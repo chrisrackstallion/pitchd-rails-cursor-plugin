@@ -2,7 +2,7 @@
 FROM node:22-alpine
 
 # bash: Cursor/VS Code server install scripts. zsh + shadow: Oh My Zsh and chsh.
-RUN apk add --no-cache bash git ca-certificates zsh curl shadow \
+RUN apk add --no-cache bash git openssh-client ca-certificates zsh curl shadow \
   && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
   && chsh -s /bin/zsh root
 
