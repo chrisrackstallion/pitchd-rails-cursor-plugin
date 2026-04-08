@@ -1,0 +1,144 @@
+---
+description: Rails controller conventions — DHH/37signals style. Apply when working with controllers.
+globs: app/controllers/**/*.rb
+alwaysApply: false
+---
+
+# Controller Conventions
+
+## Thin Controllers, Rich Models
+
+Controllers orchestrate — they receive requests, delegate to models, and respond. Business logic belongs on the model. If a controller action has more than a handful of lines, logic is leaking.
+
+```ruby
+# Good — controller delegates to model verb
+def create
+  @card.close(by: Current.user)
+  redirect_to @card
+end
+
+# Bad — business logic in controller
+def create
+  @card.update!(closed: true, closed_at: Time.current, closed_by: Current.user)
+  @card.watchers.each { |w| NotifyJob.perform_later(w, @card) }
+  redirect_to @card
+end
+```
+
+## Everything Maps to CRUD
+
+Custom actions become new resources. Instead of verbs on existing resources, create noun controllers with standard CRUD actions.
+
+```ruby
+# Good — noun resource with CRUD
+resource :closure       # Cards::ClosuresController#create / #destroy
+resource :archival      # Cards::ArchivalsController#create
+resources :assignments  # Cards::AssignmentsController#create / #destroy
+
+# Bad — verb actions on parent controller
+post :close
+post :archive
+post :assign
+```
+
+## Controller Structure
+
+Organise every controller in this order:
+
+```ruby
+class ArticlesController < ApplicationController
+  # 1. Concerns
+  include Sortable
+
+  # 2. Security / rate limiting
+  rate_limit to: 10, within: 3.minutes, only: :create
+
+  # 3. Callbacks (before_action, after_action)
+  before_action :set_article, only: %i[ show edit update destroy ]
+
+  # 4. Public actions — index, show, new, create, edit, update, destroy
+  def index
+    @articles = Article.chronologically
+  end
+
+  def show
+  end
+
+  private
+    # 5. Resource finders (memoised)
+    def set_article
+      @article = Article.find(params[:id])
+    end
+
+    # 6. Strong parameters
+    def article_params
+      params.expect(article: %i[ title body ])
+    end
+end
+```
+
+## Response Hierarchy
+
+Prefer the simplest mechanism that satisfies the UX. Each step adds controller complexity — resist climbing until you must:
+
+1. **Morphing** — `redirect_to` after mutation. Plain controller code, no format negotiation. Default.
+2. **Turbo Frames** — scoped partial updates. Controller still renders normally.
+3. **Turbo Streams** — surgical multi-target DOM updates. Last resort.
+
+Maximise use of `redirect_to`. See the Turbo rules for implementation detail.
+
+## Strong Parameters with `params.expect`
+
+Prefer `params.expect` over `params.require(...).permit(...)` — it is the Rails 8+ convention, more concise, and raises on missing keys.
+
+```ruby
+def article_params
+  params.expect(article: %i[ title body visibility ])
+end
+```
+
+## Scoped Finders for Nested Resources
+
+For nested resources, always scope record lookups through the parent association:
+
+```ruby
+# Good — scoped through parent
+def set_comment
+  @comment = @article.comments.find(params[:id])
+end
+
+# Bad — unscoped lookup for a nested resource
+def set_comment
+  @comment = Comment.find(params[:id])
+end
+```
+
+Top-level resources use `Model.find(params[:id])` directly — scoping only applies when a resource is nested under a parent.
+
+## Authentication (Rails 8+)
+
+Rails 8 ships a built-in authentication generator (`bin/rails generate authentication`). Controllers require authentication by default and opt out explicitly:
+
+```ruby
+class ApplicationController < ActionController::Base
+  include Authentication
+end
+
+class SessionsController < ApplicationController
+  allow_unauthenticated_access
+  rate_limit to: 10, within: 3.minutes, only: :create
+end
+```
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Business logic in actions | Model method or domain verb |
+| Custom verb actions (`close`, `archive`) | New noun resource with CRUD |
+| `params.require(...).permit(...)` | `params.expect(...)` |
+| Reaching for Turbo Streams first | Morphing → frames → streams (see Turbo rules) |
+| Unscoped find for nested resources | Scope through parent association |
+| `redirect_to` after failed save | `render :action, status: :unprocessable_content` |
+| Multiple `before_action` setting the same chain | Base controller concern or inheritance |
+| `rescue => e` in actions | `rescue_from` at the controller class level |

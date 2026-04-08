@@ -1,0 +1,121 @@
+---
+description: Rails service conventions — DHH/37signals style. Apply when working with operations, form objects, or service-like classes.
+globs: app/services/**/*.rb, app/models/**/form.rb, app/models/**/*_form.rb
+alwaysApply: false
+---
+
+# Service Conventions
+
+## There Is No Service Layer
+
+Rails does not have a service layer. Business logic belongs on the model. If you are reaching for `app/services/`, stop and ask where this logic *actually* lives.
+
+```ruby
+# Good — domain verb on the model
+class Article < ApplicationRecord
+  def publish(by: Current.user)
+    transaction do
+      create_publication!(publisher: by)
+      update!(published_at: Time.current)
+    end
+  end
+end
+
+# Bad — service wrapping a model call
+class PublishArticleService
+  def call(article, user:)
+    article.update!(published: true, published_by: user)
+  end
+end
+```
+
+## Where Logic Actually Lives
+
+| Situation | Where It Goes |
+|-----------|---------------|
+| Operates on a single model instance | Model method (domain verb) |
+| Shared behaviour across models | Concern |
+| Complex multi-step operation on one aggregate | PORO namespaced under the model |
+| Multi-field form spanning models or workflow | Form object (`ActiveModel::Model`) |
+| Async work, retries, scheduling | Job (`ActiveJob`) |
+| Incoming email processing | Mailbox (`ActionMailbox`) |
+| Sending email | Mailer (`ActionMailer`) |
+| External API integration | PORO in `app/models/` namespaced under a domain noun |
+| Controller coordinates two models | Inline controller orchestration — no wrapper needed |
+
+## POROs Under Model Namespaces
+
+When a model method grows too complex or an operation involves several steps within a single aggregate, extract to a PORO namespaced under the primary model. These live in `app/models/`, not `app/services/`.
+
+```ruby
+# app/models/account/onboarding.rb
+class Account::Onboarding
+  def initialize(account)
+    @account = account
+  end
+
+  def complete(params)
+    @account.transaction do
+      @account.update!(params.slice(:name, :plan))
+      @account.memberships.create!(user: Current.user, role: :owner)
+      @account.create_default_project!
+    end
+  end
+end
+```
+
+## Form Objects for Multi-Model Writes
+
+When a single form creates or updates records across multiple models, use a form object with `ActiveModel::Model`. This replaces both `accepts_nested_attributes_for` and service objects.
+
+```ruby
+# app/models/registration.rb
+class Registration
+  include ActiveModel::Model
+  include ActiveModel::Attributes
+
+  attribute :name, :string
+  attribute :email, :string
+  attribute :company_name, :string
+
+  validates :name, :email, :company_name, presence: true
+
+  def save
+    return false unless valid?
+
+    Account.transaction do
+      account = Account.create!(name: company_name)
+      User.create!(name: name, email: email, account: account)
+    end
+  end
+end
+```
+
+## Jobs Are Your Async Service Layer
+
+Anything that should happen in the background is a job, not a service. The model enqueues, the job executes.
+
+```ruby
+# Model enqueues
+after_create_commit :send_welcome_later
+
+private
+  def send_welcome_later
+    WelcomeMailer.with(user: self).welcome.deliver_later
+  end
+```
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| `app/services/` directory | Model methods, POROs under models, form objects, jobs |
+| Single-method `call` service objects | Model method |
+| Service wrapping one `update!` | Model domain verb |
+| Service as a "transaction script" | Model method with `transaction` block |
+| Service objects injecting models to simulate loose coupling | If you need the model, be the model or live under it — PORO constructor injection is fine; injection-as-architectural-boundary is not |
+| `ApplicationService` base class | No base class needed — each PORO stands alone |
+| Service for form validation | Form object (`ActiveModel::Model`) |
+| Service for async work | Job (`ActiveJob`) |
+| Service for email | Mailer (`ActionMailer`) |
+| Generic `execute`, `run` method names on POROs and form objects | Domain verbs: `complete`, `process`, `import`. Exception: `perform` is the ActiveJob contract and must not be renamed. |

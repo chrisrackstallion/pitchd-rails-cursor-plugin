@@ -1,0 +1,8 @@
+{
+  "name": "pitchd-rails-cursor-plugin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate-template.mjs"
+  }
+}

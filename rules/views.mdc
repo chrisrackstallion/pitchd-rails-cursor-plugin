@@ -1,0 +1,199 @@
+---
+description: Rails view conventions — DHH/37signals style. Apply when working with views, partials, helpers, and layouts.
+globs: app/views/**/*.erb, app/helpers/**/*.rb
+alwaysApply: false
+---
+
+# View Conventions
+
+## Views Are HTML with Sprinkles
+
+Views render the model for the browser. They are HTML documents with the minimum Ruby necessary to display data. If a view has conditionals that compute derived state or branch on business rules — that logic belongs elsewhere. Simple formatting methods (`truncate`, `humanize`, `titleize`, `time_ago_in_words`) are fine inline.
+
+```erb
+<%# Good — view reads like annotated HTML %>
+<article>
+  <h1><%= @article.title %></h1>
+  <p class="text-sm text-gray-500"><%= @article.byline %></p>
+  <p class="text-xs text-gray-400"><%= time_ago_in_words(@article.created_at) %> ago</p>
+  <%= render @article.comments %>
+</article>
+
+<%# Bad — computation and business logic in the template %>
+<article>
+  <h1><%= @article.title %></h1>
+  <p>
+    By <%= @article.creator.first_name %> <%= @article.creator.last_name %>
+    <% if @article.updated_at > @article.created_at + 1.hour %>
+      (edited)
+    <% end %>
+    <% if @article.comments.where(flagged: true).any? %>
+      <span class="text-red-600">Has flagged comments</span>
+    <% end %>
+  </p>
+</article>
+```
+
+Push domain predicates to models (`article.edited?`, `article.byline`), reusable formatting to helpers, and reusable markup to partials.
+
+## Partials with Strict Locals
+
+Every partial declares its interface with `locals:` magic comments. No instance variables in partials — they receive everything through locals.
+
+```erb
+<%# app/views/articles/_article.html.erb %>
+<%# locals: (article:) %>
+<article id="<%= dom_id(article) %>" class="border-b border-gray-200 py-4">
+  <h2><%= link_to article.title, article, class: "text-lg font-semibold text-gray-900 hover:text-blue-600" %></h2>
+  <p class="mt-1 text-sm text-gray-600"><%= article.summary %></p>
+</article>
+```
+
+Render with explicit locals:
+
+```erb
+<%= render "articles/article", article: @article %>
+<%= render partial: "articles/article", collection: @articles %>
+<%= render @articles %>
+```
+
+The short form `render @articles` works when the partial matches the model name.
+
+## Collection Rendering
+
+Render collections with `render @collection` — Rails resolves the partial automatically and handles empty states:
+
+```erb
+<%= render @articles %>
+<%= render(@articles) || tag.p("No articles yet.", class: "text-gray-500 italic py-8") %>
+```
+
+## Styling with Tailwind
+
+Utility classes go directly in the ERB markup. The HTML *is* the component in Rails — partials provide reuse, not CSS abstractions.
+
+```erb
+<div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+  <h3 class="text-lg font-semibold text-gray-900"><%= article.title %></h3>
+  <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+    Published
+  </span>
+</div>
+```
+
+Key principles:
+- **Partials are your components** — extract a partial to reuse styled blocks, not `@apply`
+- **`class_names` for conditionals** — `class: class_names("px-4 py-2 rounded", "bg-blue-600": article.featured?)` 
+- **Helpers for repeated class patterns** — `def btn_classes(variant = :primary)` returning a class string
+- **`@apply` is a last resort** — only for design tokens repeated across *many* partials (buttons, inputs)
+- **Extend the config, not arbitrary values** — project colors/spacing go in `tailwind.config`, not `bg-[#1a2b3c]`
+
+## Helpers for Presentation Logic
+
+Helpers format data for display. They return strings and take values as arguments — no side effects, no state.
+
+```ruby
+module ArticlesHelper
+  def reading_time(article)
+    minutes = (article.body.split.size / 200.0).ceil
+    pluralize(minutes, "min read")
+  end
+
+  def status_badge(article)
+    classes = class_names(
+      "rounded-full px-2 py-0.5 text-xs font-medium",
+      "bg-green-100 text-green-700": article.published?,
+      "bg-gray-100 text-gray-600": !article.published?
+    )
+    tag.span(article.published? ? "Published" : "Draft", class: classes)
+  end
+end
+```
+
+Use helpers for:
+- Formatting (dates, numbers, currency, text)
+- Conditional CSS class composition with `class_names`
+- Small composed elements (badge with icon, link with label)
+- Wrapping Rails helpers with domain defaults
+
+## Stimulus Markup
+
+Stimulus controllers provide interactivity. The data attributes live in ERB — no inline `<script>` tags.
+
+```erb
+<div data-controller="clipboard" class="flex items-center gap-2">
+  <input data-clipboard-target="source" value="<%= @article.share_url %>"
+         class="rounded border border-gray-300 px-3 py-2 text-sm" readonly>
+  <button data-action="clipboard#copy"
+          class="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
+    Copy
+  </button>
+</div>
+```
+
+## Links and Buttons
+
+`link_to` for navigation (GET). `button_to` for mutations (POST/PATCH/DELETE).
+
+```erb
+<%# Navigation — link %>
+<%= link_to "View article", article_path(@article), class: "text-blue-600 hover:underline" %>
+
+<%# Mutation — button %>
+<%= button_to "Delete", article_path(@article), method: :delete,
+      class: "text-red-600 hover:text-red-800 text-sm font-medium",
+      data: { turbo_confirm: "Delete this article?" } %>
+```
+
+## Layouts and Content Blocks
+
+Use `content_for` / `yield` to inject page-specific content into layouts. Use `provide` when setting a single value, `content_for` when building up content with blocks.
+
+```erb
+<%# app/views/articles/show.html.erb %>
+<% provide(:title, @article.title) %>
+```
+
+## Turbo Frame Markup
+
+Wrap interactive regions in `turbo_frame_tag`. The controller renders normally — Turbo extracts and replaces matching frames.
+
+```erb
+<%= turbo_frame_tag dom_id(@article) do %>
+  <h2 class="text-xl font-bold"><%= @article.title %></h2>
+  <%= link_to "Edit", edit_article_path(@article), class: "text-sm text-blue-600 hover:underline" %>
+<% end %>
+```
+
+## Form Conventions
+
+Use `form_with` bound to a model. It infers the URL, method, and Turbo behaviour automatically:
+
+```erb
+<%= form_with model: @article, class: "space-y-4" do |f| %>
+  <div>
+    <%= f.label :title, class: "block text-sm font-medium text-gray-700" %>
+    <%= f.text_field :title, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+  </div>
+
+  <%= f.submit class: "rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700" %>
+<% end %>
+```
+
+Show validation errors inline, close to the field — not as a detached error summary.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Instance variables in partials | Strict locals (`locals:` magic comment) |
+| Business logic / queries in views | Controller sets instance variables, model owns predicates |
+| `if/else` trees for rendering variants | Separate partials or polymorphic rendering |
+| Inline `<script>` or `<style>` in templates | Stimulus controllers, Tailwind utilities |
+| `link_to` for mutations (DELETE, POST) | `button_to` with `method:` |
+| `@apply` for every styled block | Extract a partial — partials are your components |
+| Arbitrary Tailwind values everywhere (`bg-[#1a2b3c]`) | Extend the Tailwind config with project tokens |
+| Hardcoded CSS class strings repeated across templates | Helper returning class string, or extract partial |
+| Rendering partials without locals declaration | Add `<%# locals: (...) %>` magic comment |
+| HTML string concatenation in helpers | `tag` builder or partials |
+| `Current.user` checks inside partials | Pass permission as boolean local, or use model predicate at the template level |

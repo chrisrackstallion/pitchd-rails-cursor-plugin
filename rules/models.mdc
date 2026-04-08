@@ -1,0 +1,96 @@
+---
+description: Rails model conventions — DHH/37signals style. Apply when working with models.
+globs: app/models/**/*.rb
+alwaysApply: false
+---
+
+# Model Conventions
+
+## Rich Domain Models
+
+Business logic belongs on the model, not in service objects. If logic operates on a single model instance, it's a model method.
+
+```ruby
+# Good — domain verb on the model
+def publish(by: Current.user)
+  transaction do
+    create_publication!(publisher: by)
+    update!(published_at: Time.current)
+  end
+end
+
+# Bad — unnecessary service wrapper
+class PublishService
+  def call!(article)
+    article.update!(published: true)
+  end
+end
+```
+
+## Concerns for Horizontal Behaviour
+
+Extract shared capabilities into concerns. Name them as adjectives describing what the model *can do*.
+
+- `Publishable`, `Closeable`, `Searchable`, `Taggable` — capabilities
+- 50–150 lines each, self-contained with associations + scopes + methods
+- Not for mere organisation — extract when genuine reuse exists or a single file grows unwieldy
+- Extract when a model exceeds ~300 lines with distinct capability clusters
+
+## State as Records, Not Booleans
+
+Track state changes with join records instead of boolean columns. You get timestamps, attribution, and clean query semantics for free.
+
+```ruby
+has_one :closure, dependent: :destroy
+
+def closed?   = closure.present?
+def close(by: Current.user) = create_closure!(creator: by)
+def reopen     = closure&.destroy!
+```
+
+## Scopes — Query Logic on the Model
+
+Push domain queries to named scopes. Controllers should read like prose, not SQL. Never use `default_scope` — it contaminates every query, breaks `unscoped` expectations, and hides intent.
+
+```ruby
+scope :chronologically, -> { order(created_at: :asc) }
+scope :active,          -> { where(status: :active) }
+scope :preloaded,       -> { includes(:creator, :tags) }
+```
+
+## Database Constraints Over Validations
+
+Enforce integrity at the database level. Model validations are for user-facing error messages, not data safety.
+
+```ruby
+# migration — source of truth
+add_index :users, :email, unique: true
+add_foreign_key :cards, :boards
+change_column_null :users, :email, false
+```
+
+## Callbacks — Sparingly
+
+Use `after_commit` for async work and `before_save` for derived data. Never use callbacks for business logic, external calls, or complex side effects.
+
+## Method Naming
+
+- **Verbs** for state changes: `publish`, `close`, `archive`, `gild`
+- **Predicates** for queries: `published?`, `closed?`, `golden?`
+- **No generic setters**: `set_status`, `update_flag` — use domain verbs instead
+
+## Bang Convention
+
+Domain verbs use the non-bang form (`publish`, `close`) — they are the normal way to do the thing. The bang lives on the internal AR calls (`create!`, `update!`) and propagates `ActiveRecord::RecordInvalid` naturally. Reserve a bang domain verb only when you offer both a "try" form and a "must succeed" form.
+
+## Association Defaults with Current
+
+```ruby
+belongs_to :creator, class_name: "User", default: -> { Current.user }
+```
+
+## Normalizes for Data Cleaning
+
+```ruby
+normalizes :email, with: ->(e) { e.strip.downcase }
+```
