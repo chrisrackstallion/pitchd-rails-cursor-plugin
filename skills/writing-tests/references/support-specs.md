@@ -1,8 +1,265 @@
 # Support Specs Reference
 
-Specs for jobs, mailers, concerns, and standalone POROs. These are the
-"everything else" — write them when the object has meaningful logic
-worth testing in isolation.
+Specs for policies, jobs, mailers, concerns, and standalone POROs. These
+are the "everything else" — write them when the object has meaningful
+logic worth testing in isolation.
+
+## Policy Specs
+
+Policy specs test authorization logic — who can do what. They are the
+single home for permission assertions. Request specs test that the HTTP
+layer enforces authorization (status codes, redirects); policy specs test
+the logic itself.
+
+### Structure
+
+Test policies by instantiating them directly and asserting on the boolean
+return value. Use `let` for the role × action matrix — this is one place
+where `let` is appropriate because the context/role structure is the test's
+core organising principle, not obscure shared state.
+
+```ruby
+# spec/policies/article_policy_spec.rb
+RSpec.describe ArticlePolicy do
+  let(:article) { create(:article, creator: creator) }
+  let(:creator) { create(:user) }
+
+  context "as a regular user" do
+    let(:user) { create(:user) }
+
+    it "permits create but forbids update and destroy" do
+      policy = described_class.new(user, article)
+
+      expect(policy.create?).to be true
+      expect(policy.update?).to be false
+      expect(policy.destroy?).to be false
+    end
+  end
+
+  context "as the article creator" do
+    let(:user) { creator }
+
+    it "permits update but forbids destroy" do
+      policy = described_class.new(user, article)
+
+      expect(policy.update?).to be true
+      expect(policy.destroy?).to be false
+    end
+  end
+
+  context "as an admin" do
+    let(:user) { create(:user, :admin) }
+
+    it "permits all actions" do
+      policy = described_class.new(user, article)
+
+      expect(policy.show?).to be true
+      expect(policy.create?).to be true
+      expect(policy.update?).to be true
+      expect(policy.destroy?).to be true
+    end
+  end
+end
+```
+
+### When `pundit_user` is `Current`
+
+Policy specs instantiate `Policy.new(first_arg, record)` with the **same
+shape** production passes — if `pundit_user` returns `Current`, pass `Current`
+(or a test double that responds to `account`, `user`, etc.), not a bare `User`.
+
+```ruby
+RSpec.describe ArticlePolicy do
+  let(:article) { create(:article, creator: creator) }
+  let(:creator) { create(:user) }
+
+  around do |example|
+    Current.set(user: signed_in_user) { example.run }
+  end
+
+  let(:signed_in_user) { create(:user) }
+
+  it "uses Current as the first argument when production uses pundit_user → Current" do
+    policy = described_class.new(Current, article)
+
+    # Example: policy compares user.user to record.creator — adjust expectations to your rules
+    expect(policy.update?).to be false
+  end
+end
+```
+
+Use `Current.set` (or your app’s equivalent) so `Current` matches what
+controllers assign during a request. If you only ever use `pundit_user` →
+`Current.user`, keep passing a `User` into `Policy.new` as in the examples
+above.
+
+### With pundit-matchers (Optional)
+
+The `pundit-matchers` gem provides concise one-liner syntax. If your
+project uses it, the same spec can be written more compactly:
+
+```ruby
+RSpec.describe ArticlePolicy do
+  subject { described_class.new(user, article) }
+
+  let(:article) { create(:article, creator: creator) }
+  let(:creator) { create(:user) }
+
+  context "as the article creator" do
+    let(:user) { creator }
+
+    it { is_expected.to permit_action(:update) }
+    it { is_expected.to forbid_action(:destroy) }
+  end
+end
+```
+
+> **Note:** The `is_expected.to` + implicit `subject` pattern is normally
+> discouraged in this project's testing conventions. Policy specs with
+> `pundit-matchers` are an accepted exception — the one-liners map cleanly
+> to the permission matrix and remain readable.
+
+### Testing Scopes
+
+```ruby
+RSpec.describe ArticlePolicy::Scope do
+  describe "#resolve" do
+    it "returns all articles for admins" do
+      admin = create(:user, :admin)
+      create_list(:article, 3)
+
+      scope = described_class.new(admin, Article).resolve
+
+      expect(scope.count).to eq(3)
+    end
+
+    it "returns own and published articles for regular users" do
+      user = create(:user)
+      own_article = create(:article, creator: user)
+      published = create(:article, :published)
+      other_draft = create(:article) # someone else's draft
+
+      scope = described_class.new(user, Article).resolve
+
+      expect(scope).to contain_exactly(own_article, published)
+    end
+  end
+end
+```
+
+### Testing Namespaced Policies
+
+For admin or other namespaced policies, test the namespaced class directly:
+
+```ruby
+# spec/policies/admin/article_policy_spec.rb
+RSpec.describe Admin::ArticlePolicy do
+  context "as a regular user" do
+    let(:user) { create(:user) }
+
+    it "forbids all actions" do
+      policy = described_class.new(user, create(:article))
+
+      expect(policy.index?).to be false
+      expect(policy.destroy?).to be false
+    end
+  end
+
+  context "as an admin" do
+    let(:user) { create(:user, :admin) }
+
+    it "permits all actions" do
+      policy = described_class.new(user, create(:article))
+
+      expect(policy.index?).to be true
+      expect(policy.destroy?).to be true
+    end
+  end
+end
+```
+
+The controller uses `authorize [:admin, @article]` which resolves to
+`Admin::ArticlePolicy` — but in the spec, instantiate the class directly.
+
+### Testing State-Change Policies (Noun Resources)
+
+State-change controllers use a dedicated policy class. The spec tests
+`create?` and `destroy?` — standard CRUD, no custom verb methods:
+
+```ruby
+# spec/policies/cards/closure_policy_spec.rb
+RSpec.describe Cards::ClosurePolicy do
+  let(:card) { create(:card, creator: card_creator) }
+  let(:card_creator) { create(:user) }
+
+  context "as the card creator" do
+    let(:user) { card_creator }
+
+    it "permits create and destroy" do
+      policy = described_class.new(user, card)
+
+      expect(policy.create?).to be true
+      expect(policy.destroy?).to be true
+    end
+  end
+
+  context "as another user" do
+    let(:user) { create(:user) }
+
+    it "forbids create and destroy" do
+      policy = described_class.new(user, card)
+
+      expect(policy.create?).to be false
+      expect(policy.destroy?).to be false
+    end
+  end
+end
+```
+
+The controller calls `authorize @card, policy_class: Cards::ClosurePolicy`
+— the spec instantiates the policy class directly with the card as the record.
+
+### Boundaries — What Belongs Here vs. Elsewhere
+
+Policy specs own the permission logic. Other layers trust them:
+
+| Assertion | Tested in | NOT tested in |
+|-----------|-----------|---------------|
+| Admin can destroy articles | Policy spec | Request spec doesn't re-check the logic |
+| Regular user cannot destroy | Policy spec | Request spec tests the redirect |
+| Scope filters by user | Policy spec | Controller uses `policy_scope`; request spec trusts it |
+| Endpoint redirects unauthorized users | Request spec | Policy spec doesn't test HTTP |
+| Button is hidden for unauthorized user | System spec | Policy spec doesn't test views |
+
+```ruby
+# Policy spec — owns the logic
+it "denies non-owners" do
+  policy = described_class.new(other_user, article)
+  expect(policy.update?).to be false
+end
+
+# Request spec — owns the HTTP gate (e.g. redirect from Pundit handler)
+it "redirects unauthorized users" do
+  sign_in other_user
+  patch article_path(article), params: { article: { title: "Hacked" } }
+  expect(response).to redirect_to(root_path)
+end
+
+# The request spec does NOT also check policy.update? — that's duplication.
+# The policy spec does NOT make HTTP requests — that's the wrong layer.
+```
+
+### Guidelines
+
+- **One spec file per policy** — `spec/policies/article_policy_spec.rb`
+- **Test every role × action combination** — this is the permission matrix
+- **`let` is appropriate here** — the role matrix is declarative, not obscure
+- **Test scopes separately** — they have their own logic worth verifying
+- **Don't test HTTP in policy specs** — policy specs test `true`/`false`
+- **Don't re-test policy logic in request specs** — request specs test the HTTP response
+- **Use `pundit-matchers`** for concise one-liner assertions (optional but clean)
+
+---
 
 ## Job Specs
 

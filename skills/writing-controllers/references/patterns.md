@@ -42,11 +42,13 @@ module Cards
     before_action :set_card
 
     def create
+      authorize @card, policy_class: Cards::ClosurePolicy
       @card.close(by: Current.user)
       redirect_to @card
     end
 
     def destroy
+      authorize @card, policy_class: Cards::ClosurePolicy
       @card.reopen
       redirect_to @card
     end
@@ -203,7 +205,7 @@ end
 | Resource scoping | Load parent resource for nested controllers | `BoardScoped`, `AccountScoped` |
 | Request context | Populate `Current` attributes from request | `SetCurrentRequest`, `SetTimezone` |
 | Response helpers | Shared rendering patterns | `FlashStreams`, `Sortable` |
-| Authorization | Permission checks as `before_action` | `RequireAdmin` |
+| Authentication / session | Ensure user is signed in — not Pundit | `Authentication`, session setup |
 | Platform detection | Mobile/desktop branching | `DetectPlatform` |
 
 ### Guidelines
@@ -336,56 +338,87 @@ belongs_to :creator, class_name: "User", default: -> { Current.user }
 
 ---
 
-## Authorization
+## Authorization with Pundit
 
 ### Philosophy
 
-The model defines what permissions mean. The controller enforces them.
-Keep it simple — use model methods for permission logic, `before_action`
-for enforcement.
+Authorization logic lives in policy objects — one per model, one method
+per action. The controller calls `authorize`, the policy decides. This
+replaces Pundit policy checks in `before_action` and duplicating the full
+permission matrix on the model. Domain predicates (`published?`, `owned_by?(user)`)
+stay on the model; policies compose them.
 
-### before_action Guards
+### Controller Integration
 
 ```ruby
 class ArticlesController < ApplicationController
-  before_action :set_article, only: %i[ show edit update destroy ]
-  before_action :ensure_can_edit, only: %i[ edit update ]
-  before_action :ensure_can_destroy, only: %i[ destroy ]
+  before_action :set_article, only: %i[show edit update destroy]
 
-  # ...
+  def index
+    @articles = policy_scope(Article).chronologically
+    authorize Article
+  end
+
+  def show
+    authorize @article
+  end
+
+  def create
+    @article = Article.new(article_params)
+    authorize @article
+
+    if @article.save
+      redirect_to @article
+    else
+      render :new, status: :unprocessable_content
+    end
+  end
+
+  def update
+    authorize @article
+
+    if @article.update(article_params)
+      redirect_to @article
+    else
+      render :edit, status: :unprocessable_content
+    end
+  end
+
+  def destroy
+    authorize @article
+    @article.destroy!
+    redirect_to articles_path
+  end
 
   private
-    def ensure_can_edit
-      head :forbidden unless @article.editable_by?(Current.user)
+    def set_article
+      @article = Article.find(params[:id])
     end
 
-    def ensure_can_destroy
-      head :forbidden unless Current.user.admin?
+    def article_params
+      params.expect(article: %i[title body visibility])
     end
 end
 ```
 
-### Model-Level Permission Methods
+### State-Change Controllers (Noun Resources)
 
-```ruby
-class Article < ApplicationRecord
-  def editable_by?(user)
-    user.admin? || user == creator
-  end
+State changes are modelled as CRUD on noun resources. The policy mirrors
+this — a `Cards::ClosurePolicy` with standard `create?`/`destroy?`. See
+the ClosuresController example above in "Mapping Custom Actions to
+Resources" for the full implementation with `before_action :set_card` and
+`authorize`. See the policies skill for the `Cards::ClosurePolicy` pattern.
 
-  def publishable_by?(user)
-    editable_by?(user) && !published?
-  end
-end
-```
-
-### rescue_from for Authorization Errors
-
-Handle authorization failures at the base controller level:
+### ApplicationController Setup
 
 ```ruby
 class ApplicationController < ActionController::Base
-  rescue_from User::NotAuthorized, with: :user_not_authorized
+  include Pundit::Authorization
+
+  after_action :verify_authorized
+  after_action :verify_policy_scoped, only: :index
+
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   private
     def user_not_authorized
@@ -394,6 +427,29 @@ class ApplicationController < ActionController::Base
     end
 end
 ```
+
+`verify_authorized` catches actions that never called `authorize`.
+`verify_policy_scoped` catches index actions that never called `policy_scope`.
+Use `skip_after_action` only for actions that intentionally skip authorization
+or scoping (public pages, health checks). See the policies skill § Skipping
+Verification.
+
+### Skipping Verification
+
+For actions that genuinely don't need authorization:
+
+```ruby
+class PagesController < ApplicationController
+  skip_after_action :verify_authorized
+  skip_after_action :verify_policy_scoped
+
+  def home
+  end
+end
+```
+
+See the policies skill for full policy patterns, scopes, roles, and
+namespaced policies.
 
 ---
 
@@ -518,7 +574,8 @@ def show
 end
 
 def index
-  @articles = Article.chronologically
+  @articles = policy_scope(Article).chronologically
+  authorize Article
   fresh_when etag: @articles
 end
 ```
@@ -571,13 +628,11 @@ ApplicationController                   # global config, auth, flash types, layo
 ```ruby
 module Admin
   class BaseController < ApplicationController
-    before_action :require_admin
     layout "admin"
 
-    private
-      def require_admin
-        head :forbidden unless Current.user&.admin?
-      end
+    # Each admin controller action calls authorize [:admin, @record],
+    # which resolves to Admin::ModelPolicy — these policies check user.admin?
+    # No need for a blanket before_action guard; Pundit handles it per-action.
   end
 end
 ```

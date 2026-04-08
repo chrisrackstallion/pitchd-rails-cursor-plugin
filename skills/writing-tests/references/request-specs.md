@@ -12,6 +12,7 @@ browsers can't easily verify.
 RSpec.describe "Articles", type: :request do
   describe "GET /articles" do
     it "returns a successful response" do
+      sign_in create(:user)
       create_list(:article, 3, :published)
 
       get articles_path
@@ -78,13 +79,13 @@ end
 
 ## CRUD Resource Specs
 
-### Full CRUD Pattern (API-Only or Without System Specs)
+### Full CRUD Pattern (Without System Specs)
 
-Use this pattern for **API-only resources** or resources that don't have
-system specs. For server-rendered resources with system specs, you typically
-do NOT need a full CRUD request spec — write request specs only for
-HTTP-layer concerns not covered by system specs (auth gates, status codes,
-rate limits). See "Boundaries" below.
+Use this pattern for resources that don't have system specs. For
+server-rendered resources with system specs, you typically do NOT need a
+full CRUD request spec — write request specs only for HTTP-layer concerns
+not covered by system specs (auth gates, status codes, rate limits). See
+"Boundaries" below.
 
 ```ruby
 RSpec.describe "Articles", type: :request do
@@ -156,6 +157,10 @@ end
 
 ## Authentication and Authorization
 
+Request specs test the HTTP gate — status codes and redirects. The policy
+spec tests the authorization *logic* (who can do what). Don't re-test
+policy logic here; just verify the endpoint enforces it.
+
 ### Unauthenticated Access
 
 ```ruby
@@ -170,23 +175,31 @@ describe "GET /articles" do
 end
 ```
 
-### Authorization
+### Authorization (with Pundit)
+
+Request specs verify that Pundit enforcement works at the HTTP layer.
+Test one authorized and one unauthorized case per endpoint — the policy
+spec covers the full role × action matrix.
+
+The `rescue_from Pundit::NotAuthorizedError` handler in `ApplicationController`
+typically redirects with a flash (302). Test accordingly:
 
 ```ruby
 describe "DELETE /articles/:id" do
-  it "returns 403 for non-owners" do
+  it "redirects unauthorized users" do
     article = create(:article)
-    other_user = create(:user)
-    sign_in other_user
+    sign_in create(:user) # authenticated but not the owner
 
     delete article_path(article)
 
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to redirect_to(root_path)
+    # Don't also assert policy.destroy? — policy spec owns that
   end
 
   it "succeeds for the article owner" do
-    article = create(:article, author: user)
+    user = create(:user)
     sign_in user
+    article = create(:article, creator: user)
 
     delete article_path(article)
 
@@ -195,17 +208,22 @@ describe "DELETE /articles/:id" do
 end
 ```
 
+> **Important:** Sign in an authenticated but *unauthorized* user to test
+> the Pundit layer specifically. If you skip sign-in, the authentication
+> layer redirects to login before Pundit ever runs — you'd be testing auth,
+> not authorization.
+
 ### Admin-Only Endpoints
 
 ```ruby
 RSpec.describe "Admin::Users", type: :request do
   describe "GET /admin/users" do
-    it "returns 403 for non-admins" do
+    it "redirects non-admins" do
       sign_in create(:user)
 
       get admin_users_path
 
-      expect(response).to have_http_status(:forbidden)
+      expect(response).to redirect_to(root_path)
     end
 
     it "succeeds for admins" do
@@ -267,10 +285,10 @@ For controllers that map custom actions to CRUD (e.g., closing, publishing):
 ```ruby
 RSpec.describe "Card Closures", type: :request do
   describe "POST /cards/:card_id/closure" do
-    it "redirects to the card" do
+    it "redirects to the card on success" do
       user = create(:user)
       sign_in user
-      card = create(:card)
+      card = create(:card, creator: user)
 
       post card_closure_path(card)
 
@@ -278,66 +296,26 @@ RSpec.describe "Card Closures", type: :request do
       # Don't assert card.reload.closed? — the model spec owns that.
       # This spec proves the endpoint returns the right HTTP response.
     end
+
+    it "redirects unauthorized users" do
+      sign_in create(:user)
+      card = create(:card) # created by someone else
+
+      post card_closure_path(card)
+
+      expect(response).to redirect_to(root_path)
+    end
   end
 
   describe "DELETE /cards/:card_id/closure" do
-    it "redirects to the card" do
+    it "redirects to the card on success" do
       user = create(:user)
       sign_in user
-      card = create(:card, :closed)
+      card = create(:card, :closed, creator: user)
 
       delete card_closure_path(card)
 
       expect(response).to redirect_to(card_path(card))
-    end
-  end
-end
-```
-
----
-
-## JSON API Endpoints
-
-For APIs that return JSON:
-
-```ruby
-RSpec.describe "API Articles", type: :request do
-  describe "GET /api/articles" do
-    it "returns articles as JSON" do
-      create_list(:article, 3, :published)
-
-      get api_articles_path, headers: { "Accept" => "application/json" }
-
-      expect(response).to have_http_status(:ok)
-      expect(response.content_type).to include("application/json")
-
-      json = response.parsed_body
-      expect(json.length).to eq(3)
-      expect(json.first).to include("title", "body", "created_at")
-    end
-  end
-
-  describe "POST /api/articles" do
-    it "creates and returns the article" do
-      sign_in create(:user)
-
-      post api_articles_path,
-        params: { article: { title: "API Article", body: "Content" } },
-        as: :json
-
-      expect(response).to have_http_status(:created)
-      expect(response.parsed_body["title"]).to eq("API Article")
-    end
-
-    it "returns validation errors" do
-      sign_in create(:user)
-
-      post api_articles_path,
-        params: { article: { title: "" } },
-        as: :json
-
-      expect(response).to have_http_status(:unprocessable_content)
-      expect(response.parsed_body["errors"]).to include("title")
     end
   end
 end
@@ -427,6 +405,7 @@ sometimes request specs are simpler):
 ```ruby
 describe "GET /articles/:id" do
   it "includes the article title" do
+    sign_in create(:user)
     article = create(:article, title: "Testing Guide")
 
     get article_path(article)
@@ -445,11 +424,10 @@ or re-test model domain logic.
 
 ### What Request Specs Own
 
-- Status codes: 200, 201, 302, 401, 403, 422, 429
+- Status codes: 200, 201, 302, 401, 422, 429
 - Redirects: where the user is sent after mutations
-- Auth gates: unauthenticated → redirect to login, unauthorized → 403
+- Auth gates: unauthenticated → redirect to login, unauthorized → redirect (Pundit handler)
 - Rate limiting: 429 after exceeding limits
-- API JSON shape: correct keys, correct types in response body
 - CSRF and security headers
 - Turbo Stream content type for Turbo requests
 
@@ -465,8 +443,8 @@ or re-test model domain logic.
 Authentication and authorization are critical enough to **always** test at
 the HTTP layer, even when system specs exist for the happy path. A system
 spec that signs in and creates an article doesn't prove that an
-unauthenticated request gets a 302, or that a non-owner gets a 403. Those
-are request spec concerns.
+unauthenticated request gets redirected to login, or that an unauthorized
+user gets redirected by the Pundit handler. Those are request spec concerns.
 
 ```ruby
 # Always write these, regardless of system spec coverage
@@ -478,13 +456,13 @@ describe "POST /articles" do
 end
 
 describe "DELETE /articles/:id" do
-  it "returns 403 for non-owners" do
-    sign_in create(:user)
-    article = create(:article) # owned by a different user
+  it "redirects unauthorized users" do
+    sign_in create(:user) # authenticated but not the owner
+    article = create(:article)
 
     delete article_path(article)
 
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to redirect_to(root_path)
   end
 end
 ```
@@ -500,6 +478,7 @@ when it tests something the system spec cannot:
 # Unnecessary — the system spec already covers article creation
 describe "POST /articles" do
   it "creates an article" do
+    sign_in create(:user)
     post articles_path, params: { article: { title: "New", body: "Content" } }
     expect(Article.count).to eq(1)  # System spec already proves this
   end
@@ -508,6 +487,7 @@ end
 # Valuable — tests an HTTP concern the system spec can't
 describe "POST /articles" do
   it "returns 422 with missing params" do
+    sign_in create(:user)
     post articles_path, params: { article: { title: "" } }
     expect(response).to have_http_status(:unprocessable_content)
   end
@@ -527,17 +507,20 @@ concern:
 ```ruby
 # Bad — two tests for one concern
 it "redirects to the article" do
+  sign_in create(:user)
   post articles_path, params: { article: valid_params }
   expect(response).to redirect_to(article_path(Article.last))
 end
 
 it "creates the article record" do
+  sign_in create(:user)
   post articles_path, params: { article: valid_params }
   expect(Article.count).to eq(1)
 end
 
 # Good — one test for the success path
 it "creates an article and redirects" do
+  sign_in create(:user)
   post articles_path, params: { article: valid_params }
 
   expect(response).to redirect_to(article_path(Article.last))
@@ -552,7 +535,6 @@ end
 - **Test status codes and redirects** — not response body content (save that for system specs)
 - **Test auth at every endpoint** — unauthenticated, unauthorized, authorized
 - **Follow redirects when needed** — `follow_redirect!` after a redirect assertion
-- **Use `as: :json`** for JSON API tests — sets content type and parses response
 - **Don't test view rendering** — that's what system specs are for
 - **Keep request specs focused on HTTP concerns** — the model spec tests the domain logic
 - **Don't duplicate system spec flows** — if the system spec proves the feature works, the request spec only adds HTTP-layer assertions

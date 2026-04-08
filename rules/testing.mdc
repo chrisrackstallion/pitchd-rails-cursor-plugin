@@ -20,7 +20,7 @@ Test behaviour, not implementation. Write tests that give you confidence to ship
 The 37signals testing philosophy inverts the traditional pyramid — system tests are the backbone, not the afterthought:
 
 1. **System specs** — the primary testing tool. Simulate real user flows through the browser. Most features should have system specs.
-2. **Request specs** — test HTTP layer for APIs, redirects, auth, and response codes. Use for anything system specs can't cover.
+2. **Request specs** — test HTTP layer for redirects, auth, and response codes. Use for anything system specs can't cover.
 3. **Model specs** — test domain logic, scopes, state transitions, and validations. The unit test of Rails.
 4. **Everything else** — job specs, mailer specs, concern specs. Write them when the object has meaningful logic worth testing in isolation.
 
@@ -82,7 +82,8 @@ creates maintenance drag when behaviour changes.
 | Domain logic (publish, close, scopes) | Model spec | System/request spec don't re-test the logic |
 | User flow (fill form, click, see result) | System spec | Request spec doesn't duplicate the flow |
 | HTTP concerns (status codes, redirects) | Request spec | System spec doesn't assert status codes |
-| Auth gates and authorization | Request spec — **always**, even if a system spec exists | Auth is critical enough to test at the HTTP layer |
+| Policy logic (who can do what) | Policy spec | Request spec doesn't re-test policy logic; it tests the HTTP gate |
+| Auth gates at the HTTP layer | Request spec — **always**, even if a system spec exists | Auth is critical enough to test at the HTTP layer |
 | Job performs work correctly | Job spec | Model spec just asserts `have_enqueued_job` |
 | Mailer content | Mailer spec | Request spec just asserts delivery was enqueued |
 
@@ -92,7 +93,7 @@ If a system spec already proves the user can create an article (fills form,
 clicks save, sees the article), **don't** write a request spec that posts
 the same params and checks the same record was created. The request spec
 should only exist if it tests something the system spec can't: a specific
-status code, a redirect chain, rate limiting, or API-only behaviour.
+status code, a redirect chain, or rate limiting.
 
 If a model spec proves `article.publish` creates a publication record,
 the system spec just clicks "Publish" and asserts the page shows "Published"
@@ -172,3 +173,4 @@ can cause flakiness across processes.
 | Job | `spec/jobs/notify_subscribers_job_spec.rb` | Matches job name |
 | Mailer | `spec/mailers/notification_mailer_spec.rb` | Matches mailer name |
 | Concern | `spec/models/concerns/publishable_spec.rb` | Matches concern name |
+| Policy | `spec/policies/article_policy_spec.rb` | Matches policy name |

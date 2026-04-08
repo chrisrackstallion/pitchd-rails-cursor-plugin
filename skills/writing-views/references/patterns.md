@@ -1191,7 +1191,8 @@ Eager load associations in the controller, not the view:
 ```ruby
 # Controller
 def index
-  @articles = Article.preloaded.chronologically
+  @articles = policy_scope(Article).preloaded.chronologically
+  authorize Article
 end
 ```
 

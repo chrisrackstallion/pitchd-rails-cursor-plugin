@@ -31,7 +31,7 @@ clarity over cleverness.
 | Turbo responses | See the Turbo rules — controller patterns are covered there |
 | Controller concern | Read `references/patterns.md` § Concerns |
 | Strong parameters | Read `references/patterns.md` § Strong Parameters |
-| Authorization | Read `references/patterns.md` § Authorization |
+| Authorization | Read `references/patterns.md` § Authorization; see also the policies skill |
 | Error handling | Read `references/patterns.md` § Error Handling |
 | Code review | Read all references, review against conventions |
 
@@ -52,18 +52,23 @@ class ArticlesController < ApplicationController
 
   # 4. Public actions — in CRUD order
   def index
-    @articles = Article.chronologically
+    @articles = policy_scope(Article).chronologically
+    authorize Article
   end
 
   def show
+    authorize @article
   end
 
   def new
     @article = Article.new
+    authorize @article
   end
 
   def create
     @article = Article.new(article_params)
+    authorize @article
+
     if @article.save
       redirect_to @article, notice: "Article created."
     else
@@ -72,9 +77,12 @@ class ArticlesController < ApplicationController
   end
 
   def edit
+    authorize @article
   end
 
   def update
+    authorize @article
+
     if @article.update(article_params)
       redirect_to @article, notice: "Article updated."
     else
@@ -83,6 +91,7 @@ class ArticlesController < ApplicationController
   end
 
   def destroy
+    authorize @article
     @article.destroy!
     redirect_to articles_path, notice: "Article deleted."
   end
@@ -142,6 +151,10 @@ See the Turbo rules for implementation detail on each level.
 | Service object wrapping a single model call | Let the controller call the model directly |
 | `rescue => e` in actions | `rescue_from` at the controller class level |
 | Skipping CSRF / auth checks per-action | Dedicated controller with appropriate base class |
+| Inline `current_user.admin?` permission checks | `authorize @record` delegates to Pundit policy |
+| Pundit policy checks in `before_action` | `authorize` in the action — use `before_action` for authentication and finders |
+| Missing authorization in an action | `after_action :verify_authorized` catches forgotten calls |
+| Missing `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it (when enabled) |
 
 ### 5. Naming Conventions
 
@@ -150,7 +163,7 @@ See the Turbo rules for implementation detail on each level.
 | Controllers | Plural noun matching resource | `ArticlesController`, `CommentsController` |
 | Nested state controllers | `Parent::StateNounController` | `Cards::ClosuresController`, `Articles::PublicationsController` |
 | Namespace controllers | Module wrapping | `Admin::ArticlesController` |
-| Callbacks | `set_` for finders, `ensure_` for guards | `set_article`, `ensure_can_edit` |
+| Callbacks | `set_` for finders | `set_article`, `set_comment` |
 | Params methods | `resource_params` | `article_params`, `comment_params` |
 | Resource finders | `set_` + singular resource name | `set_article`, `set_comment` |
 | Concerns | Adjective or `Scoped` suffix | `Searchable`, `BoardScoped`, `Sortable` |
@@ -165,7 +178,9 @@ Before finishing, verify:
 - [ ] Failed validations render with `status: :unprocessable_content`, not redirect
 - [ ] Nested resource lookups are scoped through parent associations
 - [ ] Response uses the simplest Turbo mechanism (morphing > frames > streams)
-- [ ] Authorization is checked via `before_action` or model-level guards
+- [ ] Every action calls `authorize` (Pundit) — including index — `after_action :verify_authorized` catches misses
+- [ ] Index actions use `policy_scope` to filter records, then `authorize` (typically `authorize Model` after scoping)
+- [ ] `verify_policy_scoped` on index is enabled when you use `after_action :verify_policy_scoped, only: :index` in `ApplicationController`
 - [ ] Controller has no more than ~7 public methods (CRUD actions only)
 - [ ] Shared behaviour is extracted to concerns, not duplicated
 - [ ] Rate limiting applied to creation/mutation endpoints where appropriate

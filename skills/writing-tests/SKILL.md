@@ -29,8 +29,9 @@ from DHH and 37signals. The tooling (RSpec, FactoryBot) is an adaptation;
 |------|--------|
 | New feature end-to-end | Read `references/system-specs.md`, write a system spec |
 | Model domain logic | Read `references/model-specs.md`, write a model spec |
-| API / HTTP behaviour | Read `references/request-specs.md`, write a request spec |
+| HTTP behaviour | Read `references/request-specs.md`, write a request spec |
 | Creating test data | Read `references/factory-patterns.md`, create factories |
+| Authorization / policy | Read `references/support-specs.md` § Policy Specs, write a policy spec |
 | Job / mailer / concern | Read `references/support-specs.md`, write the appropriate spec |
 | Debugging a failing test | Read all relevant references, diagnose the failure |
 | Adding coverage to existing code | Determine the right spec type, read the reference |
@@ -44,17 +45,21 @@ Is this a user-facing feature?
 └── NO
     Is this about HTTP behaviour (status codes, redirects, auth)?
     ├── YES → Request spec
-    │         API returns 401, redirect after login, CSRF protection
+    │         401/redirect after login, CSRF protection
     └── NO
-        Is this domain logic on a model?
-        ├── YES → Model spec
-        │         article.publish, scope queries, state transitions
+        Is this authorization logic (who can do what)?
+        ├── YES → Policy spec
+        │         admin can delete, owner can edit, scope filters
         └── NO
-            Is this a job, mailer, or standalone object?
-            ├── YES → Spec matching the object type
-            │         Job enqueues, mailer sends, PORO processes
+            Is this domain logic on a model?
+            ├── YES → Model spec
+            │         article.publish, scope queries, state transitions
             └── NO
-                Add the assertion to an existing system spec.
+                Is this a job, mailer, or standalone object?
+                ├── YES → Spec matching the object type
+                │         Job enqueues, mailer sends, PORO processes
+                └── NO
+                    Add the assertion to an existing system spec.
 ```
 
 ### 3. Test Structure
@@ -123,7 +128,8 @@ Before writing a test, ask:
   - Domain logic (publish, close, scopes) → model spec owns it
   - User-visible flow (fill form, click, see result) → system spec owns it
   - HTTP concerns (status codes, redirects) → request spec owns it
-  - Auth gates and authorization → request spec **always** owns this, even if a system spec exists. Auth is critical enough to test at the HTTP layer regardless.
+  - Authorization logic (who can do what) → policy spec owns the logic
+  - Auth gates at the HTTP layer → request spec **always** owns this, even if a system spec exists. Test one authorized + one unauthorized case per endpoint.
   - Job/mailer work → job/mailer spec owns it; callers just assert enqueuing
 - If a system spec proves the user can create an article, don't write a request
   spec that posts the same params and checks the record exists. The request spec
@@ -157,15 +163,17 @@ trust the lower layer from above:
 
 ```
 ┌─────────────┐  Owns: user-visible flows, page content, form interactions
-│ System spec │  Trusts: model logic works (tested in model spec)
-│             │  Trusts: HTTP layer works (tested in request spec)
-├─────────────┤  Owns: status codes, redirects, rate limits, API JSON
+│ System spec │  Trusts: model logic, policies, HTTP layer
+├─────────────┤  Owns: status codes, redirects, rate limits
 │ Request spec│  Owns: auth gates — ALWAYS test auth here, even if system specs exist
-│             │  Trusts: model logic works (tested in model spec)
-│             │  Does NOT duplicate: system spec flows
+│             │  Trusts: policy logic (tested in policy spec), model logic (tested in model spec)
+│             │  Does NOT duplicate: system spec flows or policy logic
+├─────────────┤  Owns: authorization logic — who can do what, scoped collections
+│ Policy spec │  Is trusted by: request and system specs
+│             │  Does NOT test: HTTP responses or UI
 ├─────────────┤  Owns: domain verbs, scopes, state transitions, business rules
-│ Model spec  │  Is trusted by: system and request specs
-│             │  Does NOT test: HTTP or UI concerns
+│ Model spec  │  Is trusted by: system, request, and policy specs
+│             │  Does NOT test: HTTP, UI, or authorization concerns
 ├─────────────┤  Owns: the work the job/mailer performs
 │ Support spec│  Callers assert enqueuing only (have_enqueued_job / have_enqueued_mail)
 └─────────────┘
@@ -193,7 +201,7 @@ it "user publishes an article" do
 end
 
 # Request spec — ONLY if there's an HTTP concern system spec can't cover
-# e.g., API-only endpoint, specific status code, rate limiting
+# e.g., specific status code, rate limiting, auth gate
 # Do NOT write a request spec that just posts and checks the record exists
 # when the system spec already covers the flow.
 ```
@@ -314,7 +322,7 @@ Before finishing, verify:
 For detailed patterns and examples by spec type:
 
 - [Model specs](references/model-specs.md) — domain logic, scopes, concerns, validations
-- [Request specs](references/request-specs.md) — HTTP layer, APIs, auth, redirects
+- [Request specs](references/request-specs.md) — HTTP layer, auth, redirects
 - [System specs](references/system-specs.md) — user flows, Capybara, browser testing
 - [Factory patterns](references/factory-patterns.md) — FactoryBot conventions, traits, sequences
 - [Support specs](references/support-specs.md) — jobs, mailers, concerns, POROs

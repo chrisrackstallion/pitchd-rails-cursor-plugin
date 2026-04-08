@@ -58,10 +58,12 @@ class ArticlesController < ApplicationController
 
   # 4. Public actions — index, show, new, create, edit, update, destroy
   def index
-    @articles = Article.chronologically
+    @articles = policy_scope(Article).chronologically
+    authorize Article
   end
 
   def show
+    authorize @article
   end
 
   private
@@ -130,6 +132,49 @@ class SessionsController < ApplicationController
 end
 ```
 
+## Authorization with Pundit
+
+Use Pundit for authorization. Call `authorize` in every action — including `index`. Use `policy_scope` in `index` to filter records, then call `authorize` (usually `authorize Article` after scoping; see the policies rule). See the policies rule for full conventions.
+
+```ruby
+class ArticlesController < ApplicationController
+  def index
+    @articles = policy_scope(Article).chronologically
+    authorize Article
+  end
+
+  def update
+    @article = Article.find(params[:id])
+    authorize @article
+
+    if @article.update(article_params)
+      redirect_to @article
+    else
+      render :edit, status: :unprocessable_content
+    end
+  end
+end
+```
+
+Default: every action calls `authorize`. Use `after_action :verify_authorized` (and typically `after_action :verify_policy_scoped, only: :index`) in `ApplicationController`. For actions that intentionally need no authorization (public pages, health checks), use `skip_after_action` — see the policies skill § Skipping Verification.
+
+```ruby
+class ApplicationController < ActionController::Base
+  include Pundit::Authorization
+
+  after_action :verify_authorized
+  after_action :verify_policy_scoped, only: :index
+
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  private
+    def user_not_authorized
+      flash[:alert] = "You are not authorized to perform this action."
+      redirect_back_or_to(root_path)
+    end
+end
+```
+
 ## Anti-Patterns
 
 | Anti-Pattern | Instead |
@@ -142,3 +187,7 @@ end
 | `redirect_to` after failed save | `render :action, status: :unprocessable_content` |
 | Multiple `before_action` setting the same chain | Base controller concern or inheritance |
 | `rescue => e` in actions | `rescue_from` at the controller class level |
+| Inline `current_user.admin?` permission checks | `authorize @record` delegates to policy |
+| Pundit policy checks in `before_action` | `authorize` in the action body — keep `before_action` for authentication and finders, not permission rules |
+| Forgetting authorization in an action | `after_action :verify_authorized` catches it |
+| Forgetting `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it (when enabled) |
