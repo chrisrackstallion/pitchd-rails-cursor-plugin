@@ -79,15 +79,17 @@ class ArticlesController < ApplicationController
 end
 ```
 
-## Response Hierarchy
+## Response Hierarchy (Hotwire)
 
 Prefer the simplest mechanism that satisfies the UX. Each step adds controller complexity — resist climbing until you must:
 
-1. **Morphing** — `redirect_to` after mutation. Plain controller code, no format negotiation. Default.
-2. **Turbo Frames** — scoped partial updates. Controller still renders normally.
-3. **Turbo Streams** — surgical multi-target DOM updates. Last resort.
+1. **Full-page success** — `redirect_to` after a successful mutation. Turbo Drive performs a full-page visit by default (Turbo 8 may morph on refresh when that path is enabled — not every redirect implies a morph). Model-driven refreshes (e.g. `broadcasts_refreshes_to`) can still update other clients. Default for ordinary CRUD.
+2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Controller renders HTML into a frame; no streams required for validation errors if the frame can re-render with 422.
+3. **Turbo Streams** — multi-target DOM updates. Last resort — see the writing-controllers skill reference § Hotwire / Turbo.
 
-Maximise use of `redirect_to`. See the Turbo rules for implementation detail.
+**Successful mutations:** prefer **`redirect_to`**. **Failed validations:** **`render`** the same template (`:new` / `:edit` / a partial context) with **`status: :unprocessable_content`** — never redirect a failed save. Use **`:unprocessable_content`** (422), not **`:unprocessable_entity`**.
+
+**Turbo-heavy flows** (modal close + refresh underlying list, frame-targeted success): use `respond_to` with `format.html` and `format.turbo_stream` when needed; **compose stream payloads** in `ApplicationController` helpers or small concerns so actions stay thin — avoid long inline `turbo_stream` arrays. Details, frame conventions, and anti-patterns (`data-turbo-frame="_top"`, per-record frames, broadcasts) live in **`skills/writing-controllers/references/patterns.md`** § Hotwire / Turbo.
 
 ## Strong Parameters with `params.expect`
 
@@ -182,7 +184,7 @@ end
 | Business logic in actions | Model method or domain verb |
 | Custom verb actions (`close`, `archive`) | New noun resource with CRUD |
 | `params.require(...).permit(...)` | `params.expect(...)` |
-| Reaching for Turbo Streams first | Morphing → frames → streams (see Turbo rules) |
+| Reaching for Turbo Streams first | Morphing → frames → streams (`skills/writing-controllers/references/patterns.md` § Hotwire / Turbo) |
 | Unscoped find for nested resources | Scope through parent association |
 | `redirect_to` after failed save | `render :action, status: :unprocessable_content` |
 | Multiple `before_action` setting the same chain | Base controller concern or inheritance |

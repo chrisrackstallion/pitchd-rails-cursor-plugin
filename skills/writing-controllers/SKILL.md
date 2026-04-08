@@ -2,7 +2,7 @@
 name: writing-controllers
 description: >-
   Write Rails controllers following DHH/37signals conventions — thin CRUD
-  controllers, REST-mapped resources, morphing-first responses, concerns
+  controllers, REST-mapped resources, redirect-first Hotwire responses, concerns
   for shared behaviour, and strong parameters with params.expect. Use when
   creating new controllers, adding actions, extracting concerns, handling
   Turbo responses, or when the user mentions controllers, actions, strong
@@ -15,7 +15,7 @@ description: >-
 Write controllers that are thin orchestrators — they receive a request,
 delegate to the model, and respond. Every custom action maps to CRUD on a
 new resource. Responses use the simplest Turbo mechanism that works:
-morphing first, then frames, then streams. Follow DHH/37signals
+full-page redirect first, then frames, then streams. Follow DHH/37signals
 conventions: REST purity, rich models, vanilla controller code, and
 clarity over cleverness.
 </objective>
@@ -28,7 +28,7 @@ clarity over cleverness.
 |------|--------|
 | New controller | Read `references/patterns.md`, scaffold the controller |
 | New action on existing controller | Read `references/patterns.md` § REST Mapping — likely needs a new resource |
-| Turbo responses | See the Turbo rules — controller patterns are covered there |
+| Turbo / Hotwire responses | Read `references/patterns.md` § Hotwire / Turbo |
 | Controller concern | Read `references/patterns.md` § Concerns |
 | Strong parameters | Read `references/patterns.md` § Strong Parameters |
 | Authorization | Read `references/patterns.md` § Authorization; see also the policies skill |
@@ -132,11 +132,11 @@ Before writing code, ask these questions:
 Prefer the simplest mechanism that satisfies the UX. Each step adds
 controller complexity — maximise use of `redirect_to`:
 
-1. **Morphing** — `redirect_to` after mutation. Plain controller code. Default.
-2. **Turbo Frames** — scoped partial updates. Controller renders normally.
-3. **Turbo Streams** — surgical multi-target DOM updates. Last resort.
+1. **Full-page success** — `redirect_to` after a successful mutation. Turbo Drive advances the page (morphing is a Turbo 8 refinement on some paths, not every visit). Default for ordinary CRUD.
+2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Re-render with 422 inside the frame when possible.
+3. **Turbo Streams** — multi-target DOM updates. Last resort.
 
-See the Turbo rules for implementation detail on each level.
+Details match `rules/controllers.mdc` § Response Hierarchy (Hotwire). Frame/stream patterns, helpers, and anti-patterns: `references/patterns.md` § Hotwire / Turbo.
 
 ### 4. Anti-Patterns
 
@@ -145,7 +145,7 @@ See the Turbo rules for implementation detail on each level.
 | Business logic in actions | Model method or domain verb |
 | Custom verb actions (`close`, `archive`) | New noun resource with CRUD |
 | `params.require(...).permit(...)` | `params.expect(...)` |
-| Reaching for Turbo Streams first | Morphing → frames → streams (see Turbo rules) |
+| Reaching for Turbo Streams first | Redirect / full-page → frames → streams (`references/patterns.md` § Hotwire / Turbo) |
 | Unscoped find for nested resources | Scope through parent association |
 | `redirect_to` after failed validation | `render :action, status: :unprocessable_content` |
 | Service object wrapping a single model call | Let the controller call the model directly |
@@ -177,7 +177,7 @@ Before finishing, verify:
 - [ ] Strong parameters use `params.expect`, not `params.require.permit`
 - [ ] Failed validations render with `status: :unprocessable_content`, not redirect
 - [ ] Nested resource lookups are scoped through parent associations
-- [ ] Response uses the simplest Turbo mechanism (morphing > frames > streams)
+- [ ] Response uses the simplest Turbo mechanism (full-page redirect → frames → streams — see `references/patterns.md` § Hotwire / Turbo)
 - [ ] Every action calls `authorize` (Pundit) — including index — `after_action :verify_authorized` catches misses
 - [ ] Index actions use `policy_scope` to filter records, then `authorize` (typically `authorize Model` after scoping)
 - [ ] `verify_policy_scoped` on index is enabled when you use `after_action :verify_policy_scoped, only: :index` in `ApplicationController`
