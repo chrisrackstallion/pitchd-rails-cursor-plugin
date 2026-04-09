@@ -35,6 +35,7 @@ drive-by refactors outside scope.
 | `writing-*` + `rules/*.mdc` | **How** to write routes, models, controllers, Hotwire, tests, etc., for this repo. |
 | `writing-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
 | `writing-tests` | Tests: DHH/37signals philosophy (system backbone, real objects, behaviour over mocks) plus `rules/testing.mdc`. |
+| `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `rules/rubocop.mdc`. Not a substitute for compass or tests. |
 
 **Conflict rule (same as reviewing-pitchd-rails):**
 
@@ -80,7 +81,7 @@ to add JS or service layers by reflex — apply the **defaults under Load the co
 
 1. Implement **exactly** what the task specifies (and the plan’s file layout if given).
 2. **Tests:** Follow `writing-tests` and `rules/testing.mdc`. If the task says **TDD**, follow that order (red → green → refactor).
-3. **Verify:** Run the tests and any checks the repo uses (e.g. lint) for what you changed.
+3. **Verify:** Run the tests and any checks the repo uses for what you changed. If the app uses RuboCop, follow **`running-rubocop`** and **`rules/rubocop.mdc`**: **`bin/rubocop` must exit 0 with zero offences** (typically full project — see skill) before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. If you truly cannot fix an offence, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
 4. **Self-review** (below) before reporting.
 
 **Do not create git commits** (no `git commit`). The parent or human owns version control; leave changes for them to commit unless the delegating prompt says otherwise.
@@ -109,6 +110,10 @@ Bad work is worse than no work. **Escalate** — you will not be penalized.
 
 **How to escalate:** Status **BLOCKED** or **NEEDS_CONTEXT**, what you tried, what you need (context, smaller tasks, decision).
 
+### When you cannot ship RuboCop green
+
+If a cop cannot be satisfied with a **correct** code fix and needs a human policy or product call, report **BLOCKED**: cop name, full offence text, what you tried, and what decision is needed. **Do not** use disable comments or YAML excludes to ship. Residual RuboCop debt is **not** **DONE_WITH_CONCERNS** — either green or **BLOCKED**.
+
 ## Self-review (before reporting)
 
 **Completeness:** Spec fully implemented? Edge cases? Missed requirements?
@@ -118,6 +123,8 @@ Bad work is worse than no work. **Escalate** — you will not be penalized.
 **Discipline:** YAGNI? Only what was requested? Existing patterns followed? Plugin rules applied?
 
 **Testing:** Behaviour verified (not only mocked internals)? TDD if required? Right spec layer per `writing-tests`?
+
+**RuboCop (when the app uses it):** **`bin/rubocop` zero offences** on the completion run? No inline or config suppressions added?
 
 Fix issues you find before reporting.
 
@@ -132,7 +139,7 @@ Fix issues you find before reporting.
 - ...
 
 ### Tests and verification
-- Commands run: ...
+- Commands run: ... (include `bin/rubocop` with exit 0 / zero offences when RuboCop applies)
 - Results: ...
 
 ### Files changed
@@ -145,7 +152,7 @@ Fix issues you find before reporting.
 - ...
 ```
 
-- **DONE_WITH_CONCERNS:** Finished but residual doubt about correctness or follow-up risk.
+- **DONE_WITH_CONCERNS:** Finished but residual doubt about correctness or follow-up risk — **not** for leftover RuboCop offences (those require **green** or **BLOCKED**).
 - **BLOCKED:** Cannot complete.
 - **NEEDS_CONTEXT:** Missing information that blocks correct implementation.
 
@@ -166,6 +173,7 @@ Task tool or slash command. Subagent instructions add **delegation** and
 
 ## Related
 
+- **RuboCop:** `../running-rubocop/SKILL.md`, `../../rules/rubocop.mdc`
 - **Compass:** `../rails-omakase-compass/SKILL.md`
 - **Review after implementation:** `../reviewing-pitchd-rails/SKILL.md` — `pitchd-rails-reviewer`
 - **Surroundings / pre-existing code in touched files:** `../reviewing-touched-surroundings/SKILL.md` — `pitchd-rails-surroundings-reviewer`

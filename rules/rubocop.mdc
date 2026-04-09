@@ -1,0 +1,42 @@
+---
+description: >-
+  RuboCop must pass with zero offences: fix code, never disable cops in source
+  or config. Full bin/rubocop green before work is complete. Apply when editing
+  Ruby or Rake files.
+globs: "**/*.{rb,rake}"
+alwaysApply: false
+---
+
+# RuboCop (Rails + omakase-shaped)
+
+## Zero offences — non-negotiable
+
+- **`bin/rubocop`** must finish with **exit code 0** and **no offences** for the work you are finishing. Do not report **DONE** or hand off for review until that is true (when the app uses RuboCop).
+- **Fix offences in code** — refactor, rename, extract, or adjust implementation so the cop is satisfied.
+
+## Never suppress
+
+- **No** `# rubocop:disable` / `:enable` / inline directive comments (or any RuboCop comment that turns cops off).
+- **No** disabling or excluding cops in **`.rubocop.yml`** or any other RuboCop config to “make green” — that is the same failure mode as inline disables.
+- **No** **`.rubocop_todo.yml`** — do not use or keep it. Fix every offence in code, then **delete** that file from the project so nothing is deferred.
+- Do **not** add new `Exclude:` / `Enabled: false` entries to silence offences on your changes.
+
+## Source of truth (baseline only)
+
+- **Follow the app’s** `.rubocop.yml` and inherited packs (e.g. **`rubocop-rails-omakase`** via `inherit_gem`) as the **ruleset** — not as permission to opt out per file.
+- **`rubocop-rails`** is the Rails plugin; **`rubocop-rails-omakase`** is an inherited **config pack** — they are not the same thing.
+
+## How to run and fix
+
+- **`bin/rubocop`** from the Rails app root (match **CI**). Use **`bin/rubocop -a`** / **`--autocorrect`** first; use **`-A`** / **`--autocorrect-all`** only when you read the diff and behaviour stays correct.
+- During iteration you may pass **paths**; before **done**, run **`bin/rubocop`** on the **whole project** (no path args) unless CI explicitly scopes differently — default assumption is **full tree green**.
+
+## When you cannot fix (rare)
+
+- If an offence cannot be resolved correctly without a policy call (true edge case), **stop**: status **BLOCKED**, explain the cop, what you tried, and what the user must decide. **Do not** ship with offences or suppressions.
+
+## What green does not mean
+
+- Passing RuboCop does **not** prove DHH-style design (REST, fat models, thin controllers). It is still **required** before completion — pair with **tests** per the repo.
+
+For procedure and escalation detail, use **`skills/running-rubocop/SKILL.md`**.

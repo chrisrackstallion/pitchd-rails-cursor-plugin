@@ -46,7 +46,7 @@ From the diff or plan, pick **only** the skills that apply:
 `writing-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
 `writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
 `writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-tests`.
+`writing-tests`, `running-rubocop` (expect **zero** RuboCop offences — fix in code, no disables; not architecture).
 
 Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
 sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
@@ -112,6 +112,7 @@ context-isolation rules; the workflow and report shape are defined **here**.
 
 ## Related
 
+- **RuboCop (zero offences, no disables):** `../running-rubocop/SKILL.md`, `../../rules/rubocop.mdc`
 - **Compass (why / whether):** `../rails-omakase-compass/SKILL.md`
 - **Planning:** `../writing-plans/SKILL.md` (plans should be reviewed with this skill via **`pitchd-rails-reviewer`**, Phase `plan`)
 - **Full plan execution (orchestrator):** `../executing-pitchd-rails-plan/SKILL.md` — loops implementor → this reviewer until Approved, then **`dhh-rails-reviewer`**

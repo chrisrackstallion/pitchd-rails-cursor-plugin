@@ -53,7 +53,8 @@ Plugin assets are under the workspace root: `skills/`, `rules/`.
 
 3. **Read order** — Per the skill: **`skills/rails-omakase-compass/SKILL.md`**
    when boundaries apply, then only the **`writing-*`** skills and
-   **`rules/*.mdc`** files relevant to the task. Do not skip the compass for
+   **`rules/*.mdc`** files relevant to the task (include **`rules/rubocop.mdc`**
+   when you touch Ruby or Rake). Do not skip the compass for
    work that changes API/HTML boundaries or domain ownership.
 
 4. **No commits** — Do **not** run `git commit` or treat a commit as part of the
@@ -90,7 +91,7 @@ dependencies, or anything unclear — ask before starting.
 Once clear:
 1. Implement exactly what the task specifies (Pitchd: compass + writing-* + rules).
 2. Write tests per writing-tests / rules/testing.mdc (TDD if task says so).
-3. Verify (tests + relevant checks).
+3. Verify: tests **and**, if the app uses RuboCop, **`skills/running-rubocop`** — **`bin/rubocop` exit 0, zero offences** before DONE/review; fix in code only (no disable comments or cop suppressions in YAML). **BLOCKED** if truly unfixable — see implementing-pitchd-rails.
 4. Self-review per implementing-pitchd-rails.
 5. Report back using the skill’s report format.
 
