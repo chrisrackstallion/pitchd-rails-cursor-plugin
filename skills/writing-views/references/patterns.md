@@ -175,6 +175,9 @@ Tailwind is the 37signals CSS strategy. Utility classes go directly in
 ERB markup. The HTML *is* the component in Rails — partials provide
 reuse, not CSS abstractions.
 
+**`tailwindcss-rails`,** Tailwind **v3 vs v4** config, `@apply` in stylesheets,
+extending the theme, and global anti-patterns — **`../../writing-css-tailwind/references/patterns.md`**. This section stays **template- and helper-focused**.
+
 ### Utilities in the Markup
 
 Don't apologise for long class strings — they're readable and greppable.
@@ -269,25 +272,7 @@ Usage:
 <%= f.text_field :title, class: input_classes %>
 ```
 
-### @apply — Last Resort
-
-Use `@apply` only for design tokens you repeat across *many different
-partials* and where a helper or partial doesn't make sense. The canonical
-case is base form input styling via `@tailwindcss/forms` plugin
-customisation.
-
-```css
-/* app/assets/stylesheets/application.css */
-/* Rare — only for truly atomic, cross-cutting styles */
-@layer components {
-  .prose { @apply max-w-none text-gray-800 leading-relaxed; }
-}
-```
-
-If you're reaching for `@apply` more than a few times, you're fighting
-Tailwind. Extract a partial or helper instead.
-
-### Class Order
+### Class order
 
 Suggest a consistent order for readability (not enforced, but helps
 scanning):
@@ -304,42 +289,9 @@ scanning):
 10. States: `hover:`, `focus:`, `active:`, `disabled:`
 11. Responsive: `sm:`, `md:`, `lg:`, `xl:`
 
-### Extend the Config, Not Arbitrary Values
+### Responsive and `dark:` in markup
 
-Project-specific colours, fonts, and spacing go in the Tailwind config.
-Repeated arbitrary values (`bg-[#1a2b3c]`) mean you should extend the
-theme.
-
-```js
-// tailwind.config.js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        brand: {
-          50: '#eff6ff',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-        }
-      },
-      fontFamily: {
-        display: ['Cal Sans', 'Inter', 'sans-serif'],
-      }
-    }
-  }
-}
-```
-
-Then use `bg-brand-500` instead of `bg-[#3b82f6]`.
-
-Arbitrary values are fine for one-offs. Repeated arbitrary values are a
-code smell — extend the config.
-
-### Responsive Design
-
-Tailwind responsive prefixes (`sm:`, `md:`, `lg:`) live in the HTML.
-The responsive behaviour is visible where the content is.
+Prefixes (`sm:`, `md:`, `lg:`) and `dark:` sit on the same elements as the content:
 
 ```erb
 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -347,25 +299,13 @@ The responsive behaviour is visible where the content is.
 </div>
 ```
 
-### Dark Mode
-
-Use Tailwind's `dark:` variant when the app supports it:
-
 ```erb
 <div class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
   <h1 class="text-2xl font-bold text-gray-900 dark:text-white"><%= @article.title %></h1>
 </div>
 ```
 
-Set the strategy in the config (`class` for manual toggle, `media` for
-system preference):
-
-```js
-// tailwind.config.js
-module.exports = {
-  darkMode: 'class',
-}
-```
+**Theme extension** (`bg-brand-500` vs repeated `bg-[#…]`) and **dark strategy** (`class` vs `media`) — **`../../writing-css-tailwind/references/patterns.md`**.
 
 ---
 

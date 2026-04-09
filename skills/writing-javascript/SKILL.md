@@ -6,8 +6,9 @@ description: >-
   justified, Stimulus under app/javascript/controllers, Propshaft-friendly
   entrypoints, and a clear boundary with Turbo/HTML. DHH/37signals style. Use when
   editing importmap, package.json, application.js, Stimulus registration, or
-  choosing bundling; not for Hotwire/Turbo behaviour (see writing-hotwire) or
-  CSS-only work (see writing-views).
+  choosing bundling; not for Hotwire/Turbo behaviour (see writing-hotwire),
+  Tailwind/config/global CSS (see writing-css-tailwind), or ERB markup (see
+  writing-views).
 ---
 
 # Writing JavaScript (Rails Boundary)
@@ -19,6 +20,8 @@ requires it. One clear pipeline per codebase — no duplicate routers, no client
 authority over domain state for first-party pages. The asset pipeline delivers
 what the layout asks for; Hotwire owns in-browser navigation and partial
 updates once loaded.
+Styling is **Tailwind + ERB + minimal Stimulus class toggles** — not JS theme
+systems or CSS-in-JS; **`../writing-css-tailwind`**, **`../writing-views`**.
 </objective>
 
 ## Process
@@ -44,7 +47,7 @@ Do not add client-side routing, global Redux-style stores, or JSON APIs solely t
 
 ### 5. When Unsure
 
-Hotwire/Turbo/streams: **`../writing-hotwire`**. Views and ERB: **`../writing-views`**.
+Hotwire/Turbo/streams: **`../writing-hotwire`**. Views and ERB: **`../writing-views`**. Tailwind pipeline and global CSS: **`../writing-css-tailwind`**.
 
 ## Verification
 

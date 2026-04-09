@@ -10,7 +10,7 @@ alwaysApply: false
 
 The browser receives **HTML from Rails**. Turbo accelerates navigation and partial updates; Stimulus adds **small** client behaviours. Do not duplicate routing, authorization, or domain state in JavaScript — that is SPA drift.
 
-Canonical detail, examples, and anti-patterns: **`skills/writing-hotwire/references/patterns.md`**. Importmap vs bundling, entrypoints, Propshaft: **`rules/javascript.mdc`**, **`skills/writing-javascript/references/patterns.md`**. Controllers stay thin: **`rules/controllers.mdc`** § Response Hierarchy. Model broadcast APIs: **`skills/writing-models/references/patterns.md`** § Turbo Broadcasts.
+Canonical detail, examples, and anti-patterns: **`skills/writing-hotwire/references/patterns.md`**. Importmap vs bundling, entrypoints, Propshaft: **`rules/javascript.mdc`**, **`skills/writing-javascript/references/patterns.md`**. Tailwind utilities and global CSS policy: **`rules/css-tailwind.mdc`**, **`skills/writing-css-tailwind/references/patterns.md`**. Controllers stay thin: **`rules/controllers.mdc`** § Response Hierarchy. Model broadcast APIs: **`skills/writing-models/references/patterns.md`** § Turbo Broadcasts.
 
 ## Response Hierarchy (Controllers)
 

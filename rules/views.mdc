@@ -72,7 +72,7 @@ Render collections with `render @collection` — Rails resolves the partial auto
 
 ## Styling with Tailwind
 
-Utility classes go directly in the ERB markup. The HTML *is* the component in Rails — partials provide reuse, not CSS abstractions.
+Utility classes go directly in the ERB markup. The HTML *is* the component in Rails — partials provide reuse, not CSS abstractions. Use **`class_names`** for conditional utilities; helpers may return class strings when the same pattern repeats across templates.
 
 ```erb
 <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -83,12 +83,7 @@ Utility classes go directly in the ERB markup. The HTML *is* the component in Ra
 </div>
 ```
 
-Key principles:
-- **Partials are your components** — extract a partial to reuse styled blocks, not `@apply`
-- **`class_names` for conditionals** — `class: class_names("px-4 py-2 rounded", "bg-blue-600": article.featured?)` 
-- **Helpers for repeated class patterns** — `def btn_classes(variant = :primary)` returning a class string
-- **`@apply` is a last resort** — only for design tokens repeated across *many* partials (buttons, inputs)
-- **Extend the config, not arbitrary values** — project colors/spacing go in `tailwind.config`, not `bg-[#1a2b3c]`
+**Pipeline and global CSS** — `tailwindcss-rails`, Tailwind **v3 vs v4** config shape, `@apply` policy, extending the theme, dark/responsive conventions: **`rules/css-tailwind.mdc`**, **`skills/writing-css-tailwind/references/patterns.md`**. Template-level patterns (partials, `class_names`, forms): this rule and **`skills/writing-views/references/patterns.md`** § Tailwind.
 
 ## Helpers for Presentation Logic
 

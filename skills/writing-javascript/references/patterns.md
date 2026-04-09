@@ -71,8 +71,9 @@ and compiled CSS there per team conventions.
 **Sprockets**-legacy apps: same *mental* rule — one pipeline, do not fight it
 with ad hoc copies in `public/` for assets that belong in the manifest.
 
-This skill does **not** duplicate Tailwind or view styling guidance — see
-**`../writing-views/references/patterns.md`**.
+This skill does **not** duplicate Tailwind or view styling guidance — templates
+and utilities: **`../writing-views/references/patterns.md`**; pipeline and global
+CSS: **`../writing-css-tailwind/references/patterns.md`**.
 
 ---
 

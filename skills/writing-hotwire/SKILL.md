@@ -32,6 +32,8 @@ over client-side framework patterns, and progressive enhancement.
 
 **Importmap, bundlers, and `application.js` wiring** are not this skill — see **`../writing-javascript`**.
 
+**Tailwind / global CSS** — add or remove utility classes from Stimulus; do not duplicate a styling architecture here — **`../writing-css-tailwind`**, **`rules/css-tailwind.mdc`**.
+
 ## Process
 
 ### 1. Pick the Response Shape

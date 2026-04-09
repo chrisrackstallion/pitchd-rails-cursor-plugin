@@ -10,7 +10,7 @@ alwaysApply: false
 
 Rails 7+ defaults to **importmap** for JavaScript and **Propshaft** for static assets — no Node required for Hello World. If you add **jsbundling-rails**, **cssbundling-rails**, or **Vite**, commit to **one** delivery story. Do not run importmap pins and a separate bundled “app shell” that both load Turbo — pick a path and document it.
 
-Canonical detail: **`skills/writing-javascript/references/patterns.md`**. Turbo, frames, streams, Stimulus *behaviour*: **`skills/writing-hotwire/references/patterns.md`**, **`rules/hotwire.mdc`**.
+Canonical detail: **`skills/writing-javascript/references/patterns.md`**. Turbo, frames, streams, Stimulus *behaviour*: **`skills/writing-hotwire/references/patterns.md`**, **`rules/hotwire.mdc`**. Tailwind and global CSS: **`rules/css-tailwind.mdc`**, **`skills/writing-css-tailwind/references/patterns.md`** — not the JS boundary.
 
 ## Where JavaScript Lives
 

@@ -6,10 +6,11 @@ description: >-
   rendering, helpers for presentation logic, Tailwind utility-first styling,
   layouts with content_for. Stimulus and Turbo — writing-hotwire skill. User-
   facing static copy and locales — writing-i18n skill. JS delivery (importmap,
-  bundling) — writing-javascript skill. Use when creating new views, extracting
-  partials, writing helpers, building forms, styling with Tailwind, working with
-  layouts, or when the user mentions views, partials, ERB, helpers, Tailwind,
-  Stimulus, Turbo, importmap, JavaScript, I18n, locales, or templates.
+  bundling) — writing-javascript skill. Tailwind build/config/global CSS —
+  writing-css-tailwind skill. Use when creating new views, extracting partials,
+  writing helpers, building forms, styling with Tailwind in templates, working
+  with layouts, or when the user mentions views, partials, ERB, helpers,
+  Tailwind, Stimulus, Turbo, importmap, JavaScript, I18n, locales, or templates.
 ---
 
 # Writing Rails Views
@@ -20,8 +21,9 @@ data. Views are the final rendering step — they present what the model provide
 they don't compute it. Partials are the unit of reuse. Helpers format data for
 display. Tailwind utilities style directly in the markup. Stimulus data
 attributes provide interactivity; Hotwire (Turbo + Stimulus) is documented in
-the writing-hotwire skill. Follow DHH/37signals conventions: ERB, strict
-locals, utility-first CSS, collection rendering, and clarity over cleverness.
+the writing-hotwire skill. Tailwind **build** and **global** CSS policy —
+writing-css-tailwind skill. Follow DHH/37signals conventions: ERB, strict locals,
+utility-first CSS in templates, collection rendering, and clarity over cleverness.
 </objective>
 
 ## Process
@@ -35,7 +37,8 @@ locals, utility-first CSS, collection rendering, and clarity over cleverness.
 | Collection rendering | Read `references/patterns.md` § Collections |
 | New helper method | Read `references/patterns.md` § Helpers |
 | User-facing strings / locales | Read `../writing-i18n/references/patterns.md` |
-| Tailwind styling | Read `references/patterns.md` § Tailwind |
+| Tailwind in templates (utilities, partials, `class_names`, helpers) | Read `references/patterns.md` § Tailwind |
+| Tailwind pipeline, config, `@apply`, v3/v4, global CSS | Read `../writing-css-tailwind/references/patterns.md` |
 | Stimulus / Turbo / Hotwire | Read `../writing-hotwire/references/patterns.md` |
 | Importmap, package.json, JS entrypoints | Read `../writing-javascript/references/patterns.md` |
 | Layout / content_for | Read `references/patterns.md` § Layouts |
@@ -195,4 +198,4 @@ Before finishing, verify:
 
 ## References
 
-For detailed patterns and examples, see [references/patterns.md](references/patterns.md).
+For detailed patterns and examples, see [references/patterns.md](references/patterns.md). For Tailwind **build** and **global** styling policy, see [../writing-css-tailwind/references/patterns.md](../writing-css-tailwind/references/patterns.md).
