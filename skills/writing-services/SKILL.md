@@ -1,12 +1,11 @@
 ---
 name: writing-services
 description: >-
-  Write service-like objects following DHH/37signals conventions — rich models
-  over service objects, POROs namespaced under models, form objects for
-  multi-model writes, jobs for async work, and operation objects only when
-  genuine coordination warrants them. Use when the user mentions services,
-  service objects, POROs, form objects, operations, interactors, use cases,
-  or when deciding where complex business logic should live.
+  Where application logic lives in Rails without an app/services layer —
+  DHH/37signals style: rich models, concerns, model-namespaced POROs,
+  ActiveModel form objects, and jobs. Use when deciding where behaviour
+  belongs, or when the user mentions services, service objects, POROs, forms,
+  jobs, operations, interactors, or use cases.
 ---
 
 # Writing Services (The Rails Way)
