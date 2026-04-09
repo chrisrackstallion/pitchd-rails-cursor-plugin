@@ -30,6 +30,7 @@ drive-by refactors outside scope.
 
 | Skill | Role |
 |-------|------|
+| `executing-pitchd-rails-plan` | **Orchestration** — run a whole plan (or subset) by delegating each task to **`pitchd-rails-implementor`** and **`pitchd-rails-reviewer`** in a loop; orchestrator does **not** write app code. |
 | `rails-omakase-compass` | **Whether** the approach fits majestic monolith / server truth / REST — read **before** coding when the task involves boundaries or product shape. |
 | `writing-*` + `rules/*.mdc` | **How** to write routes, models, controllers, Hotwire, tests, etc., for this repo. |
 | `writing-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |

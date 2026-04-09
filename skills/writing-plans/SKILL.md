@@ -350,3 +350,11 @@ or `both`; see `reviewing-touched-surroundings`), merge any new quick wins or
 follow-ups into the plan **or** the PR description. Use the same **Present
 findings** and **conditional pitchd-rails-reviewer** steps whenever the **plan
 document** changes as a result.
+
+## Executing the plan (orchestration)
+
+To **run** an approved plan without the main agent writing app code, use
+**`../executing-pitchd-rails-plan/SKILL.md`**: delegate each task to
+**`pitchd-rails-implementor`**, review with **`pitchd-rails-reviewer`** in a loop
+until Approved, then **`dhh-rails-reviewer`** for final recommendations before
+user sign-off.
