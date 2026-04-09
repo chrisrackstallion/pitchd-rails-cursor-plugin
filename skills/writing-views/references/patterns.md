@@ -925,26 +925,11 @@ partials for distinct presentations.
 
 ---
 
-## Previews and Mailer Views
+## Mailer views and previews
 
-### Mailer Views
+Mailer classes, **`deliver_later`**, multipart templates, **`Mailer.with`**, **`ActionMailer::Preview`**, and mailer specs: **`../../writing-mailers/references/patterns.md`**. Rule: **`rules/mailers.mdc`**.
 
-Mailer views follow the same conventions as web views. Mailer templates
-are action templates (not partials), so instance variables are correct
-here — same as controller action views.
-
-```erb
-<%# app/views/article_mailer/published.html.erb %>
-<h1><%= @article.title %> is now live</h1>
-<p><%= @article.summary %></p>
-<%= link_to "Read it", article_url(@article) %>
-```
-
-Use `_url` helpers (not `_path`) in mailer views — emails need full
-URLs.
-
-Note: Tailwind utilities don't work in email HTML. Email templates
-need inline styles or a CSS inliner (like `premailer-rails`).
+Mailer templates live under **`app/views/<name>_mailer/`**; instance variables set in the mailer method are normal (unlike strict-local partials). Use **`_url`** helpers, not **`_path`**. Email HTML is not Tailwind-class-friendly — inline CSS or an inliner.
 
 ---
 

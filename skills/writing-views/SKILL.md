@@ -37,6 +37,7 @@ locals, utility-first CSS, collection rendering, and clarity over cleverness.
 | Stimulus / Turbo / Hotwire | Read `../writing-hotwire/references/patterns.md` |
 | Layout / content_for | Read `references/patterns.md` § Layouts |
 | Form template | Read `references/patterns.md` § Forms |
+| Mailer templates (`*_mailer/`) | Read `../writing-mailers/references/patterns.md` |
 | Turbo Frame/Stream markup | Read `../writing-hotwire/references/patterns.md` |
 | Links vs buttons | Read `references/patterns.md` § Links and Buttons |
 | Empty state / error display | Read `references/patterns.md` § Empty States |

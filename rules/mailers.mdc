@@ -1,0 +1,39 @@
+---
+description: ActionMailer — thin mailers, previews, deliver_later, multipart templates. DHH/37signals. Apply when editing mailers, mailer views, or mailer specs/previews.
+globs: app/mailers/**/*.rb, app/views/**/*_mailer/**/*, spec/mailers/**/*.rb, test/mailers/**/*.rb
+alwaysApply: false
+---
+
+# Mailer Conventions
+
+## Mailers Are Mail Controllers
+
+Each public method is one user-visible email — named after the **outcome** (`welcome`, `password_reset`, `published`), not `send_email` or `notify`. Set instance variables for templates; keep business rules on the **model** (or the job that calls the mailer), not buried in the mailer.
+
+Canonical patterns: **`skills/writing-mailers/references/patterns.md`**. Template style (partials, helpers): **`skills/writing-views/references/patterns.md`**. No mailer-shaped service objects: **`rules/services.mdc`**.
+
+## Delivery
+
+Prefer **`deliver_later`** from the request lifecycle so sending does not block the user. Use **`deliver_now`** only when the caller must know delivery finished before continuing (rare). After a DB write, enqueue from **`after_create_commit`** / **`after_update_commit`** (or a job) so mail is not sent for rolled-back transactions — see **`skills/writing-mailers/references/patterns.md`** § Delivery.
+
+## Templates
+
+Provide **HTML and text** parts unless you deliberately ship one format and document why. Use **`_url`** helpers in mailer bodies, not **`_path`**. Email HTML is not Tailwind-in-class — inline CSS or an inliner; see patterns.
+
+## Previews
+
+Every non-trivial mailer method should be **previewable** in development (`ActionMailer::Preview`). Realistic sample records — no production secrets.
+
+## Testing
+
+Mailer **content** (recipients, subject, body fragment) lives in **mailer specs**. Callers assert **`have_enqueued_mail`** or job enqueue — they do not re-assert body copy. **`rules/testing.mdc`** § Each Behaviour Has One Home.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| `NotificationService` that only calls a mailer | Call `Mailer.with(...).action.deliver_later` from model/job/controller |
+| Heavy domain logic in the mailer | Model methods; mailer formats what the model exposes |
+| `deliver_now` in a controller during a normal POST | `deliver_later` |
+| Skipping previews | Add `ActionMailer::Preview` for each important method |
+| Only HTML, no text | Add `.text.erb` or explicit documented exception |

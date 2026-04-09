@@ -39,7 +39,7 @@ end
 | Multi-field form spanning models or workflow | Form object (`ActiveModel::Model`) |
 | Async work, retries, scheduling | Job (`ActiveJob`) |
 | Incoming email processing | Mailbox (`ActionMailbox`) |
-| Sending email | Mailer (`ActionMailer`) |
+| Sending email | Mailer (`ActionMailer`) — **`rules/mailers.mdc`**, **`skills/writing-mailers/references/patterns.md`** |
 | External API integration | PORO in `app/models/` namespaced under a domain noun |
 | Controller coordinates two models | Inline controller orchestration — no wrapper needed |
 
@@ -117,5 +117,5 @@ private
 | `ApplicationService` base class | No base class needed — each PORO stands alone |
 | Service for form validation | Form object (`ActiveModel::Model`) |
 | Service for async work | Job (`ActiveJob`) |
-| Service for email | Mailer (`ActionMailer`) |
+| Service for email | Mailer (`ActionMailer`) — see mailers rule |
 | Generic `execute`, `run` method names on POROs and form objects | Domain verbs: `complete`, `process`, `import`. Exception: `perform` is the ActiveJob contract and must not be renamed. |

@@ -32,7 +32,8 @@ from DHH and 37signals. The tooling (RSpec, FactoryBot) is an adaptation;
 | HTTP behaviour | Read `references/request-specs.md`, write a request spec |
 | Creating test data | Read `references/factory-patterns.md`, create factories |
 | Authorization / policy | Read `references/support-specs.md` § Policy Specs, write a policy spec |
-| Job / mailer / concern | Read `references/support-specs.md`, write the appropriate spec |
+| Job / concern | Read `references/support-specs.md`, write the appropriate spec |
+| Mailer class, templates, previews | Read `../writing-mailers/references/patterns.md`; RSpec examples in `references/support-specs.md` § Mailer Specs |
 | Debugging a failing test | Read all relevant references, diagnose the failure |
 | Adding coverage to existing code | Determine the right spec type, read the reference |
 

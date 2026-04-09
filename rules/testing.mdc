@@ -87,6 +87,8 @@ creates maintenance drag when behaviour changes.
 | Job performs work correctly | Job spec | Model spec just asserts `have_enqueued_job` |
 | Mailer content | Mailer spec | Request spec just asserts delivery was enqueued |
 
+Mailer classes, previews, `deliver_later`, and template layout: **`rules/mailers.mdc`**, **`skills/writing-mailers/references/patterns.md`**.
+
 ### The Rule
 
 If a system spec already proves the user can create an article (fills form,

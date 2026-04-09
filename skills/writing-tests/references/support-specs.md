@@ -339,6 +339,8 @@ end
 
 ## Mailer Specs
 
+Mailer classes, `deliver_later`, `Mailer.with`, and previews: **`../writing-mailers/references/patterns.md`**. Below: **RSpec** shape for mail content and enqueueing.
+
 Test mailers by asserting on the generated mail object — recipients,
 subject, body content.
 

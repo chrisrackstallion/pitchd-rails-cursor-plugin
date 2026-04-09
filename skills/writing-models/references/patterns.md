@@ -691,7 +691,7 @@ context that a model-level `after_commit` callback can't access.
 
 **`ActiveRecord.after_all_transactions_commit`** — fires after the
 outermost transaction commits, safe to call inside or outside a
-transaction:
+transaction. Mailer API and delivery: **`../../writing-mailers/references/patterns.md`**.
 
 ```ruby
 def publish(by: Current.user)

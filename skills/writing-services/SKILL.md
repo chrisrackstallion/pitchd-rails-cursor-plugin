@@ -133,7 +133,7 @@ Before writing code, ask these questions:
 | Service objects injecting models to simulate loose coupling | If you need the model, be the model or live under it — PORO constructor injection is fine; injection-as-architectural-boundary is not |
 | `ServiceResult` / `Result` monads | Return the created/updated record, or raise on failure |
 | Service for validation | Form object (`ActiveModel::Model`) |
-| Service for email | Mailer |
+| Service for email | Mailer — **`rules/mailers.mdc`**, **`skills/writing-mailers`** |
 | Service for async work | Job |
 | Service per CRUD action | Controller + model handle CRUD natively |
 | God service coordinating everything | Break into model methods; controller orchestrates |
