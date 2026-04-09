@@ -1,0 +1,40 @@
+---
+description: Hotwire — Turbo (Drive, Frames, Streams) and Stimulus. Server-rendered HTML first; no accidental SPA. Apply when editing views, turbo_stream templates, or Stimulus controllers.
+globs: app/views/**/*.erb, app/javascript/controllers/**/*.js
+alwaysApply: false
+---
+
+# Hotwire Conventions
+
+## Server HTML First
+
+The browser receives **HTML from Rails**. Turbo accelerates navigation and partial updates; Stimulus adds **small** client behaviours. Do not duplicate routing, authorization, or domain state in JavaScript — that is SPA drift.
+
+Canonical detail, examples, and anti-patterns: **`skills/writing-hotwire/references/patterns.md`**. Controllers stay thin: **`rules/controllers.mdc`** § Response Hierarchy. Model broadcast APIs: **`skills/writing-models/references/patterns.md`** § Turbo Broadcasts.
+
+## Response Hierarchy (Controllers)
+
+Prefer the simplest mechanism. Each step adds complexity — climb only when required:
+
+1. **Full-page success** — `redirect_to` after a successful mutation (default CRUD).
+2. **Turbo Frames** — scoped regions (modals, drawers, per-record edit). Re-render with **422** on validation errors inside the frame when possible.
+3. **Turbo Streams** — multi-target DOM updates. **Last resort** — see the writing-hotwire skill.
+
+**Failed saves:** `render` + **`status: :unprocessable_content`** — never `redirect_to` after validation failure.
+
+## Markup and Stimulus (Views / JS)
+
+- Wrap frame targets with **`turbo_frame_tag`** and stable **`dom_id`**s.
+- Use **`form_with`** so URL, method, and Turbo semantics stay correct.
+- Put interactivity in **`app/javascript/controllers/*_controller.js`** — `data-controller`, `data-action`, targets — not inline `<script>` tags.
+- Stream templates live beside HTML: **`create.turbo_stream.erb`**, etc.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Turbo Streams as the default for CRUD | Redirect → frames → streams (`skills/writing-hotwire/references/patterns.md`) |
+| Large Stimulus apps mirroring server state | Forms, frames, streams, broadcasts — server is source of truth |
+| JSON APIs + `fetch` for first-party pages only you render | HTML responses + Turbo |
+| Inline `turbo_stream` arrays in every action | Helpers or concerns on `ApplicationController` |
+| `data-turbo-frame="_top"` everywhere | Named frames, full-page flow, or 422 inside the frame |

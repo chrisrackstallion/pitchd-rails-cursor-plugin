@@ -152,7 +152,7 @@ controller complexity — maximise use of `redirect_to`:
 
 1. **Full-page success** — `redirect_to` after a successful mutation. Turbo Drive performs a full-page visit by default; Turbo 8 may apply morphing on some refresh paths — do not assume every redirect is a morph. Pair with model-level broadcast refresh helpers when other tabs or users should update without a full navigation. Default for ordinary CRUD.
 2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Validation failures re-render with 422 inside the frame when possible.
-3. **Turbo Streams** — multi-target DOM updates. Last resort — see § Hotwire / Turbo below.
+3. **Turbo Streams** — multi-target DOM updates. Last resort — see **`../writing-hotwire/references/patterns.md`**.
 
 ### Failed Validations
 
@@ -183,113 +183,13 @@ validation), matching what `new` would have exposed.
 
 ### Hotwire / Turbo
 
-Controller-side Hotwire patterns (Turbo Drive, Frames, Streams). View markup
-and Stimulus belong with the views rules; here we focus on **responses**.
-
-#### Default: full-page success, 422 on failure
-
-Typical CRUD needs **no `respond_to`** — redirect on success, render on failure:
-
-```ruby
-def create
-  @article = Article.new(article_params)
-  if @article.save
-    redirect_to @article, notice: "Article created."
-  else
-    render :new, status: :unprocessable_content, locals: { article: @article }
-  end
-end
-```
-
-#### When to add `format.turbo_stream`
-
-Use **`respond_to`** when the same action serves **HTML** and a **Turbo Stream**
-— e.g. a form in a **modal or slideover** where success should **close the
-overlay** and **refresh the page behind it** in one response, without relying
-only on async broadcasts (they can race open frames).
-
-```ruby
-def create
-  @article = Article.new(article_params)
-  if @article.save
-    respond_to do |format|
-      format.turbo_stream { render turbo_stream: modal_success_streams }
-      format.html { redirect_to articles_path, notice: "Created." }
-    end
-  else
-    render :new, status: :unprocessable_content, locals: { article: @article }
-  end
-end
-```
-
-Implement **`modal_success_streams`** (name it for your app) on
-`ApplicationController` or a concern. It should return something **`render
-turbo_stream:`** accepts — typically an **array** of stream actions (e.g.
-**`turbo_stream.update`** to clear the modal target, **`turbo_stream.append`**
-for flash, **`turbo_stream.refresh`** so the current URL re-fetches). Splat or
-return the array from one method so actions stay one-liners. **Compose** stream
-arrays in one place; avoid long inline `turbo_stream` chains in every action.
-If Turbo skips a refresh when the request id matches a recent navigation, you
-may need **`turbo_stream.refresh`** with **`request_id: nil`** — check Turbo’s
-docs for your version.
-
-Prefer **one coordinated refresh** (clear modal + `refresh`) over many ad hoc
-**`replace`** calls on individual fragments unless a full refresh is wrong
-(rare).
-
-#### Frames: overlay vs full page
-
-Overlays are for work **without leaving the page**. If success should **go to
-another screen**, use a **full-page** form instead of escaping frames.
-
-**`data-turbo-frame="_top"`** breaks out of all enclosing frames — treat as a
-**smell**: often you want a named frame (`turbo_frame_tag dom_id(record)`), a
-full-page flow, or **422 + re-render** inside the frame. Use `_top` only when
-intentionally leaving the current UI.
-
-#### Per-record inline edit
-
-Use **`turbo_frame_tag dom_id(record)`** around rows and edit templates. On
-failure, **`render :edit, status: :unprocessable_content`**. Avoid
-**`data-turbo-permanent`** on rows that must update during morphs.
-
-#### Broadcasts vs synchronous responses
-
-**`broadcasts_refreshes_to`** updates **other** clients. The **submitter** should
-still get a correct **redirect or stream** in the same request. For **bulk**
-work, suppress per-record broadcasts and emit **one** refresh when the batch
-completes.
-
-#### Morph protection
-
-Permanent overlay frames can use **`data-turbo-permanent`**. Do **not** cancel
-the **entire page** morph from Stimulus — that stalls the document. Clear modal
-content with streams targeted at the frame.
-
-#### When streams fit
-
-| Streams add value | Simpler first |
-|-------------------|---------------|
-| Ephemeral UI (e.g. typeahead) | — |
-| Modal / slideover: must **clear the overlay** and **synchronously** refresh the page behind it in **one** response (see § When to add `format.turbo_stream`) | **`redirect_to`** alone when a full navigation is acceptable and your layout clears the modal; **streams** when the background must update without that trade-off |
-| Replace one row + flash after inline save | **`redirect_to`** or a single **`render`** when that matches the UX |
-
-**Validation errors** belong on **`render` + 422** inside the frame or full page — not a stream workaround.
-
-Streams are **not** contradictory to § When to add `format.turbo_stream`: the
-table picks the **default** (`redirect` / `render`); streams are for the cases
-in the left column.
-
-#### Redirects that preserve filters
-
-Merge **permitted** query params into **`redirect_to`** when returning to an
-index (search, sort, tab). Frame POSTs may omit the parent URL — use **hidden
-fields** when state must survive.
-
-#### Mutating requests
-
-Use **`button_to`** or forms for **POST/PATCH/DELETE**, not **`link_to`** for
-state-changing actions.
+Controller-side Hotwire — `respond_to`, **`format.turbo_stream`**, composing
+stream payloads, frame vs full-page flows, **`data-turbo-frame="_top"`**,
+broadcasts vs the submitter’s response, redirects that preserve filters, and
+mutating requests (**`button_to`**) — lives in
+**`../writing-hotwire/references/patterns.md`** alongside Stimulus, ERB markup,
+morphing, and accidental-SPA anti-patterns. One canonical reference keeps
+Turbo coherent across controllers and views.
 
 ---
 

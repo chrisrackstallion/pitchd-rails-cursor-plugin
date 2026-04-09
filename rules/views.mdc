@@ -116,20 +116,9 @@ Use helpers for:
 - Small composed elements (badge with icon, link with label)
 - Wrapping Rails helpers with domain defaults
 
-## Stimulus Markup
+## Stimulus and Turbo (Hotwire)
 
-Stimulus controllers provide interactivity. The data attributes live in ERB — no inline `<script>` tags.
-
-```erb
-<div data-controller="clipboard" class="flex items-center gap-2">
-  <input data-clipboard-target="source" value="<%= @article.share_url %>"
-         class="rounded border border-gray-300 px-3 py-2 text-sm" readonly>
-  <button data-action="clipboard#copy"
-          class="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
-    Copy
-  </button>
-</div>
-```
+Stimulus controllers live in **`app/javascript/controllers/`** — `data-controller`, `data-action`, targets — not inline `<script>` tags. Turbo Frames wrap regions that update in isolation; stream templates use **`action.turbo_stream.erb`**. Full patterns, morphing, broadcasts, and accidental-SPA anti-patterns: **`skills/writing-hotwire/references/patterns.md`**. Rule: **`rules/hotwire.mdc`**.
 
 ## Links and Buttons
 
@@ -152,17 +141,6 @@ Use `content_for` / `yield` to inject page-specific content into layouts. Use `p
 ```erb
 <%# app/views/articles/show.html.erb %>
 <% provide(:title, @article.title) %>
-```
-
-## Turbo Frame Markup
-
-Wrap interactive regions in `turbo_frame_tag`. The controller renders normally — Turbo extracts and replaces matching frames.
-
-```erb
-<%= turbo_frame_tag dom_id(@article) do %>
-  <h2 class="text-xl font-bold"><%= @article.title %></h2>
-  <%= link_to "Edit", edit_article_path(@article), class: "text-sm text-blue-600 hover:underline" %>
-<% end %>
 ```
 
 ## Form Conventions

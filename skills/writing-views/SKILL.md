@@ -4,10 +4,11 @@ description: >-
   Write Rails views, partials, and helpers following DHH/37signals conventions —
   ERB templates as HTML-first documents, strict-local partials, collection
   rendering, helpers for presentation logic, Tailwind utility-first styling,
-  Stimulus data attributes, layouts with content_for, and Turbo-aware markup.
-  Use when creating new views, extracting partials, writing helpers, building
-  forms, styling with Tailwind, working with layouts, or when the user mentions
-  views, partials, ERB, helpers, Tailwind, Stimulus, or templates.
+  layouts with content_for. Stimulus and Turbo (frames, streams) — see the
+  writing-hotwire skill for canonical Hotwire patterns. Use when creating new
+  views, extracting partials, writing helpers, building forms, styling with
+  Tailwind, working with layouts, or when the user mentions views, partials,
+  ERB, helpers, Tailwind, Stimulus, Turbo, or templates.
 ---
 
 # Writing Rails Views
@@ -17,7 +18,8 @@ Write views that are HTML documents with the minimum Ruby necessary to display
 data. Views are the final rendering step — they present what the model provides,
 they don't compute it. Partials are the unit of reuse. Helpers format data for
 display. Tailwind utilities style directly in the markup. Stimulus data
-attributes provide interactivity. Follow DHH/37signals conventions: ERB, strict
+attributes provide interactivity; Hotwire (Turbo + Stimulus) is documented in
+the writing-hotwire skill. Follow DHH/37signals conventions: ERB, strict
 locals, utility-first CSS, collection rendering, and clarity over cleverness.
 </objective>
 
@@ -32,10 +34,10 @@ locals, utility-first CSS, collection rendering, and clarity over cleverness.
 | Collection rendering | Read `references/patterns.md` § Collections |
 | New helper method | Read `references/patterns.md` § Helpers |
 | Tailwind styling | Read `references/patterns.md` § Tailwind |
-| Stimulus interactivity | Read `references/patterns.md` § Stimulus Markup |
+| Stimulus / Turbo / Hotwire | Read `../writing-hotwire/references/patterns.md` |
 | Layout / content_for | Read `references/patterns.md` § Layouts |
 | Form template | Read `references/patterns.md` § Forms |
-| Turbo Frame/Stream markup | Read `references/patterns.md` § Turbo Markup |
+| Turbo Frame/Stream markup | Read `../writing-hotwire/references/patterns.md` |
 | Links vs buttons | Read `references/patterns.md` § Links and Buttons |
 | Empty state / error display | Read `references/patterns.md` § Empty States |
 | Code review | Read all references, review against conventions |

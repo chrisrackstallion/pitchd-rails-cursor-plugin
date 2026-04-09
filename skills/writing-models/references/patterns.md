@@ -523,6 +523,8 @@ end
 
 ### Turbo Broadcasts
 
+Narrative order (redirect → frames → streams), ERB/stream templates, and Stimulus: **`../../writing-hotwire/references/patterns.md`**. This section documents **model-side** broadcast APIs.
+
 **Preferred — broadcast page refreshes with morphing:**
 
 ```ruby

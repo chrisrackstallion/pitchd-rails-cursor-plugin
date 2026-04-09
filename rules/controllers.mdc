@@ -85,11 +85,11 @@ Prefer the simplest mechanism that satisfies the UX. Each step adds controller c
 
 1. **Full-page success** — `redirect_to` after a successful mutation. Turbo Drive performs a full-page visit by default (Turbo 8 may morph on refresh when that path is enabled — not every redirect implies a morph). Model-driven refreshes (e.g. `broadcasts_refreshes_to`) can still update other clients. Default for ordinary CRUD.
 2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Controller renders HTML into a frame; no streams required for validation errors if the frame can re-render with 422.
-3. **Turbo Streams** — multi-target DOM updates. Last resort — see the writing-controllers skill reference § Hotwire / Turbo.
+3. **Turbo Streams** — multi-target DOM updates. Last resort — see **`skills/writing-hotwire/references/patterns.md`**.
 
 **Successful mutations:** prefer **`redirect_to`**. **Failed validations:** **`render`** the same template (`:new` / `:edit` / a partial context) with **`status: :unprocessable_content`** — never redirect a failed save. Use **`:unprocessable_content`** (422), not **`:unprocessable_entity`**.
 
-**Turbo-heavy flows** (modal close + refresh underlying list, frame-targeted success): use `respond_to` with `format.html` and `format.turbo_stream` when needed; **compose stream payloads** in `ApplicationController` helpers or small concerns so actions stay thin — avoid long inline `turbo_stream` arrays. Details, frame conventions, and anti-patterns (`data-turbo-frame="_top"`, per-record frames, broadcasts) live in **`skills/writing-controllers/references/patterns.md`** § Hotwire / Turbo.
+**Turbo-heavy flows** (modal close + refresh underlying list, frame-targeted success): use `respond_to` with `format.html` and `format.turbo_stream` when needed; **compose stream payloads** in `ApplicationController` helpers or small concerns so actions stay thin. Frames, streams, Stimulus, and anti-SPA patterns: **`skills/writing-hotwire/references/patterns.md`**. The **`rules/hotwire.mdc`** rule applies when editing views and Stimulus controllers.
 
 ## Strong Parameters with `params.expect`
 
@@ -184,7 +184,7 @@ end
 | Business logic in actions | Model method or domain verb |
 | Custom verb actions (`close`, `archive`) | New noun resource with CRUD |
 | `params.require(...).permit(...)` | `params.expect(...)` |
-| Reaching for Turbo Streams first | Morphing → frames → streams (`skills/writing-controllers/references/patterns.md` § Hotwire / Turbo) |
+| Reaching for Turbo Streams first | Redirect → frames → streams (`skills/writing-hotwire/references/patterns.md`) |
 | Unscoped find for nested resources | Scope through parent association |
 | `redirect_to` after failed save | `render :action, status: :unprocessable_content` |
 | Multiple `before_action` setting the same chain | Base controller concern or inheritance |

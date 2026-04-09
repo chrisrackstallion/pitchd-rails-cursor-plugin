@@ -28,7 +28,7 @@ clarity over cleverness.
 |------|--------|
 | New controller | Read `references/patterns.md`, scaffold the controller |
 | New action on existing controller | Read `references/patterns.md` § REST Mapping — likely needs a new resource |
-| Turbo / Hotwire responses | Read `references/patterns.md` § Hotwire / Turbo |
+| Turbo / Hotwire responses | Read `../writing-hotwire/references/patterns.md` (canonical); `references/patterns.md` § Response Hierarchy for failed validations |
 | Controller concern | Read `references/patterns.md` § Concerns |
 | Strong parameters | Read `references/patterns.md` § Strong Parameters |
 | Authorization | Read `references/patterns.md` § Authorization; see also the policies skill |
@@ -136,7 +136,7 @@ controller complexity — maximise use of `redirect_to`:
 2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Re-render with 422 inside the frame when possible.
 3. **Turbo Streams** — multi-target DOM updates. Last resort.
 
-Details match `rules/controllers.mdc` § Response Hierarchy (Hotwire). Frame/stream patterns, helpers, and anti-patterns: `references/patterns.md` § Hotwire / Turbo.
+Details match `rules/controllers.mdc` § Response Hierarchy (Hotwire). Frames, streams, Stimulus, and anti-SPA patterns: **`../writing-hotwire/references/patterns.md`**.
 
 ### 4. Anti-Patterns
 
@@ -145,7 +145,7 @@ Details match `rules/controllers.mdc` § Response Hierarchy (Hotwire). Frame/str
 | Business logic in actions | Model method or domain verb |
 | Custom verb actions (`close`, `archive`) | New noun resource with CRUD |
 | `params.require(...).permit(...)` | `params.expect(...)` |
-| Reaching for Turbo Streams first | Redirect / full-page → frames → streams (`references/patterns.md` § Hotwire / Turbo) |
+| Reaching for Turbo Streams first | Redirect → frames → streams (`../writing-hotwire/references/patterns.md`) |
 | Unscoped find for nested resources | Scope through parent association |
 | `redirect_to` after failed validation | `render :action, status: :unprocessable_content` |
 | Service object wrapping a single model call | Let the controller call the model directly |
@@ -177,7 +177,7 @@ Before finishing, verify:
 - [ ] Strong parameters use `params.expect`, not `params.require.permit`
 - [ ] Failed validations render with `status: :unprocessable_content`, not redirect
 - [ ] Nested resource lookups are scoped through parent associations
-- [ ] Response uses the simplest Turbo mechanism (full-page redirect → frames → streams — see `references/patterns.md` § Hotwire / Turbo)
+- [ ] Response uses the simplest Turbo mechanism (full-page redirect → frames → streams — see `../writing-hotwire/references/patterns.md`)
 - [ ] Every action calls `authorize` (Pundit) — including index — `after_action :verify_authorized` catches misses
 - [ ] Index actions use `policy_scope` to filter records, then `authorize` (typically `authorize Model` after scoping)
 - [ ] `verify_policy_scoped` on index is enabled when you use `after_action :verify_policy_scoped, only: :index` in `ApplicationController`
