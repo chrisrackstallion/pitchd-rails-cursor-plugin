@@ -1,11 +1,15 @@
 ---
 name: writing-plans
 description: >-
-  Write implementation plans for multi-step Rails work before touching code —
-  vertical REST slices, DHH/37signals conventions, and this plugin's rules and skills.
-  After drafting, plan review uses the pitchd-rails-reviewer subagent
-  (reviewing-pitchd-rails skill, Phase plan). Use when turning a spec into tasks,
-  planning a feature, or breaking work into checklisted steps.
+  Write implementation plans for multi-step Rails work before application code.
+  Plans follow vertical REST slices, DHH/37signals conventions, and this plugin's
+  skills and rules. After drafting: review with pitchd-rails-reviewer and apply
+  that feedback to the plan file; then run pitchd-rails-surroundings-reviewer on
+  the paths the plan will touch, merge quick wins into the plan, record deferred
+  follow-ups, and give the user a full summary—including items too large for this
+  plan. Re-run pitchd-rails-reviewer for final sign-off when you incorporated Pass
+  1 recommendations and/or Pass 2 materially changed the plan. Use when turning
+  a spec into tasks, planning a feature, or breaking work into checklisted steps.
 ---
 
 # Writing Rails Implementation Plans
@@ -230,10 +234,20 @@ Fix issues inline; add tasks for missing requirements.
 
 ## Plan review
 
-After drafting the plan, run a **second pass** by delegating to the
-**`pitchd-rails-reviewer`** subagent (`.cursor/agents/pitchd-rails-reviewer.md` —
-see [Cursor subagents](https://cursor.com/docs/subagents)). It implements
-`skills/reviewing-pitchd-rails/SKILL.md` in an isolated context.
+**Happy path (default):** Draft → **Pass 1** → apply feedback to the plan file →
+**Pass 2** → **Merge surroundings** → **Present findings** → **Pass 3** only when
+required (see Pass 3). Even **small** plans still run Pass 2 once so
+touched-path surroundings are not skipped by habit.
+
+Follow **ordered passes**. After Pass 1 feedback is in the plan, **always** run
+Pass 2: it reviews **pre-existing** code along the plan’s touched paths (see
+`skills/reviewing-touched-surroundings/SKILL.md`), not the new feature blocks.
+
+### Pass 1 — Feature / plan shape (`pitchd-rails-reviewer`)
+
+After drafting, delegate to **`pitchd-rails-reviewer`**
+(`.cursor/agents/pitchd-rails-reviewer.md` — [Cursor subagents](https://cursor.com/docs/subagents)).
+**Canonical workflow and report format:** `skills/reviewing-pitchd-rails/SKILL.md`.
 
 **Delegation prompt must include:**
 
@@ -245,4 +259,94 @@ see [Cursor subagents](https://cursor.com/docs/subagents)). It implements
 | **Scope** | The plan file path again, or `full plan` |
 
 Invoke with **`/pitchd-rails-reviewer`** plus that context, or use the Task tool.
-Incorporate **Approved** or address **Issues found** before implementation.
+
+**Incorporate** Approved items or **address** Issues found by **editing the plan**
+(tasks, file map, snippets). “Implemented” at this stage means **feedback is
+applied in the plan document** — not yet shipping code.
+
+### Pass 2 — Touched surroundings (`pitchd-rails-surroundings-reviewer`)
+
+**When:** After Pass 1 feedback is **incorporated into the plan** (and before
+starting implementation), delegate to **`pitchd-rails-surroundings-reviewer`**
+(`.cursor/agents/pitchd-rails-surroundings-reviewer.md`). **Canonical workflow
+and report format:** `skills/reviewing-touched-surroundings/SKILL.md` (**pre-existing**
+code on touched paths, not new feature blocks).
+
+**Delegation prompt must include:**
+
+| Field | Value |
+|-------|--------|
+| **Phase** | `plan` |
+| **Plan path** | Same plan file as Pass 1 |
+| **Spec path** | Same as Pass 1, or `none` |
+| **Scope** | **Touched paths** from the plan’s file map (and related globs if listed). If no diff exists yet, say **plan-inferred scope** and list paths; the subagent may infer boundaries — that is expected for a pre-code plan. |
+
+Invoke with **`/pitchd-rails-surroundings-reviewer`** or the Task tool.
+
+### Merge surroundings into the plan
+
+This step **edits the plan file** (markdown on disk). **Present findings** (below)
+is the separate **user-facing** summary in chat or PR—do not duplicate long Pass 2
+verbatim in both places if the plan already records deferred items.
+
+Use the surroundings **Report format** output to update the plan:
+
+- **Quick wins** that fit this effort: add **checkbox tasks**, extra steps, or a
+  short **“Surrounding improvements (in scope)”** subsection with concrete file
+  references — so the codebase improves in the same paths as the feature.
+- **Separate follow-ups** (large refactors, behavior surface changes, migrations,
+  multi-file churn): add a **“Deferred / out-of-plan”** (or similar) subsection
+  **in the plan** with one line each — *or* a pointer that the full list lives in
+  your user-facing summary (see below). Do **not** silently drop these; they
+  belong in the record even when not scheduled.
+
+If Pass 2 finds nothing actionable for the plan body, note that explicitly
+(e.g. one line under the header).
+
+### Present findings to the user
+
+Narrative for the user (chat/PR), not a substitute for **Merge surroundings**—the
+plan document is the checklist source of truth.
+
+Return a **single user-visible summary** that includes:
+
+1. **Pass 1** outcome (already folded into the plan — keep this brief).
+2. **Pass 2** surroundings report: include the important philosophy and tactical
+   lines, **Quick wins** vs **Separate follow-ups**, and the report's **one-line
+   summary**.
+3. **Items too large to carry in this plan** — always list these explicitly
+   (copy or paraphrase from **Separate follow-ups**), with **why** they are
+   deferred, so the user can prioritize later work.
+
+### Pass 3 — Final sign-off (`pitchd-rails-reviewer`, conditional)
+
+**Order:** Run Pass 3 **after** Pass 2 and **Merge surroundings** (not between Pass
+1 and Pass 2—you need the final plan state).
+
+**When:** **Skip** Pass 3 only when Pass 1 required **no** edits to the plan **and**
+Pass 2 did **not** materially change it after merge. **Run** Pass 3 in every other
+case—for example you **incorporated Pass 1 recommendations**, or Pass 2 added
+tasks, map entries, approach or snippet edits, or deferred sections that change
+scope.
+
+Then delegate to **`pitchd-rails-reviewer`** again.
+
+| Field | Value |
+|-------|--------|
+| **Phase** | `plan` (use `both` only if you also need implementation-shaped checks) |
+| **Plan path** | Updated plan file |
+| **Spec path** | Unchanged from earlier passes, or `none` |
+| **Scope** | `full plan` — and state in the prompt that this is **final sign-off before implementation**, and whether this run is prompted by **Pass 1 edits**, **Pass 2 merge**, or **both** |
+
+Treat the outcome as **final plan approval** before implementation. If Pass 3
+raises issues, fix the plan once; call Pass 3 again **only if** those fixes or a
+further surroundings merge **materially** change scope again (avoid loops—one edit
+cycle is usually enough).
+
+### After code exists (optional repeat)
+
+If you run a **post-implementation** surroundings review (Phase `implementation`
+or `both`; see `reviewing-touched-surroundings`), merge any new quick wins or
+follow-ups into the plan **or** the PR description. Use the same **Present
+findings** and **conditional pitchd-rails-reviewer** steps whenever the **plan
+document** changes as a result.
