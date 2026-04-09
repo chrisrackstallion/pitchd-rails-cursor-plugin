@@ -26,7 +26,7 @@ see — not wrapper objects or implementation trivia.
 |------|--------|
 | New mailer / new email | Read `references/patterns.md`, add mailer + templates |
 | Parameterized mail (`Mailer.with`) | Read `references/patterns.md` § Parameterized mailers |
-| Subject / body copy | Read `references/patterns.md` § I18n and subjects |
+| Subject / body copy | Read `references/patterns.md` § I18n and subjects; key structure in `../writing-i18n/references/patterns.md` § Mailers |
 | Async vs sync delivery | Read `references/patterns.md` § Delivery |
 | Preview in browser | Read `references/patterns.md` § Previews |
 | Mailer spec | Read `references/patterns.md` § Testing; **`skills/writing-tests/references/support-specs.md`** § Mailer Specs |

@@ -1,5 +1,9 @@
 # View Patterns Reference
 
+## User-facing strings (I18n)
+
+Prefer **`t()`** for static copy; use **lazy lookup** (`t(".title")`) where it matches the template path. Helpers and shared partials use **absolute keys**. Interpolation, pluralization, and YAML layout: **`../../writing-i18n/references/patterns.md`**.
+
 ## Partials
 
 Partials are the unit of reuse in Rails views. A partial represents one

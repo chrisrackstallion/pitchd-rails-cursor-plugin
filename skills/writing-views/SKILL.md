@@ -4,11 +4,11 @@ description: >-
   Write Rails views, partials, and helpers following DHH/37signals conventions —
   ERB templates as HTML-first documents, strict-local partials, collection
   rendering, helpers for presentation logic, Tailwind utility-first styling,
-  layouts with content_for. Stimulus and Turbo (frames, streams) — see the
-  writing-hotwire skill for canonical Hotwire patterns. Use when creating new
+  layouts with content_for. Stimulus and Turbo — writing-hotwire skill. User-
+  facing static copy and locales — writing-i18n skill. Use when creating new
   views, extracting partials, writing helpers, building forms, styling with
   Tailwind, working with layouts, or when the user mentions views, partials,
-  ERB, helpers, Tailwind, Stimulus, Turbo, or templates.
+  ERB, helpers, Tailwind, Stimulus, Turbo, I18n, locales, or templates.
 ---
 
 # Writing Rails Views
@@ -33,6 +33,7 @@ locals, utility-first CSS, collection rendering, and clarity over cleverness.
 | Extract a partial | Read `references/patterns.md` § Partials |
 | Collection rendering | Read `references/patterns.md` § Collections |
 | New helper method | Read `references/patterns.md` § Helpers |
+| User-facing strings / locales | Read `../writing-i18n/references/patterns.md` |
 | Tailwind styling | Read `references/patterns.md` § Tailwind |
 | Stimulus / Turbo / Hotwire | Read `../writing-hotwire/references/patterns.md` |
 | Layout / content_for | Read `references/patterns.md` § Layouts |

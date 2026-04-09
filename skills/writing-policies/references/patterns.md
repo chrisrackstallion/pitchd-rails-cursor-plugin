@@ -687,6 +687,8 @@ private
 
 ### I18n for Policy Messages
 
+Key structure and flash copy: **`../../writing-i18n/references/patterns.md`**.
+
 ```yaml
 # config/locales/pundit.en.yml
 en:

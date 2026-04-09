@@ -99,10 +99,11 @@ team standardizes on it — do not assume web CSS works in Gmail.
 mail(to: user.email, subject: default_i18n_subject)
 ```
 
-Use **`default_i18n_subject`** with keys under **`article_mailer.published.subject`**
-or set explicit **`subject:`** with **`I18n.t`** for interpolation. Avoid
-hardcoded English in one branch and I18n in another for the same mail — pick a
-consistent approach per app.
+**`default_i18n_subject`** looks up **`<mailer>.<action>.subject`**. Use
+**`I18n.t`** for interpolation; keep HTML and text bodies aligned on shared keys
+where it helps. Full key conventions, lazy vs absolute lookup, and testing:
+**`../../writing-i18n/references/patterns.md`**. Avoid hardcoded copy in one
+branch and I18n in another for the same mail.
 
 ---
 

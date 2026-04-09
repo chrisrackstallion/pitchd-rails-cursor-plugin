@@ -10,6 +10,8 @@ alwaysApply: false
 
 Test behaviour, not implementation. Write tests that give you confidence to ship, not tests that break when you refactor. Prefer real objects over mocks. Hit the database. Render the views. Click the buttons.
 
+User-facing copy and **`I18n.t`** in assertions: **`rules/i18n.mdc`**, **`skills/writing-i18n/references/patterns.md`** § Testing.
+
 > **Tooling note:** DHH and 37signals use Minitest with fixtures. The testing
 > *philosophy* here — system tests as backbone, real objects, behaviour over
 > implementation — is theirs. The tooling (RSpec, FactoryBot, Capybara DSL)

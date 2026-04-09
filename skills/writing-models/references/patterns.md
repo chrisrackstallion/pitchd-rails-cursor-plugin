@@ -244,7 +244,9 @@ end
 ### Philosophy
 
 Database constraints are the source of truth for data integrity. Model
-validations exist to produce user-facing error messages.
+validations exist to produce user-facing error messages. Attribute labels and
+error strings live under **`activerecord`** in **`config/locales`** — see
+**`../../writing-i18n/references/patterns.md`** § Active Record labels and errors.
 
 ```ruby
 # Migration — enforces integrity

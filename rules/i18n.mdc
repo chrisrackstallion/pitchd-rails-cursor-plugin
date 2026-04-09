@@ -1,0 +1,33 @@
+---
+description: Rails I18n — key structure, lazy lookup, interpolation, no string soup in views. DHH/37signals. Apply when editing locales, user-facing strings in views/helpers, or flash copy.
+globs: config/locales/**/*.yml, config/locales/**/*.yaml, config/locales.yml, config/initializers/i18n.rb, app/views/**/*.erb, app/helpers/**/*.rb
+alwaysApply: false
+---
+
+# I18n Conventions
+
+## Use the Framework
+
+Rails ships **I18n** — use **`t()`** / **`I18n.t`** for user-visible static copy instead of scattering raw English in ERB and helpers. Domain data (`@article.title`) stays out of locale files; **labels, buttons, flashes, and validation messages** belong in **`config/locales`**.
+
+Canonical patterns: **`skills/writing-i18n/references/patterns.md`**. Mailer subjects and mail-scoped keys: **`skills/writing-mailers/references/patterns.md`** (subjects) + writing-i18n for key shape. Pundit flash messages: **`skills/writing-policies/references/patterns.md`** § I18n for Policy Messages.
+
+## Keys
+
+- **Scope by feature** — `articles.index.title`, `comments.form.submit`, not a flat `title_472`.
+- **`activerecord`** — attributes and errors live under Rails’ expected structure for `human_attribute_name` and form errors.
+- **Lazy lookup in templates** — `t(".heading")` resolves relative to the view path; use for page-specific copy.
+- **Absolute keys** — shared partials, helpers, controllers (`flash`), mailers — `t("articles.published_notice")`.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| `"Hello " + user.name + "!"` in ERB | `t("greeting", name: user.name)` with `%{name}` in YAML |
+| `t("foo.#{key}.bar")` with unbounded `key` | Fixed keys, enum, or explicit allowlist |
+| User-facing strings only in English in `en.yml` and hardcoded elsewhere | One approach per app; translate keys consistently |
+| Storing canonical copy in the DB for static UI | Locale files for static strings; DB for user-authored content |
+
+## What This Rule Is Not
+
+Translation vendor workflows, TMS sync, and client-side i18n stacks — out of scope. This plugin documents **Rails I18n** conventions only.

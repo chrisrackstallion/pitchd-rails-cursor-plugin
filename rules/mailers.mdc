@@ -18,7 +18,7 @@ Prefer **`deliver_later`** from the request lifecycle so sending does not block 
 
 ## Templates
 
-Provide **HTML and text** parts unless you deliberately ship one format and document why. Use **`_url`** helpers in mailer bodies, not **`_path`**. Email HTML is not Tailwind-in-class — inline CSS or an inliner; see patterns.
+Provide **HTML and text** parts unless you deliberately ship one format and document why. Use **`_url`** helpers in mailer bodies, not **`_path`**. Email HTML is not Tailwind-in-class — inline CSS or an inliner; see patterns. Subjects and repeated phrases — **`default_i18n_subject`** / **`t()`**; key shape: **`skills/writing-i18n/references/patterns.md`** § Mailers.
 
 ## Previews
 

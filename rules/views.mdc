@@ -36,6 +36,8 @@ Views render the model for the browser. They are HTML documents with the minimum
 
 Push domain predicates to models (`article.edited?`, `article.byline`), reusable formatting to helpers, and reusable markup to partials.
 
+**User-facing static copy** — use **`t()`** / **`I18n.t`** and keys under **`config/locales`**, not raw strings scattered through ERB. Lazy lookup, interpolation, and key structure: **`rules/i18n.mdc`**, **`skills/writing-i18n/references/patterns.md`**.
+
 ## Partials with Strict Locals
 
 Every partial declares its interface with `locals:` magic comments. No instance variables in partials — they receive everything through locals.
