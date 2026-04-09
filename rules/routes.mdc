@@ -1,0 +1,80 @@
+---
+description: Rails routing — REST-first URLs, shallow nesting, helpers, constraints. DHH/37signals. Apply when editing config/routes.rb or adding routes.
+globs: config/routes.rb, config/routes/**/*.rb
+alwaysApply: false
+---
+
+# Routing Conventions
+
+## REST Is the Default Vocabulary
+
+Resources are nouns; HTTP verbs map to the seven actions. Prefer `resources` / `resource` so `rails routes` reads like a table of contents and `*_path` helpers stay predictable.
+
+```ruby
+# Good — standard resource, dead actions trimmed
+resources :articles, only: %i[ index show new create edit update destroy ]
+
+# Bad — RPC verbs where a resource or model method belongs
+post "articles/:id/publish"
+```
+
+Custom URL segments are rare, named, and honest (state transitions, legacy URLs). If you add one, leave a one-line comment: why standard REST is not enough.
+
+## Shallow Nesting
+
+Nest in the URL only while the parent scopes identity. Then stop — use `shallow: true` so `show` / `edit` / `update` / `destroy` do not repeat `/parents/:parent_id` forever.
+
+```ruby
+# Good — shallow: child index/create stay nested; member routes are short
+resources :projects do
+  resources :tasks, shallow: true
+end
+
+# Bad — deep chains by default
+# /projects/:project_id/tasks/:task_id/comments/:id/...
+```
+
+If nesting goes deeper than one parent without a strong reason, split a resource or flatten.
+
+## Member vs Collection
+
+- **member** — acts on **one** record (`/resources/:id/action`).
+- **collection** — acts on the **set** (`/resources/action`).
+
+If it is neither, it is probably a new resource, a query on `index`, or a domain verb on the model — not another `post` on the member block.
+
+## Constraints Belong in the Router When They Are Real Routing Predicates
+
+Use `constraints` for format, host, subdomain, and other **wiring** rules. Do not encode authorization (“current user may…”) in the router — that belongs in controllers / policies.
+
+## Duplication vs Cleverness
+
+Prefer conventional duplication across `namespace` / `scope module:` blocks over meta-programmed `routes.rb` that makes `rails routes` untrustworthy. Excitement belongs in models; the routes file should be boring.
+
+## API vs HTML
+
+Same REST shape when possible. Introduce `namespace :api` (or versioned API) when the **contract** differs — not a parallel tree that differs only because JSON “feels different.”
+
+## Defaults the Team Should Agree On
+
+- Plural `resources` names; `resource` for true singletons (session, account dashboard).
+- `only` / `except` so unused actions do not exist in the routing table.
+- Explicit `as:` when you need stable helper names; `param:` only when slugs are intentional and consistent with `to_param`.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| `post :do_the_thing` on every resource | New noun resource + CRUD, or model method |
+| Deep `/a/:a_id/b/:b_id/c/:c_id/...` | Shallow nesting, fewer segments, or separate top-level resource |
+| Authorization in `constraints` | Policies + controller |
+| Dynamic route generation obscuring `rails routes` | Explicit declarations; small helpers only where repetition is real |
+| Greedy `match '*path'` swallowing real routes | Narrow redirects; explicit routes first |
+
+## PR Checklist (Routes-Clean)
+
+1. `rails routes` reads like a table of contents.
+2. No nest deeper than one level without shallowing or splitting — or a documented exception.
+3. Every custom action has a sentence-level justification.
+4. Path helpers are not ambiguous (`article_path` vs `project_article_path`).
+5. No user permission logic in routes beyond format / host constraints.
