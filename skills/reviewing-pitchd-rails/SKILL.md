@@ -114,4 +114,5 @@ context-isolation rules; the workflow and report shape are defined **here**.
 
 - **Compass (why / whether):** `../rails-omakase-compass/SKILL.md`
 - **Planning:** `../writing-plans/SKILL.md` (plans should be reviewed with this skill via **`pitchd-rails-reviewer`**, Phase `plan`)
+- **Implementation (execute a task):** `../implementing-pitchd-rails/SKILL.md` — **`pitchd-rails-implementor`** for isolated task execution with compass + tactics
 - **Pre-existing code in touched files (campground rule):** `../reviewing-touched-surroundings/SKILL.md` — use **`pitchd-rails-surroundings-reviewer`** for an isolated pass on surrounding code, not the new diff
