@@ -57,6 +57,10 @@ Read **`../rails-omakase-compass/SKILL.md`** when the task involves:
 
 For purely local edits inside an established pattern, still **skim** the compass if the change could drift (e.g. duplicating business rules in JS).
 
+**Default stack:** Prefer **Hotwire** (Turbo, Stimulus) and **server-rendered HTML** for app flows. Reach for **`writing-javascript`** only when the **task** or **existing app** already requires client-side behaviour beyond that — not as a default for “richer” UX.
+
+**Domain logic:** Keep behaviour in **models**, **jobs**, **mailers**, and plain Ruby where the app already does. Use **`writing-services`** only when the **task**, **plan**, or **established pattern** in the repo justifies a dedicated object — not to “clean up” a controller or avoid a fat model without cause (see `rails-omakase-compass` and `writing-services`).
+
 ### 3. Select tactical skills by scope
 
 From the task description and files you will touch, read **only** the relevant:
@@ -68,7 +72,8 @@ From the task description and files you will touch, read **only** the relevant:
 
 For each area, open the skill’s **SKILL.md** and the relevant
 **`references/patterns.md`** (or sectioned references). Cross-check
-**`rules/<area>.mdc`** for the same area.
+**`rules/<area>.mdc`** for the same area. The list is a **menu**, not permission
+to add JS or service layers by reflex — apply the **defaults under Load the compass** first.
 
 ### 4. Implement
 
@@ -84,7 +89,7 @@ For each area, open the skill’s **SKILL.md** and the relevant
 ## Code organization
 
 - Follow the **file structure** from the plan when one exists.
-- **One clear responsibility** per file; **well-defined** public interface.
+- **One clear responsibility** per file, with **clear, conventional Rails boundaries** — match what the **app already does**, not abstract “ports and adapters” for its own sake.
 - If a **new** file grows beyond the plan’s intent, **stop** and report **DONE_WITH_CONCERNS** — do not split or reorganize without plan guidance.
 - If an **existing** file is already large or tangled, touch it **carefully** and note it under concerns.
 - In existing codebases, **match established patterns**. Improve only what you are touching in a way a good teammate would — **no** scope creep.
@@ -151,8 +156,10 @@ The **`pitchd-rails-implementor`** custom subagent at
 **`.cursor/agents/pitchd-rails-implementor.md`** runs this workflow in an
 **isolated** context (`readonly: false`, `model: inherit`). It does not commit
 code. It does not see parent chat — the delegating agent must pass **full task
-text**, **context**, **working directory**, and paths to **plan/spec** when
-relevant. Invoke via the
+text** (including acceptance criteria and file layout when the plan would have
+them), **context**, **working directory**, and paths to **plan/spec** when
+relevant. When **plan path** is `none`, **pasted task text** must stand in for
+the plan so nothing is lost. Invoke via the
 Task tool or slash command. Subagent instructions add **delegation** and
 **input** rules only; process and report shape are defined **here**.
 

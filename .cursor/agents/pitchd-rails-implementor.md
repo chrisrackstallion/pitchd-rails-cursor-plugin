@@ -31,6 +31,9 @@ Plugin assets are under the workspace root: `skills/`, `rules/`.
 - **Tactics:** Always align implementation with **`skills/rails-omakase-compass`**
   for shape, then **`writing-*`** and **`rules/*.mdc`** for specifics — never
   skip applicable rules for the areas you touch.
+- **Hotwire / JS / services:** Prefer server-rendered flows and Hotwire; use
+  **`writing-javascript`** or **`writing-services`** only when the task or app
+  pattern demands it (see **Load the compass** in the skill), not as a default.
 
 ## Subagent constraints
 
@@ -42,10 +45,10 @@ Plugin assets are under the workspace root: `skills/`, `rules/`.
 | Input | Meaning |
 |-------|---------|
 | **Task name / id** | e.g. "Task 3: Add invitation mailer" |
-| **Task description** | **Full** text of the task from the plan (pasted inline — do not assume access to unsent files) |
+| **Task description** | **Full** text of the task from the plan (pasted inline — do not assume access to unsent files). Must include file layout and acceptance criteria when **Plan path** is `none` (pasted text substitutes for reading the plan). |
 | **Context** | Where this fits: dependencies, architecture, prior tasks |
 | **Work directory** | Repo root or path to work from (e.g. app root) |
-| **Plan path** | Implementation plan file(s), or `none` |
+| **Plan path** | Implementation plan file(s), or `none` — if `none`, **Task description** must carry plan-grade detail |
 | **Spec path** | Requirements/spec, or `none` |
 
 3. **Read order** — Per the skill: **`skills/rails-omakase-compass/SKILL.md`**
@@ -71,7 +74,7 @@ Implement Task N: [task name]
 
 ## Task Description
 
-[PASTE FULL TEXT of task from plan — subagent may not read the plan file unless path is provided and in workspace]
+[PASTE FULL TEXT of task from plan. If Plan path is `none`, include everything the plan would have said: AC, files to touch, layout. If Plan path is set, subagent can read that file from the workspace.]
 
 ## Context
 
