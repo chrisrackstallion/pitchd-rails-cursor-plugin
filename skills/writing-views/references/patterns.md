@@ -120,14 +120,24 @@ This is shorthand for:
 
 ### Empty States
 
+Branch when the collection is empty. **`render(collection) || fallback` is unreliable** — an empty collection usually produces an empty string buffer, which is truthy, so the right-hand side never runs.
+
 ```erb
-<%= render(@articles) || render("articles/empty") %>
+<% if @articles.any? %>
+  <%= render @articles %>
+<% else %>
+  <%= render "articles/empty" %>
+<% end %>
 ```
 
 Or inline:
 
 ```erb
-<%= render(@articles) || tag.p("No articles yet.", class: "py-8 text-center text-gray-500 italic") %>
+<% if @articles.any? %>
+  <%= render @articles %>
+<% else %>
+  <%= tag.p("No articles yet.", class: "py-8 text-center text-gray-500 italic") %>
+<% end %>
 ```
 
 ### Spacer Templates
@@ -780,10 +790,14 @@ dom_class(@article, :featured) # => "featured_article"
 
 ## Empty States
 
-Handle empty collections gracefully. Never show a blank page.
+Handle empty collections gracefully. Never show a blank page. Prefer an explicit branch (same as § Collections → Empty States) — not `render(collection) || …`, for the same empty-string / truthiness reason.
 
 ```erb
-<%= render(@articles) || render("articles/empty") %>
+<% if @articles.any? %>
+  <%= render @articles %>
+<% else %>
+  <%= render "articles/empty" %>
+<% end %>
 ```
 
 ```erb
