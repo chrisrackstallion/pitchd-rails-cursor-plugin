@@ -5,10 +5,11 @@ description: >-
   ERB templates as HTML-first documents, strict-local partials, collection
   rendering, helpers for presentation logic, Tailwind utility-first styling,
   layouts with content_for. Stimulus and Turbo — writing-hotwire skill. User-
-  facing static copy and locales — writing-i18n skill. Use when creating new
-  views, extracting partials, writing helpers, building forms, styling with
-  Tailwind, working with layouts, or when the user mentions views, partials,
-  ERB, helpers, Tailwind, Stimulus, Turbo, I18n, locales, or templates.
+  facing static copy and locales — writing-i18n skill. JS delivery (importmap,
+  bundling) — writing-javascript skill. Use when creating new views, extracting
+  partials, writing helpers, building forms, styling with Tailwind, working with
+  layouts, or when the user mentions views, partials, ERB, helpers, Tailwind,
+  Stimulus, Turbo, importmap, JavaScript, I18n, locales, or templates.
 ---
 
 # Writing Rails Views
@@ -36,6 +37,7 @@ locals, utility-first CSS, collection rendering, and clarity over cleverness.
 | User-facing strings / locales | Read `../writing-i18n/references/patterns.md` |
 | Tailwind styling | Read `references/patterns.md` § Tailwind |
 | Stimulus / Turbo / Hotwire | Read `../writing-hotwire/references/patterns.md` |
+| Importmap, package.json, JS entrypoints | Read `../writing-javascript/references/patterns.md` |
 | Layout / content_for | Read `references/patterns.md` § Layouts |
 | Form template | Read `references/patterns.md` § Forms |
 | Mailer templates (`*_mailer/`) | Read `../writing-mailers/references/patterns.md` |

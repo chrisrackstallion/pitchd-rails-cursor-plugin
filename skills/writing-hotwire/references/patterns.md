@@ -116,6 +116,8 @@ Use **`button_to`** or forms for **POST/PATCH/DELETE**, not **`link_to`** for st
 
 Stimulus controllers provide interactivity through data attributes in ERB. No inline `<script>` tags, no custom JavaScript in templates.
 
+**File location, importmap pins, and bundling** — not duplicated here: **`../writing-javascript/references/patterns.md`**.
+
 ### Attaching a controller
 
 ```erb

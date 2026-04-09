@@ -1,0 +1,38 @@
+---
+description: JavaScript boundary — importmaps vs bundling, Propshaft-friendly entrypoints, Stimulus location. Server-rendered app first; do not let JS swallow Rails. DHH/37signals omakase.
+globs: config/importmap.rb, app/javascript/**/*.js, package.json, package-lock.json, yarn.lock, pnpm-lock.yaml, Procfile.dev, vite.config.ts, vite.config.js, vite.config.mjs
+alwaysApply: false
+---
+
+# JavaScript and the Asset Boundary
+
+## One Stack Per App
+
+Rails 7+ defaults to **importmap** for JavaScript and **Propshaft** for static assets — no Node required for Hello World. If you add **jsbundling-rails**, **cssbundling-rails**, or **Vite**, commit to **one** delivery story. Do not run importmap pins and a separate bundled “app shell” that both load Turbo — pick a path and document it.
+
+Canonical detail: **`skills/writing-javascript/references/patterns.md`**. Turbo, frames, streams, Stimulus *behaviour*: **`skills/writing-hotwire/references/patterns.md`**, **`rules/hotwire.mdc`**.
+
+## Where JavaScript Lives
+
+- **Entry** — `app/javascript/application.js` imports Stimulus and any pinned modules.
+- **Stimulus** — `app/javascript/controllers/**/*_controller.js`, registered from the application entry (e.g. `eagerLoadControllersFrom("controllers")` with importmap).
+- **Layouts** — `javascript_importmap_tags` (importmap) or the helper your bundler documents — not ad hoc `<script src="https://cdn…">` for app logic.
+
+## Boundary Rules
+
+- **HTML + Turbo** own navigation and server-backed state for first-party pages.
+- **Stimulus** enhances the DOM; it does not replace routes, sessions, or authorization.
+- **No parallel client router** or JSON-first CRUD for pages you already render with ERB — that fights the asset pipeline *and* Hotwire.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Two competing JS pipelines (importmap + heavy webpack for same app chrome) | One strategy; simplify |
+| `fetch` + JSON for every mutation on same-origin pages you control | Forms, Turbo, streams |
+| Client-only source of truth for domain state | Server session + HTML |
+| Stimulus controllers importing a full “app store” | Small controllers; server truth |
+
+## Out of Scope
+
+React/Vue/Svelte as the primary shell, micro-frontends, and CDN-only frontends decoupled from Rails — not this rule. Propshaft vs Sprockets migration nuance: **`skills/writing-javascript/references/patterns.md`**.

@@ -30,6 +30,8 @@ over client-side framework patterns, and progressive enhancement.
 | Stimulus targets, actions, values | Heavy realtime games — different constraints |
 | `broadcasts_*`, `turbo_stream_from`, morph meta | Infra/deploy — out of scope |
 
+**Importmap, bundlers, and `application.js` wiring** are not this skill — see **`../writing-javascript`**.
+
 ## Process
 
 ### 1. Pick the Response Shape
@@ -69,3 +71,4 @@ Compose stream payloads in **`ApplicationController`** helpers or concerns — n
 ## References
 
 - [references/patterns.md](references/patterns.md) — controller responses, frames, streams, Stimulus, morphing, broadcasts, accidental SPA anti-patterns.
+- [../writing-javascript/references/patterns.md](../writing-javascript/references/patterns.md) — importmap vs bundling, Stimulus file location, asset pipeline boundary.

@@ -120,7 +120,7 @@ Use helpers for:
 
 ## Stimulus and Turbo (Hotwire)
 
-Stimulus controllers live in **`app/javascript/controllers/`** — `data-controller`, `data-action`, targets — not inline `<script>` tags. Turbo Frames wrap regions that update in isolation; stream templates use **`action.turbo_stream.erb`**. Full patterns, morphing, broadcasts, and accidental-SPA anti-patterns: **`skills/writing-hotwire/references/patterns.md`**. Rule: **`rules/hotwire.mdc`**.
+Stimulus controllers live in **`app/javascript/controllers/`** — `data-controller`, `data-action`, targets — not inline `<script>` tags. Importmap vs bundling, entrypoints, and not fighting the pipeline: **`rules/javascript.mdc`**, **`skills/writing-javascript/references/patterns.md`**. Turbo Frames wrap regions that update in isolation; stream templates use **`action.turbo_stream.erb`**. Full patterns, morphing, broadcasts, and accidental-SPA anti-patterns: **`skills/writing-hotwire/references/patterns.md`**. Rule: **`rules/hotwire.mdc`**.
 
 ## Links and Buttons
 
