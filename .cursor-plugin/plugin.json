@@ -9,5 +9,6 @@
   },
   "license": "MIT",
   "keywords": ["cursor", "plugin", "rails", "ruby", "pitchd"],
-  "logo": "assets/logo.svg"
+  "logo": "assets/logo.svg",
+  "agents": [".cursor/agents/pitchd-rails-reviewer.md"]
 }

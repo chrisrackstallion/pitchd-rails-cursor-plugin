@@ -3,8 +3,9 @@ name: writing-plans
 description: >-
   Write implementation plans for multi-step Rails work before touching code —
   vertical REST slices, DHH/37signals conventions, and this plugin's rules and skills.
-  Use when turning a spec into tasks, planning a feature, or breaking work into
-  checklisted steps.
+  After drafting, plan review uses the pitchd-rails-reviewer subagent
+  (reviewing-pitchd-rails skill, Phase plan). Use when turning a spec into tasks,
+  planning a feature, or breaking work into checklisted steps.
 ---
 
 # Writing Rails Implementation Plans
@@ -229,5 +230,19 @@ Fix issues inline; add tasks for missing requirements.
 
 ## Plan review
 
-For a structured second pass, use the template in
-`references/plan-document-reviewer-prompt.md`.
+After drafting the plan, run a **second pass** by delegating to the
+**`pitchd-rails-reviewer`** subagent (`.cursor/agents/pitchd-rails-reviewer.md` —
+see [Cursor subagents](https://cursor.com/docs/subagents)). It implements
+`skills/reviewing-pitchd-rails/SKILL.md` in an isolated context.
+
+**Delegation prompt must include:**
+
+| Field | Value |
+|-------|--------|
+| **Phase** | `plan` (or `both` if you also want implementation-adjacent checks) |
+| **Plan path** | Path to this plan file (e.g. `docs/plans/2026-04-09-feature.md`) |
+| **Spec path** | Path to the spec or requirements doc, or `none` |
+| **Scope** | The plan file path again, or `full plan` |
+
+Invoke with **`/pitchd-rails-reviewer`** plus that context, or use the Task tool.
+Incorporate **Approved** or address **Issues found** before implementation.
