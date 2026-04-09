@@ -38,7 +38,14 @@ Extract shared capabilities into concerns. Name them as adjectives describing wh
 
 ## State as Records, Not Booleans
 
-Track state changes with join records instead of boolean columns. You get timestamps, attribution, and clean query semantics for free.
+Model state as **data you can query** — often a **child record whose existence is the state** — with **domain verbs** on the parent that create or destroy that row in a transaction. That is the default omakase alternative to **boolean soup** and to **state machine gems** (AASM, Statesman, Workflow, etc.) for typical lifecycles: it stays Active Record–native and maps cleanly to **REST noun resources** and standard HTTP (`POST`/`DELETE` on a small resource; see the controllers rule).
+
+- **`enum`** on a column for a **small ordered lifecycle** (`draft` → `published`) when you do not need attribution or join-heavy “who closed this?” queries on that axis.
+- **State record** (`has_one` child, polymorphic join, etc.) when you need **timestamps, actor, or joins** — existence of the row *is* the current state; destroying it *is* revert.
+- **Per-transition history table** when audit, compliance, or a **timeline** is a product requirement — not by default for every app.
+- **State machine gem** only when **many named states**, **non-obvious allowed transitions**, **guards across several attributes**, or **external workflow** integration would otherwise scatter `if`/`case` logic — not for prestige.
+
+Prefer proving you need a gem with **messy real rules**, not with fear of missing an “enterprise” pattern.
 
 ```ruby
 has_one :closure, dependent: :destroy
@@ -47,6 +54,8 @@ def closed?   = closure.present?
 def close(by: Current.user) = create_closure!(creator: by)
 def reopen     = closure&.destroy!
 ```
+
+Full ladder, anti-patterns, and REST alignment: **`skills/writing-models/references/patterns.md`** § State as Records.
 
 ## Scopes — Query Logic on the Model
 

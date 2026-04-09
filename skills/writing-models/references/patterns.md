@@ -120,6 +120,68 @@ Card.where.missing(:closure)  # all open cards
 | Simple flag, no audit trail needed | Boolean column |
 | Toggled frequently with no history | Boolean column |
 
+### Enums, state records, and state machine gems
+
+Rails already gives you most of what you need: **associations**, **transactions**,
+**validations**, and **domain verbs** on the parent. A **child row whose presence
+is the state** is often the smallest accurate model. Prefer proving you need a
+**state machine gem** (AASM, Statesman, Workflow, etc.) with **real complexity**,
+not because “serious apps use state machines.”
+
+| Layer | Use when |
+|-------|----------|
+| **`enum` on a column** | Small ordered lifecycle (`draft` → `active` → `archived`), no rich audit on that axis, transitions stay obvious |
+| **State record** (`has_one` / polymorphic child) | Binary or few modes; need **timestamps, actor, joins**; **destroy** = revert feels natural |
+| **Per-transition / history table** | Compliance, undo, or **timeline** is a product requirement — not for every app by default |
+| **State machine gem** | **Many named states**, **non-obvious allowed transitions**, **guards** across several attributes, or **external workflow** integration would otherwise sprawl |
+
+**Retention:** Reverting with `destroy` fits when the child row is only current state plus metadata and **discarding the row is allowed**. If **policy forbids deletes** (audit retention, legal hold), use a **history table**, **superseding rows**, or **soft flags** on a durable record — not `DELETE` as undo.
+
+**Heuristic:** If the lifecycle fits **two or three nouns** on a napkin and rules
+live in **a few well-named methods**, you likely need **better names and maybe
+one more table** — not a gem.
+
+### REST and noun resources
+
+State changes map cleanly to **noun resources** and standard HTTP (`POST` to
+create the state record, `DELETE` to remove it). Routing, authorization, and
+request specs stay conventional. Generic **`transition_to!`**-style APIs on the
+model often **fight REST** and duplicate policy boundaries — prefer resources
+like `Cards::ClosuresController` (see the writing-controllers skill) unless the
+domain truly is a single object with a complex internal machine.
+
+### Anti-patterns (state machines)
+
+- **Callback-heavy gems** driving transitions through `after_save` or magic
+  hooks — same pain as callback-heavy domain logic; hard to test and follow.
+- **Scattered** `if` / `case` on `state` across controllers and jobs when **one
+  place** (model verbs or a small PORO next to the model) would do.
+- **Over-modeled enums** — twelve `status` values when the domain is really
+  **“has publication” / “has closure”** plus clear verbs.
+- **Reaching for a gem** before **state-as-record + verbs** has been tried.
+
+### When a state machine library is justified
+
+- Large **transition matrix** with role-based or attribute-heavy **guards**.
+- **External workflow** or BPM integration with a contract that expects a
+  formal state model.
+- Team agreement that the gem’s API is the **single choke point** for
+  transitions — not as a substitute for modeling state as data.
+
+### Contrast — verbs and records vs callback transitions
+
+Prefer explicit verbs and Active Record calls:
+
+```ruby
+def close(by: Current.user)
+  transaction { create_closure!(creator: by) }
+end
+```
+
+Avoid packing domain rules into transition callbacks on a gem unless the
+**matrix** truly warrants centralization — and even then, keep side effects in
+**`after_commit`** when they must be async.
+
 ---
 
 ## Scopes

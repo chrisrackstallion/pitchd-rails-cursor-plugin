@@ -27,7 +27,7 @@ and clarity over cleverness.
 | New model | Read `references/patterns.md`, scaffold the model |
 | New concern | Read `references/patterns.md` § Concerns |
 | Scopes / queries | Read `references/patterns.md` § Scopes |
-| State tracking | Read `references/patterns.md` § State as Records |
+| State tracking | Read `references/patterns.md` § State as Records — default: enums → state records → history → state machine gem only when complexity demands it |
 | Refactoring | Read `references/patterns.md`, identify which pattern applies |
 | Code review | Read all references, review against conventions |
 
@@ -107,6 +107,12 @@ Before writing code, ask these questions:
 - Simple flag with no history → boolean is acceptable
 - Will be queried with joins → state record
 
+**"Enum, state record, or state machine gem?"**
+- Small lifecycle on one column, no audit needs → **`enum`**
+- Binary or few modes with *who*/*when* or joins → **state record** + verbs on the parent
+- Full history of every transition → **history table** (or event log) when the product requires it
+- Many states, transition matrix, heavy guards, or external workflow API → consider a **state machine gem** only after the simpler shapes fail — see `references/patterns.md` § State as Records
+
 ### 4. Anti-Patterns
 
 | Anti-Pattern | Instead |
@@ -123,6 +129,9 @@ Before writing code, ask these questions:
 | `default_scope` | Named scopes — `default_scope` contaminates all queries |
 | `ActiveRecord::Base` subclass with no table | `ActiveModel::Model` instead |
 | Conditional validations (`if:` / `on:`) | Form objects for workflow-specific validation |
+| State machine gem for two-state lifecycles | State record + domain verbs; `enum` if a column is enough |
+| Callback-driven transitions (`after_transition` doing business logic) | Explicit verbs + transactions; `after_commit` only for async side effects |
+| Scattered `transition_to!` / `case state` across the app | Centralize in model methods or one object next to the model; gem only if the matrix warrants it |
 
 ### 5. Naming Conventions
 
@@ -147,6 +156,7 @@ Before finishing, verify:
 - [ ] Callbacks are limited to async dispatch and derived data
 - [ ] Method names use domain language, not generic CRUD terms
 - [ ] Bang methods used for operations where failure is exceptional
+- [ ] State modeled with the simplest shape that fits: `enum` → state record → history/gem only when justified (`references/patterns.md` § State as Records)
 
 ## References
 
