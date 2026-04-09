@@ -1,12 +1,13 @@
 {
   "name": "pitchd-rails",
-  "displayName": "Pitchd Rails",
   "version": "0.1.0",
   "description": "Cursor plugin with rules and skills for building best practice Rails apps.",
   "author": {
     "name": "Chris Bellairs",
     "email": "chris@pitchd.ai"
   },
+  "homepage": "https://pitchd.ai",
+  "repository": "https://github.com/chrisrackstallion/pitchd-rails-cursor-plugin",
   "license": "MIT",
   "keywords": ["cursor", "plugin", "rails", "ruby", "pitchd"],
   "logo": "assets/logo.svg"
