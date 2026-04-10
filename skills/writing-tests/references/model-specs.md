@@ -4,6 +4,13 @@ Model specs are unit tests for domain logic. They test methods, scopes,
 state transitions, and business rules on the model — using real database
 records, not mocks.
 
+As a controlled exception, you may use `build_stubbed` when the method under
+test is purely in-memory — no DB queries, no scopes, no callbacks requiring
+persistence. `build_stubbed` returns a stubbed object, not a real record; it
+stubs `id`, `persisted?`, `save`, and all association persistence methods.
+If the method ever grows to touch the database, the test will fail loudly —
+that's the point. Use `create` for everything else. When in doubt, use `create`.
+
 ## Structure
 
 ```ruby

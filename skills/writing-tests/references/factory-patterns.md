@@ -254,7 +254,7 @@ create(:article, :published, :with_comments, comments_count: 5)
 |--------|-----------|---------------|----------|
 | `create` | Yes | Persisted | Default — most tests need real records |
 | `build` | No | Built | Testing validations or form objects before save |
-| `build_stubbed` | No | Stubbed | Rarely — speed gain is marginal, behaviour drift can mask bugs |
+| `build_stubbed` | No | Stubbed | Internal method tests that don't touch the database |
 
 ### Default to `create`
 
@@ -278,6 +278,58 @@ it "requires a title" do
   expect(article.errors[:title]).to be_present
 end
 ```
+
+### Use `build_stubbed` for Pure Method Tests
+
+Use `build_stubbed` to make the test's contract explicit — it signals that
+the method is purely in-memory and must stay that way. If the method ever
+grows to touch the database, the test will fail loudly, which is the point.
+`build_stubbed` stubs `id`, `persisted?`, `save`, and all association
+persistence — it is not a real record.
+
+```ruby
+# Good — pure calculation, contract is explicit
+it "formats the full name" do
+  user = build_stubbed(:user, first_name: "Alice", last_name: "Johnson")
+
+  expect(user.full_name).to eq("Alice Johnson")
+end
+
+# Good — logic branch on an attribute, no DB involved
+it "returns true for admin role" do
+  user = build_stubbed(:user, role: :admin)
+
+  expect(user).to be_admin
+end
+
+# Bad — looks like pure logic but fires a DB query; build_stubbed silently returns wrong result
+it "returns true when any active member exists" do
+  # member.any_active? calls Member.where(status: :active).exists? internally
+  member = build_stubbed(:member, status: :active)
+
+  expect(member.any_active?).to be true # always false — stubbed object not in DB
+end
+```
+
+**When NOT to use `build_stubbed`:**
+- The method calls any scope, `where`, `find`, or other DB query
+- The method calls `valid?` or `errors` with a uniqueness validation (the SELECT is skipped silently)
+- The method uses `after_create`/`after_save` callbacks
+- Traits use `after(:create)` — those callbacks are skipped silently:
+
+```ruby
+# Trap — build_stubbed with an after(:create) trait skips the callback entirely
+trait :published do
+  after(:create) { |article| article.publish }
+end
+
+article = build_stubbed(:article, :published)
+article.published? # => false — publish was never called
+```
+
+- Associations need to be real persisted records (e.g., the method calls `.save` or `.create` on them)
+
+When in doubt, use `create` — the cost of a real insert is almost always worth the confidence.
 
 ---
 
@@ -451,6 +503,6 @@ end
 - **Override when it matters** — if the test asserts a value, set it in the test
 - **One file per model** — `spec/factories/model_name.rb`
 - **No factory inheritance** — use traits instead of child factories
-- **Avoid `build_stubbed`** — the speed gain is marginal and the behaviour drift can mask real bugs
+- **`build_stubbed` for pure method tests** — use when the method doesn't touch the database; prefer `create` when any DB interaction is involved
 - **No shared mutable state** — each test creates its own records
 - **Traits compose** — `create(:article, :published, :with_comments)`
