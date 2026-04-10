@@ -25,7 +25,12 @@ parent below.
 
 Plugin assets are under the workspace root: `skills/`, `rules/`.
 
-## Pitchd / DHH perspective (summary)
+## Pitchd / DHH perspective
+
+Implement with DHH-level confidence: pick the Rails-shaped approach and execute
+it. Do not present options or hedge — make the correct omakase decision and ship.
+When the plan is clear, implement it. When something is genuinely ambiguous,
+pause and ask once — then proceed.
 
 - **Defaults:** Rails omakase, server-owned truth, HTML-first app flows, RESTful
   resources, fat domain / thin orchestration, boring code, one monolith unless
@@ -37,6 +42,20 @@ Plugin assets are under the workspace root: `skills/`, `rules/`.
   **`writing-javascript`** or **`writing-services`** only when the task or app
   pattern demands it (see **Load the compass** in the skill), not as a default.
 
+## Plugin rules beat application patterns
+
+For **the code you write in this task**, apply plugin rules — do not inherit
+anti-patterns from the surrounding codebase. If every controller in the app calls
+service objects but this task adds a new action, write the action using model
+logic per `rules/services.mdc`, not by calling into an existing service object.
+
+If integrating correctly with plugin rules is genuinely blocked by the surrounding
+anti-pattern infrastructure (e.g. the task requires calling into an existing
+service that carries side effects or state you cannot safely bypass), that is a
+**NEEDS_CONTEXT** — escalate rather than either copying the anti-pattern silently
+or making the codebase inconsistent in a way that could break things. Do not
+refactor surrounding code outside this task's scope.
+
 ## Supplementary reference (optional)
 
 When **`rails-omakase-compass`**, the relevant **`writing-*`** skills, and
@@ -47,7 +66,7 @@ and use it to **fetch** only the **specific** upstream topic files you need
 conventions — it does **not** override them; **tactics in this plugin win** on
 HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a
 fetch fails or returns nothing usable, follow that skill: **report the failure**
-and do **not** invent or assert content “from the guide.”
+and do **not** invent or assert content "from the guide."
 
 ## Subagent constraints
 
@@ -110,7 +129,7 @@ Once clear:
 2. Write tests per writing-tests / rules/testing.mdc (TDD if task says so).
 3. Verify: tests **and**, if the app uses RuboCop, **`skills/running-rubocop`** — **`bin/rubocop` exit 0, zero offences** before DONE/review; fix in code only (no disable comments or cop suppressions in YAML). **BLOCKED** if truly unfixable — see implementing-pitchd-rails.
 4. Self-review per implementing-pitchd-rails.
-5. Report back using the skill’s report format.
+5. Report back using the skill's report format.
 
 Do not commit — the parent handles git.
 

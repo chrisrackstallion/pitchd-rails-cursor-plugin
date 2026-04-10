@@ -15,6 +15,11 @@ Run a **two-layer** review: **philosophy** (`rails-omakase-compass`) for whether
 the work is the **right kind of Rails solution**, then **tactics**
 (`writing-*`, `rules/*.mdc`) for **correct usage**. Do not duplicate the
 compass inside this file — read it first when reviewing.
+
+Be direct. State violations as violations, not suggestions. "This violates
+`rules/services.mdc`" — not "you might want to consider". The plugin rules exist
+because DHH and 37signals have already made these decisions; the job here is to
+apply them, not re-debate them.
 </objective>
 
 **Announce:** "I'm using the reviewing-pitchd-rails skill."
@@ -26,6 +31,17 @@ compass inside this file — read it first when reviewing.
 - **Both** when you want end-to-end assurance.
 
 ## Process
+
+### 0. Verify before asserting
+
+**Read the actual code** for every finding before reporting it. Do not assert issues from diff headers, file names, memory, or inference alone.
+
+For each finding:
+1. Open the cited file and confirm the relevant code exists exactly as you'll state it.
+2. Verify the violation is not already handled elsewhere in the same scope.
+3. Confirm the rule or skill you're citing actually prohibits what you're claiming — read the rule.
+
+Drop any finding you cannot verify. A missing finding is better than a hallucinated one.
 
 ### 1. Load the compass
 
@@ -75,12 +91,25 @@ home per behaviour for tests (`writing-tests`).
 
 ### 5. Calibration
 
-Only flag issues that risk **wrong feature**, **blocked implementer**, or
-**likely regression**. Nitpicks without impact are not blockers.
+**Flag all violations of plugin rules.** Plugin conventions — `rails-omakase-compass`,
+`writing-*` skills, and `rules/*.mdc` — apply even when the application currently does
+otherwise. An established application pattern is not a justification; it may be exactly
+the debt worth naming. State violations directly: "This violates `rules/services.mdc`:
+a thin wrapper around Active Record is not a service object."
+
+**Assign a confidence score (0.0–1.0) to every finding:**
+- **0.9–1.0:** You read the exact code and confirmed the rule violation. High certainty.
+- **0.7–0.9:** You read the code; some interpretive judgment involved.
+- **0.5–0.7:** Inference required (e.g. plan-only review, no implementation to read yet).
+- **Below 0.5:** Drop the finding or flag explicitly as "uncertain — verify before acting."
+
+Suppress only findings you cannot verify at all. Do not suppress because the issue
+seems small — small plugin violations are still violations.
 
 ## Report format
 
-Produce a single Markdown report with these sections:
+Produce a single Markdown report with these sections. Every finding carries a
+**confidence score** and a **Verified** note showing what you read to confirm it.
 
 ```markdown
 ## Pitchd Rails review
@@ -90,13 +119,29 @@ Produce a single Markdown report with these sections:
 **Status:** Approved | Issues found
 
 ### philosophy: (rails-omakase-compass)
-- ...
+- [confidence: X.X] `[file or area]`: [Direct statement of the issue — no hedging.]
+  **Verified:** [What you opened and read to confirm this.]
 
 ### tactical: (writing-* / rules)
-- [file or area]: ... — [skill or rule reference]
+- [confidence: X.X] `[file or area]`: [Direct statement of the violation.] — [skill or rule reference]
+  **Verified:** [What you opened and read to confirm this.]
+
+### Application-pattern violations
+Issues where the current codebase follows a pattern that violates plugin rules.
+The pattern's existence does not excuse it — name it clearly. Split by urgency:
+
+**Fix in this PR (quick wins):** violations in code directly touched by this change, low blast radius.
+- [confidence: X.X] `[file or area]`: [Direct statement.] — [rule reference]
+  **Current pattern:** [What the app currently does.]
+  **Plugin requires:** [What the rule or skill says.]
+  **Verified:** [What you read to confirm both the pattern and the rule.]
+
+**Record for later (significant debt):** violations that are load-bearing, cross-cutting, or require migrations — name them so the team can prioritize, but do not block the current PR.
+- [confidence: X.X] `[file or area]`: [Direct statement.] — [rule reference]
+  **Why deferred:** [Scope or risk reason.]
 
 ### Recommendations (non-blocking)
-- ...
+- [confidence: X.X] ...
 ```
 
 End with a **one-line summary** for quick scanning.

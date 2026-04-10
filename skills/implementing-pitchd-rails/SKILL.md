@@ -16,6 +16,22 @@ Ship **correct, boring, omakase-shaped Rails** that matches **this plugin**:
 **philosophy** from `rails-omakase-compass`, **tactics** from `writing-*` skills
 and `rules/*.mdc`. Implement what the task asks — no extra framework, no
 drive-by refactors outside scope.
+
+**Voice:** Implement with DHH-level confidence. Pick the Rails-shaped approach
+and execute it. Do not hedge about which pattern to use — make the correct omakase
+decision and ship. When the plan is clear, implement it. When something is
+genuinely ambiguous, pause and ask once — then proceed.
+
+**Plugin rules beat application patterns:** For the **code you write in this
+task**, apply plugin rules — do not inherit anti-patterns from the surrounding
+codebase. If every controller in the app calls service objects but this task
+adds a new action, write the action using model logic per `rules/services.mdc`,
+not by calling into an existing service object. If integrating correctly is
+genuinely blocked by surrounding anti-pattern infrastructure (e.g. you must
+call into an existing service that carries side effects or state), escalate as
+**NEEDS_CONTEXT** — do not silently copy the anti-pattern or make the codebase
+inconsistent in ways that could break things. Do not refactor surrounding code
+outside this task's scope.
 </objective>
 
 **Announce:** "I'm using the implementing-pitchd-rails skill."
@@ -59,9 +75,9 @@ Read **`../rails-omakase-compass/SKILL.md`** when the task involves:
 
 For purely local edits inside an established pattern, still **skim** the compass if the change could drift (e.g. duplicating business rules in JS).
 
-**Default stack:** Prefer **Hotwire** (Turbo, Stimulus) and **server-rendered HTML** for app flows. Reach for **`writing-javascript`** only when the **task** or **existing app** already requires client-side behaviour beyond that — not as a default for “richer” UX.
+**Default stack:** Prefer **Hotwire** (Turbo, Stimulus) and **server-rendered HTML** for app flows. Reach for **`writing-javascript`** only when the **task** or **existing app** already requires client-side behaviour beyond that — not as a default for "richer" UX.
 
-**Domain logic:** Keep behaviour in **models**, **jobs**, **mailers**, and plain Ruby where the app already does. Use **`writing-services`** only when the **task**, **plan**, or **established pattern** in the repo justifies a dedicated object — not to “clean up” a controller or avoid a fat model without cause (see `rails-omakase-compass` and `writing-services`).
+**Domain logic:** Keep behaviour in **models**, **jobs**, **mailers**, and plain Ruby where the app already does. Use **`writing-services`** only when the **task**, **plan**, or **established pattern** in the repo justifies a dedicated object — not to "clean up" a controller or avoid a fat model without cause (see `rails-omakase-compass` and `writing-services`).
 
 ### 3. Select tactical skills by scope
 
@@ -72,14 +88,14 @@ From the task description and files you will touch, read **only** the relevant:
 `writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
 `writing-jobs`, `writing-migrations`, `writing-tests`.
 
-For each area, open the skill’s **SKILL.md** and the relevant
+For each area, open the skill's **SKILL.md** and the relevant
 **`references/patterns.md`** (or sectioned references). Cross-check
 **`rules/<area>.mdc`** for the same area. The list is a **menu**, not permission
 to add JS or service layers by reflex — apply the **defaults under Load the compass** first.
 
 ### 4. Implement
 
-1. Implement **exactly** what the task specifies (and the plan’s file layout if given).
+1. Implement **exactly** what the task specifies (and the plan's file layout if given).
 2. **Tests:** Follow `writing-tests` and `rules/testing.mdc`. If the task says **TDD**, follow that order (red → green → refactor).
 3. **Verify:** Run the tests and any checks the repo uses for what you changed. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
 4. **Self-review** (below) before reporting.
@@ -91,10 +107,10 @@ to add JS or service layers by reflex — apply the **defaults under Load the co
 ## Code organization
 
 - Follow the **file structure** from the plan when one exists.
-- **One clear responsibility** per file, with **clear, conventional Rails boundaries** — match what the **app already does**, not abstract “ports and adapters” for its own sake.
-- If a **new** file grows beyond the plan’s intent, **stop** and report **DONE_WITH_CONCERNS** — do not split or reorganize without plan guidance.
+- **One clear responsibility** per file, with **clear, conventional Rails boundaries**. For **file structure and size decisions** (where to put a class, whether to split a file), match what the **app already does** — not abstract "ports and adapters" for its own sake.
+- If a **new** file grows beyond the plan's intent, **stop** and report **DONE_WITH_CONCERNS** — do not split or reorganize without plan guidance.
 - If an **existing** file is already large or tangled, touch it **carefully** and note it under concerns.
-- In existing codebases, **match established patterns**. Improve only what you are touching in a way a good teammate would — **no** scope creep.
+- For **coding patterns** (service objects, RPC routes, test layer choices), match established patterns **only when they do not contradict plugin rules**. When a current pattern violates plugin rules, implement the correct approach for the code you write in this task and note the deviation in your report — do not refactor surrounding code outside task scope.
 
 ## When you are in over your head
 
@@ -120,7 +136,7 @@ If a cop cannot be satisfied with a **correct** code fix and needs a human polic
 
 **Quality:** Best work? Names accurate? Code maintainable?
 
-**Discipline:** YAGNI? Only what was requested? Existing patterns followed? Plugin rules applied?
+**Discipline:** YAGNI? Only what was requested? Plugin rules applied (not just existing app patterns)?
 
 **Testing:** Behaviour verified (not only mocked internals)? TDD if required? Right spec layer per `writing-tests`?
 

@@ -20,21 +20,33 @@ description: >-
 Produce **implementation plans** a skilled developer can follow without guessing
 your codebase: exact paths, real Ruby snippets, **RSpec** commands with expected
 outcomes, and **Rails-shaped** decomposition. Assume the reader knows Ruby and
-Rails but not your app — not that they need hand-holding on “what a test is.”
+Rails but not your app — not that they need hand-holding on "what a test is."
 
 Plans follow **37signals-style Rails**: **fat models**, **thin controllers**,
 **REST-first routing**, **Pundit** at the boundary, **Hotwire** for HTML UX,
 **no fake service layer** — and the **testing philosophy** in
 `skills/writing-tests/SKILL.md` / `rules/testing.mdc` (RSpec + FactoryBot).
+
+**Voice:** Write plans with DHH-level confidence. Make decisions; do not present
+options and defer to the reader. "Use a model concern here" — not "you might
+consider a concern". If the plugin rules say how to do something, the plan
+follows them — even if the current application does it differently. The plan
+shapes the code; the existing code does not shape the plan.
+
+**Plugin rules beat application patterns:** If the current codebase uses service
+objects, custom routes, or test patterns that contradict plugin rules, the plan
+does **not** inherit those patterns. Name the correct approach and cite the rule.
+If an existing anti-pattern must be worked around for this task, say so explicitly
+and mark it as technical debt — do not normalize it.
 </objective>
 
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
 ## Philosophy (DHH / Pitchd Rails)
 
-- **Vertical slices over layers:** Prefer tasks that complete **one resource’s
+- **Vertical slices over layers:** Prefer tasks that complete **one resource's
   slice** (schema → model → policy → routes → controller → views → specs) over
-  scattering “all models, then all controllers.”
+  scattering "all models, then all controllers."
 - **REST is the vocabulary:** New behavior is usually **new resources** or
   **standard CRUD**, not RPC routes — see `rules/routes.mdc`. If the plan adds
   `post :publish`, it needs a **one-line justification** or a **nested resource**
@@ -70,7 +82,7 @@ Use these **while writing the plan** so tasks do not contradict the codebase:
 
 | Area | Read |
 |------|------|
-| Architecture, omakase fit, boundaries (“whether” before “how”) | `skills/rails-omakase-compass/SKILL.md` |
+| Architecture, omakase fit, boundaries ("whether" before "how") | `skills/rails-omakase-compass/SKILL.md` |
 | Models, domain verbs, state-as-records | `rules/models.mdc`, `skills/writing-models/SKILL.md` |
 | Routes, shallow nesting, REST | `rules/routes.mdc`, `skills/writing-routes/SKILL.md` |
 | Controllers, params, Hotwire response order | `rules/controllers.mdc`, `skills/writing-controllers/SKILL.md` |
@@ -89,17 +101,17 @@ Use these **while writing the plan** so tasks do not contradict the codebase:
 
 ### Supplementary reference (optional)
 
-When **`rails-omakase-compass`**, this skill’s philosophy section, and the scoped **`rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap (e.g. a pattern name or tradeoff not spelled out in the plugin), load **`skills/referencing-unofficial-37signals-guide/SKILL.md`** and **fetch** only the **specific** upstream topic files you need (README TOC → raw `.md`). That material **informs** the plan — it does **not** override plugin rules or skills; **tactics in this plugin win** on HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a fetch fails or returns nothing usable, **report** that; **do not** invent or assert content “from the guide.”
+When **`rails-omakase-compass`**, this skill's philosophy section, and the scoped **`rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap (e.g. a pattern name or tradeoff not spelled out in the plugin), load **`skills/referencing-unofficial-37signals-guide/SKILL.md`** and **fetch** only the **specific** upstream topic files you need (README TOC → raw `.md`). That material **informs** the plan — it does **not** override plugin rules or skills; **tactics in this plugin win** on HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a fetch fails or returns nothing usable, **report** that; **do not** invent or assert content "from the guide."
 
 ## Map files before tasks
 
 Before checkbox tasks, add a **short file map**: what will be created or
 changed and **why** (single responsibility per file). Prefer **cohesion with the
-existing app**: if the codebase uses larger files, do not split “for SRP” unless
+existing app**: if the codebase uses larger files, do not split "for SRP" unless
 the spec or file size demands it.
 
 - **Files that change together** should live together (Rails default: by
-  resource/feature, not by abstract “layer”).
+  resource/feature, not by abstract "layer").
 - **Interfaces** are REST + Active Record + Pundit — not internal JavaScript APIs
   unless the spec is explicitly an API feature.
 
@@ -185,7 +197,7 @@ Python/pytest unless the spec is literally a non-Ruby subproject.
 - [ ] **Step 1: Write the failing test** (system / request / model / policy per `skills/writing-tests/SKILL.md`)
 
 ```ruby
-# Illustrative — align with the app’s helpers, factories, and I18n keys.
+# Illustrative — align with the app's helpers, factories, and I18n keys.
 RSpec.describe "A focused behaviour", type: :system do
   it "does what the user cares about" do
     # ...
@@ -222,20 +234,22 @@ These are **plan failures** — fix before sharing:
 - Introducing **service objects**, **repository layers**, or **RPC routes** without
   matching justification and alignment with `rules/services.mdc` / `rules/routes.mdc`
 
-## Rails anti-patterns to flag in plans
+## Rails anti-patterns to reject in plans
 
-Reject or rewrite tasks that:
+**Reject or rewrite tasks that follow these patterns — regardless of whether the
+current application already does them.** If an anti-pattern is already present in
+the codebase, do not extend it. Name it, cite the rule, and route around it.
 
-- Add **`app/services`** wrappers that only call Active Record — use model verbs,
+- **`app/services` wrappers** that only call Active Record — use model verbs,
   form objects, or jobs (`rules/services.mdc`).
-- Add **custom member routes** for state that belongs in **`update`** or a **small
+- **Custom member routes** for state that belongs in **`update`** or a **small
   resource** (`post :publish` vs `PublicationsController`) without justification
   (`rules/routes.mdc`).
-- Duplicate **system + request + model** coverage for the **same** behaviour
+- **Duplicate system + request + model** coverage for the **same** behaviour
   (`rules/testing.mdc`).
-- Reach for **Turbo Streams** before **redirect** / **frame** solutions when the
-  UX allows (`rules/controllers.mdc`, `skills/writing-hotwire/SKILL.md`).
-- Split **one vertical slice** across many tasks that **never** pass CI in between.
+- **Turbo Streams** before **redirect** / **frame** solutions when the UX allows
+  (`rules/controllers.mdc`, `skills/writing-hotwire/SKILL.md`).
+- **One vertical slice split** across many tasks that **never** pass CI in between.
 
 ## Self-review
 
@@ -245,6 +259,8 @@ After drafting the plan:
 2. **Placeholder scan:** Search for forbidden vague phrases (see above).
 3. **Naming consistency:** Method names, policy methods, and route helpers match
    across tasks (no `publish` vs `publish!` drift unless intentional).
+4. **Anti-pattern scan:** Check that no task normalizes a current application
+   anti-pattern — even if the existing code does it. Flag and route around it.
 
 Fix issues inline; add tasks for missing requirements.
 
@@ -256,7 +272,7 @@ required (see Pass 3). Even **small** plans still run Pass 2 once so
 touched-path surroundings are not skipped by habit.
 
 Follow **ordered passes**. After Pass 1 feedback is in the plan, **always** run
-Pass 2: it reviews **pre-existing** code along the plan’s touched paths (see
+Pass 2: it reviews **pre-existing** code along the plan's touched paths (see
 `skills/reviewing-touched-surroundings/SKILL.md`), not the new feature blocks.
 
 ### Pass 1 — Feature / plan shape (`pitchd-rails-reviewer`)
@@ -277,7 +293,7 @@ After drafting, delegate to **`pitchd-rails-reviewer`**
 Invoke with **`/pitchd-rails-reviewer`** plus that context, or use the Task tool.
 
 **Incorporate** Approved items or **address** Issues found by **editing the plan**
-(tasks, file map, snippets). “Implemented” at this stage means **feedback is
+(tasks, file map, snippets). "Implemented" at this stage means **feedback is
 applied in the plan document** — not yet shipping code.
 
 ### Pass 2 — Touched surroundings (`pitchd-rails-surroundings-reviewer`)
@@ -295,7 +311,7 @@ code on touched paths, not new feature blocks).
 | **Phase** | `plan` |
 | **Plan path** | Same plan file as Pass 1 |
 | **Spec path** | Same as Pass 1, or `none` |
-| **Scope** | **Touched paths** from the plan’s file map (and related globs if listed). If no diff exists yet, say **plan-inferred scope** and list paths; the subagent may infer boundaries — that is expected for a pre-code plan. |
+| **Scope** | **Touched paths** from the plan's file map (and related globs if listed). If no diff exists yet, say **plan-inferred scope** and list paths; the subagent may infer boundaries — that is expected for a pre-code plan. |
 
 Invoke with **`/pitchd-rails-surroundings-reviewer`** or the Task tool.
 
@@ -308,10 +324,10 @@ verbatim in both places if the plan already records deferred items.
 Use the surroundings **Report format** output to update the plan:
 
 - **Quick wins** that fit this effort: add **checkbox tasks**, extra steps, or a
-  short **“Surrounding improvements (in scope)”** subsection with concrete file
+  short **"Surrounding improvements (in scope)"** subsection with concrete file
   references — so the codebase improves in the same paths as the feature.
 - **Separate follow-ups** (large refactors, behavior surface changes, migrations,
-  multi-file churn): add a **“Deferred / out-of-plan”** (or similar) subsection
+  multi-file churn): add a **"Deferred / out-of-plan"** (or similar) subsection
   **in the plan** with one line each — *or* a pointer that the full list lives in
   your user-facing summary (see below). Do **not** silently drop these; they
   belong in the record even when not scheduled.
