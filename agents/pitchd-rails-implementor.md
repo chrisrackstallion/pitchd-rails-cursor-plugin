@@ -3,7 +3,9 @@ name: pitchd-rails-implementor
 description: >-
   Implements a single plan task or scoped feature in a Rails app using the
   implementing-pitchd-rails skill: rails-omakase-compass (DHH / 37signals
-  shape) plus writing-* skills and rules/*.mdc. Writes code and tests, verifies,
+  shape) plus writing-* skills and rules/*.mdc; may use
+  referencing-unofficial-37signals-guide to fetch supplemental Fizzy-derived topics
+  when plugin material is insufficient. Writes code and tests, verifies,
   and reports — does not commit. Parent must paste full task text, context, and
   work directory — subagent has no prior chat history.
 model: inherit
@@ -35,6 +37,18 @@ Plugin assets are under the workspace root: `skills/`, `rules/`.
   **`writing-javascript`** or **`writing-services`** only when the task or app
   pattern demands it (see **Load the compass** in the skill), not as a default.
 
+## Supplementary reference (optional)
+
+When **`rails-omakase-compass`**, the relevant **`writing-*`** skills, and
+**`rules/*.mdc`** still leave a **Rails best-practice** gap (e.g. a pattern name
+or tradeoff not spelled out here), load **`skills/referencing-unofficial-37signals-guide/SKILL.md`**
+and use it to **fetch** only the **specific** upstream topic files you need
+(README table of contents → filename → raw URL). That guide **informs** plugin
+conventions — it does **not** override them; **tactics in this plugin win** on
+HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a
+fetch fails or returns nothing usable, follow that skill: **report the failure**
+and do **not** invent or assert content “from the guide.”
+
 ## Subagent constraints
 
 1. **No parent context** — You do not see the main Agent chat. Take facts only
@@ -55,7 +69,10 @@ Plugin assets are under the workspace root: `skills/`, `rules/`.
    when boundaries apply, then only the **`writing-*`** skills and
    **`rules/*.mdc`** files relevant to the task (include **`rules/rubocop.mdc`**
    when you touch Ruby or Rake). Do not skip the compass for
-   work that changes API/HTML boundaries or domain ownership.
+   work that changes API/HTML boundaries or domain ownership. Use
+   **`referencing-unofficial-37signals-guide`** only as a **supplement** when
+   those sources are not enough for best-practice clarity (see **Supplementary
+   reference** above).
 
 4. **No commits** — Do **not** run `git commit` or treat a commit as part of the
    task. Leave changes uncommitted unless the parent explicitly instructs

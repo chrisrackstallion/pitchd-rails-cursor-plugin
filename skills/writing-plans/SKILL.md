@@ -10,6 +10,8 @@ description: >-
   plan. Re-run pitchd-rails-reviewer for final sign-off when you incorporated Pass
   1 recommendations and/or Pass 2 materially changed the plan. Use when turning
   a spec into tasks, planning a feature, or breaking work into checklisted steps.
+  May use referencing-unofficial-37signals-guide for supplemental topic fetches
+  when compass and scoped plugin material are insufficient for best-practice clarity.
 ---
 
 # Writing Rails Implementation Plans
@@ -68,6 +70,7 @@ Use these **while writing the plan** so tasks do not contradict the codebase:
 
 | Area | Read |
 |------|------|
+| Architecture, omakase fit, boundaries (“whether” before “how”) | `skills/rails-omakase-compass/SKILL.md` |
 | Models, domain verbs, state-as-records | `rules/models.mdc`, `skills/writing-models/SKILL.md` |
 | Routes, shallow nesting, REST | `rules/routes.mdc`, `skills/writing-routes/SKILL.md` |
 | Controllers, params, Hotwire response order | `rules/controllers.mdc`, `skills/writing-controllers/SKILL.md` |
@@ -83,6 +86,10 @@ Use these **while writing the plan** so tasks do not contradict the codebase:
 | Background jobs | `rules/jobs.mdc`, `skills/writing-jobs/SKILL.md` |
 | Migrations | `rules/migrations.mdc`, `skills/writing-migrations/SKILL.md` |
 | Linting | `rules/rubocop.mdc`, `skills/running-rubocop/SKILL.md` |
+
+### Supplementary reference (optional)
+
+When **`rails-omakase-compass`**, this skill’s philosophy section, and the scoped **`rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap (e.g. a pattern name or tradeoff not spelled out in the plugin), load **`skills/referencing-unofficial-37signals-guide/SKILL.md`** and **fetch** only the **specific** upstream topic files you need (README TOC → raw `.md`). That material **informs** the plan — it does **not** override plugin rules or skills; **tactics in this plugin win** on HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a fetch fails or returns nothing usable, **report** that; **do not** invent or assert content “from the guide.”
 
 ## Map files before tasks
 
@@ -152,9 +159,9 @@ form object, job), Hotwire surface]
 
 **Rails shape:** [Key models, resources, policies]
 
-**Conventions:** `rules/models.mdc`, `rules/routes.mdc`, `rules/controllers.mdc`,
-`rules/policies.mdc`, `rules/services.mdc`, `rules/testing.mdc`, `rules/hotwire.mdc`
-(and UI rules as needed — see table above)
+**Conventions:** `skills/rails-omakase-compass/SKILL.md` (shape), `rules/models.mdc`,
+`rules/routes.mdc`, `rules/controllers.mdc`, `rules/policies.mdc`, `rules/services.mdc`,
+`rules/testing.mdc`, `rules/hotwire.mdc` (and UI rules as needed — see table above)
 
 ---
 ```
