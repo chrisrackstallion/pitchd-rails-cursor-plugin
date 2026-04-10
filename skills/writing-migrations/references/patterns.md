@@ -20,10 +20,12 @@ class AddTaglineToUsers < ActiveRecord::Migration[8.0]
 end
 ```
 
-### Column with a default (safe in Rails 8+)
+### Column with a default (safe on Postgres 11+ and MySQL 8+)
 
 Rails passes the default to the database efficiently. No table rewrite on
-Postgres 11+ or MySQL 8+:
+Postgres 11+ or MySQL 8+ — the database handles it natively without rewriting
+existing rows. On older database versions a full table rewrite may occur;
+confirm against your database version, not the Rails version:
 
 ```ruby
 class AddNotificationsEnabledToUsers < ActiveRecord::Migration[8.0]
@@ -324,18 +326,30 @@ def display_name
 end
 ```
 
-**Deploy 2 — backfill, flip reads fully to new column, remove old:**
+**Between deploys — backfill (run as a rake task, separately from the deploy):**
 
 ```ruby
-class BackfillAndRemoveNameFromUsers < ActiveRecord::Migration[8.0]
-  def up
-    execute "UPDATE users SET display_name = name WHERE display_name IS NULL"
-    remove_column :users, :name, :string
-  end
-
-  def down
-    add_column :users, :name, :string
-    execute "UPDATE users SET name = display_name"
+# lib/tasks/backfill_display_name.rake
+namespace :backfill do
+  task display_name: :environment do
+    User.where(display_name: nil).in_batches.each_record do |user|
+      user.update_column(:display_name, user[:name])
+    end
   end
 end
 ```
+
+Update the model to read fully from the new column once all rows are backfilled
+(remove the fallback reader).
+
+**Deploy 2 — remove the old column (DDL only, after backfill is complete):**
+
+```ruby
+class RemoveNameFromUsers < ActiveRecord::Migration[8.0]
+  def change
+    remove_column :users, :name, :string
+  end
+end
+```
+
+After the migration runs, remove `ignored_columns` from the model.

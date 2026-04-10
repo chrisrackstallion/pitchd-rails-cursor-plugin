@@ -58,18 +58,13 @@ def perform(article_id)
   article = Article.find(article_id)
   article.notify_subscribers
 end
-
-# Acceptable when you handle DeserializationError at the ApplicationJob level
-NotifySubscribersJob.perform_later(article)
-
-def perform(article)
-  article.notify_subscribers
-end
 ```
 
-If you pass an ActiveRecord object directly, `discard_on ActiveJob::DeserializationError`
-in `ApplicationJob` prevents queue poisoning when the record is deleted before
-the job runs.
+GlobalID allows passing ActiveRecord objects directly as job arguments — Rails
+serializes them automatically. The convention is to pass IDs for explicitness
+and resilience. As an exception, if you pass an object directly, ensure
+`discard_on ActiveJob::DeserializationError` is set on `ApplicationJob` to
+prevent queue poisoning when the record is deleted before the job runs.
 
 ### Keyword arguments
 
@@ -183,14 +178,14 @@ For permanent failures — validation errors, records that no longer exist,
 states the job cannot handle — use `discard_on` to prevent retrying:
 
 ```ruby
-class SendWelcomeEmailJob < ApplicationJob
+class ProcessPaymentJob < ApplicationJob
   discard_on ActiveRecord::RecordNotFound
-  discard_on User::AlreadyOnboarded
+  discard_on Payment::AlreadyProcessed
 
-  def perform(user_id)
-    user = User.find(user_id)
-    raise User::AlreadyOnboarded if user.welcomed?
-    UserMailer.with(user: user).welcome.deliver_now
+  def perform(payment_id)
+    payment = Payment.find(payment_id)
+    raise Payment::AlreadyProcessed if payment.processed?
+    payment.process!
   end
 end
 ```
@@ -279,28 +274,30 @@ RenewalReminderJob.set(wait_until: subscription.renews_at - 3.days).perform_late
 ### Recurring jobs (cron-style)
 
 Solid Queue has scheduling built in — no additional gem required. Define
-recurring tasks in `config/solid_queue.yml` (or `config/recurring.yml` if
-separated) under the dispatcher's `recurring_tasks` key:
+recurring tasks in `config/recurring.yml` — a dedicated flat file separate
+from the queue/worker configuration:
 
 ```yaml
-# config/solid_queue.yml
-dispatchers:
-  - polling_interval: 1
-    batch_size: 500
-    recurring_tasks:
-      daily_digest:
-        class: DailyDigestJob
-        schedule: "0 8 * * *"   # standard cron — every day at 08:00
-      weekly_report:
-        class: WeeklyReportJob
-        args: [ { format: "pdf" } ]
-        schedule: "0 9 * * 1"   # every Monday at 09:00
+# config/recurring.yml
+daily_digest:
+  class: DailyDigestJob
+  schedule: "0 8 * * *"   # standard cron — every day at 08:00
+
+weekly_report:
+  class: WeeklyReportJob
+  args: [ { format: "pdf" } ]
+  schedule: "0 9 * * 1"   # every Monday at 09:00
 ```
 
 The `schedule` field accepts standard cron expressions or Fugit natural-language
-syntax (`"every day at 8am"`). Solid Queue uses a `solid_queue_recurring_executions`
-table with a unique index on `(task_key, run_at)` to prevent duplicate enqueues
-when multiple dispatchers share the same configuration.
+syntax (`"every day at 8am"`). The file path can be overridden with the
+`SOLID_QUEUE_RECURRING_SCHEDULE` environment variable or the
+`--recurring_schedule_file` flag to `bin/jobs`. To disable all recurring tasks
+in an environment (staging, review apps), set `SOLID_QUEUE_SKIP_RECURRING=true`.
+
+Solid Queue uses a `solid_queue_recurring_executions` table with a unique index
+on `(task_key, run_at)` to prevent duplicate enqueues when multiple schedulers
+share the same configuration.
 
 Keep the job itself thin — domain logic belongs on the model, the schedule is
 configuration, not application code.
@@ -309,53 +306,7 @@ configuration, not application code.
 
 ## Testing
 
-### Asserting enqueueing (callers)
+Job spec patterns — structure, enqueuing assertions, idempotency testing,
+and the boundary between caller specs and job specs — live in:
 
-The caller (model callback, controller, another job) should only prove the
-job was enqueued — not that the job performed correctly:
-
-```ruby
-# spec/models/article_spec.rb
-describe "#publish" do
-  it "enqueues subscriber notification" do
-    article = create(:article)
-
-    expect {
-      article.publish
-    }.to have_enqueued_job(NotifySubscribersJob).with(article.id)
-  end
-end
-```
-
-### Testing the job itself
-
-Run the job inline to test `perform`:
-
-```ruby
-# spec/jobs/notify_subscribers_job_spec.rb
-RSpec.describe NotifySubscribersJob, type: :job do
-  describe "#perform" do
-    it "notifies each subscriber" do
-      article = create(:article, :published)
-      subscribers = create_list(:user, 3)
-      subscribers.each { |u| article.subscribers << u }
-
-      expect {
-        described_class.perform_now(article.id)
-      }.to have_enqueued_mail(ArticleMailer, :update).exactly(3).times
-    end
-
-    it "does nothing when the article is unpublished" do
-      article = create(:article)  # not published
-
-      expect {
-        described_class.perform_now(article.id)
-      }.not_to have_enqueued_mail
-    end
-  end
-end
-```
-
-Use `perform_enqueued_jobs` in system or request specs only when you need
-to verify end-to-end side effects — prefer unit-level job specs for the
-job's own logic.
+**`skills/writing-tests/references/support-specs.md`** § Job Specs

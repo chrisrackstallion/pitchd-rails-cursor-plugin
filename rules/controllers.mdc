@@ -228,4 +228,4 @@ end
 | Inline `current_user.admin?` permission checks | `authorize @record` delegates to policy |
 | Pundit policy checks in `before_action` | `authorize` in the action body — keep `before_action` for authentication and finders, not permission rules |
 | Forgetting authorization in an action | `after_action :verify_authorized` catches it |
-| Forgetting `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it (when enabled) |
+| Forgetting `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it |

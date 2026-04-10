@@ -9,7 +9,10 @@ alwaysApply: false
 ## Jobs Are the Async Service Layer
 
 Background work belongs in jobs, not in service objects. A job calls a model
-method asynchronously — it is not a place to write domain logic.
+method asynchronously — it is not a place to write domain logic. Jobs fill the
+slot where service objects would be tempting for async orchestration; the model
+still owns the domain logic. (See **`rules/services.mdc`** — "There Is No
+Service Layer" — for where orchestration code does not belong.)
 
 ```ruby
 # Good — job delegates to the model
@@ -87,16 +90,14 @@ discard_on ActiveRecord::RecordNotFound
 Solid Queue ships with a cron-style scheduler. Do not reach for `whenever`
 or any other scheduling gem — that is not omakase.
 
-Define recurring tasks in `config/solid_queue.yml` under `recurring_tasks`:
+Define recurring tasks in `config/recurring.yml` (a separate flat file,
+not nested inside `config/queue.yml`):
 
 ```yaml
-dispatchers:
-  - polling_interval: 1
-    batch_size: 500
-    recurring_tasks:
-      daily_digest:
-        class: DailyDigestJob
-        schedule: "0 8 * * *"
+# config/recurring.yml
+daily_digest:
+  class: DailyDigestJob
+  schedule: "0 8 * * *"   # standard cron — every day at 08:00
 ```
 
 The schedule accepts standard cron syntax or Fugit natural language
