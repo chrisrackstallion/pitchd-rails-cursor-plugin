@@ -46,7 +46,8 @@ From the diff or plan, pick **only** the skills that apply:
 `writing-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
 `writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
 `writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-tests`, `running-rubocop` (expect **zero** RuboCop offences — fix in code, no disables; not architecture).
+`writing-jobs`, `writing-migrations`, `writing-tests`,
+`running-rubocop` (when the app uses RuboCop: expect **zero** offences — fix in code, no disables, no `.rubocop_todo.yml`; not architecture).
 
 Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
 sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.

@@ -37,7 +37,7 @@ end
 | Shared behaviour across models | Concern |
 | Complex multi-step operation on one aggregate | PORO namespaced under the model |
 | Multi-field form spanning models or workflow | Form object (`ActiveModel::Model`) |
-| Async work, retries, scheduling | Job (`ActiveJob`) |
+| Async work, retries, scheduling | Job (`ActiveJob`) — **`rules/jobs.mdc`**, **`skills/writing-jobs/references/patterns.md`** |
 | Incoming email processing | Mailbox (`ActionMailbox`) |
 | Sending email | Mailer (`ActionMailer`) — **`rules/mailers.mdc`**, **`skills/writing-mailers/references/patterns.md`** |
 | External API integration | PORO in `app/models/` namespaced under a domain noun |

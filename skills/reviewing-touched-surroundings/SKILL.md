@@ -83,7 +83,8 @@ way as `reviewing-pitchd-rails`, but **only** for pre-existing regions:
 
 `writing-models`, `writing-routes`, `writing-controllers`, `writing-hotwire`,
 `writing-views`, `writing-javascript`, `writing-css-tailwind`, `writing-i18n`,
-`writing-mailers`, `writing-policies`, `writing-services`, `writing-tests`,
+`writing-mailers`, `writing-policies`, `writing-services`, `writing-jobs`,
+`writing-migrations`, `writing-tests`,
 `writing-plans` (if the touched artifact is a plan file).
 
 Prefix findings **`tactical:`** and cite skill or rule.

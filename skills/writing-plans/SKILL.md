@@ -80,6 +80,9 @@ Use these **while writing the plan** so tasks do not contradict the codebase:
 | JavaScript | `rules/javascript.mdc`, `skills/writing-javascript/SKILL.md` |
 | I18n | `rules/i18n.mdc`, `skills/writing-i18n/SKILL.md` |
 | Mailers | `rules/mailers.mdc`, `skills/writing-mailers/SKILL.md` |
+| Background jobs | `rules/jobs.mdc`, `skills/writing-jobs/SKILL.md` |
+| Migrations | `rules/migrations.mdc`, `skills/writing-migrations/SKILL.md` |
+| Linting | `rules/rubocop.mdc`, `skills/running-rubocop/SKILL.md` |
 
 ## Map files before tasks
 
@@ -108,6 +111,12 @@ Order tasks by **dependency**, not arbitrary numbering:
    behavior (`skills/writing-hotwire/SKILL.md`).
 8. **I18n** — user-facing copy (`rules/i18n.mdc`) when adding or changing strings.
 9. **Mailer** — only if the spec requires email (`rules/mailers.mdc`).
+10. **Jobs** — only if the spec requires background processing (`rules/jobs.mdc`).
+11. **Tests** — spec type per `skills/writing-tests/SKILL.md`: system spec for
+    user-visible flows, model/request/policy specs for their respective layers.
+    Each task should include the test step inline (write failing test → red →
+    implement → green); this step is the reminder to include tests in **every**
+    task, not only at the end.
 
 Each **task** should be a **coherent slice** that can reach a green checkpoint
 (tests passing), not a ritual sequence of micro-edits with no runnable state

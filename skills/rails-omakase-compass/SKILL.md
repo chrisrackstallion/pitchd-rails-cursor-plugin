@@ -126,6 +126,8 @@ Read only what the task touches:
 | Mailers | `writing-mailers` |
 | Policies / Pundit | `writing-policies` |
 | Service objects (when justified) | `writing-services` |
+| Background jobs / ActiveJob | `writing-jobs` |
+| Database migrations | `writing-migrations` |
 | Tests / RSpec | `writing-tests` |
 
 ## What this skill deliberately omits

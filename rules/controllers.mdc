@@ -56,7 +56,7 @@ class ArticlesController < ApplicationController
   # 3. Callbacks (before_action, after_action)
   before_action :set_article, only: %i[ show edit update destroy ]
 
-  # 4. Public actions — index, show, new, create, edit, update, destroy
+  # 4. Public actions — in CRUD order
   def index
     @articles = policy_scope(Article).chronologically
     authorize Article
@@ -64,6 +64,42 @@ class ArticlesController < ApplicationController
 
   def show
     authorize @article
+  end
+
+  def new
+    @article = Article.new
+    authorize @article
+  end
+
+  def create
+    @article = Article.new(article_params)
+    authorize @article
+
+    if @article.save
+      redirect_to @article, notice: "Article created."
+    else
+      render :new, status: :unprocessable_content
+    end
+  end
+
+  def edit
+    authorize @article
+  end
+
+  def update
+    authorize @article
+
+    if @article.update(article_params)
+      redirect_to @article, notice: "Article updated."
+    else
+      render :edit, status: :unprocessable_content
+    end
+  end
+
+  def destroy
+    authorize @article
+    @article.destroy!
+    redirect_to articles_path, notice: "Article deleted."
   end
 
   private
@@ -158,7 +194,7 @@ class ArticlesController < ApplicationController
 end
 ```
 
-Default: every action calls `authorize`. Use `after_action :verify_authorized` (and typically `after_action :verify_policy_scoped, only: :index`) in `ApplicationController`. For actions that intentionally need no authorization (public pages, health checks), use `skip_after_action` — see the policies skill § Skipping Verification.
+Default: every action calls `authorize`. Use `after_action :verify_authorized` and `after_action :verify_policy_scoped, only: :index` in `ApplicationController`. For actions that intentionally need no authorization (public pages, health checks), use `skip_after_action` — see the policies skill § Skipping Verification.
 
 ```ruby
 class ApplicationController < ActionController::Base

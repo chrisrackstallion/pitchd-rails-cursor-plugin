@@ -1,0 +1,97 @@
+---
+description: Rails background job conventions — DHH/37signals style. Apply when working with ActiveJob subclasses, background processing, or async work.
+globs: app/jobs/**/*.rb
+alwaysApply: false
+---
+
+# Job Conventions
+
+## Jobs Are the Async Service Layer
+
+Background work belongs in jobs, not in service objects. A job calls a model
+method asynchronously — it is not a place to write domain logic.
+
+```ruby
+# Good — job delegates to the model
+class NotifySubscribersJob < ApplicationJob
+  queue_as :default
+
+  def perform(article_id)
+    article = Article.find(article_id)
+    article.notify_subscribers
+  end
+end
+
+# Bad — domain logic inside perform
+class NotifySubscribersJob < ApplicationJob
+  def perform(article_id)
+    article = Article.find(article_id)
+    article.subscribers.each do |subscriber|
+      # business rules and mail logic here — belongs on the model
+    end
+  end
+end
+```
+
+## Pass IDs, Not Objects
+
+```ruby
+# Good — find the record fresh in perform
+NotifySubscribersJob.perform_later(article.id)
+
+def perform(article_id)
+  article = Article.find(article_id)
+  article.notify_subscribers
+end
+```
+
+## Enqueue After Commit
+
+Never enqueue a job inside an open transaction — the job runs before commit
+or after a rollback.
+
+```ruby
+# Good — after_commit fires only when the transaction commits
+after_create_commit :notify_subscribers_later
+
+private
+  def notify_subscribers_later
+    NotifySubscribersJob.perform_later(id)
+  end
+```
+
+## Idempotency
+
+Jobs can be retried. Every `perform` must be safe to run twice.
+
+```ruby
+def perform(subscription_id)
+  subscription = Subscription.find(subscription_id)
+  return if subscription.cancelled?   # guard against duplicate execution
+  subscription.cancel
+end
+```
+
+## Error Handling
+
+```ruby
+# Transient errors — retry with backoff
+retry_on Net::OpenTimeout, wait: :polynomially_longer, attempts: 5
+
+# Permanent errors — discard without retrying
+discard_on ActiveRecord::RecordNotFound
+```
+
+Canonical patterns: **`skills/writing-jobs/references/patterns.md`**.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Domain logic in `perform` | Model method; job just calls it |
+| Passing ActiveRecord objects as arguments | Pass IDs |
+| `perform_now` in production | `perform_later` |
+| Enqueueing inside a transaction | `after_commit` callback |
+| Wrapping `deliver_later` in a job | Call `deliver_later` directly |
+| No idempotency consideration | Guard clause at the top of `perform` |
+| Silently rescuing all exceptions | `retry_on` / `discard_on` with specific classes |
