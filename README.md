@@ -40,12 +40,13 @@ New here? Start with **`rails-omakase-compass`** to understand the philosophy, t
 
 ## Credits
 
-This plugin stands on the shoulders of two excellent Cursor plugin ecosystems:
+This plugin stands on the shoulders of two excellent Cursor plugin ecosystems and one reference guide:
 
 - **[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)** (Every) — for strong **planning**, **execution**, and **review** skills and patterns; the **DHH Rails reviewer** persona in particular is a highlight.
 - **[Superpowers](https://github.com/obra/superpowers)** — for disciplined **planning** and **execution** workflows.
+- **[unofficial-37signals-coding-style-guide](https://github.com/marckohlbrugge/unofficial-37signals-coding-style-guide)** (Marc Köhlbrugge) — the community-maintained guide to 37signals coding patterns, fetched selectively as a supplemental reference.
 
-Thank you to both projects for the ideas and structure that made this plugin possible.
+Thank you to all three projects for the ideas and structure that made this plugin possible.
 
 ## License
 
