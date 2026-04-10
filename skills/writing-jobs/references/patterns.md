@@ -264,7 +264,9 @@ end
 
 ## Scheduling
 
-For recurring or delayed jobs, pass timing options when enqueueing:
+### One-off delayed jobs
+
+Pass timing options when enqueueing:
 
 ```ruby
 # Run in 30 minutes
@@ -274,10 +276,34 @@ DigestEmailJob.set(wait: 30.minutes).perform_later(user.id)
 RenewalReminderJob.set(wait_until: subscription.renews_at - 3.days).perform_later(subscription.id)
 ```
 
-For recurring work (daily reports, periodic cleanup), use a scheduler gem
-such as `whenever` (cron) or `mission_control-jobs` alongside Solid Queue —
-or your hosting platform's scheduler. Keep the job itself thin; the schedule
-is configuration, not application logic.
+### Recurring jobs (cron-style)
+
+Solid Queue has scheduling built in — no additional gem required. Define
+recurring tasks in `config/solid_queue.yml` (or `config/recurring.yml` if
+separated) under the dispatcher's `recurring_tasks` key:
+
+```yaml
+# config/solid_queue.yml
+dispatchers:
+  - polling_interval: 1
+    batch_size: 500
+    recurring_tasks:
+      daily_digest:
+        class: DailyDigestJob
+        schedule: "0 8 * * *"   # standard cron — every day at 08:00
+      weekly_report:
+        class: WeeklyReportJob
+        args: [ { format: "pdf" } ]
+        schedule: "0 9 * * 1"   # every Monday at 09:00
+```
+
+The `schedule` field accepts standard cron expressions or Fugit natural-language
+syntax (`"every day at 8am"`). Solid Queue uses a `solid_queue_recurring_executions`
+table with a unique index on `(task_key, run_at)` to prevent duplicate enqueues
+when multiple dispatchers share the same configuration.
+
+Keep the job itself thin — domain logic belongs on the model, the schedule is
+configuration, not application code.
 
 ---
 

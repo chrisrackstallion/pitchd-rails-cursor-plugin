@@ -82,6 +82,26 @@ retry_on Net::OpenTimeout, wait: :polynomially_longer, attempts: 5
 discard_on ActiveRecord::RecordNotFound
 ```
 
+## Recurring Jobs — Use Solid Queue's Built-In Scheduler
+
+Solid Queue ships with a cron-style scheduler. Do not reach for `whenever`
+or any other scheduling gem — that is not omakase.
+
+Define recurring tasks in `config/solid_queue.yml` under `recurring_tasks`:
+
+```yaml
+dispatchers:
+  - polling_interval: 1
+    batch_size: 500
+    recurring_tasks:
+      daily_digest:
+        class: DailyDigestJob
+        schedule: "0 8 * * *"
+```
+
+The schedule accepts standard cron syntax or Fugit natural language
+(`"every day at 8am"`). Full patterns: **`skills/writing-jobs/references/patterns.md`** § Scheduling.
+
 Canonical patterns: **`skills/writing-jobs/references/patterns.md`**.
 
 ## Anti-Patterns
@@ -95,3 +115,4 @@ Canonical patterns: **`skills/writing-jobs/references/patterns.md`**.
 | Wrapping `deliver_later` in a job | Call `deliver_later` directly |
 | No idempotency consideration | Guard clause at the top of `perform` |
 | Silently rescuing all exceptions | `retry_on` / `discard_on` with specific classes |
+| `whenever` or other cron gems for recurring jobs | Solid Queue `recurring_tasks` in `config/solid_queue.yml` |
