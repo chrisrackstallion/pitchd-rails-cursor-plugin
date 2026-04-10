@@ -154,7 +154,7 @@ Details match `rules/controllers.mdc` § Response Hierarchy (Hotwire). Frames, s
 | Inline `current_user.admin?` permission checks | `authorize @record` delegates to Pundit policy |
 | Pundit policy checks in `before_action` | `authorize` in the action — use `before_action` for authentication and finders |
 | Missing authorization in an action | `after_action :verify_authorized` catches forgotten calls |
-| Missing `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it (when enabled) |
+| Missing `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it |
 
 ### 5. Naming Conventions
 
@@ -180,7 +180,7 @@ Before finishing, verify:
 - [ ] Response uses the simplest Turbo mechanism (full-page redirect → frames → streams — see `../writing-hotwire/references/patterns.md`)
 - [ ] Every action calls `authorize` (Pundit) — including index — `after_action :verify_authorized` catches misses
 - [ ] Index actions use `policy_scope` to filter records, then `authorize` (typically `authorize Model` after scoping)
-- [ ] `verify_policy_scoped` on index is enabled when you use `after_action :verify_policy_scoped, only: :index` in `ApplicationController`
+- [ ] `after_action :verify_policy_scoped, only: :index` is set in `ApplicationController` — it is required, not optional
 - [ ] Controller has no more than ~7 public methods (CRUD actions only)
 - [ ] Shared behaviour is extracted to concerns, not duplicated
 - [ ] Rate limiting applied to creation/mutation endpoints where appropriate

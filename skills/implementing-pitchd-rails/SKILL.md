@@ -70,7 +70,7 @@ From the task description and files you will touch, read **only** the relevant:
 `writing-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
 `writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
 `writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-tests`.
+`writing-jobs`, `writing-migrations`, `writing-tests`.
 
 For each area, open the skill’s **SKILL.md** and the relevant
 **`references/patterns.md`** (or sectioned references). Cross-check
@@ -81,7 +81,7 @@ to add JS or service layers by reflex — apply the **defaults under Load the co
 
 1. Implement **exactly** what the task specifies (and the plan’s file layout if given).
 2. **Tests:** Follow `writing-tests` and `rules/testing.mdc`. If the task says **TDD**, follow that order (red → green → refactor).
-3. **Verify:** Run the tests and any checks the repo uses for what you changed. If the app uses RuboCop, follow **`running-rubocop`** and **`rules/rubocop.mdc`**: **`bin/rubocop` must exit 0 with zero offences** (typically full project — see skill) before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. If you truly cannot fix an offence, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
+3. **Verify:** Run the tests and any checks the repo uses for what you changed. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
 4. **Self-review** (below) before reporting.
 
 **Do not create git commits** (no `git commit`). The parent or human owns version control; leave changes for them to commit unless the delegating prompt says otherwise.

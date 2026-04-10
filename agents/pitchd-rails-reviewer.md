@@ -2,7 +2,9 @@
 name: pitchd-rails-reviewer
 description: >-
   Runs the reviewing-pitchd-rails skill in an isolated subagent context: Pitchd
-  Rails plan and/or code review (compass + scoped writing-* skills and rules).
+  Rails plan and/or code review (compass + scoped writing-* skills and rules);
+  may use referencing-unofficial-37signals-guide as a supplemental fetch when
+  plugin material is insufficient for best-practice checks.
   Use proactively for PR review, plan sign-off, merge readiness, or verifying
   plugin fit. Parent must pass Phase, plan/spec paths, and scope — this agent
   has no prior chat history. Prefer delegating here when review output should
@@ -32,5 +34,7 @@ Plugin assets are under the workspace root: `skills/`, `rules/`.
 | **Scope** | Paths to review, git diff summary, or `full app context` |
 
 3. **Read order inside the skill** — The skill already orders compass first (`skills/rails-omakase-compass/SKILL.md` via `../rails-omakase-compass` from the reviewing skill’s location), then scoped tactical skills. Do not skip the compass.
+
+4. **Supplementary reference (optional)** — When compass, scoped **`writing-*`**, and **`rules/*.mdc`** are not enough to judge **Rails best practice** for a finding, load **`skills/referencing-unofficial-37signals-guide/SKILL.md`** and **fetch** only the **specific** upstream topics needed (README TOC → raw `.md`). Use it to **inform** the review alongside plugin material — **not** to replace **`reviewing-pitchd-rails`** or plugin rules. If a fetch fails, **report that**; do **not** fabricate guide content.
 
 Deliver the report exactly as **Report format** in `skills/reviewing-pitchd-rails/SKILL.md`.

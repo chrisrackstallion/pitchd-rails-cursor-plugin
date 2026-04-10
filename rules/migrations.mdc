@@ -1,0 +1,77 @@
+---
+description: Rails migration conventions — safe schema changes, reversibility, database constraints. Apply when writing or reviewing migrations.
+globs: db/migrate/**/*.rb
+alwaysApply: false
+---
+
+# Migration Conventions
+
+## Migrations Are an Append-Only Record
+
+Never edit a migration that has been committed. It has been run in production.
+Create a new migration to change the schema.
+
+## Reversibility First
+
+Use `def change` for operations Rails can automatically reverse (add_column,
+create_table, add_index, add_foreign_key). Use `def up` / `def down` for
+irreversible changes. Raise `ActiveRecord::IrreversibleMigration` in `down`
+only when data is genuinely destroyed and cannot be recreated.
+
+```ruby
+# Good — reversible
+class AddPublishedAtToArticles < ActiveRecord::Migration[8.0]
+  def change
+    add_column :articles, :published_at, :datetime
+    add_index :articles, :published_at
+  end
+end
+```
+
+## Database Constraints Are the Source of Truth
+
+Enforce integrity at the database level. Model validations are for error
+messages, not data safety.
+
+```ruby
+# Migration — source of truth
+add_index :users, :email, unique: true
+add_foreign_key :articles, :users, column: :author_id
+change_column_null :articles, :title, false
+```
+
+## Safe Operations on Live Tables
+
+Adding a NOT NULL column to a table with existing rows without a default
+will fail. The safe pattern: add nullable → backfill → add constraint across
+two deploys. See **`skills/writing-migrations/references/patterns.md`**.
+
+Removing a column: tell ActiveRecord to ignore it first (Deploy 1), then
+remove it (Deploy 2). See **`skills/writing-migrations/references/patterns.md`**
+§ Removing Columns.
+
+Adding an index on a large Postgres table: use `algorithm: :concurrently`
+with `disable_ddl_transaction!` to avoid a full table lock.
+
+## Separate Schema Changes from Data Migration
+
+Data migrations (backfills) belong in a separate migration file or a rake
+task — not mixed with DDL. Schema changes run instantly; data migrations
+can take hours on large tables.
+
+## Naming
+
+Names are the permanent record. Be specific:
+`add_published_at_to_articles`, `remove_legacy_status_from_users`,
+`add_unique_index_to_users_on_email`.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Editing a past migration | New migration |
+| `add_column null: false` on existing table with no default | Add nullable → backfill → add constraint |
+| DDL and DML (backfill) in the same migration | Separate files |
+| `add_index` without `algorithm: :concurrently` on large Postgres table | Concurrent index with `disable_ddl_transaction!` |
+| `rename_column` on a live app | Three-step: add → dual-write → remove |
+| Hardcoded IDs or seeds in migrations | Seeds file or separate rake task |

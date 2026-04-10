@@ -126,7 +126,13 @@ Read only what the task touches:
 | Mailers | `writing-mailers` |
 | Policies / Pundit | `writing-policies` |
 | Service objects (when justified) | `writing-services` |
+| Background jobs / ActiveJob | `writing-jobs` |
+| Database migrations | `writing-migrations` |
 | Tests / RSpec | `writing-tests` |
+
+### Optional external digest
+
+For **targeted** HTTP fetches from the third-party [unofficial 37signals coding style guide](https://github.com/marckohlbrugge/unofficial-37signals-coding-style-guide) (Fizzy-derived topics, README TOC → raw `.md` files), use **`referencing-unofficial-37signals-guide`**. **Successful fetches** are required **only to attribute or cite content as coming from that guide** — if a fetch fails, **do not** invent guide text; you may still give **general Rails** guidance using plugin rules and skills without claiming it is from the guide.
 
 ## What this skill deliberately omits
 

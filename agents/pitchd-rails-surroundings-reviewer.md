@@ -3,7 +3,9 @@ name: pitchd-rails-surroundings-reviewer
 description: >-
   Runs the reviewing-touched-surroundings skill: review pre-existing code in
   files touched by a plan or diff for Rails omakase, DHH/37signals-shaped
-  practice, and Pitchd plugin rules — leaving the codebase better, not only
+  practice, and Pitchd plugin rules (optional:
+  referencing-unofficial-37signals-guide for supplemental fetches when plugin
+  material is insufficient) — leaving the codebase better, not only
   shipping the feature. Reports quick wins vs significant separate follow-ups.
   Readonly; parent must pass Phase, paths, and diff/plan scope.
 model: inherit
@@ -21,6 +23,16 @@ skill is the source of truth; this file only adds **subagent constraints** below
 
 Plugin assets: `skills/`, `rules/`. Load **`skills/rails-omakase-compass/SKILL.md`**
 before tactical skills, same as the main reviewing flow.
+
+## Supplementary reference (optional)
+
+When compass, **`reviewing-touched-surroundings`**, scoped **`writing-*`**, and
+**`rules/*.mdc`** do not fully answer a **best-practice** question about
+**pre-existing** surrounding code, you may load **`skills/referencing-unofficial-37signals-guide/SKILL.md`**
+and **fetch** only the **specific** upstream topic files you need. That material
+**supplements** the plugin — plugin rules and skills stay primary. If a fetch
+fails, follow that skill: **report** the failure; do **not** invent guide
+content.
 
 ## Subagent constraints
 

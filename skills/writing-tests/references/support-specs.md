@@ -264,7 +264,7 @@ end
 ## Job Specs
 
 Test that jobs do their work correctly. Use `perform_now` to execute
-synchronously in the test.
+synchronously in the test. Pass IDs — consistent with the job convention.
 
 ### Structure
 
@@ -272,68 +272,82 @@ synchronously in the test.
 # spec/jobs/notify_subscribers_job_spec.rb
 RSpec.describe NotifySubscribersJob, type: :job do
   describe "#perform" do
-    it "sends notification emails to subscribers" do
+    it "notifies each subscriber" do
       article = create(:article, :published)
       subscribers = create_list(:user, 3)
-      subscribers.each { |u| create(:subscription, user: u, author: article.author) }
+      subscribers.each { |u| article.subscribers << u }
 
       expect {
-        described_class.perform_now(article)
-      }.to change { ActionMailer::Base.deliveries.count }.by(3)
+        described_class.perform_now(article.id)
+      }.to have_enqueued_mail(ArticleMailer, :update).exactly(3).times
     end
 
-    it "skips unsubscribed users" do
-      article = create(:article, :published)
-      unsubscribed = create(:user)
+    it "does nothing when the article is unpublished" do
+      article = create(:article)  # not published
 
       expect {
-        described_class.perform_now(article)
-      }.not_to change { ActionMailer::Base.deliveries.count }
+        described_class.perform_now(article.id)
+      }.not_to have_enqueued_mail
     end
   end
 end
 ```
 
-### Testing Job Enqueuing
+### Testing Job Enqueuing (callers)
 
-Test that jobs get enqueued at the right time (in model or request specs):
+The caller (model callback, controller) should only prove the job was
+enqueued — not that the job performed correctly. Pass IDs to match the
+convention:
 
 ```ruby
-# In a model spec
-describe "after publishing" do
-  it "enqueues a notification job" do
+# spec/models/article_spec.rb
+describe "#publish" do
+  it "enqueues subscriber notification" do
     article = create(:article)
 
     expect {
       article.publish
-    }.to have_enqueued_job(NotifySubscribersJob).with(article)
+    }.to have_enqueued_job(NotifySubscribersJob).with(article.id)
   end
 end
 ```
 
-### Testing Retry Behaviour
+Use `perform_enqueued_jobs` in system or request specs only when you need
+to verify end-to-end side effects — prefer unit-level job specs for the
+job's own logic.
+
+### Testing Idempotency
+
+Idempotency is a first-class job convention — verify it explicitly by
+running `perform` twice and asserting the outcome is the same:
 
 ```ruby
-describe "retry behaviour" do
-  it "retries on network timeout" do
-    expect(described_class.new.retry_on).to include(
-      a_hash_including(error: Net::TimeoutError)
-    )
+# spec/jobs/cancel_subscription_job_spec.rb
+RSpec.describe CancelSubscriptionJob, type: :job do
+  describe "#perform — idempotency" do
+    it "is safe to run twice" do
+      subscription = create(:subscription, :active)
+
+      described_class.perform_now(subscription.id)
+      described_class.perform_now(subscription.id)  # second run
+
+      expect(subscription.reload).to be_cancelled
+      expect(subscription.cancellations.count).to eq(1)  # only one record created
+    end
   end
 end
 ```
 
-### Testing Queue Assignment
+The assertion after the second call must be identical to the first — no
+duplicate records, no double-charges, no extra emails.
 
-```ruby
-it "enqueues on the correct queue" do
-  article = create(:article)
+### Guidelines
 
-  expect {
-    described_class.perform_later(article)
-  }.to have_enqueued_job.on_queue("default")
-end
-```
+- **Pass IDs, not objects** — `perform_now(article.id)`, consistent with the job convention
+- **Callers assert enqueuing, not performing** — `have_enqueued_job`, not inline `perform_now`
+- **Job spec owns what the job does** — model spec does not call `perform_now`
+- **Test idempotency explicitly** — call `perform` twice, assert once
+- **One spec file per job** — `spec/jobs/notify_subscribers_job_spec.rb`
 
 ---
 

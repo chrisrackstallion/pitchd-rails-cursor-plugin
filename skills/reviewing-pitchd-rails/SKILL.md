@@ -46,7 +46,8 @@ From the diff or plan, pick **only** the skills that apply:
 `writing-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
 `writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
 `writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-tests`, `running-rubocop` (expect **zero** RuboCop offences — fix in code, no disables; not architecture).
+`writing-jobs`, `writing-migrations`, `writing-tests`,
+`running-rubocop` (when the app uses RuboCop: expect **zero** offences — fix in code, no disables, no `.rubocop_todo.yml`; not architecture).
 
 Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
 sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
@@ -115,6 +116,6 @@ context-isolation rules; the workflow and report shape are defined **here**.
 - **RuboCop (zero offences, no disables):** `../running-rubocop/SKILL.md`, `../../rules/rubocop.mdc`
 - **Compass (why / whether):** `../rails-omakase-compass/SKILL.md`
 - **Planning:** `../writing-plans/SKILL.md` (plans should be reviewed with this skill via **`pitchd-rails-reviewer`**, Phase `plan`)
-- **Full plan execution (orchestrator):** `../executing-pitchd-rails-plan/SKILL.md` — loops implementor → this reviewer until Approved, then **`dhh-rails-reviewer`**
+- **Full plan execution (orchestrator):** `../executing-pitchd-rails-plan/SKILL.md` — loops implementor → this reviewer until Approved, then user sign-off
 - **Implementation (execute a task):** `../implementing-pitchd-rails/SKILL.md` — **`pitchd-rails-implementor`** for isolated task execution with compass + tactics
 - **Pre-existing code in touched files (campground rule):** `../reviewing-touched-surroundings/SKILL.md` — use **`pitchd-rails-surroundings-reviewer`** for an isolated pass on surrounding code, not the new diff
