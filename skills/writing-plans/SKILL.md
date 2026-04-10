@@ -365,5 +365,4 @@ document** changes as a result.
 To **run** an approved plan without the main agent writing app code, use
 **`../executing-pitchd-rails-plan/SKILL.md`**: delegate each task to
 **`pitchd-rails-implementor`**, review with **`pitchd-rails-reviewer`** in a loop
-until Approved, then **`dhh-rails-reviewer`** for final recommendations before
-user sign-off.
+until Approved, then hand off to the user for sign-off.
