@@ -54,6 +54,7 @@ Do not assert findings from memory, diff headers, or inference alone. Drop any f
 | **Plan path** | Implementation plan file(s), or `none` |
 | **Spec path** | Requirements/spec, or `none` |
 | **Scope** | Paths to review, git diff summary, or `full app context` |
+| **User revisions** | (optional) Bullet summary of what the user changed in the plan — when present, limit review to the described changed sections and note in the report that scope was narrowed to user revisions |
 
 3. **Read order inside the skill** — The skill already orders compass first (`skills/rails-omakase-compass/SKILL.md` via `../rails-omakase-compass` from the reviewing skill's location), then scoped tactical skills. Do not skip the compass.
 

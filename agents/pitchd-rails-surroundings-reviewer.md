@@ -69,6 +69,7 @@ content.
 | **Plan path** | Implementation plan file(s), or `none` |
 | **Spec path** | Requirements/spec, or `none` |
 | **Scope** | Touched paths **and** git diff **or** explicit description of which lines/blocks are new vs pre-existing |
+| **User revisions** | (optional) Bullet summary of what the user changed in the plan — when present, limit surroundings review to files or paths affected by those changes and note in the report that scope was narrowed to user revisions |
 
 3. **Focus** — Review **surrounding / pre-existing** code in touched files only.
    Do **not** duplicate a full review of the **new** feature code; that belongs

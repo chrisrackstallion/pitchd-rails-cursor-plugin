@@ -32,7 +32,15 @@ apply them, not re-debate them.
 
 ## Process
 
-### 0. Verify before asserting
+### 0. Scope check — user revisions
+
+**If this is a final sign-off pass (the prompt says "final sign-off" or "Pass 3"):** review the full scope regardless of User revisions. User revisions is context — it tells you where to pay closest attention; it does not restrict what you read.
+
+**Otherwise, if User revisions was provided:** restrict this review to the described changed sections only. Locate and read those sections or paths in the relevant artifact (plan file, code files, or both depending on Phase); skip the rest. Note in the report: "**Scope:** User revisions — [brief restatement of what changed]."
+
+**If User revisions is absent:** review the full scope as specified.
+
+### 1. Verify before asserting
 
 **Read the actual code** for every finding before reporting it. Do not assert issues from diff headers, file names, memory, or inference alone.
 
@@ -43,7 +51,7 @@ For each finding:
 
 Drop any finding you cannot verify. A missing finding is better than a hallucinated one.
 
-### 1. Load the compass
+### 2. Load the compass
 
 Read **`../rails-omakase-compass/SKILL.md`**. Use it for:
 
@@ -55,7 +63,7 @@ Read **`../rails-omakase-compass/SKILL.md`**. Use it for:
 
 Prefix these findings **`philosophy:`**.
 
-### 2. Select tactical skills by scope
+### 3. Select tactical skills by scope
 
 From the diff or plan, pick **only** the skills that apply:
 
@@ -70,7 +78,7 @@ sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
 
 Prefix these findings **`tactical:`**.
 
-### 3. Conflict rule
+### 4. Conflict rule
 
 - **Tactics** win on **specific** HOW (this repo’s rules and patterns).
 - **Compass** wins on **whether** the approach matches **majestic monolith /
@@ -78,7 +86,7 @@ Prefix these findings **`tactical:`**.
   different shape (API-first, SPA, etc.); then treat it as a documented
   exception and review tactics for consistency with that choice.
 
-### 4. What to check by phase
+### 5. What to check by phase
 
 **Plan:** Completeness (no blocking TODOs), spec alignment, vertical slices,
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
@@ -89,7 +97,7 @@ coverage).
 **Implementation:** Map changed files to skills; compass on overall drift; one
 home per behaviour for tests (`writing-tests`).
 
-### 5. Calibration
+### 6. Calibration
 
 **Flag all violations of plugin rules.** Plugin conventions — `rails-omakase-compass`,
 `writing-*` skills, and `rules/*.mdc` — apply even when the application currently does
@@ -115,6 +123,8 @@ Produce a single Markdown report with these sections. Every finding carries a
 ## Pitchd Rails review
 
 **Phase covered:** plan | implementation | both
+
+**Scope:** User revisions — [brief restatement of changed sections]  ← include this line only when scope was narrowed; omit entirely for full-scope reviews
 
 **Status:** Approved | Issues found
 

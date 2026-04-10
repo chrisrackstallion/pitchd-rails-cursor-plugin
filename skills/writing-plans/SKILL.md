@@ -275,6 +275,24 @@ Follow **ordered passes**. After Pass 1 feedback is in the plan, **always** run
 Pass 2: it reviews **pre-existing** code along the plan's touched paths (see
 `skills/reviewing-touched-surroundings/SKILL.md`), not the new feature blocks.
 
+### User revisions (at any point)
+
+If the user requests changes to the plan — before Pass 1, between passes, or
+after findings are presented — apply them to the plan file immediately. Then:
+
+1. **Summarize what changed** — list which sections were affected: header
+   fields, file map, task list, snippets, approach, deferred items, etc. A
+   concise bullet summary is sufficient; no git-diff format required.
+2. **Scope the next reviewer to those changes** — include a **User revisions**
+   field in the delegation prompt (see each Pass below). Reviewers must focus
+   only on the described changes, not re-examine unchanged content.
+   **Exception:** if no full pass has yet reviewed the plan (i.e. the user
+   edited the plan before Pass 1 ever ran), always send a full-scope review —
+   User revisions scoping applies only once at least one full pass is on record.
+3. **Re-run Pass 3 when warranted** — if user revisions materially change plan
+   scope (tasks added or removed, approach changed, file map altered), run Pass
+   3 regardless of whether earlier passes required no edits.
+
 ### Pass 1 — Feature / plan shape (`pitchd-rails-reviewer`)
 
 After drafting, delegate to **`pitchd-rails-reviewer`**
@@ -289,6 +307,7 @@ After drafting, delegate to **`pitchd-rails-reviewer`**
 | **Plan path** | Path to this plan file (e.g. `docs/plans/2026-04-09-feature.md`) |
 | **Spec path** | Path to the spec or requirements doc, or `none` |
 | **Scope** | The plan file path again, or `full plan` |
+| **User revisions** | (optional) Bullet summary of what the user changed — reviewer focuses only on these sections. Example: `- Task 3: replaced form object with model verb; - File map: removed app/forms/publish_form.rb` |
 
 Invoke with **`/pitchd-rails-reviewer`** plus that context, or use the Task tool.
 
@@ -312,6 +331,7 @@ code on touched paths, not new feature blocks).
 | **Plan path** | Same plan file as Pass 1 |
 | **Spec path** | Same as Pass 1, or `none` |
 | **Scope** | **Touched paths** from the plan's file map (and related globs if listed). If no diff exists yet, say **plan-inferred scope** and list paths; the subagent may infer boundaries — that is expected for a pre-code plan. |
+| **User revisions** | (optional) Bullet summary of what the user changed — reviewer focuses only on sections or paths affected by those changes |
 
 Invoke with **`/pitchd-rails-surroundings-reviewer`** or the Task tool.
 
@@ -368,7 +388,8 @@ Then delegate to **`pitchd-rails-reviewer`** again.
 | **Phase** | `plan` (use `both` only if you also need implementation-shaped checks) |
 | **Plan path** | Updated plan file |
 | **Spec path** | Unchanged from earlier passes, or `none` |
-| **Scope** | `full plan` — and state in the prompt that this is **final sign-off before implementation**, and whether this run is prompted by **Pass 1 edits**, **Pass 2 merge**, or **both** |
+| **Scope** | `full plan` — and state in the prompt that this is **final sign-off before implementation**, and whether this run is prompted by **Pass 1 edits**, **Pass 2 merge**, **user revisions**, or any combination |
+| **User revisions** | (optional) Bullet summary of what the user changed — **context only for Pass 3**: the reviewer reads the full plan; User revisions tells them where to pay extra attention, not where to stop |
 
 Treat the outcome as **final plan approval** before implementation. If Pass 3
 raises issues, fix the plan once; call Pass 3 again **only if** those fixes or a

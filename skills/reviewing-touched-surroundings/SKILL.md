@@ -64,7 +64,13 @@ and stop after a one-line summary.
 
 ## Process
 
-### 0. Verify before asserting
+### 0. Scope check — user revisions
+
+If **User revisions** was provided in the delegation prompt, **limit this pass to files or paths affected by the described changes only.** To derive affected paths: read the plan's file map and identify which paths correspond to the described changes; those are the paths to review. Skip surrounding code in files unrelated to those changes. Note in the report: "**Scope:** User revisions — [brief restatement of what changed]."
+
+If **User revisions** is absent, review surrounding code across all touched paths as specified.
+
+### 1. Verify before asserting
 
 **Read the actual surrounding code** before reporting any finding. Do not assert
 violations from file names, diff headers, or memory alone.
@@ -76,7 +82,7 @@ For each finding:
 
 Drop any finding you cannot verify. A missing finding is better than a hallucinated one.
 
-### 1. Establish boundaries
+### 2. Establish boundaries
 
 From **Scope**, list **touched files**. For each, separate:
 
@@ -84,7 +90,7 @@ From **Scope**, list **touched files**. For each, separate:
   findings (except to avoid duplicating reviewing-pitchd-rails).
 - **Surrounding blocks** — **analyze** these.
 
-### 2. Load the compass (philosophy)
+### 3. Load the compass (philosophy)
 
 Read **`../rails-omakase-compass/SKILL.md`**. Apply its **decision tests** to
 surrounding code only: omakase first, server-owned truth, HTML-first, REST
@@ -92,7 +98,7 @@ gravity, fat domain vs scripts, boundaries.
 
 Prefix findings **`philosophy:`**.
 
-### 3. Tactical skills and rules
+### 4. Tactical skills and rules
 
 Map **surrounding** code to **`writing-*`** skills and **`rules/*.mdc`** the same
 way as `reviewing-pitchd-rails`, but **only** for pre-existing regions:
@@ -105,14 +111,14 @@ way as `reviewing-pitchd-rails`, but **only** for pre-existing regions:
 
 Prefix findings **`tactical:`** and cite skill or rule.
 
-### 4. DHH / 37signals lens
+### 5. DHH / 37signals lens
 
 Align with **clarity over cleverness**, **convention over configuration** where
 Rails already has an answer, **RESTful resources**, **thin controllers / rich
 models**, **progressive enhancement**, and **no invented frameworks** — as
 expressed in the compass and `writing-*` patterns, not as generic slogans.
 
-### 5. Calibration
+### 6. Calibration
 
 **Flag all plugin violations** in surrounding code — even when the surrounding
 code predates the plugin or "has always been that way." An application pattern
@@ -136,6 +142,8 @@ Every finding carries a **confidence score** and a **Verified** note showing wha
 ## Touched surroundings review (pre-existing code)
 
 **Phase covered:** plan | implementation | both
+
+**Scope:** User revisions — [brief restatement of changed sections]  ← include this line only when scope was narrowed; omit entirely for full-scope reviews
 
 **Touched files:** …
 
