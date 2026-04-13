@@ -13,6 +13,9 @@ description: >-
   May use referencing-unofficial-37signals-guide for supplemental Fizzy-derived
   topic fetches or referencing-rails-guides for authoritative Rails API docs when
   compass and scoped plugin material are insufficient for best-practice clarity.
+  Also handles post-session revision requests — when the user says something needs
+  changing or isn't right after the skill has run, treat it as a self-contained
+  plan revision and run a scoped reviewer pass.
 ---
 
 # Writing Rails Implementation Plans
@@ -283,21 +286,10 @@ Pass 2: it reviews **pre-existing** code along the plan's touched paths (see
 
 ### User revisions (at any point)
 
-If the user requests changes to the plan — before Pass 1, between passes, or
-after findings are presented — apply them to the plan file immediately. Then:
-
-1. **Summarize what changed** — list which sections were affected: header
-   fields, file map, task list, snippets, approach, deferred items, etc. A
-   concise bullet summary is sufficient; no git-diff format required.
-2. **Scope the next reviewer to those changes** — include a **User revisions**
-   field in the delegation prompt (see each Pass below). Reviewers must focus
-   only on the described changes, not re-examine unchanged content.
-   **Exception:** if no full pass has yet reviewed the plan (i.e. the user
-   edited the plan before Pass 1 ever ran), always send a full-scope review —
-   User revisions scoping applies only once at least one full pass is on record.
-3. **Re-run Pass 3 when warranted** — if user revisions materially change plan
-   scope (tasks added or removed, approach changed, file map altered), run Pass
-   3 regardless of whether earlier passes required no edits.
+If the user requests changes to the plan at any point during the session, enter
+**Revision mode** (see `## Revision mode` below). After the revision is applied
+and the scoped review is complete, resume or close the pass flow as described
+there.
 
 ### Pass 1 — Feature / plan shape (`pitchd-rails-reviewer`)
 
@@ -409,6 +401,86 @@ or `both`; see `reviewing-touched-surroundings`), merge any new quick wins or
 follow-ups into the plan **or** the PR description. Use the same **Present
 findings** and **conditional pitchd-rails-reviewer** steps whenever the **plan
 document** changes as a result.
+
+## Revision mode
+
+### When to enter revision mode
+
+After this skill has run in the current chat session — whether mid-pass, after
+findings have been presented, or after final sign-off — treat any user message
+as a **revision request** if it matches phrases like — but not limited to — these:
+
+> "this needs changing", "that's not right", "can you fix…", "this is wrong",
+> "update this", "adjust…", "tweak…", "it should do X instead", "change the…",
+> "rewrite task N", "the approach is wrong"
+
+**Do not** restart the full pass flow. **Do not** ask which pass or section this
+relates to. Treat the user's message as the complete description of a
+**self-contained plan revision** and proceed immediately.
+
+### Revision task loop
+
+#### R1. Scope the revision
+
+Extract from the user's message:
+
+- **What to change** — the section, task, snippet, approach, or field they flagged.
+- **Where in the plan** — infer from context (last pass reviewed, section mentioned).
+  If genuinely ambiguous, ask **one** short question before proceeding.
+- **Acceptance** — what "fixed" looks like (derive from the user's wording;
+  do not ask for a formal AC).
+
+#### R2. Edit the plan
+
+Apply the change directly to the plan document on disk. This skill edits the plan;
+there is no implementor subagent for plan edits. Scope the edit tightly — do not
+rewrite unrelated sections or re-run the self-review on unchanged content.
+
+After editing:
+
+- **Summarize what changed** — concise bullet list of which sections were affected
+  (header fields, file map, task list, snippets, approach, deferred items, etc.).
+
+#### R3. Delegate a scoped review
+
+Invoke **`pitchd-rails-reviewer`** with:
+
+- **Phase:** `plan`
+- **Plan path:** the plan file.
+- **Spec path:** as used earlier in this session, or `none`.
+- **Scope:** the changed sections only (not the full plan).
+- **User revisions:** the bullet summary from R2 — the reviewer focuses only on
+  what changed.
+
+**Exception:** if no full pass has yet reviewed the plan (the revision happened
+before Pass 1 ever ran), send a **full-scope** review — scoping to changed
+sections only applies once at least one full pass is on record.
+
+#### R4. Branch on status
+
+- **`Status: Approved`** → report back to the user (see **R5** below), then
+  resume or close the pass flow:
+  - If the revision materially changed plan scope (tasks added or removed,
+    approach changed, file map altered) **and** Pass 3 has already run, run
+    Pass 3 again on the full plan before treating the plan as finally approved.
+  - Otherwise, continue from wherever the pass flow was interrupted.
+- **`Issues found`** → apply the reviewer's feedback to the plan and loop
+  from **R2** until Approved.
+
+#### R5. Revision completion report
+
+Deliver a brief summary:
+
+- What was changed and in which plan sections.
+- Reviewer status (`Approved` after N iteration(s)).
+- Any non-blocking notes from the reviewer worth the user knowing.
+- Whether the revision triggers a Pass 3 re-run (and if so, that it will run next).
+
+**Do not** re-present the full findings from earlier passes — this is a targeted
+revision report only. If the user's follow-up triggers another revision, repeat
+from **R1**.
+
+---
 
 ## Executing the plan (orchestration)
 

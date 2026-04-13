@@ -6,7 +6,10 @@ description: >-
   to pitchd-rails-implementor, reviews via pitchd-rails-reviewer, and loops on
   feedback until Approved before user sign-off. Use when the user says execute
   the plan, run the plan, implement the plan, ship planned tasks, or wants a
-  subset of plan tasks done in full with Pitchd conventions.
+  subset of plan tasks done in full with Pitchd conventions. Also handles
+  post-execution revision requests — when the user says something needs changing,
+  isn't right, or requests a fix after the skill has run, treat it as a
+  self-contained revision task and run the same implement → review loop.
 ---
 
 # Executing a Pitchd Rails plan (orchestrator)
@@ -80,6 +83,82 @@ Instruction: follow **`skills/reviewing-pitchd-rails/SKILL.md`** and return the 
 ### 4. Escalation from implementor
 
 If the implementor returns **BLOCKED** or **NEEDS_CONTEXT**, **stop** and present the report to the **user**. Do not invent architecture; wait for decisions or smaller tasks.
+
+## Revision mode (post-execution feedback)
+
+### When to enter revision mode
+
+After this skill has already run in the current chat session, treat any user
+message as a **revision request** if it matches phrases like — but not limited
+to — these:
+
+> "this needs changing", "that's not right", "can you fix…", "this is wrong",
+> "update this", "adjust…", "tweak…", "it should do X instead", "change the…"
+
+**Do not** re-run the full plan. **Do not** ask clarifying questions about which
+plan task this relates to. Treat the user's message as the complete description
+of a **small, self-contained revision task** and proceed immediately.
+
+### Revision task loop
+
+Follow the same implement → review pattern as the per-task loop above, scoped
+tightly to what the user described:
+
+#### R1. Scope the revision
+
+Extract from the user's message:
+
+- **What to change** — the behaviour, output, or code the user flagged.
+- **Where** — infer the file(s) from context (last task completed, files
+  mentioned in the plan or conversation). If genuinely ambiguous, ask **one**
+  short question before proceeding.
+- **Acceptance** — what "fixed" looks like (derive from the user's wording;
+  do not ask for a formal AC).
+
+#### R2. Delegate implementation
+
+Invoke **`pitchd-rails-implementor`** with a self-contained revision prompt:
+
+- **Task name:** `Revision: <one-line summary of the change>`
+- **Task description:** Full description of what needs changing and why,
+  including the file(s) to touch and the expected outcome.
+- **Context:** Which plan task this relates to; any prior implementor output
+  that is relevant (paste key snippets — the subagent has no chat history).
+- **Work directory**, **Plan path**, **Spec path** as used in the original run.
+- Instruction: scope the change tightly — **do not** refactor surrounding code
+  outside the revision; follow `skills/implementing-pitchd-rails/SKILL.md` and
+  `rules/rubocop.mdc`; no `git commit`.
+
+#### R3. Delegate review
+
+Invoke **`pitchd-rails-reviewer`** with:
+
+- **Phase:** `implementation`
+- **Scope:** only the files changed by the revision (not the full plan scope).
+- **Plan path**, **Spec path** as above.
+
+#### R4. Branch on status
+
+- **`Status: Approved`** → report back to the user (see **R5** below).
+- **`Issues found`** → feed review feedback to the implementor as a fix pass.
+  Loop until Approved.
+- **BLOCKED / NEEDS_CONTEXT** from implementor → stop, present the blocker to
+  the user, and wait for a decision.
+
+#### R5. Revision completion report
+
+Deliver a brief summary:
+
+- What was changed and in which file(s).
+- Reviewer status (`Approved` after N iteration(s)).
+- Any non-blocking notes from the reviewer worth the user knowing.
+- Whether anything needs manual verification (tests run, RuboCop status).
+
+**Do not** re-present the full original completion package — this is a targeted
+revision report only. If the user's follow-up triggers another revision, repeat
+from **R1**.
+
+---
 
 ## After all tasks are Approved (Pitchd)
 
