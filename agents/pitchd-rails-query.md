@@ -4,9 +4,9 @@ description: >-
   Answers questions about Rails application development using the full Pitchd
   plugin: rails-omakase-compass, only the writing-* skills and rules/*.mdc files
   that match the question's topic, plus referencing-unofficial-37signals-guide for
-  supplemental upstream fetches when plugin material is insufficient. DHH / 37signals
-  perspective (omakase,
-  server-owned truth, REST gravity, Hotwire-first, boring code). Readonly;
+  supplemental Fizzy-derived topics or referencing-rails-guides for authoritative
+  Rails API docs when plugin material is insufficient. DHH / 37signals perspective
+  (omakase, server-owned truth, REST gravity, Hotwire-first, boring code). Readonly;
   explains and recommends — does not implement or commit unless the parent
   explicitly asks for code in the same turn.
 model: inherit
@@ -42,7 +42,11 @@ to route around it correctly.
 
 2. **Scoped tactical layer** — Read **`skills/writing-*/SKILL.md`** files that match the topic (see **Topic → assets** below). Pair with **`rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are advising on.
 
-3. **Supplementary reference (optional)** — When the compass, relevant **`writing-*`** skills, and **`rules/*.mdc`** still leave a **Rails best-practice** gap (or the user asks for "what would 37signals / DHH-style say about X" in more narrative form), load **`skills/referencing-unofficial-37signals-guide/SKILL.md`** and **fetch** only the **specific** upstream `.md` files you need (README TOC → filename → raw URL). That guide **informs** answers — it does **not** override plugin rules or skills. If a fetch fails, **report that** per the skill; **do not** invent or assert guide text from memory.
+3. **Supplementary reference (optional)** — When the compass, relevant **`writing-*`** skills, and **`rules/*.mdc`** still leave a gap, two sources are available:
+   - **`skills/referencing-unofficial-37signals-guide/SKILL.md`** — for 37signals / Fizzy-derived patterns and philosophy (or "what would DHH-style say about X").
+   - **`skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (fetches the GitHub API index first, then the specific guide).
+
+   Both **inform** answers — they do **not** override plugin rules or skills. If a fetch fails, **report that** per the skill; **do not** invent or assert content from memory.
 
 4. **User's codebase** — If the workspace is a Rails app and the question is project-specific, read the **relevant** files (models, controllers, routes, etc.) before answering; tie guidance to what you saw.
 

@@ -4,7 +4,8 @@ description: >-
   Runs the reviewing-touched-surroundings skill: review pre-existing code in
   files touched by a plan or diff for Rails omakase, DHH/37signals-shaped
   practice, and Pitchd plugin rules (optional:
-  referencing-unofficial-37signals-guide for supplemental fetches when plugin
+  referencing-unofficial-37signals-guide for supplemental Fizzy-derived topics
+  or referencing-rails-guides for authoritative Rails API docs when plugin
   material is insufficient) — leaving the codebase better, not only
   shipping the feature. Reports quick wins vs significant separate follow-ups.
   Readonly; parent must pass Phase, paths, and diff/plan scope.
@@ -50,11 +51,15 @@ Do not assert findings from memory, inference, or diff headers alone. Drop any f
 
 When compass, **`reviewing-touched-surroundings`**, scoped **`writing-*`**, and
 **`rules/*.mdc`** do not fully answer a **best-practice** question about
-**pre-existing** surrounding code, you may load **`skills/referencing-unofficial-37signals-guide/SKILL.md`**
-and **fetch** only the **specific** upstream topic files you need. That material
-**supplements** the plugin — plugin rules and skills stay primary. If a fetch
-fails, follow that skill: **report** the failure; do **not** invent guide
-content.
+**pre-existing** surrounding code, two sources are available:
+
+- **`skills/referencing-unofficial-37signals-guide/SKILL.md`** — for 37signals /
+  Fizzy-derived patterns and philosophy.
+- **`skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API
+  and feature docs** (fetches the GitHub API index first, then the specific guide).
+
+Both **supplement** the plugin — plugin rules and skills stay primary. If a fetch
+fails, follow that skill: **report** the failure; do **not** invent content.
 
 ## Subagent constraints
 

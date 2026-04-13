@@ -10,8 +10,9 @@ description: >-
   plan. Re-run pitchd-rails-reviewer for final sign-off when you incorporated Pass
   1 recommendations and/or Pass 2 materially changed the plan. Use when turning
   a spec into tasks, planning a feature, or breaking work into checklisted steps.
-  May use referencing-unofficial-37signals-guide for supplemental topic fetches
-  when compass and scoped plugin material are insufficient for best-practice clarity.
+  May use referencing-unofficial-37signals-guide for supplemental Fizzy-derived
+  topic fetches or referencing-rails-guides for authoritative Rails API docs when
+  compass and scoped plugin material are insufficient for best-practice clarity.
 ---
 
 # Writing Rails Implementation Plans
@@ -101,7 +102,12 @@ Use these **while writing the plan** so tasks do not contradict the codebase:
 
 ### Supplementary reference (optional)
 
-When **`rails-omakase-compass`**, this skill's philosophy section, and the scoped **`rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap (e.g. a pattern name or tradeoff not spelled out in the plugin), load **`skills/referencing-unofficial-37signals-guide/SKILL.md`** and **fetch** only the **specific** upstream topic files you need (README TOC → raw `.md`). That material **informs** the plan — it does **not** override plugin rules or skills; **tactics in this plugin win** on HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a fetch fails or returns nothing usable, **report** that; **do not** invent or assert content "from the guide."
+When **`rails-omakase-compass`**, this skill's philosophy section, and the scoped **`rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap, two sources are available — use the one that fits:
+
+- **`skills/referencing-unofficial-37signals-guide/SKILL.md`** — for 37signals / Fizzy-derived patterns and philosophy not spelled out in the plugin (README TOC → raw `.md`).
+- **`skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (GitHub API index → specific guide `.md`).
+
+Both **inform** the plan — they do **not** override plugin rules or skills; **tactics in this plugin win** on HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a fetch fails or returns nothing usable, **report** that; **do not** invent or assert content.
 
 ## Map files before tasks
 

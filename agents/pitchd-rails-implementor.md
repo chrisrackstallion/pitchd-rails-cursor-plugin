@@ -4,8 +4,9 @@ description: >-
   Implements a single plan task or scoped feature in a Rails app using the
   implementing-pitchd-rails skill: rails-omakase-compass (DHH / 37signals
   shape) plus writing-* skills and rules/*.mdc; may use
-  referencing-unofficial-37signals-guide to fetch supplemental Fizzy-derived topics
-  when plugin material is insufficient. Writes code and tests, verifies,
+  referencing-unofficial-37signals-guide for supplemental Fizzy-derived topics
+  or referencing-rails-guides for authoritative Rails API docs when plugin
+  material is insufficient. Writes code and tests, verifies,
   and reports — does not commit. Parent must paste full task text, context, and
   work directory — subagent has no prior chat history.
 model: inherit
@@ -59,14 +60,19 @@ refactor surrounding code outside this task's scope.
 ## Supplementary reference (optional)
 
 When **`rails-omakase-compass`**, the relevant **`writing-*`** skills, and
-**`rules/*.mdc`** still leave a **Rails best-practice** gap (e.g. a pattern name
-or tradeoff not spelled out here), load **`skills/referencing-unofficial-37signals-guide/SKILL.md`**
-and use it to **fetch** only the **specific** upstream topic files you need
-(README table of contents → filename → raw URL). That guide **informs** plugin
-conventions — it does **not** override them; **tactics in this plugin win** on
-HOW, same as the compass conflict rule in **`implementing-pitchd-rails`**. If a
-fetch fails or returns nothing usable, follow that skill: **report the failure**
-and do **not** invent or assert content "from the guide."
+**`rules/*.mdc`** still leave a **Rails best-practice** gap, two supplementary
+sources are available — use the one that fits the gap:
+
+- **`skills/referencing-unofficial-37signals-guide/SKILL.md`** — for 37signals /
+  Fizzy-derived patterns, philosophy, and tradeoffs not spelled out in the plugin.
+- **`skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API
+  and feature docs** (e.g. querying, routing DSL, callbacks, Action Cable). Fetches
+  the GitHub API index first, then the specific guide.
+
+Both **inform** plugin conventions — they do **not** override them; **tactics in
+this plugin win** on HOW, same as the compass conflict rule in
+**`implementing-pitchd-rails`**. If a fetch fails, follow that skill: **report
+the failure** and do **not** invent or assert content.
 
 ## Subagent constraints
 
@@ -89,9 +95,9 @@ and do **not** invent or assert content "from the guide."
    **`rules/*.mdc`** files relevant to the task (include **`rules/rubocop.mdc`**
    when you touch Ruby or Rake). Do not skip the compass for
    work that changes API/HTML boundaries or domain ownership. Use
-   **`referencing-unofficial-37signals-guide`** only as a **supplement** when
-   those sources are not enough for best-practice clarity (see **Supplementary
-   reference** above).
+   **`referencing-unofficial-37signals-guide`** or **`referencing-rails-guides`**
+   only as a **supplement** when those sources are not enough for best-practice
+   clarity (see **Supplementary reference** above).
 
 4. **No commits** — Do **not** run `git commit` or treat a commit as part of the
    task. Leave changes uncommitted unless the parent explicitly instructs
