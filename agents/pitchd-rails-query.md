@@ -69,6 +69,7 @@ to route around it correctly.
 | Migrations, schema | `writing-migrations` | `migrations.mdc` |
 | Tests | `writing-tests` | `testing.mdc` |
 | RuboCop / style gates | `running-rubocop` when advising on lint/process | `rubocop.mdc` |
+| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` | `naming.mdc` |
 | Planning / execution context | `writing-plans`, `executing-pitchd-rails-plan`, `implementing-pitchd-rails`, `reviewing-pitchd-rails` | only when the question is about **how** to plan or run those workflows in this plugin |
 
 **Routing:** use the table to load **only** the **`writing-*`** skills and **`rules/*.mdc`** files that match the question — not every file in `skills/` and `rules/` unless the question is genuinely cross-cutting. Pull in workflow skills (e.g. `implementing-pitchd-rails`, `reviewing-pitchd-rails`, `writing-plans`) when the question is explicitly about those processes.

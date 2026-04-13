@@ -1,0 +1,138 @@
+---
+description: Naming conventions across the Rails stack — DHH/37signals style. Apply when creating files, classes, methods, columns, routes, variables, or reviewing any naming decision.
+globs: app/**/*.rb, config/routes.rb, db/migrate/**/*.rb, spec/**/*.rb
+alwaysApply: false
+---
+
+# Naming Conventions
+
+Names are decisions. Good names make the codebase read like prose, `rails routes` read like a table of contents, and `schema.rb` read like a domain model. Use Rails idioms first, domain language second, and invent nothing. Boring, obvious names are correct. Clever names are a smell.
+
+## Domain Layer (Models, Concerns, POROs)
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Model | Singular PascalCase noun | `Article`, `User`, `ProjectMembership` |
+| Concern | Adjective describing capability | `Publishable`, `Closeable`, `Taggable`, `Searchable` |
+| Scope | Business term or adverb | `chronologically`, `active`, `preloaded`, `recent` |
+| State record | Noun for the state | `Closure`, `Publication`, `Archival`, `Lock` |
+| Domain verb | Imperative, non-bang | `publish`, `close`, `archive`, `gild`, `invite` |
+| Predicate method | Present tense + `?` | `published?`, `closed?`, `member?`, `locked?` |
+| Bang domain verb | Only when a "try" form also exists | `lock!` alongside `lock` — not a default suffix |
+| PORO under model | Namespaced PascalCase noun | `Article::Publisher`, `Account::Onboarding` |
+| Form object | Standalone domain noun | `Registration`, `Invitation`, `ArticleTransfer` |
+
+Do **not** use generic CRUD verbs as domain names: `set_status`, `update_flag`, `create_record`. The name should reflect what happens in the domain, not which SQL call fires underneath.
+
+## Controllers
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Resource controller | Plural PascalCase + `Controller` | `ArticlesController`, `ProjectMembershipsController` |
+| Singleton resource | Singular + `Controller` | `SessionsController`, `AccountController` |
+| Namespaced | Module-prefixed | `Admin::ArticlesController`, `Api::V1::UsersController` |
+| Action names | Seven standard REST actions only | `index`, `show`, `new`, `create`, `edit`, `update`, `destroy` |
+
+A non-REST action name is a signal to extract a new resource. `publish` on `ArticlesController` should be `create` on `PublicationsController`.
+
+## Views and Partials
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| View template | Matches controller + action | `app/views/articles/show.html.erb` |
+| Partial | Underscore prefix, singular noun | `_article.html.erb`, `_form.html.erb`, `_header.html.erb` |
+| Layout | Lowercase, semantic | `application`, `admin`, `minimal` |
+| Local variable in partial | Singular domain noun | `article`, `user`, `membership` — not `item`, `obj`, `record` |
+| Stimulus controller identifier | Kebab-case, mirrors DOM scope | `article-form`, `inline-editor`, `dropdown` |
+
+## Jobs
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Job class | `{Verb}{Noun}Job` | `NotifySubscribersJob`, `CleanupExpiredSessionsJob`, `SyncInventoryJob` |
+| Perform method | Always `perform` | Never rename — it is the ActiveJob contract |
+
+Verb first so jobs sort by action: `Deliver*`, `Notify*`, `Sync*`, `Process*`. The noun names what is acted on.
+
+## Mailers
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Mailer class | `{Noun}Mailer` | `UserMailer`, `InvitationMailer`, `OrderMailer` |
+| Mailer method | Domain event or action | `welcome`, `invitation`, `password_reset`, `receipt` |
+
+## Policies (Pundit)
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Policy class | Matches model + `Policy` | `ArticlePolicy`, `ProjectMembershipPolicy` |
+| Scope | Nested `Scope` class | `ArticlePolicy::Scope` |
+| Permission methods | Action name + `?` | `show?`, `update?`, `destroy?`, `publish?` |
+
+Custom permission methods mirror the controller action or domain verb that triggers them — not the English description of the rule.
+
+## Database
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Table | Plural snake_case | `articles`, `project_memberships`, `publication_locks` |
+| Column | Snake_case, semantic | `published_at`, `creator_id`, `locked_reason` |
+| Datetime column | `_at` suffix | `published_at`, `closed_at`, `expires_at` |
+| Date-only column | `_on` suffix | `due_on`, `starts_on`, `expires_on` |
+| Boolean column | Adjective, no `is_` prefix | `active`, `featured`, `locked` — not `is_active` |
+| Foreign key | `{singular_model}_id` — use semantic name when role differs from class | `creator_id` (User), `approver_id` (User) — not `user_id` when the role is specific |
+| Join table | Alphabetical order, no surrogate key | `articles_tags`, `memberships_roles` |
+| Migration file | Descriptive verb phrase | `add_published_at_to_articles`, `create_project_memberships`, `remove_legacy_status_from_users` |
+
+Never use generic column names: `status`, `data`, `info`, `type` (unless it is Rails STI). Name what it stores.
+
+## Routes and Helpers
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Resource | Plural noun | `resources :articles` |
+| Singleton resource | Singular noun | `resource :session`, `resource :account` |
+| Path helper | `{resource}_path` / `{resource}_url` | `article_path`, `new_project_membership_path` |
+| Namespace | Lowercase singular | `namespace :admin`, `namespace :api` |
+| Custom route | Rare, honest, commented | Always prefer a new resource noun over a custom verb segment |
+
+## Tests and Factories
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Spec file | Mirrors app path + `_spec` suffix | `spec/models/article_spec.rb`, `spec/system/publishing_spec.rb` |
+| Factory name | Matches model name (singular symbol) | `:article`, `:project_membership` |
+| Factory trait | Domain adjective or past participle | `:published`, `:closed`, `:with_members`, `:as_admin` |
+| `let` / `let!` | Meaningful domain noun | `let(:article)`, `let(:author)` — not `let(:obj)` or `let(:user1)` |
+| `describe` block | Class name or `#method` / `.class_method` | `describe Article`, `describe "#publish"`, `describe ".active"` |
+| `context` block | `"when …"` or `"with …"` | `context "when published"`, `context "with no members"` |
+| `it` block | Third-person present, no "should" | `"creates a publication record"`, `"raises when already closed"` |
+
+Use role names, not ordinals: `author`, `reviewer`, `admin` — not `user1`, `user2`.
+
+## Variables and Locals
+
+- **Full words** — `article` not `a`, `membership` not `m`.
+- **Domain nouns for instances** — `user`, `account`, `article` — not `record`, `object`, `item`, `thing`.
+- **Plural for collections** — `articles`, `memberships` — not `article_list` or `arr`.
+- **No Hungarian notation** — no `strName`, `bActive`, `arrItems`.
+- **Block parameters match the domain noun** — `articles.each { |article| }` not `{ |a| }`.
+- **Meaningful boolean locals** — `published`, `locked` — not `flag`, `result`, `ok`.
+
+## Anti-Patterns
+
+| Anti-Pattern | Correct |
+|-------------|---------|
+| `set_status`, `update_flag`, `do_publish` | Domain verb: `close`, `publish`, `archive` |
+| `ArticleModel`, `UserClass` | `Article`, `User` — no suffix Rails doesn't expect |
+| `ArticleManager`, `UserHandler` | Model methods or namespaced PORO |
+| `PublishingConcern`, `TaggingBehavior` | Adjective: `Publishable`, `Taggable` |
+| `ArticleService`, `PublishService` | Model domain verb — see `rules/services.mdc` |
+| `is_active`, `is_locked`, `has_members` | `active`, `locked`, `member?` |
+| `created_date`, `updated_time` | `created_at`, `updated_at` — Rails timestamps |
+| `tags_articles` join table | Alphabetical: `articles_tags` |
+| Generic column: `status`, `data`, `info` | Semantic: `publication_state`, `settings`, `bio` |
+| `execute`, `run`, `do` on POROs | Domain verb: `complete`, `transfer`, `process` |
+| `user1`, `user2` in specs | Role names: `author`, `reviewer`, `admin` |
+| `it "should create…"` | `it "creates…"` — no "should" |
+| `describe "testing publish"` | `describe "#publish"` |

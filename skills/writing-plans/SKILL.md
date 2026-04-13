@@ -101,6 +101,7 @@ Use these **while writing the plan** so tasks do not contradict the codebase:
 | Mailers | `rules/mailers.mdc`, `skills/writing-mailers/SKILL.md` |
 | Background jobs | `rules/jobs.mdc`, `skills/writing-jobs/SKILL.md` |
 | Migrations | `rules/migrations.mdc`, `skills/writing-migrations/SKILL.md` |
+| Naming (classes, methods, columns, routes, specs) | `rules/naming.mdc`, `skills/writing-naming-conventions/SKILL.md` |
 | Linting | `rules/rubocop.mdc`, `skills/running-rubocop/SKILL.md` |
 
 ### Supplementary reference (optional)
