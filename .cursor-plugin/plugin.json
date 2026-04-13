@@ -1,7 +1,7 @@
 {
   "name": "pitchd-rails",
   "version": "0.1.0",
-  "description": "Cursor plugin with rules and skills for building best practice Rails apps.",
+  "description": "Rules, skills, and agents for building Rails apps the 37signals way — omakase defaults, REST-shaped boundaries, Hotwire-first front ends, and a full plan → implement → review loop baked in. A few Pitchd-specific preferences layered on top.",
   "author": {
     "name": "Chris Bellairs",
     "email": "chris@pitchd.ai"
