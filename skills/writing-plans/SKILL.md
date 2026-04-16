@@ -257,6 +257,9 @@ the codebase, do not extend it. Name it, cite the rule, and route around it.
   (`rules/routes.mdc`).
 - **Duplicate system + request + model** coverage for the **same** behaviour
   (`rules/testing.mdc`).
+- **Standalone `not_to` assertions** that only prove an element is absent — every
+  spec must assert positive behaviour the user *sees*; `not_to` is a secondary
+  side-effect assertion, not a primary one (`rules/testing.mdc`).
 - **Turbo Streams** before **redirect** / **frame** solutions when the UX allows
   (`rules/controllers.mdc`, `skills/writing-hotwire/SKILL.md`).
 - **One vertical slice split** across many tasks that **never** pass CI in between.

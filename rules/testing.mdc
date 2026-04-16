@@ -151,6 +151,41 @@ to assert more things about the same outcome.
 | Re-testing domain logic in integration specs | Model spec owns the logic; integration asserts the outcome |
 | Separate tests for each assertion on one action | Multiple assertions in one test for one behaviour |
 | Testing the same happy path in model + request + system | One home per behaviour — pick the right layer |
+| Standalone `not_to` assertions that only prove absence | Assert the positive behaviour the user *does* see; `not_to` is a side-effect assertion, not a primary one |
+
+### Do not write specs to prove code was removed
+
+A spec whose only assertion is `not_to have_*` does not test behaviour — it tests absence. Such tests pass trivially (including when the feature never existed), document nothing about what users *can* do, and break silently if the element is renamed.
+
+```ruby
+# Bad — proves nothing except an element is absent; passes even if the page is empty
+it "does not show an excluded agencies section" do
+  expect(page).not_to have_link("New Excluded Agency")
+end
+
+# Good — tests what the user actually sees and can do on this page
+it "shows the agencies list without the excluded agency option" do
+  visit agencies_path
+  expect(page).to have_content("Agencies")
+  expect(page).to have_link("New Agency")
+end
+```
+
+`not_to` is valid as a **secondary assertion** when it confirms a visible state change alongside a positive assertion:
+
+```ruby
+# Fine — not_to confirms the item is gone after deletion, paired with a positive outcome
+it "user deletes an article" do
+  article = create(:article, title: "To Delete")
+  visit article_path(article)
+  click_button "Delete"
+
+  expect(page).to have_content("Article deleted.")  # primary
+  expect(page).not_to have_content("To Delete")     # confirms removal
+end
+```
+
+The rule: every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
 ## Database Strategy
 

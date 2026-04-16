@@ -284,6 +284,41 @@ end
 | Separate `it` blocks for each assertion on one action | One `it` with multiple `expect`s when setup and action are identical |
 | Re-testing domain verb logic in a request spec | Request spec calls the endpoint; model spec owns the verb logic |
 | Job spec re-testing what the model spec covers | Job spec tests orchestration; model spec tests the domain method the job calls |
+| Standalone `not_to` assertions to prove code was removed | Assert the positive behaviour the user sees; `not_to` is a side-effect, not a primary assertion |
+
+#### Do not write specs to prove code was removed
+
+A test whose only assertion is `not_to have_*` does not test behaviour — it tests absence. It passes trivially (including if the page is blank), documents nothing about what users *can* do, and breaks silently when an element is renamed rather than removed.
+
+```ruby
+# Bad — only asserts an element is absent; no positive behaviour proven
+it "does not show an excluded agencies section" do
+  expect(page).not_to have_link("New Excluded Agency")
+end
+
+# Good — asserts what the user actually sees and can do
+it "shows the agencies list" do
+  visit agencies_path
+  expect(page).to have_content("Agencies")
+  expect(page).to have_link("New Agency")
+end
+```
+
+`not_to` is valid as a **secondary assertion** confirming a visible change alongside a positive one:
+
+```ruby
+# Fine — not_to confirms removal after deletion, paired with a positive assertion
+it "user deletes an article" do
+  article = create(:article, title: "To Delete")
+  visit article_path(article)
+  click_button "Delete"
+
+  expect(page).to have_content("Article deleted.")  # primary assertion
+  expect(page).not_to have_content("To Delete")     # confirms removal
+end
+```
+
+Every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
 ### 7. Naming Conventions
 
@@ -318,6 +353,7 @@ Before finishing, verify:
 - [ ] Model specs don't re-test in request/system specs — integration specs trust the unit
 - [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
 - [ ] Job/mailer callers assert enqueuing only — the job/mailer spec owns the work
+- [ ] No standalone `not_to` assertions — every test has at least one positive assertion; `not_to` is only used alongside a positive one
 
 ## References
 
