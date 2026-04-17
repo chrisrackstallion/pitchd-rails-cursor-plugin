@@ -77,7 +77,7 @@ Create a task for each item and complete **in order**:
 3. **Ask clarifying questions** — one per message; purpose, constraints, success criteria.
 4. **Propose 2–3 approaches** — trade-offs in **Rails terms** (resources vs RPC, HTML vs JSON, sync vs job, model vs controller vs policy), consistent with what you already loaded. For each approach, **state explicitly where the domain logic will live** (model method, callback, scope, concern) — not implicit.
 5. **Present design in sections** — scaled to complexity; approval after each section.
-6. **Write spec** — default path **`docs/specs/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/specs` if needed; user or team conventions override).
+6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override).
 7. **Spec self-review** — placeholders, contradictions, ambiguity, scope; fix inline.
 8. **User reviews written spec** — wait for approval or revision requests.
 9. **Transition to planning** — invoke **`writing-plans`** only.
@@ -93,7 +93,7 @@ digraph brainstorming_rails {
     "Propose 2-3 approaches\n(Rails trade-offs)" [shape=box];
     "Present design sections\n(Rails-shaped)" [shape=box];
     "User approves design?" [shape=diamond];
-    "Write spec to docs/specs" [shape=box];
+    "Write spec to docs/brainstorms" [shape=box];
     "Spec self-review" [shape=box];
     "User approves spec file?" [shape=diamond];
     "Invoke writing-plans" [shape=doublecircle];
@@ -106,10 +106,10 @@ digraph brainstorming_rails {
     "Propose 2-3 approaches\n(Rails trade-offs)" -> "Present design sections\n(Rails-shaped)";
     "Present design sections\n(Rails-shaped)" -> "User approves design?";
     "User approves design?" -> "Present design sections\n(Rails-shaped)" [label="no, revise"];
-    "User approves design?" -> "Write spec to docs/specs" [label="yes"];
-    "Write spec to docs/specs" -> "Spec self-review";
+    "User approves design?" -> "Write spec to docs/brainstorms" [label="yes"];
+    "Write spec to docs/brainstorms" -> "Spec self-review";
     "Spec self-review" -> "User approves spec file?";
-    "User approves spec file?" -> "Write spec to docs/specs" [label="changes requested"];
+    "User approves spec file?" -> "Write spec to docs/brainstorms" [label="changes requested"];
     "User approves spec file?" -> "Invoke writing-plans" [label="approved"];
 }
 ```
@@ -160,7 +160,7 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 
 **Documentation**
 
-- Write the validated spec to **`docs/specs/YYYY-MM-DD-<topic>.md`** (unless the user names another path).
+- Write the validated spec to **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** (unless the user names another path).
 - Commit the spec when the repo is yours to commit; otherwise leave changes ready for the human.
 
 **Spec self-review**
