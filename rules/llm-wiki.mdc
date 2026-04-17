@@ -1,0 +1,43 @@
+---
+description: >-
+  Conventions for an agent-maintained LLM wiki under docs/llm-wiki/ — immutable
+  raw sources, wiki graph, index and log. Apply when editing those markdown files.
+globs: docs/llm-wiki/**/*.md
+alwaysApply: false
+---
+
+# LLM wiki (docs layout)
+
+These rules apply to the **Pitchd default** wiki tree: **`docs/llm-wiki/`** beside
+a Rails app. Canonical workflow: **`skills/maintaining-llm-wiki/SKILL.md`**.
+
+## Boundaries
+
+- **`docs/llm-wiki/raw/**`** — Treat as **human-curated, agent-read-only**. Do not
+  edit, rename, or delete raw sources unless the user explicitly asked for that
+  housekeeping in this turn.
+- **Wiki pages** (elsewhere under `docs/llm-wiki/`) — Agent may create and edit
+  to integrate knowledge, cross-link, and record contradictions.
+- **`SCHEMA.md`** — Co-owned contract; change only when aligning with the user on
+  structure or workflow.
+
+## File responsibilities
+
+| File | Rule |
+|------|------|
+| `index.md` | Stay in sync with wiki pages: every substantive page listed with a one-line summary; update when adding/removing pages. |
+| `log.md` | **Append-only** for ingest/query/lint events; use consistent entry headers so logs stay greppable. |
+| Topic/entity pages | Prefer stable filenames; when renaming, update inbound links and `index.md`. |
+
+## Style
+
+- Prefer **relative links** between wiki pages.
+- When new information **contradicts** an existing page, **update both** (or add
+  a contradiction note) — do not silently delete old claims without trace.
+- Keep **Rails app code** out of this tree unless the user asked for embedded
+  snippets; this directory is for **compiled knowledge**, not application source.
+
+## Relationship to Rails work
+
+Wiki edits here are **documentation** — they do **not** replace
+`rules/testing.mdc`, `implementing-pitchd-rails`, or app implementation tasks.

@@ -86,7 +86,17 @@ Prefix these findings **`tactical:`**.
   different shape (API-first, SPA, etc.); then treat it as a documented
   exception and review tactics for consistency with that choice.
 
-### 5. What to check by phase
+### 5. Wiki capture candidates
+
+When reviewing implementation, note any of these in the **Wiki capture candidates** section of the report (non-blocking, optional):
+
+- **Architectural decisions** with explicit rationale (e.g. "job over callback because X").
+- **Non-obvious constraints** found in the codebase (e.g. N+1 traps, locking behaviour, required counter-caches).
+- **Patterns codified** for the first time in this app (e.g. how a Turbo Stream broadcast is structured, a Solid Queue pattern, a policy shape).
+
+Do not flag routine implementation details — only decisions and discoveries that would otherwise vanish into chat history.
+
+### 6. What to check by phase
 
 **Plan:** Completeness (no blocking TODOs), spec alignment, vertical slices,
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
@@ -97,7 +107,7 @@ coverage).
 **Implementation:** Map changed files to skills; compass on overall drift; one
 home per behaviour for tests (`writing-tests`).
 
-### 6. Calibration
+### 7. Calibration
 
 **Flag all violations of plugin rules.** Plugin conventions — `rails-omakase-compass`,
 `writing-*` skills, and `rules/*.mdc` — apply even when the application currently does
@@ -152,6 +162,10 @@ The pattern's existence does not excuse it — name it clearly. Split by urgency
 
 ### Recommendations (non-blocking)
 - [confidence: X.X] ...
+
+### Wiki capture candidates (optional)
+Notable decisions, constraints, or patterns codified during this work that are worth filing into `docs/llm-wiki/` via `pitchd-rails-wiki-maintainer`. Only include entries that add durable value — not every implementation detail.
+- ...
 ```
 
 End with a **one-line summary** for quick scanning.

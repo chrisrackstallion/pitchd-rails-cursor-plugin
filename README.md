@@ -28,6 +28,11 @@ You can also ask it to review the **surroundings** of files you touched — `rev
 
 Use the **`rails-omakase-compass`** skill. It answers whether a direction fits 37signals-shaped Rails — omakase defaults, REST gravity, server-owned truth, majestic monolith — and points you at the right `writing-*` skill for tactical detail. It can also pull from the unofficial 37signals guide via **`referencing-unofficial-37signals-guide`**.
 
+### Maintain a compounding LLM wiki (Karpathy pattern)
+> *"Ingest this article into our wiki"* / *"Lint the knowledge base for stale links"*
+
+Use the **`maintaining-llm-wiki`** skill. It treats **`docs/llm-wiki/`** as a git-backed, agent-maintained markdown graph with immutable **`raw/`** sources, **`index.md`**, **`log.md`**, and a **`SCHEMA.md`** contract — boring defaults first (index + grep), optional local search later. Pair with **`rules/llm-wiki.mdc`** when editing those paths. Delegate focused passes to **`pitchd-rails-wiki-maintainer`**.
+
 ---
 
 New here? Start with **`rails-omakase-compass`** to understand the philosophy, then reach for the workflow skills above.
@@ -36,7 +41,7 @@ New here? Start with **`rails-omakase-compass`** to understand the philosophy, t
 
 - **`rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more.
 - **`skills/`** — Workflows for planning, implementing, and reviewing Rails work (including layer-specific `writing-*` skills).
-- **`agents/`** — Subagent definitions for implementation and review passes.
+- **`agents/`** — Subagent definitions for implementation, review, and focused wiki maintenance passes.
 
 ## Credits
 

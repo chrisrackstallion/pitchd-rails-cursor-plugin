@@ -162,7 +162,15 @@ from **R1**.
 
 ## After all tasks are Approved (Pitchd)
 
-### 5. Handoff for user sign-off
+### 5. Optional wiki capture pass
+
+If any **`pitchd-rails-reviewer`** report contained a **Wiki capture candidates** section with non-empty entries, surface those to the user and offer a focused wiki pass:
+
+> "The reviewer flagged N decisions/patterns worth documenting. Want me to run a wiki capture pass via `pitchd-rails-wiki-maintainer`?"
+
+If the user says yes, delegate to **`pitchd-rails-wiki-maintainer`** with: goal `ingest`, the list of wiki candidates from the reviewer reports, and `docs/llm-wiki/` as the wiki root. Do not run this automatically — the user decides.
+
+### 6. Handoff for user sign-off
 
 Deliver a short **completion package**:
 
@@ -171,7 +179,7 @@ Deliver a short **completion package**:
 - **Pitchd reviewer** final notes (if any non-blocking recommendations were in those reports).
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it).
 
-**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed.
+**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Include a prompt about any pending wiki capture pass (Step 5) if not yet actioned.
 
 ## Related
 

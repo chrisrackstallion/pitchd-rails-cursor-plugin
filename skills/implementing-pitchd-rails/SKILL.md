@@ -52,6 +52,7 @@ outside this task's scope.
 | `writing-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
 | `writing-tests` | Tests: DHH/37signals philosophy (system backbone, real objects, behaviour over mocks) plus `rules/testing.mdc`. |
 | `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `rules/rubocop.mdc`. Not a substitute for compass or tests. |
+| `maintaining-llm-wiki` | **Knowledge wiki only** — ingest/query/lint for `docs/llm-wiki/` per `rules/llm-wiki.mdc`; use **`pitchd-rails-wiki-maintainer`** for delegation. Not a substitute for app implementation — if the task is code, stay in this skill. |
 
 **Conflict rule (same as reviewing-pitchd-rails):**
 
