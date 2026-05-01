@@ -26,7 +26,7 @@ sign-off.
 
 ## When to use
 
-- A **written plan** exists (see `../writing-plans/SKILL.md`) and the user wants it **executed**.
+- A **written plan** exists (see `../writing-pitchd-rails-plans/SKILL.md`) and the user wants it **executed**.
 - The user names a **subset** of tasks (e.g. "tasks 2–4 only" or "Task 1 and Task 5").
 - The user wants **Pitchd / omakase** execution without the main agent touching the codebase.
 
@@ -186,7 +186,7 @@ Deliver a short **completion package**:
 
 ## Related
 
-- **Plans:** `../writing-plans/SKILL.md`
+- **Plans:** `../writing-pitchd-rails-plans/SKILL.md`
 - **Implement:** `../implementing-pitchd-rails/SKILL.md` — **`pitchd-rails-implementor`**
 - **Review:** `../reviewing-pitchd-rails/SKILL.md` — **`pitchd-rails-reviewer`**
 - **Subagent definitions:** `.cursor/agents/pitchd-rails-implementor.md`, `.cursor/agents/pitchd-rails-reviewer.md`

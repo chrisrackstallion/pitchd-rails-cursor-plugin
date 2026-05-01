@@ -56,9 +56,9 @@ Use the **same order** as **`agents/pitchd-rails-query.md`** so this skill has t
 | Tests | `writing-tests` | `testing.mdc` |
 | RuboCop / style gates | `running-rubocop` when relevant to the design | `rubocop.mdc` |
 | Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` | `naming.mdc` |
-| Planning / execution context | `writing-plans`, `executing-pitchd-rails-plan`, `implementing-pitchd-rails`, `reviewing-pitchd-rails` | only when the brainstorm is about **how** to plan or run those workflows in this plugin |
+| Planning / execution context | `writing-pitchd-rails-plans`, `executing-pitchd-rails-plan`, `implementing-pitchd-rails`, `reviewing-pitchd-rails` | only when the brainstorm is about **how** to plan or run those workflows in this plugin |
 
-Pull in workflow skills only when the conversation is explicitly about those processes — not for routine feature design (those stay behind the HARD-GATE until **`writing-plans`**).
+Pull in workflow skills only when the conversation is explicitly about those processes — not for routine feature design (those stay behind the HARD-GATE until **`writing-pitchd-rails-plans`**).
 
 <HARD-GATE>
 Do **not** invoke **`implementing-pitchd-rails`**, **`executing-pitchd-rails-plan`**, or any implementation skill; do **not** write application code, migrations, or tests; do **not** scaffold until you have presented a design and the user has approved it, then written the spec file and passed the user review gate below. This applies to every change regardless of perceived size.
@@ -66,7 +66,7 @@ Do **not** invoke **`implementing-pitchd-rails`**, **`executing-pitchd-rails-pla
 
 ## Anti-pattern: "Too small to need a spec"
 
-Unexamined assumptions waste the most effort on "small" changes. The spec can be a short paragraph, but you **must** present it, get approval, write it to disk, and get user sign-off on the file before **`writing-plans`**.
+Unexamined assumptions waste the most effort on "small" changes. The spec can be a short paragraph, but you **must** present it, get approval, write it to disk, and get user sign-off on the file before **`writing-pitchd-rails-plans`**.
 
 ## Checklist
 
@@ -80,7 +80,7 @@ Create a task for each item and complete **in order**:
 6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override).
 7. **Spec self-review** — placeholders, contradictions, ambiguity, scope; fix inline.
 8. **User reviews written spec** — wait for approval or revision requests.
-9. **Transition to planning** — invoke **`writing-plans`** only.
+9. **Transition to planning** — invoke **`writing-pitchd-rails-plans`** only.
 
 ## Process flow
 
@@ -96,7 +96,7 @@ digraph brainstorming_rails {
     "Write spec to docs/brainstorms" [shape=box];
     "Spec self-review" [shape=box];
     "User approves spec file?" [shape=diamond];
-    "Invoke writing-plans" [shape=doublecircle];
+    "Invoke writing-pitchd-rails-plans" [shape=doublecircle];
 
     "Grounding order\n(compass → writing-* + rules → refs? → codebase)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message only)" [label="yes"];
@@ -110,15 +110,15 @@ digraph brainstorming_rails {
     "Write spec to docs/brainstorms" -> "Spec self-review";
     "Spec self-review" -> "User approves spec file?";
     "User approves spec file?" -> "Write spec to docs/brainstorms" [label="changes requested"];
-    "User approves spec file?" -> "Invoke writing-plans" [label="approved"];
+    "User approves spec file?" -> "Invoke writing-pitchd-rails-plans" [label="approved"];
 }
 ```
 
-**Terminal state is `writing-plans`.** Do **not** jump to **`implementing-pitchd-rails`**, **`writing-hotwire`**, or other implementation skills from this workflow.
+**Terminal state is `writing-pitchd-rails-plans`.** Do **not** jump to **`implementing-pitchd-rails`**, **`writing-hotwire`**, or other implementation skills from this workflow.
 
 ## Rails-shaped design content
 
-Scale sections to complexity. Prefer vocabulary that will survive into **`writing-plans`** without re-litigating philosophy:
+Scale sections to complexity. Prefer vocabulary that will survive into **`writing-pitchd-rails-plans`** without re-litigating philosophy:
 
 | Lens | Cover |
 |------|--------|
@@ -135,7 +135,7 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 
 **Design for clear Rails boundaries:** Vertical slices (resource/feature cohesion), one obvious home for domain rules (models, concerns — not generic service registries). If the brainstorm drifts toward "generic executor," "repository on thin models," or duplicated rules in JS, stop and realign with **`rails-omakase-compass`**.
 
-**Working in existing codebases:** Follow patterns that match **plugin rules**. Where the app contradicts those rules, the spec should describe the **correct** Rails-shaped direction for new work (same rule as **`implementing-pitchd-rails`** and **`writing-plans`**) and note integration friction — not silently entrench anti-patterns.
+**Working in existing codebases:** Follow patterns that match **plugin rules**. Where the app contradicts those rules, the spec should describe the **correct** Rails-shaped direction for new work (same rule as **`implementing-pitchd-rails`** and **`writing-pitchd-rails-plans`**) and note integration friction — not silently entrench anti-patterns.
 
 ## The process (mirrors superpowers brainstorming)
 
@@ -178,7 +178,7 @@ Wait for response; revise and re-review until approved.
 
 **Planning**
 
-- Invoke **`writing-plans`** with the spec as input. **Only** that skill follows this one.
+- Invoke **`writing-pitchd-rails-plans`** with the spec as input. **Only** that skill follows this one.
 
 ## Key principles
 
@@ -205,7 +205,7 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 |---------|-----|
 | Reading the app before compass / **`writing-*`** / **`rules/*.mdc`** on architectural questions | Follow **Grounding order (always)** — same order as **`pitchd-rails-query`**. |
 | Loading every `writing-*` and rule without routing | Use **Topic → assets**; expand only when cross-cutting. |
-| Coding or migrating during brainstorm | Stop; complete spec and **`writing-plans`** first. |
+| Coding or migrating during brainstorm | Stop; complete spec and **`writing-pitchd-rails-plans`** first. |
 | Defaulting to JSON/SPA for app flows | Re-read **HTML as primary interface** in **`rails-omakase-compass`**. |
 | "If an RPC-shaped action is unavoidable…" | It almost never is. Model it RESTfully first — find the resource the action creates, updates, or destroys. Document exception only after the attempt. |
 | New "service object" as the first idea | Ask what **model** or **concern** owns the behaviour (`rules/services.mdc`). Name the specific collaborator type if extraction is genuinely needed. |
@@ -223,5 +223,5 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 
 - **`agents/pitchd-rails-query.md`** — same **Grounding order** and **Topic → assets** table (readonly Q&A; this skill is brainstorm + spec).
 - **`skills/rails-omakase-compass/SKILL.md`** — whether the shape fits.
-- **`skills/writing-plans/SKILL.md`** — next step after an approved spec.
+- **`skills/writing-pitchd-rails-plans/SKILL.md`** — next step after an approved spec.
 - **`skills/implementing-pitchd-rails/SKILL.md`** — after a plan exists, not during brainstorm.

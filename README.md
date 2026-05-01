@@ -9,7 +9,7 @@ Metadata lives in [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json).
 ### Write a plan
 > *"Write a plan for adding comment threads to posts"*
 
-Use the **`writing-plans`** skill. It turns a spec or feature description into a checklisted implementation plan — exact file paths, real Ruby snippets, RSpec commands, and REST-shaped decomposition. A philosophy check and a tactical pass run before you see the final plan.
+Use the **`writing-pitchd-rails-plans`** skill. It turns a spec or feature description into a checklisted implementation plan — exact file paths, real Ruby snippets, RSpec commands, and REST-shaped decomposition. A philosophy check and a tactical pass run before you see the final plan.
 
 ### Execute a plan
 > *"Execute the plan"*

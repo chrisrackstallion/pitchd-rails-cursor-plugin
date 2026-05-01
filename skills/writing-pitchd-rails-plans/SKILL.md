@@ -1,5 +1,5 @@
 ---
-name: writing-plans
+name: writing-pitchd-rails-plans
 description: >-
   Write implementation plans for multi-step Rails work before application code.
   Plans follow vertical REST slices, DHH/37signals conventions, and this plugin's
@@ -41,7 +41,7 @@ If an existing anti-pattern must be worked around for this task, say so explicit
 and mark it as technical debt — do not normalize it.
 </objective>
 
-**Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
+**Announce at start:** "I'm using the writing-pitchd-rails-plans skill to create the implementation plan."
 
 ## Philosophy (DHH / Pitchd Rails)
 

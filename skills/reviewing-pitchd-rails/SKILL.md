@@ -67,7 +67,7 @@ Prefix these findings **`philosophy:`**.
 
 From the diff or plan, pick **only** the skills that apply:
 
-`writing-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
+`writing-pitchd-rails-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
 `writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
 `writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
 `writing-jobs`, `writing-migrations`, `writing-tests`,
@@ -100,7 +100,7 @@ Do not flag routine implementation details — only decisions and discoveries th
 
 **Plan:** Completeness (no blocking TODOs), spec alignment, vertical slices,
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
-layer for rules; `writing-plans` fit; red flags from `writing-plans` (services,
+layer for rules; `writing-pitchd-rails-plans` fit; red flags from `writing-pitchd-rails-plans` (services,
 RPC, missing policy, Turbo escalation before simpler options, duplicate test
 coverage).
 
@@ -226,6 +226,6 @@ context-isolation rules; the workflow and report shape are defined **here**.
 
 - **RuboCop (zero offences, no disables):** `../running-rubocop/SKILL.md`, `../../rules/rubocop.mdc`
 - **Compass (why / whether):** `../rails-omakase-compass/SKILL.md`
-- **Planning:** `../writing-plans/SKILL.md` (plans should be reviewed with this skill via **`pitchd-rails-reviewer`**, Phase `plan`)
+- **Planning:** `../writing-pitchd-rails-plans/SKILL.md` (plans should be reviewed with this skill via **`pitchd-rails-reviewer`**, Phase `plan`)
 - **Full plan execution (orchestrator):** `../executing-pitchd-rails-plan/SKILL.md` — loops implementor → this reviewer until Approved, then user sign-off
 - **Implementation (execute a task):** `../implementing-pitchd-rails/SKILL.md` — **`pitchd-rails-implementor`** for isolated task execution with compass + tactics

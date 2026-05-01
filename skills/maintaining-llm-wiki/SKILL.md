@@ -26,7 +26,7 @@ Inspired by Andrej Karpathy's LLM wiki pattern.
 - **Querying** with citations to wiki paths; **linting** contradictions, staleness, orphans.
 - Choosing **index + grep** (then optional local search) before embeddings-heavy stacks.
 
-**When not to use:** One-off summaries with no durable wiki; product specs that belong in **`writing-plans`** / app code.
+**When not to use:** One-off summaries with no durable wiki; product specs that belong in **`writing-pitchd-rails-plans`** / app code.
 
 ## Rails + Pitchd alignment
 

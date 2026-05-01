@@ -114,7 +114,7 @@ Read only what the task touches:
 
 | Area | Skill |
 |------|--------|
-| Plans / task breakdown | `writing-plans` |
+| Plans / task breakdown | `writing-pitchd-rails-plans` |
 | Models / concerns / domain | `writing-models` |
 | Controllers / Turbo responses | `writing-controllers` |
 | Routes / REST mapping | `writing-routes` |

@@ -49,7 +49,7 @@ outside this task's scope.
 | `executing-pitchd-rails-plan` | **Orchestration** — run a whole plan (or subset) by delegating each task to **`pitchd-rails-implementor`** and **`pitchd-rails-reviewer`** in a loop; orchestrator does **not** write app code. |
 | `rails-omakase-compass` | **Whether** the approach fits majestic monolith / server truth / REST — read **before** coding when the task involves boundaries or product shape. |
 | `writing-*` + `rules/*.mdc` | **How** to write routes, models, controllers, Hotwire, tests, etc., for this repo. |
-| `writing-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
+| `writing-pitchd-rails-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
 | `writing-tests` | Tests: DHH/37signals philosophy (system backbone, real objects, behaviour over mocks) plus `rules/testing.mdc`. |
 | `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `rules/rubocop.mdc`. Not a substitute for compass or tests. |
 | `maintaining-llm-wiki` | **Knowledge wiki only** — ingest/query/lint for `docs/llm-wiki/` per `rules/llm-wiki.mdc`; use **`pitchd-rails-wiki-maintainer`** for delegation. Not a substitute for app implementation — if the task is code, stay in this skill. |
@@ -84,7 +84,7 @@ For purely local edits inside an established pattern, still **skim** the compass
 
 From the task description and files you will touch, read **only** the relevant:
 
-`writing-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
+`writing-pitchd-rails-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
 `writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
 `writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
 `writing-jobs`, `writing-migrations`, `writing-tests`.
