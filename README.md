@@ -19,9 +19,7 @@ Use the **`executing-pitchd-rails-plan`** skill. An orchestrator delegates each 
 ### Review existing code
 > *"Review this PR"* / *"Review the code I just wrote"*
 
-Use the **`reviewing-pitchd-rails`** skill. It runs a two-layer review: **philosophy** (is this the right kind of Rails solution?) via `rails-omakase-compass`, then **tactics** (is it implemented correctly?) via the relevant `writing-*` skills and rules.
-
-You can also ask it to review the **surroundings** of files you touched — `reviewing-touched-surroundings` will flag issues in adjacent code worth cleaning up before merging.
+Use the **`reviewing-pitchd-rails`** skill. It runs a two-layer review: **philosophy** (is this the right kind of Rails solution?) via `rails-omakase-compass`, then **tactics** (is it implemented correctly?) via the relevant `writing-*` skills and rules. During implementation reviews it also checks the **surroundings** — pre-existing code in touched files — flagging quick wins and deferred follow-ups in the same report.
 
 ### Query for Rails best practice
 > *"How should I handle this in Rails?"* / *"What's the right pattern for background jobs here?"*

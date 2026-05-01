@@ -192,5 +192,4 @@ Task tool or slash command. Subagent instructions add **delegation** and
 
 - **RuboCop:** `../running-rubocop/SKILL.md`, `../../rules/rubocop.mdc`
 - **Compass:** `../rails-omakase-compass/SKILL.md`
-- **Review after implementation:** `../reviewing-pitchd-rails/SKILL.md` — `pitchd-rails-reviewer`
-- **Surroundings / pre-existing code in touched files:** `../reviewing-touched-surroundings/SKILL.md` — `pitchd-rails-surroundings-reviewer`
+- **Review after implementation:** `../reviewing-pitchd-rails/SKILL.md` — `pitchd-rails-reviewer` (includes surroundings pass for pre-existing code in touched files)

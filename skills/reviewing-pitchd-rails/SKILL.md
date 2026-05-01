@@ -107,7 +107,37 @@ coverage).
 **Implementation:** Map changed files to skills; compass on overall drift; one
 home per behaviour for tests (`writing-tests`).
 
-### 7. Calibration
+### 7. Surroundings pass (pre-existing code in touched files)
+
+**When:** `implementation` or `both` phases only. Skip for plan-only reviews.
+
+After reviewing the new code, scan **pre-existing** (unchanged or lightly
+adapted) code in the same touched files. Apply compass + tactical checks to
+**surrounding blocks** only — methods, concerns, and imports that the diff did
+**not** add or materially rewrite.
+
+**Boundary rule:** Lines added or materially rewritten by this change are new
+code — already covered above. Lines that were there before and remain
+substantially unchanged are surrounding code — covered here. Greenfield files
+that are entirely new: skip and note "No surrounding code."
+
+For each surrounding finding:
+
+1. Open the cited file and confirm the surrounding lines exist as stated.
+2. Verify the issue is not handled elsewhere in the same scope.
+3. Confirm the rule or skill you're citing actually prohibits the pattern.
+
+Drop any finding you cannot verify. Prefix philosophy findings
+**`surrounding/philosophy:`** and tactical findings **`surrounding/tactical:`**.
+Use the same confidence scale (§8 Calibration). Do not repeat findings already
+in the main review.
+
+**Quick wins:** in-file, low blast radius, fits a follow-up commit in the same
+PR or a small chore PR.
+**Separate follow-ups:** refactors that change behaviour surface, span many
+files, or need migrations/QA — still report them; label clearly.
+
+### 8. Calibration
 
 **Flag all violations of plugin rules.** Plugin conventions — `rails-omakase-compass`,
 `writing-*` skills, and `rules/*.mdc` — apply even when the application currently does
@@ -163,6 +193,18 @@ The pattern's existence does not excuse it — name it clearly. Split by urgency
 ### Recommendations (non-blocking)
 - [confidence: X.X] ...
 
+### Surroundings (pre-existing code in touched files)
+_Implementation and both phases only. Omit this section for plan-only reviews._
+
+**Boundary:** [How new vs surrounding was determined — diff, plan, or inference.]
+
+**Quick wins (same PR or small chore):**
+- [confidence: X.X] `[path]` (surrounding): [Direct statement.] — [rule reference]
+  **Verified:** [What you read.]
+
+**Separate follow-ups (handle outside this feature):**
+- [confidence: X.X] `[path]`: [Direct statement — why separate.]
+
 ### Wiki capture candidates (optional)
 Notable decisions, constraints, or patterns codified during this work that are worth filing into `docs/llm-wiki/` via `pitchd-rails-wiki-maintainer`. Only include entries that add durable value — not every implementation detail.
 - ...
@@ -187,4 +229,3 @@ context-isolation rules; the workflow and report shape are defined **here**.
 - **Planning:** `../writing-plans/SKILL.md` (plans should be reviewed with this skill via **`pitchd-rails-reviewer`**, Phase `plan`)
 - **Full plan execution (orchestrator):** `../executing-pitchd-rails-plan/SKILL.md` — loops implementor → this reviewer until Approved, then user sign-off
 - **Implementation (execute a task):** `../implementing-pitchd-rails/SKILL.md` — **`pitchd-rails-implementor`** for isolated task execution with compass + tactics
-- **Pre-existing code in touched files (campground rule):** `../reviewing-touched-surroundings/SKILL.md` — use **`pitchd-rails-surroundings-reviewer`** for an isolated pass on surrounding code, not the new diff
