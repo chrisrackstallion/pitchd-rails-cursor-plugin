@@ -34,11 +34,11 @@ apply them, not re-debate them.
 
 ### 0. Scope check — user revisions
 
-**If this is a final sign-off pass (the prompt says "final sign-off" or "Pass 3"):** review the full scope regardless of User revisions. User revisions is context — it tells you where to pay closest attention; it does not restrict what you read.
+**If this is a final sign-off pass (the prompt says "final sign-off"):** review the full scope regardless of User revisions. User revisions is context — it tells you where to pay closest attention; it does not restrict what you read.
 
-**Otherwise, if User revisions was provided:** restrict this review to the described changed sections only. Locate and read those sections or paths in the relevant artifact (plan file, code files, or both depending on Phase); skip the rest. Note in the report: "**Scope:** User revisions — [brief restatement of what changed]."
+**If User revisions was provided (loop pass — fixes applied after a previous review found issues):** restrict this review to the described changed sections only. Locate and read only those sections or paths in the relevant artifact (plan file, code files, or both depending on Phase); skip the rest. Load compass and tactical skills only for the areas that changed — do not re-run full compass or reload all skills for unchanged sections. Note in the report: "**Scope:** User revisions — [brief restatement of what changed]."
 
-**If User revisions is absent:** review the full scope as specified.
+**If User revisions is absent and this is not a final sign-off:** review the full scope as specified.
 
 ### 1. Verify before asserting
 

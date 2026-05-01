@@ -319,6 +319,8 @@ altered).
 
 Then delegate to **`pitchd-rails-reviewer`** again.
 
+**Initial Pass 2 call:**
+
 | Field | Value |
 |-------|--------|
 | **Phase** | `plan` (use `both` only if you also need implementation-shaped checks) |
@@ -327,9 +329,21 @@ Then delegate to **`pitchd-rails-reviewer`** again.
 | **Scope** | `full plan` — state that this is **final sign-off before implementation** and whether prompted by **Pass 1 edits** or **user revisions** |
 | **User revisions** | (optional) Bullet summary — **context only**: the reviewer reads the full plan; User revisions tells them where to pay extra attention, not where to stop |
 
+**Loop call (after fixing Pass 2 issues):**
+
+| Field | Value |
+|-------|--------|
+| **Phase** | same as initial |
+| **Plan path** | Updated plan file |
+| **Spec path** | Unchanged, or `none` |
+| **Scope** | The changed sections only (e.g. `Task 3 — replaced approach`, `File map — removed entry`) |
+| **User revisions** | Bullet list of exactly what was fixed — the reviewer reads only these sections |
+
 Treat the outcome as **final plan approval** before implementation. If Pass 2
-raises issues, fix the plan once; call Pass 2 again **only if** those fixes
-materially change scope (avoid loops—one edit cycle is usually enough).
+raises issues, fix the plan and re-run **scoped to the fixes only** — set
+`User revisions` to a bullet list of what changed and `Scope` to those
+sections; do not send the full plan again. One scoped fix cycle is usually
+enough — if a second loop is needed, repeat the same scoped pattern.
 
 ## Revision mode
 

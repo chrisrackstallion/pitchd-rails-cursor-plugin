@@ -72,13 +72,14 @@ Invoke **`pitchd-rails-reviewer`** with:
 
 - **Phase:** `implementation` (or `both` if the task required plan-level re-validation).
 - **Plan path**, **Spec path**, **Scope:** paths changed, or a short `git diff` summary / file list the orchestrator gathered read-only.
+- **User revisions:** omit on the **first review** for a task. On **loop calls** (reviewing after a fix pass), set this to a bullet list of what the implementor changed — the reviewer will read only those areas.
 
 Instruction: follow **`skills/reviewing-pitchd-rails/SKILL.md`** and return the standard **Pitchd Rails review** report.
 
 ### 3. Branch on status
 
 - **`Status: Approved`** → proceed to **next task** (or to **final DHH pass** if no tasks remain).
-- **`Issues found`** → send the **review feedback** (philosophy + tactical items that matter) back to **`pitchd-rails-implementor`** as a **fix pass** for the **same task**. Include reviewer quotes or bullet list so the subagent can act without parent chat history. **Loop** until Approved.
+- **`Issues found`** → send the **review feedback** (philosophy + tactical items that matter) back to **`pitchd-rails-implementor`** as a **fix pass** for the **same task**. Include reviewer quotes or bullet list so the subagent can act without parent chat history. When re-invoking the reviewer after the fix, pass **User revisions** scoped to what the implementor changed — do not re-review the full task diff. **Loop** until Approved.
 
 ### 4. Escalation from implementor
 
@@ -136,12 +137,14 @@ Invoke **`pitchd-rails-reviewer`** with:
 - **Phase:** `implementation`
 - **Scope:** only the files changed by the revision (not the full plan scope).
 - **Plan path**, **Spec path** as above.
+- **User revisions:** omit on the first review call. On loop calls (reviewing after a fix pass), set to a bullet list of what the implementor changed — the reviewer reads only those areas.
 
 #### R4. Branch on status
 
 - **`Status: Approved`** → report back to the user (see **R5** below).
 - **`Issues found`** → feed review feedback to the implementor as a fix pass.
-  Loop until Approved.
+  When re-invoking the reviewer after the fix, pass **User revisions** scoped
+  to what changed — do not re-review the full revision scope. Loop until Approved.
 - **BLOCKED / NEEDS_CONTEXT** from implementor → stop, present the blocker to
   the user, and wait for a decision.
 
