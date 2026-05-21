@@ -1,71 +1,370 @@
 # System Specs Reference
 
-System specs are the backbone of Rails testing. They simulate real users
-interacting with the application through a browser — clicking buttons,
-filling forms, navigating pages. They give the highest confidence that
-the feature actually works.
+System specs are the **backbone** of Rails testing, not the **coverage**.
+They prove that routing, controllers, views, helpers, JavaScript, and
+models compose into a working user journey. They are slow, brittle to
+copy changes, and expensive to maintain — so each one must earn its
+place.
 
-## Structure
+The default answer to "should I add another system spec?" is **no — push
+it down a layer.**
+
+---
+
+## Budget
+
+Anchor on these numbers when deciding whether to add a system spec. Going
+over the budget requires a stated reason ("this seam broke in production",
+"this composition is not covered anywhere else"). Random additions are
+the failure mode.
+
+| Scope | Default budget |
+|-------|---------------|
+| Per CRUD resource | **1** canonical happy-path spec (typically create-and-see). Add a second only if edit or delete has materially different UI (modal, confirmation, multi-step). |
+| Per non-trivial form | **1** validation-error spec proving the form re-renders with errors visible. Specific validation rules belong in model specs. |
+| Per cross-resource journey (signup, onboarding, checkout, password reset) | **1** spec walking the whole journey end-to-end. |
+| Per JavaScript behaviour (Stimulus controller, Turbo Stream pattern) | **1** spec on the simplest representative page. Other usages of the same controller assume it works. |
+| Per UI authorization rule | **0** by default. Add 1 only when role-based hiding is a stated product requirement, and prefer asserting it as a secondary check inside an existing journey spec. |
+
+Anything not in this table needs a justification. The defaults are
+deliberately tight — system specs absorb work that belongs to model,
+request, and policy specs unless held in check.
+
+---
+
+## The Five Gates
+
+Before writing a system spec, every one of these must be true. If any
+gate fails, write the test at a lower layer (request, model, policy,
+helper) instead.
+
+1. **Interaction gate.** The spec calls at least one of `fill_in`,
+   `click_button`, `click_link`, `select`, `check`, `attach_file`, or
+   similar. A spec that only calls `visit` and then asserts content is
+   not a system spec — it is a view spec masquerading as one. Move it to
+   a request spec asserting `response.body.include?`, or trust the
+   canonical journey spec already proves the page renders.
+
+2. **Uniqueness gate.** The user journey is materially different from any
+   system spec already in the suite for this resource or area. If the
+   only difference is the value being submitted, the field being checked,
+   or which assertion runs at the end, fold it into the existing spec or
+   push it down a layer.
+
+3. **JavaScript-necessity gate.** If the spec requires Selenium, the
+   behaviour under test cannot be proved by a request spec asserting the
+   Turbo Stream content type, and is not already exercised by another
+   system spec for the same Stimulus controller or Turbo pattern. A
+   Stimulus controller earns at most one system spec across the entire
+   suite, on the simplest page that uses it.
+
+4. **Single-home gate.** The assertion is not already owned by a model
+   spec (domain logic), request spec (HTTP / auth gate), policy spec
+   (authorization rule), or mailer/job spec (work performed). System
+   specs trust the lower layers; they do not duplicate them.
+
+5. **One-story gate.** The spec tells exactly one user story end-to-end.
+   No drive-by assertions about nav, footer, sidebar, or unrelated
+   widgets. If the test grows past ~10 assertion lines, it is probably
+   two stories glued together, or one story with opportunistic
+   assertions.
+
+---
+
+## What System Specs Must Cover
+
+These are the only flows that genuinely need a browser-driven integration
+test. Everything else lives elsewhere.
+
+### 1. The canonical happy path per major journey
+
+For a CRUD resource, this is typically "user creates X, sees it on the
+page." Edit and delete ride along in the same spec only if natural;
+otherwise they go to request specs.
 
 ```ruby
-# spec/system/articles_spec.rb
 RSpec.describe "Articles", type: :system do
-  before do
-    driven_by(:rack_test)
-  end
+  before { driven_by(:rack_test) }
 
   it "user creates an article" do
     user = create(:user)
     sign_in user
 
     visit new_article_path
-    fill_in "Title", with: "My New Article"
-    fill_in "Body", with: "This is the content."
+    fill_in "Title", with: "Testing in Rails"
+    fill_in "Body", with: "System specs are the backbone."
     click_button "Create Article"
 
-    expect(page).to have_content("My New Article")
-    expect(page).to have_content("Article created.")
+    expect(page).to have_content("Testing in Rails")
   end
 end
 ```
+
+That is the entire CRUD system-spec budget for most resources. Do not
+add separate `it` blocks for show / edit / delete unless the UI is
+materially different.
+
+### 2. Multi-request journeys where rendered HTML feeds the next step
+
+Sign-up → confirm → onboard. Password reset email → click link → set
+password. Checkout step 1 → step 2 → step 3. These earn a system spec
+because the *integration between redirects, flash, form re-population,
+and tokens* is the actual feature.
+
+```ruby
+it "new user signs up and lands on the dashboard" do
+  visit new_registration_path
+  fill_in "Email", with: "alice@example.com"
+  fill_in "Password", with: "secretpass"
+  fill_in "Company", with: "Acme"
+  click_button "Sign up"
+
+  expect(page).to have_content("Welcome, Alice")
+  expect(page).to have_current_path(dashboard_path)
+end
+```
+
+### 3. Flows that genuinely require JavaScript to function
+
+The bar is "the user cannot complete the journey with JavaScript off,"
+not "there is JS on the page." Turbo Stream updates after a
+non-navigation event, inline edit modals, drag-and-drop, real-time
+broadcasts.
+
+```ruby
+RSpec.describe "Live comments", type: :system do
+  before { driven_by(:selenium_chrome_headless) }
+
+  it "new comment appears without page reload" do
+    article = create(:article, :published)
+    sign_in create(:user)
+
+    visit article_path(article)
+    fill_in "Comment", with: "Great article!"
+    click_button "Post Comment"
+
+    expect(page).to have_content("Great article!")
+  end
+end
+```
+
+One spec proves the Turbo Stream pattern works. Other forms that broadcast
+in the same way assume it works.
+
+### 4. One canonical validation-error spec per non-trivial form
+
+Prove the form re-renders with errors visible. The *content* of the
+validation belongs to the model spec.
+
+```ruby
+it "user sees validation errors on invalid submit" do
+  sign_in create(:user)
+
+  visit new_article_path
+  click_button "Create Article"
+
+  expect(page).to have_content("can't be blank")
+end
+```
+
+One spec per form. Not one per field, not one per validation rule.
+
+### 5. UI authorization rules — only when product-required
+
+Skip by default. Write one only when "this user must not see this
+button" is a stated requirement, and prefer asserting it as a secondary
+check inside an existing journey spec.
+
+```ruby
+it "owner sees delete button, others do not" do
+  owner = create(:user)
+  article = create(:article, author: owner)
+
+  sign_in owner
+  visit article_path(article)
+  expect(page).to have_button("Delete")
+
+  sign_in create(:user)
+  visit article_path(article)
+  expect(page).not_to have_button("Delete")
+end
+```
+
+Even this is often better expressed as a policy spec (logic) plus a
+request spec (HTTP gate). Reach for a UI-level system spec only when the
+hiding is a visible product feature.
+
+---
+
+## When NOT to Write a System Spec
+
+These are the high-frequency mistakes. Each pattern below should be
+moved to the layer indicated.
+
+### Visit-only specs ("the page shows X")
+
+If the spec only calls `visit` and then asserts content, with no
+interaction, it is a view spec. Move it.
+
+```ruby
+# Bad — no interaction; this is not a system spec
+it "shows the article on its page" do
+  article = create(:article, :published, title: "Hello")
+  visit article_path(article)
+  expect(page).to have_content("Hello")
+end
+
+# Good — request spec proves the same thing, 10x faster
+describe "GET /articles/:id" do
+  it "renders the article" do
+    article = create(:article, :published, title: "Hello")
+    get article_path(article)
+    expect(response.body).to include("Hello")
+  end
+end
+```
+
+### Repeated testing of the same JavaScript behaviour
+
+A Stimulus controller (character counter, confirm-on-delete, dropdown
+toggle, autosave) earns at most one system spec across the suite — on
+the simplest page that uses it. Other usages assume it works.
+
+```ruby
+# Bad — testing the same character counter across three forms
+it "article form shows character count"   # Selenium
+it "comment form shows character count"   # Selenium
+it "bio form shows character count"       # Selenium
+
+# Good — one spec proves the controller works
+it "character counter updates as user types" do
+  driven_by(:selenium_chrome_headless)
+  visit new_article_path
+  fill_in "Title", with: "Short"
+  expect(page).to have_content("5 / 100 characters")
+end
+```
+
+### Trivial persistence-via-UI checks
+
+"User updates their bio and the bio is saved." If the behaviour is
+"form posts, attribute round-trips, redirect," request + model specs
+already prove it. System specs only own persistence-through-UI when the
+form composition itself is non-trivial: nested attributes, multi-select,
+`accepts_nested_attributes_for`, polymorphic associations rendered as a
+single form.
+
+### Per-attribute or per-field assertions
+
+The form does not need a system spec per field. If the composition is
+non-trivial, one spec exercises the form as a whole. Per-field round-trip
+testing belongs to model specs (the attribute is set) and request specs
+(the parameter is permitted).
+
+```ruby
+# Bad — one spec per field
+it "user sets the title"
+it "user sets the body"
+it "user sets the visibility"
+it "user sets the due date"
+
+# Good — one spec exercises the form; round-tripping is request/model
+it "user creates an article" do
+  # ...fills the form fully, asserts the result
+end
+```
+
+### CRUD parity proliferation
+
+Do not write one system spec per CRUD action when the actions share a
+shape. Pick the most representative flow (usually create) and push the
+rest to request specs.
+
+```ruby
+# Bad — four near-identical system specs
+it "user creates an article"
+it "user edits an article"
+it "user deletes an article"
+it "user views an article"
+
+# Good — one system spec; edit/delete/show live in request specs
+it "user creates an article" do
+  # ...canonical create flow
+end
+```
+
+Add a second system spec only when edit or delete has UI that genuinely
+differs (e.g. delete is a confirmation modal driven by Stimulus).
+
+### Flash message and copy as the primary signal
+
+Asserting `have_content("Article created.")` is brittle to copy changes.
+Use the resource state ("the article title appears on the page") as the
+primary signal that the action succeeded. Flash assertions are a fine
+*secondary* check when the flash itself is the feature (account locked,
+session expired, rate limited).
+
+### Negative-path proliferation
+
+Every "unauthorized user sees X," "missing param returns Y," "empty
+state shows Z" does not need a system spec. These belong in request
+specs (status / redirect) and policy specs (logic). Empty-state copy
+gets at most a request spec asserting `response.body.include?`.
+
+### Selenium when rack_test would do
+
+If the spec passes under `rack_test`, it is not a JavaScript spec.
+Selenium adds 10× the runtime and an order of magnitude more flakiness.
+Default to `rack_test`; switch only when the behaviour under test
+provably fails without JS.
+
+### Drive-by assertions
+
+A spec titled "user creates an article" must not also assert nav links,
+footer copy, sidebar widgets, or the global search bar. Each system
+spec tells one story. Drive-by assertions couple unrelated changes
+together — a footer copy change breaks the article-creation spec.
+
+### `not_to` as a primary assertion
+
+Already in the skill, but worth restating: a test whose only assertion
+is `not_to have_*` proves only absence. It passes trivially on a blank
+page. Every test needs a positive assertion; `not_to` is a secondary
+check that pairs with one.
 
 ---
 
 ## Driver Selection
 
-### rack_test (Default — Fast)
+### rack_test (default)
 
-Use for most system specs. No JavaScript, no real browser, but very fast.
-
-```ruby
-before do
-  driven_by(:rack_test)
-end
-```
-
-### selenium_chrome_headless (When JS Required)
-
-Use only when the test requires JavaScript (Turbo Streams, Stimulus
-controllers, dynamic UI).
+Fast, no JavaScript, no real browser. Use for everything that doesn't
+need JS.
 
 ```ruby
-before do
-  driven_by(:selenium_chrome_headless)
-end
+before { driven_by(:rack_test) }
 ```
 
-### Guidelines
+### selenium_chrome_headless (only when JavaScript is essential)
 
-- Default to `rack_test` — it's 10x faster than Selenium
-- Only switch to Selenium when the feature under test requires JS
-- If you're testing a form submission and redirect, `rack_test` is enough
-- If you're testing live Turbo Stream updates or Stimulus behaviour, use Selenium
+Use only when the behaviour under test provably requires JavaScript —
+Turbo Stream updates after a non-navigation event, Stimulus-driven UI
+state, drag-and-drop.
+
+```ruby
+before { driven_by(:selenium_chrome_headless) }
+```
+
+If the spec passes under `rack_test`, it is not a Selenium spec. Move it
+back.
 
 ---
 
 ## Authentication in System Specs
 
-### Sign-In Helper
+Sign in through the form by default — it tests the real auth path.
+Switch to direct session insertion only when sign-in adds meaningful
+time to a spec that isn't testing auth.
 
 ```ruby
 # spec/support/system_authentication.rb
@@ -83,229 +382,33 @@ RSpec.configure do |config|
 end
 ```
 
-### Warden/Devise-Style Direct Login
-
-If you want to skip the login form for speed (common with Devise):
-
-```ruby
-# For Rails 8 built-in auth, sign in via the form is recommended.
-# For Devise: login_as(user, scope: :user)
-```
-
-Prefer signing in through the form in system specs — it tests the
-real auth flow. Only use direct login when auth is not what you're testing
-and the form sign-in adds meaningful time.
-
----
-
-## CRUD Feature Specs
-
-### Full Lifecycle
-
-```ruby
-RSpec.describe "Article management", type: :system do
-  before { driven_by(:rack_test) }
-
-  let(:user) { create(:user) }
-
-  before { sign_in user }
-
-  it "user creates an article" do
-    visit articles_path
-    click_link "New Article"
-
-    fill_in "Title", with: "Testing in Rails"
-    fill_in "Body", with: "System specs are great."
-    click_button "Create Article"
-
-    expect(page).to have_content("Testing in Rails")
-    expect(page).to have_content("Article created.")
-  end
-
-  it "user edits an article" do
-    article = create(:article, author: user, title: "Original Title")
-
-    visit article_path(article)
-    click_link "Edit"
-
-    fill_in "Title", with: "Updated Title"
-    click_button "Update Article"
-
-    expect(page).to have_content("Updated Title")
-    expect(page).to have_content("Article updated.")
-  end
-
-  it "user deletes an article" do
-    article = create(:article, author: user, title: "To Delete")
-
-    visit article_path(article)
-    click_button "Delete"
-
-    expect(page).to have_content("Article deleted.")
-    expect(page).not_to have_content("To Delete")
-  end
-
-  it "user sees validation errors" do
-    visit new_article_path
-
-    fill_in "Title", with: ""
-    click_button "Create Article"
-
-    expect(page).to have_content("can't be blank")
-  end
-end
-```
-
----
-
-## State Transition Flows
-
-```ruby
-RSpec.describe "Card closing", type: :system do
-  before { driven_by(:rack_test) }
-
-  it "user closes and reopens a card" do
-    user = create(:user)
-    card = create(:card, title: "Fix the bug")
-    sign_in user
-
-    visit card_path(card)
-    click_button "Close"
-
-    expect(page).to have_content("Closed")
-    expect(page).to have_button("Reopen")
-
-    click_button "Reopen"
-
-    expect(page).to have_content("Open")
-    expect(page).to have_button("Close")
-  end
-end
-```
-
----
-
-## List and Filtering
-
-```ruby
-RSpec.describe "Article listing", type: :system do
-  before { driven_by(:rack_test) }
-
-  it "displays published articles" do
-    published = create(:article, :published, title: "Visible Article")
-    draft = create(:article, title: "Draft Article")
-
-    visit articles_path
-
-    expect(page).to have_content("Visible Article")
-    expect(page).not_to have_content("Draft Article")
-  end
-
-  it "user searches articles" do
-    create(:article, :published, title: "Rails Testing")
-    create(:article, :published, title: "Ruby Gems")
-
-    visit articles_path
-    fill_in "Search", with: "testing"
-    click_button "Search"
-
-    expect(page).to have_content("Rails Testing")
-    expect(page).not_to have_content("Ruby Gems")
-  end
-end
-```
-
 ---
 
 ## Form Interactions
 
-### Select Dropdowns
+Use Capybara's high-level DSL — `fill_in` by label, `click_button` by
+visible text, `select` by option text. Do not select by CSS id or
+`name` attribute. Tests read as user actions, not as DOM scripts.
 
 ```ruby
-it "user sets article visibility" do
-  visit new_article_path
+# Good — reads like a user
+fill_in "Title", with: "Hello"
+select "Private", from: "Visibility"
+check "I agree to the terms"
+attach_file "Avatar", Rails.root.join("spec/fixtures/files/avatar.jpg")
+click_button "Create Article"
 
-  fill_in "Title", with: "Private Post"
-  select "Private", from: "Visibility"
-  click_button "Create Article"
-
-  expect(page).to have_content("Private")
-end
-```
-
-### Checkboxes and Radio Buttons
-
-```ruby
-it "user accepts terms" do
-  visit new_registration_path
-
-  fill_in "Name", with: "Alice"
-  fill_in "Email", with: "alice@example.com"
-  check "I agree to the terms"
-  click_button "Sign up"
-
-  expect(page).to have_content("Welcome!")
-end
-```
-
-### File Uploads
-
-```ruby
-it "user uploads an avatar" do
-  visit edit_profile_path
-
-  attach_file "Avatar", Rails.root.join("spec/fixtures/files/avatar.jpg")
-  click_button "Update Profile"
-
-  expect(page).to have_css("img[src*='avatar']")
-end
+# Bad — DOM-coupled
+fill_in "article_title", with: "Hello"
+find("#submit").click
 ```
 
 ---
 
-## JavaScript-Dependent Tests
+## Waiting for Async
 
-Only use Selenium when the test requires JavaScript execution.
-
-### Turbo Stream Updates
-
-```ruby
-RSpec.describe "Live comments", type: :system do
-  before { driven_by(:selenium_chrome_headless) }
-
-  it "new comment appears without page refresh" do
-    article = create(:article, :published)
-    user = create(:user)
-    sign_in user
-
-    visit article_path(article)
-    fill_in "Comment", with: "Great article!"
-    click_button "Post Comment"
-
-    # Turbo Stream appends the comment without navigation
-    expect(page).to have_content("Great article!")
-    expect(page).not_to have_current_path(new_article_comment_path(article))
-  end
-end
-```
-
-### Stimulus Controllers
-
-```ruby
-it "character counter updates as user types" do
-  driven_by(:selenium_chrome_headless)
-
-  visit new_article_path
-  fill_in "Title", with: "Short"
-
-  expect(page).to have_content("5 / 100 characters")
-end
-```
-
-### Waiting for Async
-
-Capybara's finders automatically wait (default 2 seconds). Increase for
-slow operations:
+Capybara's finders auto-wait (default 2 seconds). Bump the wait when an
+async operation genuinely takes longer.
 
 ```ruby
 expect(page).to have_content("Processing complete", wait: 5)
@@ -315,23 +418,13 @@ Never use `sleep` — always use Capybara's built-in waiting.
 
 ---
 
-## A Note on Page Objects
-
-Page objects are rarely needed in Rails. The Capybara DSL *is* your page
-object — `visit`, `fill_in`, `click_button`, `have_content` already read
-like plain English. Wrapping them in a class adds indirection without
-adding clarity.
-
-If you find yourself reaching for page objects, consider whether the spec
-is too complex instead. Break it into multiple focused specs or simplify
-the page under test. Only consider page objects for extremely complex admin
-dashboards where identical page interactions are tested from many angles.
-
----
-
 ## Multi-User Scenarios
 
-Use `using_session` to simulate multiple users:
+Use `using_session` to simulate multiple users in the same spec. Reserve
+this for collaboration features where two users interacting *is the
+feature* (real-time chat, shared documents). Don't reach for it to test
+isolated per-user behaviour — sign in as one user, log out, sign in as
+another instead.
 
 ```ruby
 it "two users see each other's comments" do
@@ -358,16 +451,27 @@ end
 
 ---
 
+## A Note on Page Objects
+
+Page objects are rarely needed in Rails. The Capybara DSL *is* the page
+object — `visit`, `fill_in`, `click_button`, `have_content` already read
+like English. Wrapping them in a class adds indirection without adding
+clarity.
+
+If you reach for page objects, the system spec is probably too complex —
+which usually means it is doing the work of a lower-layer spec. Look for
+gates 1, 2, and 5 violations first.
+
+---
+
 ## Accessibility Checks
 
-Integrate accessibility assertions into system specs:
+Integrate accessibility assertions into existing system specs — do not
+write standalone accessibility-only specs.
 
 ```ruby
-it "article page is accessible" do
-  article = create(:article, :published)
-
-  visit article_path(article)
-
+it "user creates an article" do
+  # ...the canonical flow
   expect(page).to be_axe_clean
 end
 ```
@@ -378,30 +482,26 @@ Requires the `axe-core-rspec` gem.
 
 ## Boundaries — What Belongs Here vs. Elsewhere
 
-System specs own user-visible flows. They prove the feature works from the
-user's perspective. They do not inspect model internals or assert HTTP details.
+### What system specs own
 
-### What System Specs Own
+- The canonical happy path through each major user journey
+- Multi-request journeys where rendered HTML feeds the next step
+- Behaviour that genuinely requires JavaScript to function
+- One validation-error path per non-trivial form
+- UI authorization, only when product-required
 
-- User flows: "user creates an article", "admin closes a card"
-- Page content: the user sees the right text, links, buttons after an action
-- Form interactions: fill in, select, check, submit, see result
-- Navigation: the user ends up on the right page
-- Error states: the user sees validation errors, flash messages
-- Multi-step workflows: sign up → onboard → see dashboard
+### What system specs do NOT test
 
-### What System Specs Do NOT Test
+- Model internals (`article.publication.present?`) — model spec
+- Status codes (`response.status`) — request spec
+- Auth gates (unauthenticated → redirect) — request spec
+- Authorization logic (admin vs. member matrix) — policy spec
+- Job / mailer work — job / mailer spec
+- Helper output — helper spec or canonical system spec implicitly
+- Every CRUD action when the actions share a shape — request spec
+- Every field, every validation, every role — push down
 
-- Model internals: don't assert `article.publication.present?` — assert the page shows "Published"
-- Status codes: don't check `response.status` — that's a request spec concern
-- Domain logic edge cases: don't test every scope permutation — model spec covers that
-- Exact database state: don't count records or inspect columns — assert what the user sees
-
-### Trust the Lower Layers
-
-The system spec trusts that model logic works (the model spec covers it)
-and that the HTTP layer works (the request spec covers it). The system spec
-just verifies the glue — user does a thing, user sees the result:
+### Trust the lower layers
 
 ```ruby
 # Good — asserts what the user sees
@@ -410,22 +510,23 @@ it "user publishes an article" do
   click_button "Publish"
 
   expect(page).to have_content("Published")
-  expect(page).not_to have_button("Publish")
 end
 
-# Bad — reaching into model internals
+# Bad — reaches into model internals
 it "user publishes an article" do
   visit article_path(article)
   click_button "Publish"
 
-  expect(article.reload.publication).to be_present  # Model spec's job
-  expect(article.reload).to be_published             # Model spec's job
+  expect(article.reload.publication).to be_present  # model spec's job
+  expect(article.reload).to be_published             # model spec's job
 end
 ```
 
-### No Redundant Tests Within the File
+---
 
-Don't write separate tests for steps in the same flow:
+## Within-File Discipline
+
+Don't split a single user story into stepwise tests:
 
 ```ruby
 # Bad — split flow into micro-tests
@@ -449,25 +550,22 @@ it "user creates an article" do
   click_button "Create Article"
 
   expect(page).to have_content("Test")
-  expect(page).to have_content("Article created.")
 end
 ```
 
-Separate tests for separate flows (create vs. edit vs. delete), not for
-separate steps within one flow.
+Separate tests are for separate flows (create vs. edit), not for
+separate steps inside one flow.
+
+---
 
 ## Guidelines
 
-- **Test user flows, not implementation** — "user creates an article", not "form posts to /articles"
-- **One flow per test** — a test should tell one story
-- **Assert what users see, not model state** — `have_content("Published")`, not `article.published?`
-- **Use `rack_test` by default** — Selenium only when JS is required
+- **System specs are the backbone, not the coverage** — push to lower layers by default
+- **Default to `rack_test`** — Selenium only when JS provably required
 - **Sign in through the form** — tests the real auth path
+- **Use Capybara's high-level DSL** — `fill_in` by label, `click_button` by visible text
 - **Never use `sleep`** — use Capybara's built-in waiting
-- **Use `have_content`** for text, **`have_css`** for elements, **`have_link`** / **`have_button`** for interactions
-- **Fill in by label text** — `fill_in "Title"`, not `fill_in "article_title"`
-- **Click by visible text** — `click_button "Save"`, not `find("#submit").click`
-- **Keep tests independent** — no test should depend on another test's side effects
-- **Test error states** — validation errors, unauthorized access, not found
-- **Don't duplicate model spec assertions** — the model spec proves the logic; the system spec proves the UX
-- **Don't duplicate request spec concerns** — system specs don't check status codes or response headers
+- **One story per spec** — no drive-by assertions
+- **Resource state as the primary signal** — flash content is a secondary check
+- **Don't duplicate lower layers** — model logic, status codes, policy rules, mailer content all live elsewhere
+- **Selenium-driven specs are a budget** — one per JS behaviour across the entire suite

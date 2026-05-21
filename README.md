@@ -26,6 +26,11 @@ Use the **`reviewing-pitchd-rails`** skill. It runs a two-layer review: **philos
 
 Use the **`rails-omakase-compass`** skill. It answers whether a direction fits 37signals-shaped Rails — omakase defaults, REST gravity, server-owned truth, majestic monolith — and points you at the right `writing-*` skill for tactical detail. It can also pull from the unofficial 37signals guide via **`referencing-unofficial-37signals-guide`**.
 
+### Refactor an existing test suite
+> *"The system specs are too heavy"* / *"Rebalance the article specs to the right layers"*
+
+Use the **`refactoring-rails-specs`** skill. It takes a list of specs (typically bloated system specs), discovers their related request, model, policy, job, mailer, and factory specs, then audits every `it` block against the Five Gates and per-layer ownership defined in `writing-tests`. Each test gets a verdict — **KEEP / MOVE / MERGE / DELETE / REWRITE** — and the work proceeds one resource at a time with coverage preserved and the suite kept green.
+
 ### Maintain a compounding LLM wiki (Karpathy pattern)
 > *"Ingest this article into our wiki"* / *"Lint the knowledge base for stale links"*
 
