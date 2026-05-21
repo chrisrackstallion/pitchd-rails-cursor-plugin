@@ -12,13 +12,23 @@ description: >-
 # Writing Rails Tests
 
 <objective>
-Write tests that give you confidence to ship. System specs are the backbone —
-they simulate real users clicking real buttons. Model specs cover domain logic.
-Request specs cover the HTTP layer. Everything uses real objects, real database
-records, and real rendering. The testing *philosophy* — system tests as
-backbone, behaviour over implementation, integration over isolation — comes
-from DHH and 37signals. The tooling (RSpec, FactoryBot) is an adaptation;
-37signals uses Minitest with fixtures. The principles are the same.
+Write tests that give you confidence to ship. System specs are the **backbone**
+of the suite — a small number of integration tests that prove the seams hold.
+They are not the place to chase coverage. Model specs cover domain logic.
+Request specs cover the HTTP layer — including rendering smoke for index/show,
+CRUD round-tripping, and every auth gate. Policy specs cover authorization
+logic. Everything uses real objects, real database records, and real
+rendering.
+
+The default answer to "should this be a system spec?" is **no — push it down
+a layer.** System specs are slow, brittle to copy changes, and expensive to
+maintain; each one must earn its place against the budget and gates in
+`references/system-specs.md`.
+
+The testing *philosophy* — system tests as backbone, behaviour over
+implementation, integration over isolation — comes from DHH and 37signals.
+The tooling (RSpec, FactoryBot) is an adaptation; 37signals uses Minitest
+with fixtures. The principles are the same.
 </objective>
 
 ## Process
@@ -40,29 +50,34 @@ from DHH and 37signals. The tooling (RSpec, FactoryBot) is an adaptation;
 
 ### 2. Choosing the Right Spec Type
 
+The tree is biased toward the **lowest layer that can prove the behaviour**.
+System specs are reserved for genuine integration — push everything else down.
+
 ```
-Is this a user-facing feature?
-├── YES → System spec (Capybara, real browser)
-│         User creates an article, user closes a card
+Is this domain logic (a method on a model — publish, close, scope, state transition)?
+├── YES → Model spec
 └── NO
-    Is this about HTTP behaviour (status codes, redirects, auth)?
-    ├── YES → Request spec
-    │         401/redirect after login, CSRF protection
+    Is this authorization logic (who can do what across roles)?
+    ├── YES → Policy spec
     └── NO
-        Is this authorization logic (who can do what)?
-        ├── YES → Policy spec
-        │         admin can delete, owner can edit, scope filters
+        Is this an HTTP-layer concern (status code, redirect, auth gate, params,
+        index/show rendering smoke, CRUD round-trip)?
+        ├── YES → Request spec
         └── NO
-            Is this domain logic on a model?
-            ├── YES → Model spec
-            │         article.publish, scope queries, state transitions
+            Is this the work a job, mailer, or PORO performs?
+            ├── YES → Spec matching the object type
             └── NO
-                Is this a job, mailer, or standalone object?
-                ├── YES → Spec matching the object type
-                │         Job enqueues, mailer sends, PORO processes
-                └── NO
-                    Add the assertion to an existing system spec.
+                Does this user journey pass ALL FIVE GATES in
+                `references/system-specs.md` (interaction, uniqueness,
+                JS-necessity, single-home, one-story)?
+                ├── YES → System spec — within the budget
+                └── NO → Push down a layer; do NOT add a system spec
 ```
+
+**Read `references/system-specs.md` before adding any system spec.** It defines
+the budget (typically 1 per CRUD resource, 1 per cross-resource journey, 1 per
+JS behaviour across the entire suite), the five gates, and the patterns that
+look like system specs but belong elsewhere.
 
 ### 3. Test Structure
 
@@ -128,16 +143,34 @@ Before writing a test, ask:
 - Before writing a test, check if the behaviour is already covered in another
   spec type. Each behaviour has exactly one home:
   - Domain logic (publish, close, scopes) → model spec owns it
-  - User-visible flow (fill form, click, see result) → system spec owns it
-  - HTTP concerns (status codes, redirects) → request spec owns it
+  - HTTP concerns (status codes, redirects, params handling, rendering smoke
+    for index/show, CRUD round-tripping) → request spec owns it
   - Authorization logic (who can do what) → policy spec owns the logic
   - Auth gates at the HTTP layer → request spec **always** owns this, even if a system spec exists. Test one authorized + one unauthorized case per endpoint.
+  - Canonical user journey end-to-end (form → submit → see result on page) → system spec owns it, but only within the budget in `references/system-specs.md`
   - Job/mailer work → job/mailer spec owns it; callers just assert enqueuing
-- If a system spec proves the user can create an article, don't write a request
-  spec that posts the same params and checks the record exists. The request spec
-  should only exist for HTTP-layer concerns the system spec can't cover.
+- If a request spec proves `POST /articles` creates the record and redirects,
+  don't add a system spec to prove the same thing unless the journey is the
+  canonical happy path for that resource (one per resource — not one per action).
 - If a model spec proves `article.publish` works, the system spec just clicks
   "Publish" and checks the page — it doesn't also inspect `article.publication`.
+
+**"Does this system spec pass the Five Gates?"** (Only ask if a system spec is
+under consideration — see `references/system-specs.md` for the full text.)
+1. **Interaction gate** — the spec calls `fill_in`, `click_*`, `select`, `check`,
+   or `attach_file`. A `visit` + assert with no interaction is not a system spec;
+   it is a view spec — move to a request spec.
+2. **Uniqueness gate** — the journey is materially different from existing system
+   specs for this resource or area.
+3. **JavaScript-necessity gate** — Selenium is justified, and the Stimulus
+   controller / Turbo pattern is not already exercised by another system spec.
+4. **Single-home gate** — the assertion is not already owned by a model, request,
+   policy, or job/mailer spec.
+5. **One-story gate** — the spec tells exactly one user story; no drive-by
+   assertions about nav, footer, sidebar, or unrelated widgets.
+
+If any gate fails, do not write the system spec — push the assertion to the
+appropriate lower layer.
 
 **"Am I splitting tests unnecessarily within this file?"**
 - Multiple assertions about the same action belong in one test, not separate tests.
@@ -164,17 +197,23 @@ Each spec type has a job. Test the behaviour where it naturally lives, and
 trust the lower layer from above:
 
 ```
-┌─────────────┐  Owns: user-visible flows, page content, form interactions
-│ System spec │  Trusts: model logic, policies, HTTP layer
-├─────────────┤  Owns: status codes, redirects, rate limits
+┌─────────────┐  Owns: canonical happy-path journeys (one per resource, within budget)
+│ System spec │  Owns: multi-request integration (signup, checkout, password reset)
+│ (smallest)  │  Owns: JS-essential behaviour (one spec per Stimulus controller / Turbo pattern)
+│             │  Trusts: model logic, policies, HTTP layer, mailer/job content
+│             │  Does NOT do: visit-only assertions, per-field testing, CRUD parity
+├─────────────┤  Owns: status codes, redirects, params handling, rate limits
 │ Request spec│  Owns: auth gates — ALWAYS test auth here, even if system specs exist
-│             │  Trusts: policy logic (tested in policy spec), model logic (tested in model spec)
-│             │  Does NOT duplicate: system spec flows or policy logic
-├─────────────┤  Owns: authorization logic — who can do what, scoped collections
+│ (workhorse) │  Owns: rendering smoke (response.body.include?) for index/show pages
+│             │  Owns: CRUD round-trips for non-canonical actions (show/edit/update/destroy)
+│             │  Trusts: policy logic, model logic, mailer/job content
+│             │  Does NOT duplicate: the canonical happy-path system spec, policy logic
+├─────────────┤  Owns: authorization logic — full role × action matrix, scoped collections
 │ Policy spec │  Is trusted by: request and system specs
 │             │  Does NOT test: HTTP responses or UI
-├─────────────┤  Owns: domain verbs, scopes, state transitions, business rules
-│ Model spec  │  Is trusted by: system, request, and policy specs
+├─────────────┤  Owns: domain verbs, scopes, state transitions, business rules, callbacks
+│ Model spec  │  (largest layer — most behaviour lives here)
+│             │  Is trusted by: system, request, and policy specs
 │             │  Does NOT test: HTTP, UI, or authorization concerns
 ├─────────────┤  Owns: the work the job/mailer performs
 │ Support spec│  Callers assert enqueuing only (have_enqueued_job / have_enqueued_mail)
@@ -184,7 +223,7 @@ trust the lower layer from above:
 **Concrete example — article publishing:**
 
 ```ruby
-# Model spec — owns the domain logic
+# Model spec — owns the domain logic (this is where most coverage lives)
 describe "#publish" do
   it "creates a publication and records the publisher" do
     article = create(:article)
@@ -192,20 +231,43 @@ describe "#publish" do
     expect(article).to be_published
     expect(article.publication.publisher).to eq(Current.user)
   end
+
+  it "raises when already published" do
+    article = create(:article, :published)
+    expect { article.publish }.to raise_error(Article::AlreadyPublished)
+  end
 end
 
-# System spec — owns the user flow, trusts the model
-it "user publishes an article" do
+# Policy spec — owns the role × action matrix
+describe ArticlePolicy do
+  it "permits the author and forbids others" do
+    # ...full matrix here
+  end
+end
+
+# Request spec — owns auth gates, status codes, and the HTTP shape
+describe "POST /articles/:id/publication" do
+  it "requires authentication" do
+    post article_publication_path(article)
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it "redirects unauthorized users" do
+    sign_in create(:user)  # not the author
+    post article_publication_path(article)
+    expect(response).to redirect_to(root_path)
+  end
+end
+
+# System spec — owns the ONE canonical happy-path journey (within budget)
+it "author publishes an article" do
+  sign_in author
   visit article_path(article)
   click_button "Publish"
   expect(page).to have_content("Published")  # visible outcome only
   # Does NOT check article.publication.present? — model spec covers that
+  # Does NOT also test "non-author cannot publish" — request/policy specs cover that
 end
-
-# Request spec — ONLY if there's an HTTP concern system spec can't cover
-# e.g., specific status code, rate limiting, auth gate
-# Do NOT write a request spec that just posts and checks the record exists
-# when the system spec already covers the flow.
 ```
 
 #### Within a Single Spec File
@@ -278,13 +340,20 @@ end
 | Asserting exact error messages | Assert error keys or behaviour |
 | Giant setup blocks | Extract to factory traits |
 | `is_expected.to` with implicit subject | Explicit subject and expectation |
-| Request spec that duplicates a system spec flow | Request spec only for HTTP-layer concerns (status, redirects, auth) |
 | System spec inspecting model internals (`article.publication`) | System spec asserts what the user sees on the page |
 | Model spec + request spec + system spec for the same happy path | One home per behaviour — pick the right layer |
 | Separate `it` blocks for each assertion on one action | One `it` with multiple `expect`s when setup and action are identical |
 | Re-testing domain verb logic in a request spec | Request spec calls the endpoint; model spec owns the verb logic |
 | Job spec re-testing what the model spec covers | Job spec tests orchestration; model spec tests the domain method the job calls |
 | Standalone `not_to` assertions to prove code was removed | Assert the positive behaviour the user sees; `not_to` is a side-effect, not a primary assertion |
+| System spec that only `visit`s and asserts content (no interaction) | Move to a request spec asserting `response.body.include?` |
+| One system spec per CRUD action when the actions share a shape | One canonical happy-path system spec (usually create); edit/delete go to request specs |
+| One system spec per field, attribute, or validation rule | One system spec exercises the form as a whole; per-field belongs to model/request specs |
+| Re-testing the same Stimulus controller / Turbo pattern in multiple system specs | One system spec per JS behaviour across the entire suite, on the simplest page |
+| Selenium driver for a spec that passes under `rack_test` | Use `rack_test`; Selenium is for genuinely JS-required behaviour only |
+| Asserting flash copy as the primary success signal | Use resource state on the page as the primary signal; flash is a secondary check |
+| Drive-by assertions on nav/footer/sidebar inside a feature spec | One story per spec; assert only what belongs to the journey under test |
+| System spec for a UI authorization rule when no product requirement exists | Policy spec for the logic + request spec for the HTTP gate is usually enough |
 
 #### Do not write specs to prove code was removed
 
@@ -341,15 +410,20 @@ Before finishing, verify:
 - [ ] No mocks of ActiveRecord or internal objects
 - [ ] Each test is self-contained — can run in isolation
 - [ ] Factory uses minimal required attributes
-- [ ] System specs test real user flows, not implementation details
-- [ ] Request specs verify status codes and redirects
+- [ ] Every system spec passes the **Five Gates** (interaction, uniqueness, JS-necessity, single-home, one-story)
+- [ ] System-spec count is within budget: ~1 canonical journey per CRUD resource, 1 per cross-resource journey, 1 per JS behaviour across the suite
+- [ ] No `visit`-and-assert-only specs in `spec/system/` — they live in `spec/requests/` with `response.body.include?`
+- [ ] No Selenium spec passes under `rack_test` — if it does, move it back
+- [ ] System specs assert resource state on the page as the primary signal; flash copy is at most secondary
+- [ ] Request specs verify status codes, redirects, auth gates, and rendering smoke (`response.body.include?`) for resources without a system spec
 - [ ] Model specs cover domain verbs, scopes, and state transitions
+- [ ] Policy specs cover the full role × action matrix
 - [ ] Tests read as documentation — a new developer understands the feature from reading them
 - [ ] No flaky tests — no sleep, no order-dependent state
 - [ ] Database is cleaned between tests (transactional fixtures or database_cleaner)
 - [ ] No cross-layer duplication — each behaviour is tested in exactly one spec type
 - [ ] System specs don't inspect model internals — they assert what users see
-- [ ] Request specs don't duplicate system spec flows — they cover HTTP-only concerns
+- [ ] System specs don't re-test the same Stimulus controller / Turbo pattern across files
 - [ ] Model specs don't re-test in request/system specs — integration specs trust the unit
 - [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
 - [ ] Job/mailer callers assert enqueuing only — the job/mailer spec owns the work
@@ -364,3 +438,11 @@ For detailed patterns and examples by spec type:
 - [System specs](references/system-specs.md) — user flows, Capybara, browser testing
 - [Factory patterns](references/factory-patterns.md) — FactoryBot conventions, traits, sequences
 - [Support specs](references/support-specs.md) — jobs, mailers, concerns, POROs
+
+## Refactoring an existing suite
+
+For rebalancing a drifted suite — slimming heavy system specs, moving
+assertions to their correct layer, deleting framework-tautology tests —
+use the **`refactoring-rails-specs`** skill. It batches discovery → audit →
+plan → execute → verify per resource, using this skill's Five Gates and
+budget as the rubric.

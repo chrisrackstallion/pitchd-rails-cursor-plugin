@@ -7,9 +7,17 @@ logic worth testing in isolation.
 ## Policy Specs
 
 Policy specs test authorization logic — who can do what. They are the
-single home for permission assertions. Request specs test that the HTTP
-layer enforces authorization (status codes, redirects); policy specs test
-the logic itself.
+**single home** for the role × action matrix. Every "admin can / member
+cannot / owner can / guest cannot" assertion lives here, exhaustively.
+Request specs test that the HTTP layer enforces authorization with one
+authorized + one unauthorized case per endpoint — they do **not** re-walk
+the matrix. System specs do not test authorization at all unless UI
+hiding is a stated product requirement.
+
+The clearest signal that a policy spec is missing something: if a
+reviewer would have to read the policy class itself to know whether a
+role can perform an action, the spec is incomplete. The spec should be
+the matrix.
 
 ### Structure
 
@@ -263,8 +271,15 @@ end
 
 ## Job Specs
 
-Test that jobs do their work correctly. Use `perform_now` to execute
-synchronously in the test. Pass IDs — consistent with the job convention.
+Job specs are the **single home** for what a job does. Use `perform_now`
+to execute synchronously in the test. Pass IDs — consistent with the job
+convention. Callers (model callbacks, controllers) only assert that the
+job was enqueued (`have_enqueued_job`) — they do not call `perform_now`
+to verify side effects.
+
+This split keeps the model spec fast (it doesn't run the job) and the
+job spec focused (it doesn't re-test the trigger). Each layer owns one
+thing.
 
 ### Structure
 
@@ -355,8 +370,12 @@ duplicate records, no double-charges, no extra emails.
 
 Mailer classes, `deliver_later`, `Mailer.with`, and previews: **`../writing-mailers/references/patterns.md`**. Below: **RSpec** shape for mail content and enqueueing.
 
-Test mailers by asserting on the generated mail object — recipients,
-subject, body content.
+Mailer specs are the **single home** for mail content. Test mailers by
+asserting on the generated mail object — recipients, subject, body
+content. Callers (controllers tested in request specs, models tested in
+model specs, jobs tested in job specs) only assert that the mailer was
+enqueued (`have_enqueued_mail`) — they do not re-test the recipient,
+subject, or body.
 
 ### Structure
 
