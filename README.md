@@ -31,6 +31,11 @@ Use the **`rails-omakase-compass`** skill. It answers whether a direction fits 3
 
 Use the **`refactoring-rails-specs`** skill. It takes a list of specs (typically bloated system specs), discovers their related request, model, policy, job, mailer, and factory specs, then audits every `it` block against the Five Gates and per-layer ownership defined in `writing-tests`. Each test gets a verdict — **KEEP / MOVE / MERGE / DELETE / REWRITE** — and the work proceeds one resource at a time with coverage preserved and the suite kept green.
 
+### Refactor an existing Stimulus fleet
+> *"The Stimulus controllers are a mess"* / *"Half of these do the same thing"*
+
+Use the **`refactoring-stimulus-controllers`** skill. It maps every controller and its `data-*` attachments, scores each against single-responsibility, DOM-derived state, lifecycle cleanup, and cross-controller coupling rules, then assigns a verdict — **KEEP / REWRITE / MERGE / SPLIT / DELETE**. After the structural refactor it ensures each Stimulus behaviour has exactly one canonical system spec on the simplest representative page, per `writing-tests`. Pair with **`writing-javascript`** for fresh-write conventions.
+
 ### Maintain a compounding LLM wiki (Karpathy pattern)
 > *"Ingest this article into our wiki"* / *"Lint the knowledge base for stale links"*
 

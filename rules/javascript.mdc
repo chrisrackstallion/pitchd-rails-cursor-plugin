@@ -1,38 +1,122 @@
 ---
-description: JavaScript boundary — importmaps vs bundling, Propshaft-friendly entrypoints, Stimulus location. Server-rendered app first; do not let JS swallow Rails. DHH/37signals omakase.
-globs: config/importmap.rb, app/javascript/**/*.js, package.json, package-lock.json, yarn.lock, pnpm-lock.yaml, Procfile.dev, vite.config.ts, vite.config.js, vite.config.mjs
+description: JavaScript in a Rails app — importmaps vs bundling, Stimulus controller anatomy, modern JS quality, accessibility and security boundary. Server-rendered HTML first; JavaScript enhances, it does not replace. DHH/37signals omakase.
+globs: config/importmap.rb, app/javascript/**/*.js, app/javascript/**/*.mjs, package.json, package-lock.json, yarn.lock, pnpm-lock.yaml, Procfile.dev, vite.config.ts, vite.config.js, vite.config.mjs
 alwaysApply: false
 ---
 
-# JavaScript and the Asset Boundary
+# JavaScript Conventions
 
 ## One Stack Per App
 
-Rails 7+ defaults to **importmap** for JavaScript and **Propshaft** for static assets — no Node required for Hello World. If you add **jsbundling-rails**, **cssbundling-rails**, or **Vite**, commit to **one** delivery story. Do not run importmap pins and a separate bundled “app shell” that both load Turbo — pick a path and document it.
+Rails 7+ defaults to **importmap** for JavaScript and **Propshaft** for static assets — no Node required for Hello World. If you adopt **jsbundling-rails**, **cssbundling-rails**, or **Vite**, commit to **one** delivery story. Do not run importmap pins and a separate bundled "app shell" that both load Turbo — pick a path and document it.
 
-Canonical detail: **`skills/writing-javascript/references/patterns.md`**. Turbo, frames, streams, Stimulus *behaviour*: **`skills/writing-hotwire/references/patterns.md`**, **`rules/hotwire.mdc`**. Tailwind and global CSS: **`rules/css-tailwind.mdc`**, **`skills/writing-css-tailwind/references/patterns.md`** — not the JS boundary.
+Canonical detail and worked examples: **`skills/writing-javascript/references/patterns.md`**. Turbo, frames, streams, Stimulus *behaviour in templates*: **`skills/writing-hotwire/references/patterns.md`**, **`rules/hotwire.mdc`**. Tailwind and global CSS: **`rules/css-tailwind.mdc`**, **`skills/writing-css-tailwind/references/patterns.md`** — not the JS boundary. Refactoring an existing fleet of Stimulus controllers: **`skills/refactoring-stimulus-controllers/SKILL.md`**.
 
 ## Where JavaScript Lives
 
-- **Entry** — `app/javascript/application.js` imports Stimulus and any pinned modules.
-- **Stimulus** — `app/javascript/controllers/**/*_controller.js`, registered from the application entry (e.g. `eagerLoadControllersFrom("controllers")` with importmap).
+- **Entry** — `app/javascript/application.js` imports Turbo, registers Stimulus, and pulls in any pinned modules.
+- **Stimulus** — `app/javascript/controllers/<name>_controller.js`, kebab-case filenames matching `data-controller="<name>"`.
+- **Shared modules** — `app/javascript/lib/<thing>.js` (pinned or bundled), imported by controllers. Use **ES modules** with named exports; avoid default exports for shared code so call sites read clearly.
 - **Layouts** — `javascript_importmap_tags` (importmap) or the helper your bundler documents — not ad hoc `<script src="https://cdn…">` for app logic.
 
 ## Boundary Rules
 
-- **HTML + Turbo** own navigation and server-backed state for first-party pages.
+- **HTML + Turbo** own navigation, persistence, and authorization for first-party pages.
 - **Stimulus** enhances the DOM; it does not replace routes, sessions, or authorization.
-- **No parallel client router** or JSON-first CRUD for pages you already render with ERB — that fights the asset pipeline *and* Hotwire.
+- **No parallel client router** or JSON-first CRUD for pages you already render with ERB.
+- **No client-only source of truth** for domain state. The server's HTML is the contract.
+
+## Modern JavaScript Hygiene
+
+Default to the modern ECMAScript subset Rails and Hotwire already assume:
+
+- **`const` by default**, `let` when reassignment is genuine, **never `var`**.
+- **ES modules** (`import` / `export`) — no AMD, no CommonJS, no `window.MyApp = …` globals.
+- **Arrow functions** for callbacks; **named functions** when stack traces matter (event handlers, debouncers).
+- **`async` / `await`** over raw `.then` chains. Wrap awaits in `try / catch` only where you can do something useful — let unexpected failures bubble.
+- **Strict equality** (`===`, `!==`); no truthiness comparisons for IDs or numeric fields.
+- **Template literals** over string concatenation. **Destructuring** for parameters and return shapes.
+- **Optional chaining** (`?.`) and **nullish coalescing** (`??`) instead of long `&&` chains.
+- **`for…of`** over `forEach` when you need `await` inside the loop; **`map` / `filter` / `reduce`** for pure transforms.
+
+Format with the team's existing tools (Prettier or the bundler default). Lint with **ESLint** when bundling; with importmap, lean on code review and the conventions in this rule.
+
+## Stimulus Controllers — Anatomy
+
+Stimulus controllers are **small, single-purpose, and DOM-driven**. They derive state from `targets`, `values`, `classes`, and the DOM itself — not from internal closures that get stranded by Turbo morphing.
+
+```js
+// app/javascript/controllers/clipboard_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["source"]
+  static values  = { successMessage: { type: String, default: "Copied" } }
+  static classes = ["success"]
+
+  async copy() {
+    await navigator.clipboard.writeText(this.sourceTarget.value)
+    this.flashSuccess()
+  }
+
+  flashSuccess() {
+    this.element.classList.add(...this.successClasses)
+    setTimeout(() => this.element.classList.remove(...this.successClasses), 1500)
+  }
+}
+```
+
+- **One responsibility per controller.** A controller that toggles a panel **and** debounces a search **and** posts a fetch is three controllers wearing a trench coat.
+- **`connect()` / `disconnect()`** for setup and teardown of *external* state only (event listeners on `window`/`document`, timers, observers). Same-element listeners are wired via `data-action` — don't `addEventListener` what HTML can express.
+- **Always clean up in `disconnect()`** — Turbo navigations re-run lifecycle hooks, and leaked listeners pile up.
+- **Outlets** for cross-controller wiring; **CustomEvents** (`this.dispatch("opened")`) when one controller signals another without a hard dependency. No global event buses.
+- **Values change callbacks** (`xValueChanged`) react to attribute mutations — useful for morph-friendly state, since the DOM (not a JS variable) is the source of truth.
+
+Cross-references: file layout and registration — **`skills/writing-javascript/references/patterns.md`**; data-attribute syntax in ERB — **`skills/writing-hotwire/references/patterns.md`** § Stimulus.
+
+## Fetching from JavaScript
+
+Reach for `fetch` only when HTML + Turbo cannot express the interaction (e.g. presigned upload to S3, third-party widget). When you do:
+
+- Use **`@rails/request.js`** (omakase) or hand-build `fetch` with the **`X-CSRF-Token`** header. Never bypass CSRF for first-party endpoints.
+- Send **`Accept: text/vnd.turbo-stream.html`** when the response is a Turbo Stream; let Turbo handle the DOM update.
+- Wrap network calls in `try / catch`; render an error message in the DOM, never `alert()` or swallow silently.
+- **Never embed secrets or API keys** in client-side JS. Server-side proxies, signed URLs, or server-rendered tokens only.
+
+## Accessibility and DOM Safety
+
+- Toggle **`aria-*`** and **`hidden`** attributes, not just CSS classes, when state changes (expanded, selected, busy).
+- Manage **focus** explicitly on overlay/modal open and close; restore focus on close.
+- Use **`textContent`** (or template rendering via Turbo) instead of `innerHTML` for user-controlled strings. If `innerHTML` is genuinely needed, the string must come from a server-rendered response.
+- Respect **`prefers-reduced-motion`** when adding animation.
+- Never call `eval`, `new Function`, or assign to `window.location` with user input.
+
+## Performance
+
+- Debounce/throttle high-frequency input handlers (search-as-you-type, resize). A 150–300 ms debounce is the usual default.
+- Tear down `MutationObserver` / `IntersectionObserver` in `disconnect()`.
+- Defer non-critical scripts with the layout's standard `defer` (`javascript_importmap_tags` already does this) — don't ship `async` scripts that race Turbo.
+- Importmap apps: **pin the minified build** of vendor modules; do not import dev builds into production.
 
 ## Anti-Patterns
 
 | Anti-Pattern | Instead |
-|-------------|---------|
-| Two competing JS pipelines (importmap + heavy webpack for same app chrome) | One strategy; simplify |
-| `fetch` + JSON for every mutation on same-origin pages you control | Forms, Turbo, streams |
+|--------------|---------|
+| Two competing JS pipelines (importmap + bundler both loading Turbo) | One strategy; simplify |
+| `fetch` + JSON for every mutation on same-origin pages | `form_with` + Turbo Streams / Frames |
 | Client-only source of truth for domain state | Server session + HTML |
-| Stimulus controllers importing a full “app store” | Small controllers; server truth |
+| God-controller doing five unrelated things | Several focused controllers composed via outlets / events |
+| `connect()` adding listeners that `disconnect()` does not remove | Always pair `addEventListener` with `removeEventListener` |
+| Closures holding state that morphing strands | Read state from `data-*-value` / DOM each time |
+| `innerHTML = userInput` | `textContent`, or a server-rendered Turbo response |
+| `alert()` / `console.log` shipped to production | Inline DOM error messages; structured logging behind a debug flag |
+| `window.MyApp.something` globals | ES module exports; Stimulus outlets/events for cross-controller wiring |
+| `node_modules` added per feature with no build requirement | Pin via importmap; bundling is an intentional decision |
+| Secrets in JS bundles | Server-side proxy or signed URL |
 
 ## Out of Scope
 
-React/Vue/Svelte as the primary shell, micro-frontends, and CDN-only frontends decoupled from Rails — not this rule. Propshaft vs Sprockets migration nuance: **`skills/writing-javascript/references/patterns.md`**.
+- React / Vue / Svelte as the primary application shell — not omakase, not this rule.
+- Detailed Vite / esbuild / webpack configuration — see upstream docs once the bundler is chosen.
+- Native mobile or hybrid clients — out of scope; consume the same Rails endpoints with their own conventions.
+- Service workers and offline-first PWAs — separate decision; document if adopted.
