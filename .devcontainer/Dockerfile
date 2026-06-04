@@ -1,11 +1,18 @@
 # Dev tooling only — project is bind-mounted at workspaceFolder (see devcontainer.json).
-FROM node:22-alpine
+# Debian/glibc: supported base for Cursor and VS Code remote server (Alpine/musl is not).
+FROM node:22-bookworm-slim
 
-# bash: Cursor/VS Code server install scripts. zsh + shadow: Oh My Zsh and chsh.
-RUN apk add --no-cache bash git openssh-client ca-certificates zsh curl shadow \
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    git \
+    openssh-client \
+    ca-certificates \
+    zsh \
+    curl \
+  && rm -rf /var/lib/apt/lists/* \
   && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
-  && chsh -s /bin/zsh root
+  && chsh -s /usr/bin/zsh root
 
-ENV SHELL=/bin/zsh
+ENV SHELL=/usr/bin/zsh
 
 WORKDIR /workspaces
