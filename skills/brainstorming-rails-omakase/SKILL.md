@@ -20,6 +20,12 @@ Turn ideas into an approved **requirements spec** through dialogue, with **omaka
 
 ## Grounding order (always)
 
+**Reading plugin files:** Before your first `Read` of `rules/*.mdc` or a
+sibling `skills/*/SKILL.md` below, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
 Use the **same order** as **`agents/pitchd-rails-query.md`** so this skill has the full Pitchd stack at hand — not just the compass.
 
 1. **`skills/rails-omakase-compass/SKILL.md`** — For **architectural** questions (boundaries, "should we…", API vs HTML, where logic belongs, jobs vs request, anything that could pull the app off-Rails or split ownership badly), read the compass **first**. For **purely tactical** questions (e.g. local Hotwire / Stimulus wiring in an otherwise settled design), you may open the relevant **`writing-*`** skill first; still use the **compass** whenever the answer could change solution shape.

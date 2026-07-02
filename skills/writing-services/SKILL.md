@@ -10,6 +10,12 @@ description: >-
 
 # Writing Services (The Rails Way)
 
+**Reading plugin files:** Before your first `Read` of `rules/*.mdc` or a
+sibling `skills/*/SKILL.md`, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
 <objective>
 Rails has no service layer. Business logic belongs on models. When an operation
 outgrows a single model method, extract to a PORO namespaced under the primary

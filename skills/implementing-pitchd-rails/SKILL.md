@@ -11,6 +11,12 @@ description: >-
 
 # Implementing Pitchd Rails (plan tasks & scoped work)
 
+**Reading plugin files:** Before your first `Read` of `rules/*.mdc` or a
+sibling `skills/*/SKILL.md`, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
 <objective>
 Ship **correct, boring, omakase-shaped Rails** that matches **this plugin**:
 **philosophy** from `rails-omakase-compass`, **tactics** from `writing-*` skills

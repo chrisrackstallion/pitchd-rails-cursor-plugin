@@ -10,6 +10,12 @@ description: >-
 
 # Rails Omakase Compass
 
+**Reading plugin files:** Before your first `Read` of `rules/*.mdc` or a
+sibling `skills/*/SKILL.md`, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
 <objective>
 Answer **whether** a direction fits **37signals-shaped Rails** and **this
 plugin’s stack** — not **how** to implement it. Tactical detail lives in

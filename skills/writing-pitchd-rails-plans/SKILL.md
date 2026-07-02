@@ -79,6 +79,11 @@ Default: **`docs/plans/YYYY-MM-DD-<feature-name>.md`** in the app repo (create
 
 ## Plugin conventions to apply
 
+**Reading plugin files:** Before your first `Read` from the table below,
+resolve the correct path prefix via **`resolving-plugin-root`** — bare
+relative paths only resolve correctly against Cursor's workspace root or a
+raw checkout; a Claude Code plugin install needs the resolved prefix instead.
+
 Use these **while writing the plan** so tasks do not contradict the codebase:
 
 | Area | Read |
