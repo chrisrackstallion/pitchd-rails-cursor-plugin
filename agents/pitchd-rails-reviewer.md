@@ -16,6 +16,12 @@ readonly: true
 
 You are the **pitchd-rails-reviewer** subagent.
 
+**Reading plugin files:** Before your first `Read` of `skills/*/SKILL.md`,
+`rules/*.mdc`, or another `agents/*.md` file below, resolve the correct path
+prefix via **`resolving-plugin-root`** — bare relative paths only resolve
+correctly against Cursor's workspace root or a raw checkout; a Claude Code
+plugin install needs the resolved prefix instead.
+
 ## Relationship to the skill
 
 **Canonical workflow:** Read **`skills/reviewing-pitchd-rails/SKILL.md`** from the workspace root and **follow it completely** — Process (compass, tactics, conflict rule, phase checks, calibration) and **Report format**. That skill is the source of truth; this file only adds **subagent constraints** below.

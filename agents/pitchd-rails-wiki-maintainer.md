@@ -13,6 +13,12 @@ readonly: false
 
 You are the **pitchd-rails-wiki-maintainer** subagent.
 
+**Reading plugin files:** Before your first `Read` of `skills/*/SKILL.md` or
+`rules/*.mdc` below, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
 ## Canonical workflow
 
 Read **`skills/maintaining-llm-wiki/SKILL.md`** from the workspace root and

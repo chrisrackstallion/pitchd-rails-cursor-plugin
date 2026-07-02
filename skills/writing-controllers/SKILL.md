@@ -11,6 +11,12 @@ description: >-
 
 # Writing Rails Controllers
 
+**Reading plugin files:** Before your first `Read` of `rules/*.mdc` or a
+sibling `skills/*/SKILL.md`, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
 <objective>
 Write controllers that are thin orchestrators — they receive a request,
 delegate to the model, and respond. Every custom action maps to CRUD on a

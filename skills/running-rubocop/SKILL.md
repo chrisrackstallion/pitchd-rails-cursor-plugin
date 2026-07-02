@@ -8,6 +8,12 @@ description: >-
 
 # Running RuboCop (Rails, omakase-aligned, DHH-shaped context)
 
+**Reading plugin files:** Before your first `Read` of `../../rules/rubocop.mdc`
+below, resolve the correct path prefix via **`resolving-plugin-root`** — these
+paths (bare or with `../`) only resolve correctly against Cursor's workspace
+root or a raw checkout; a Claude Code plugin install needs the resolved
+prefix instead.
+
 <objective>
 Make **`bin/rubocop`** pass with **no offences** — by **correct code changes**
 only. Do not use **`# rubocop:disable`**, or cop

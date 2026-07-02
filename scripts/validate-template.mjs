@@ -284,7 +284,72 @@ async function validateSinglePluginAtRoot() {
   }
 }
 
+async function validateClaudePlugin() {
+  const pluginDir = repoRoot;
+  const manifestPath = path.join(pluginDir, ".claude-plugin", "plugin.json");
+  if (!(await pathExists(manifestPath))) {
+    return;
+  }
+
+  const pluginManifest = await readJsonFile(manifestPath, "Claude Code plugin manifest");
+  if (!pluginManifest) {
+    return;
+  }
+
+  const entryName = pluginManifest.name || "plugin";
+
+  if (typeof pluginManifest.name !== "string" || !pluginNamePattern.test(pluginManifest.name)) {
+    addError(
+      `${entryName}: "name" in .claude-plugin/plugin.json must be lowercase and use only alphanumerics, hyphens, and periods.`
+    );
+  }
+
+  await validateComponentFrontmatter(pluginDir, entryName);
+
+  const marketplacePath = path.join(pluginDir, ".claude-plugin", "marketplace.json");
+  if (await pathExists(marketplacePath)) {
+    const marketplace = await readJsonFile(marketplacePath, "Claude Code marketplace manifest");
+    if (marketplace) {
+      if (typeof marketplace.name !== "string" || !marketplaceNamePattern.test(marketplace.name)) {
+        addError(
+          'Claude Code marketplace "name" must be lowercase kebab-case and start/end with an alphanumeric character.'
+        );
+      }
+
+      if (!marketplace.owner || typeof marketplace.owner.name !== "string" || marketplace.owner.name.length === 0) {
+        addError('Claude Code marketplace "owner.name" is required.');
+      }
+
+      if (!Array.isArray(marketplace.plugins) || marketplace.plugins.length === 0) {
+        addError('Claude Code marketplace "plugins" must be a non-empty array.');
+      } else {
+        for (const [index, entry] of marketplace.plugins.entries()) {
+          const label = `plugins[${index}]`;
+          if (!entry || typeof entry !== "object") {
+            addError(`Claude Code marketplace ${label} must be an object.`);
+            continue;
+          }
+          if (typeof entry.name !== "string" || !pluginNamePattern.test(entry.name)) {
+            addError(`Claude Code marketplace ${label}.name must be lowercase and use only alphanumerics, hyphens, and periods.`);
+            continue;
+          }
+          if (!isSafeRelativePath(entry.source)) {
+            addError(`Claude Code marketplace ${label}.source is not a safe relative path: "${entry.source}"`);
+            continue;
+          }
+          const sourceDir = path.resolve(path.dirname(marketplacePath), "..", entry.source);
+          await ensureDirectory(sourceDir, `Claude Code marketplace ${label}.source`);
+        }
+      }
+    }
+  } else {
+    addWarning(`${entryName}: no .claude-plugin/marketplace.json found (only needed for local marketplace install).`);
+  }
+}
+
 async function main() {
+  await validateClaudePlugin();
+
   const marketplacePath = path.join(repoRoot, ".cursor-plugin", "marketplace.json");
   if (!(await pathExists(marketplacePath))) {
     await validateSinglePluginAtRoot();

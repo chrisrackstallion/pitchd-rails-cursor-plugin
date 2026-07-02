@@ -1,8 +1,19 @@
-# pitchd-rails (Cursor plugin)
+# pitchd-rails (Cursor + Claude Code plugin)
 
-A [Cursor](https://cursor.com) plugin with **rules**, **skills**, and **agents** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends) with a few **Pitchd-specific** preferences layered on top.
+A plugin for [Cursor](https://cursor.com) and [Claude Code](https://claude.com/claude-code) with **rules**, **skills**, and **agents** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends) with a few **Pitchd-specific** preferences layered on top.
 
-Metadata lives in [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json).
+Cursor metadata lives in [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json); Claude Code metadata lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json). Both manifests point at the same `skills/`, `agents/`, and `rules/` directories — there's no duplication between the two.
+
+## Installing in Claude Code
+
+Clone this repo locally, then from any Claude Code session:
+
+```
+/plugin marketplace add /path/to/pitchd-rails-cursor-plugin
+/plugin install pitchd-rails-cursor-plugin@pitchd-rails
+```
+
+This adds the local checkout as a marketplace (via [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)) and installs the plugin from it — `skills/` and `agents/` are auto-discovered, so the workflows below work the same way they do in Cursor. Pull the repo to pick up updates, then run `/plugin marketplace update pitchd-rails` (or reinstall) to refresh.
 
 ## What you can do
 
@@ -48,7 +59,7 @@ New here? Start with **`rails-omakase-compass`** to understand the philosophy, t
 ## What's inside
 
 - **`rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more.
-- **`skills/`** — Workflows for planning, implementing, and reviewing Rails work (including layer-specific `writing-*` skills).
+- **`skills/`** — Workflows for planning, implementing, and reviewing Rails work (including layer-specific `writing-*` skills). **`resolving-plugin-root`** is a small internal skill other skills/agents read first, so `rules/*.mdc` and sibling skill references resolve correctly whether this plugin is loaded by Cursor or installed as a Claude Code plugin.
 - **`agents/`** — Subagent definitions for implementation, review, and focused wiki maintenance passes.
 
 ## Credits

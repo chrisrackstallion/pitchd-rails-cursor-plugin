@@ -1,0 +1,14 @@
+{
+  "name": "pitchd-rails",
+  "owner": {
+    "name": "Chris Bellairs",
+    "email": "chris@pitchd.ai"
+  },
+  "plugins": [
+    {
+      "name": "pitchd-rails-cursor-plugin",
+      "source": "./",
+      "description": "Rules, skills, and agents for building Rails apps the 37signals way, adapted for Claude Code."
+    }
+  ]
+}
