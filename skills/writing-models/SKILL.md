@@ -50,7 +50,7 @@ class Article < ApplicationRecord
   has_many :comments, dependent: :destroy
 
   # 4. Delegated types / enums / store accessors
-  enum :visibility, VISIBILITIES, default: :public
+  enum :visibility, VISIBILITIES, default: :public, prefix: true
 
   # 5. Normalizes
   normalizes :title, with: ->(t) { t.strip }
@@ -67,7 +67,7 @@ class Article < ApplicationRecord
 
   # 9. Class methods
   def self.search(query)
-    where("title ILIKE ?", "%#{query}%")
+    where("title ILIKE ?", "%#{sanitize_sql_like(query)}%")
   end
 
   # 10. Public instance methods — domain verbs
@@ -85,6 +85,13 @@ The `Publishable` concern (from `references/patterns.md`) provides `publish`,
 `Publication` state record. Enums are used for a *different* dimension
 (`visibility`) that doesn't need audit trails. Never mix both patterns for the
 same concept.
+
+`prefix: true` on the enum is required here because bare `public` / `private`
+values would generate `Article.public` / `Article.private` class methods that
+shadow Ruby's `Module#public` / `Module#private` visibility modifiers. With the
+prefix you get `article.visibility_public?` and `Article.visibility_public`
+instead. Values that don't collide with existing methods (`draft`, `archived`)
+don't need a prefix.
 
 ### 3. Decision Framework
 
@@ -128,7 +135,7 @@ Before writing code, ask these questions:
 | `rescue => e` in model methods | Let exceptions propagate |
 | `default_scope` | Named scopes — `default_scope` contaminates all queries |
 | `ActiveRecord::Base` subclass with no table | `ActiveModel::Model` instead |
-| Conditional validations (`if:` / `on:`) | Form objects for workflow-specific validation |
+| Workflow-specific validations via `on:` contexts or mode flags (`if: :signup_step_two?`) | Form objects — one per workflow (`references/patterns.md` § Validations). Attribute-state guards (`if: :title_changed?`) are fine |
 | State machine gem for two-state lifecycles | State record + domain verbs; `enum` if a column is enough |
 | Callback-driven transitions (`after_transition` doing business logic) | Explicit verbs + transactions; `after_commit` only for async side effects |
 | Scattered `transition_to!` / `case state` across the app | Centralize in model methods or one object next to the model; gem only if the matrix warrants it |
@@ -155,7 +162,7 @@ Before finishing, verify:
 - [ ] Scopes handle all domain queries — no raw `where` chains in controllers
 - [ ] Callbacks are limited to async dispatch and derived data
 - [ ] Method names use domain language, not generic CRUD terms
-- [ ] Bang methods used for operations where failure is exceptional
+- [ ] Domain verbs use the non-bang form; bangs live on the internal AR calls (`create!`, `update!`) so failures raise and propagate
 - [ ] State modeled with the simplest shape that fits: `enum` → state record → history/gem only when justified (`references/patterns.md` § State as Records)
 
 ## References

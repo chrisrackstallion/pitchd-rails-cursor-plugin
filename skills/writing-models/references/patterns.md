@@ -206,6 +206,16 @@ scope :by_status, ->(status) { where(status: status) }
 scope :created_after, ->(date) { where(created_at: date..) }
 ```
 
+When interpolating user input into a `LIKE` / `ILIKE` pattern, escape the
+SQL wildcards with `sanitize_sql_like` (the `?` placeholder prevents
+injection but does not escape `%` and `_`):
+
+```ruby
+def self.search(query)
+  where("title ILIKE ?", "%#{sanitize_sql_like(query)}%")
+end
+```
+
 When accepting sort columns from user input, **allowlist** the column names:
 
 ```ruby
@@ -445,6 +455,14 @@ Structured JSON storage for settings-like data:
 store :settings, accessors: %i[theme locale notifications_enabled], coder: JSON
 ```
 
+`store` is for plain text columns — it adds JSON (de)serialisation. On a
+native `json` / `jsonb` column the database already handles that, so use
+`store_accessor` instead:
+
+```ruby
+store_accessor :settings, :theme, :locale, :notifications_enabled
+```
+
 ### Enum
 
 ```ruby
@@ -654,35 +672,49 @@ end
 
 Wrap multi-step operations in transactions. Keep them short.
 
-**Preferred — `after_commit` callback for side effects:**
+**Preferred — `after_commit` callback for side effects.** Put the callback
+on the record whose write triggers it — here the state record, since `close`
+creates a `Closure` and never updates the parent (so a parent-level
+`after_commit on: :update` would never fire):
 
 ```ruby
 def close(by: Current.user)
   transaction do
     create_closure!(creator: by)
-    record_event(:closed)
+    subtasks.each(&:close)
   end
 end
+```
 
-after_commit :notify_watchers_later, on: :update
+```ruby
+# app/models/closure.rb
+class Closure < ApplicationRecord
+  belongs_to :closeable, polymorphic: true
+  belongs_to :creator, class_name: "User", default: -> { Current.user }
+
+  after_create_commit :notify_watchers_later
+
+  private
+    def notify_watchers_later
+      NotifyWatchersJob.perform_later(closeable)
+    end
+end
 ```
 
 `after_commit` is the safest option — it only fires after the database
-transaction is fully committed. Code after a `transaction` block but before
-the method returns still runs in the same request and can fail, leaving the
-job enqueued for a "failed" request.
+transaction is fully committed, so the job can never run against data the
+transaction rolled back.
 
 **Per-transaction callbacks (Rails 7.2+) — inline side effects tied to a
 specific transaction, not a model lifecycle:**
 
 ```ruby
-def close(by: Current.user)
+def close(by: Current.user, notify: true)
   transaction do |txn|
     create_closure!(creator: by)
-    record_event(:closed)
 
     txn.after_commit do
-      NotifyWatchersJob.perform_later(self)
+      NotifyWatchersJob.perform_later(self) if notify
     end
   end
 end
