@@ -119,6 +119,10 @@ This is the baseline. It uses `redirect_to` for every mutation.
 No `respond_to`, no format negotiation, no stream templates. Stay here
 as long as possible.
 
+Flash copy is hardcoded here to keep the example focused — in application
+code, flash strings live in `config/locales` (e.g.
+`notice: t("articles.created_notice")`; see the i18n rule).
+
 ### 3. Decision Framework
 
 Before writing code, ask these questions:
@@ -179,7 +183,7 @@ Details match `rules/controllers.mdc` § Response Hierarchy (Hotwire). Frames, s
 Before finishing, verify:
 
 - [ ] No business logic in controller actions — only orchestration
-- [ ] Every action maps to one of the seven CRUD verbs (index, show, new, create, edit, update, destroy)
+- [ ] Every action maps to one of the seven RESTful actions (index, show, new, create, edit, update, destroy)
 - [ ] Strong parameters use `params.expect`, not `params.require.permit`
 - [ ] Failed validations render with `status: :unprocessable_content`, not redirect
 - [ ] Nested resource lookups are scoped through parent associations

@@ -12,6 +12,7 @@ Controllers orchestrate — they receive requests, delegate to models, and respo
 
 ```ruby
 # Good — controller delegates to model verb
+# (authorize omitted for brevity — every real action calls it; see Authorization below)
 def create
   @card.close(by: Current.user)
   redirect_to @card
@@ -30,15 +31,23 @@ end
 Custom actions become new resources. Instead of verbs on existing resources, create noun controllers with standard CRUD actions.
 
 ```ruby
-# Good — noun resource with CRUD
-resource :closure       # Cards::ClosuresController#create / #destroy
-resource :archival      # Cards::ArchivalsController#create
-resources :assignments  # Cards::AssignmentsController#create / #destroy
+# Good — noun resources with CRUD
+resources :cards do
+  scope module: :cards do        # module: is what routes to Cards::* —
+    resource :closure            # Cards::ClosuresController#create / #destroy
+    resource :archival           # Cards::ArchivalsController#create
+    resources :assignments       # Cards::AssignmentsController#create / #destroy
+  end                            # plain nesting would hit top-level ClosuresController
+end
 
 # Bad — verb actions on parent controller
-post :close
-post :archive
-post :assign
+resources :cards do
+  member do
+    post :close
+    post :archive
+    post :assign
+  end
+end
 ```
 
 ## Controller Structure
@@ -166,6 +175,7 @@ end
 
 class SessionsController < ApplicationController
   allow_unauthenticated_access
+  skip_after_action :verify_authorized  # no user to authorize yet
   rate_limit to: 10, within: 3.minutes, only: :create
 end
 ```

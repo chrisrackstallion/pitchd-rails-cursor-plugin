@@ -2,8 +2,8 @@
 
 ## REST Mapping
 
-Every controller action maps to one of the seven CRUD verbs. When you need
-a custom action, create a new resource instead.
+Every controller action maps to one of the seven RESTful actions. When you
+need a custom action, create a new resource instead.
 
 ### The Rule
 
@@ -19,16 +19,24 @@ If the action name is not `index`, `show`, `new`, `create`, `edit`,
 # POST   /cards/:id/archive   → custom action
 
 # ...create noun resources:
-# POST   /cards/:id/closure   → Cards::ClosuresController#create
-# DELETE /cards/:id/closure   → Cards::ClosuresController#destroy
-# POST   /cards/:id/archival  → Cards::ArchivalsController#create
+# POST   /cards/:card_id/closure   → Cards::ClosuresController#create
+# DELETE /cards/:card_id/closure   → Cards::ClosuresController#destroy
+# POST   /cards/:card_id/archival  → Cards::ArchivalsController#create
 
 resources :cards do
-  resource :closure, only: %i[ create destroy ]
-  resource :archival, only: %i[ create ]
-  resources :assignments, only: %i[ create destroy ]
+  scope module: :cards do
+    resource :closure, only: %i[ create destroy ]
+    resource :archival, only: %i[ create ]
+    resources :assignments, only: %i[ create destroy ]
+  end
 end
 ```
+
+`scope module: :cards` is required: nesting a resource inside
+`resources :cards` nests the *URL* but still routes to a top-level
+`ClosuresController`. The `module:` scope is what routes to
+`Cards::ClosuresController`, matching the `Parent::StateNounController`
+naming convention.
 
 ### State-Change Controllers
 
@@ -269,6 +277,7 @@ logged-in user. To open specific controllers to unauthenticated visitors:
 ```ruby
 class SessionsController < ApplicationController
   allow_unauthenticated_access
+  skip_after_action :verify_authorized  # no user to authorize yet — see § Skipping Verification
   rate_limit to: 10, within: 3.minutes, only: :create
 
   def new
@@ -699,7 +708,8 @@ end
 
 ### Streaming Bodies
 
-For large responses, stream to avoid buffering:
+For large responses, stream to avoid buffering. Requires a threaded server
+(Puma) — the body is written from the request thread:
 
 ```ruby
 class ReportsController < ApplicationController
@@ -709,8 +719,8 @@ class ReportsController < ApplicationController
     response.headers["Content-Type"] = "text/csv"
     response.headers["Content-Disposition"] = "attachment; filename=report.csv"
 
-    @records.find_each do |record|
-      response.stream.write record.to_csv_row
+    Entry.chronologically.find_each do |entry|
+      response.stream.write entry.to_csv_row
     end
   ensure
     response.stream.close
