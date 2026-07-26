@@ -120,23 +120,21 @@ This is shorthand for:
 
 ### Empty States
 
-Branch when the collection is empty. **`render(collection) || fallback` is unreliable** — an empty collection usually produces an empty string buffer, which is truthy, so the right-hand side never runs.
+Rendering an empty collection returns `nil`, so the one-line fallback idiom
+works. The parentheses are required — without them Ruby parses
+`render @articles || fallback` as `render(@articles || fallback)`:
+
+```erb
+<%= render(@articles) || tag.p("No articles yet.", class: "py-8 text-center text-gray-500 italic") %>
+```
+
+When the empty state is more than a single element, branch explicitly:
 
 ```erb
 <% if @articles.any? %>
   <%= render @articles %>
 <% else %>
   <%= render "articles/empty" %>
-<% end %>
-```
-
-Or inline:
-
-```erb
-<% if @articles.any? %>
-  <%= render @articles %>
-<% else %>
-  <%= tag.p("No articles yet.", class: "py-8 text-center text-gray-500 italic") %>
 <% end %>
 ```
 
@@ -552,7 +550,7 @@ footer. Action templates fill in the content.
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title><%= yield(:title) || "App Name" %></title>
+  <title><%= content_for(:title) || "App Name" %></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
@@ -560,9 +558,8 @@ footer. Action templates fill in the content.
   <meta name="turbo-refresh-method" content="morph">
   <meta name="turbo-refresh-scroll" content="preserve">
 
-  <%= stylesheet_link_tag "application", data_turbo_track: "reload" %>
-  <%= javascript_include_tag "application", defer: true,
-        data_turbo_track: "reload" %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
   <%= render "shared/flash" %>
@@ -573,6 +570,20 @@ footer. Action templates fill in the content.
 </body>
 </html>
 ```
+
+Two gotchas baked into this example:
+
+- **`content_for(:title) || "App Name"`, not `yield(:title) || "App Name"`** —
+  `yield(:title)` returns a truthy empty buffer when nothing was provided,
+  so a `||` fallback after it never runs. The `content_for` reader returns
+  `nil` for blank content, which is what makes the fallback work.
+- **`"data-turbo-track": "reload"`, not `data_turbo_track:`** — the asset
+  tag helpers do not dasherize top-level keys, so the underscored form
+  emits a literal `data_turbo_track` attribute that Turbo ignores.
+  `javascript_importmap_tags` is the omakase JS include (it handles
+  turbo-track and module loading itself); with a bundler, use
+  `javascript_include_tag "application", "data-turbo-track": "reload", defer: true`
+  — see the writing-javascript skill.
 
 ### provide vs content_for
 
@@ -590,8 +601,8 @@ building up content with blocks or appending.
 ```
 
 ```erb
-<%# In the layout %>
-<title><%= yield(:title) || "App Name" %></title>
+<%# In the layout — content_for reader, not yield(:title), for the fallback %>
+<title><%= content_for(:title) || "App Name" %></title>
 
 <% if content_for?(:sidebar) %>
   <aside class="w-64"><%= yield(:sidebar) %></aside>
@@ -633,6 +644,14 @@ Child layouts can extend a parent layout:
   </div>
 <% end %>
 <%= render template: "layouts/application" %>
+```
+
+This only works if the parent layout yields `:body` when it is set —
+otherwise the child's wrapper (and the admin nav with it) is silently
+discarded. In `layouts/application.html.erb`, the content area must be:
+
+```erb
+<%= content_for?(:body) ? yield(:body) : yield %>
 ```
 
 ---
@@ -790,7 +809,10 @@ dom_class(@article, :featured) # => "featured_article"
 
 ## Empty States
 
-Handle empty collections gracefully. Never show a blank page. Prefer an explicit branch (same as § Collections → Empty States) — not `render(collection) || …`, for the same empty-string / truthiness reason.
+Handle empty collections gracefully. Never show a blank page. For one-line
+fallbacks, `<%= render(@articles) || ... %>` works (see § Collections →
+Empty States); for a designed empty state like this one, branch to a
+dedicated partial:
 
 ```erb
 <% if @articles.any? %>

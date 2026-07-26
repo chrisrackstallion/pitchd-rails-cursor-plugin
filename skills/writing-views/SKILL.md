@@ -83,6 +83,10 @@ Key principles:
 - Keep the template under ~50 lines — extract partials when it grows
 - The controller builds objects (`@comment = @article.comments.build`) — views don't instantiate models
 
+Static copy is hardcoded here (and throughout `references/patterns.md`) to
+keep the examples focused — in application code, user-facing strings use
+`t()` with keys under `config/locales` (see the writing-i18n skill).
+
 ### 3. Partial Structure
 
 Every partial uses strict locals and receives everything it needs through locals:

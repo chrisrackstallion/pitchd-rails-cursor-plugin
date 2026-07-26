@@ -63,13 +63,19 @@ The short form `render @articles` works when the partial matches the model name.
 
 ## Collection Rendering
 
-Render collections with `render @collection` — Rails resolves the partial automatically. **Empty collections:** branch explicitly. Do not use `render(collection) || fallback` — Rails typically returns an empty string for an empty collection, and `""` is truthy in Ruby, so the fallback never runs.
+Render collections with `render @collection` — Rails resolves the partial automatically. **Empty collections:** rendering an empty collection returns `nil`, so the one-line idiom works — but the parentheses are required (`render @articles || fallback` parses as `render(@articles || fallback)`):
+
+```erb
+<%= render(@articles) || tag.p("No articles yet.", class: "text-gray-500 italic py-8") %>
+```
+
+When the empty state is more than a single element, branch explicitly:
 
 ```erb
 <% if @articles.any? %>
   <%= render @articles %>
 <% else %>
-  <%= tag.p("No articles yet.", class: "text-gray-500 italic py-8") %>
+  <%= render "articles/empty" %>
 <% end %>
 ```
 
