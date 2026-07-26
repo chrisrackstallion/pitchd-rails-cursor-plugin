@@ -11,13 +11,12 @@ alwaysApply: false
 Business logic belongs on the model, not in service objects. If logic operates on a single model instance, it's a model method.
 
 ```ruby
-# Good — domain verb on the model
+# Good — domain verb on the model; the Publication record is the single
+# source of truth (its created_at is the publish time — no duplicate column)
 def publish(by: Current.user)
-  transaction do
-    create_publication!(publisher: by)
-    update!(published_at: Time.current)
-  end
+  create_publication!(publisher: by)
 end
+# Wrap in `transaction` when the verb performs more than one write.
 
 # Bad — unnecessary service wrapper
 class PublishService
