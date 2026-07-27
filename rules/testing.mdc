@@ -83,7 +83,9 @@ FactoryBot.define do
     association :author, factory: :user
 
     trait :published do
-      after(:create) { |article| article.publish }
+      # Pass the actor explicitly — factories run outside a request,
+      # so a verb defaulting to `by: Current.user` would get nil
+      after(:create) { |article| article.publish(by: article.author) }
     end
   end
 end
@@ -221,7 +223,10 @@ The rule: every test must have at least one positive assertion. A test that cons
 
 ## Database Strategy
 
-Use `database_cleaner` with transaction strategy for speed. System specs use truncation (Capybara runs in a separate thread).
+Transactional fixtures cover everything — including system specs. Since
+Rails 5.1 the test thread and the app server thread share one database
+connection, so `database_cleaner` and truncation strategies are legacy
+setup, not requirements.
 
 ```ruby
 # rails_helper.rb
@@ -229,9 +234,9 @@ config.use_transactional_fixtures = true
 ```
 
 For parallel test execution, ensure each process has its own database.
-RSpec with `parallel_tests` gem or Rails' built-in `parallelize` both
-handle this — but beware that shared state (sequences, unique constraints)
-can cause flakiness across processes.
+For RSpec that means the `parallel_tests` gem (Rails' built-in
+`parallelize` is Minitest-only) — and beware that shared state
+(sequences, unique constraints) can cause flakiness across processes.
 
 ## Test File Naming
 

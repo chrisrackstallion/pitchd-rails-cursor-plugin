@@ -92,7 +92,7 @@ RSpec.describe Article, type: :model do
         article = create(:article)
 
         # Act — do the thing
-        article.publish
+        article.publish(by: article.author)
 
         # Assert — verify the outcome
         expect(article).to be_published
@@ -226,10 +226,11 @@ trust the lower layer from above:
 # Model spec — owns the domain logic (this is where most coverage lives)
 describe "#publish" do
   it "creates a publication and records the publisher" do
+    publisher = create(:user)
     article = create(:article)
-    article.publish
+    article.publish(by: publisher)
     expect(article).to be_published
-    expect(article.publication.publisher).to eq(Current.user)
+    expect(article.publication.publisher).to eq(publisher)
   end
 
   it "raises when already published" do
@@ -277,28 +278,29 @@ Don't split assertions about the same action into separate tests:
 ```ruby
 # Bad — three tests for one action, identical setup
 it "publishes the article" do
-  article.publish
+  article.publish(by: publisher)
   expect(article).to be_published
 end
 
 it "creates a publication record" do
-  article.publish
+  article.publish(by: publisher)
   expect(article.publication).to be_present
 end
 
 it "records the publisher" do
-  article.publish
-  expect(article.publication.publisher).to eq(Current.user)
+  article.publish(by: publisher)
+  expect(article.publication.publisher).to eq(publisher)
 end
 
 # Good — one test verifying one behaviour from multiple angles
 it "publishes the article with attribution" do
+  publisher = create(:user)
   article = create(:article)
-  article.publish
+  article.publish(by: publisher)
 
   expect(article).to be_published
   expect(article.publication).to be_present
-  expect(article.publication.publisher).to eq(Current.user)
+  expect(article.publication.publisher).to eq(publisher)
 end
 ```
 
@@ -311,7 +313,7 @@ is a new `context`, not a new `expect`.
 context "when the article is a draft" do
   it "publishes successfully" do
     article = create(:article)
-    article.publish
+    article.publish(by: article.author)
     expect(article).to be_published
   end
 end
@@ -420,7 +422,7 @@ Before finishing, verify:
 - [ ] Policy specs cover the full role × action matrix
 - [ ] Tests read as documentation — a new developer understands the feature from reading them
 - [ ] No flaky tests — no sleep, no order-dependent state
-- [ ] Database is cleaned between tests (transactional fixtures or database_cleaner)
+- [ ] Transactional fixtures are on — they cover system specs too (Rails 5.1+ shares the connection); database_cleaner is unnecessary
 - [ ] No cross-layer duplication — each behaviour is tested in exactly one spec type
 - [ ] System specs don't inspect model internals — they assert what users see
 - [ ] System specs don't re-test the same Stimulus controller / Turbo pattern across files
