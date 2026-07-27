@@ -75,7 +75,7 @@ class Article < ApplicationRecord
 
   private
     def notify_subscribers_later
-      NotifySubscribersJob.perform_later(self)
+      NotifySubscribersJob.perform_later(id)
     end
 end
 ```

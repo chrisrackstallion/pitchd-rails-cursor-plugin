@@ -320,7 +320,7 @@ after_create_commit :notify_watchers_later
 
 private
   def notify_watchers_later
-    NotifyWatchersJob.perform_later(self)
+    NotifyWatchersJob.perform_later(id)
   end
 ```
 
@@ -696,7 +696,7 @@ class Closure < ApplicationRecord
 
   private
     def notify_watchers_later
-      NotifyWatchersJob.perform_later(closeable)
+      NotifyWatchersJob.perform_later(id)  # job finds the Closure, then its closeable
     end
 end
 ```
@@ -714,7 +714,7 @@ def close(by: Current.user, notify: true)
     create_closure!(creator: by)
 
     txn.after_commit do
-      NotifyWatchersJob.perform_later(self) if notify
+      NotifyWatchersJob.perform_later(id) if notify
     end
   end
 end

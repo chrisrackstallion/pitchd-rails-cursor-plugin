@@ -179,7 +179,7 @@ Before finishing, verify:
 - [ ] Job is idempotent — safe to run twice (guard clause or database uniqueness)
 - [ ] `retry_on` for transient errors, `discard_on` for permanent failures
 - [ ] Queue name matches worker configuration
-- [ ] Job spec uses `have_enqueued_job` for callers, `perform_enqueued_jobs` for the job itself
+- [ ] Callers assert `have_enqueued_job`; the job's own spec calls `perform_now` (see writing-tests § Job Specs)
 - [ ] No `perform_now` in production paths
 
 ## References
