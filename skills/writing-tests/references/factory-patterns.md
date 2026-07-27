@@ -14,11 +14,11 @@ FactoryBot.define do
     association :author, factory: :user
 
     trait :published do
-      after(:create) { |article| article.publish }
+      after(:create) { |article| article.publish(by: article.author) }
     end
 
     trait :archived do
-      after(:create) { |article| article.archive }
+      after(:create) { |article| article.archive(by: article.author) }
     end
 
     trait :with_comments do
@@ -108,15 +108,15 @@ or descriptive phrases.
 ```ruby
 factory :article do
   trait :published do
-    after(:create) { |article| article.publish }
+    after(:create) { |article| article.publish(by: article.author) }
   end
 
   trait :archived do
-    after(:create) { |article| article.archive }
+    after(:create) { |article| article.archive(by: article.author) }
   end
 
   trait :closed do
-    after(:create) { |article| article.close }
+    after(:create) { |article| article.close(by: article.author) }
   end
 end
 ```
@@ -124,6 +124,13 @@ end
 Use `after(:create)` when the trait calls a domain verb that requires
 a persisted record. The factory creates the record first, then applies
 the state transition.
+
+**Pass the actor explicitly.** Domain verbs default their actor to
+`Current.user` (`def publish(by: Current.user)`), but factories run outside
+a request cycle where `Current.user` is `nil` — the verb would fail on a
+required `belongs_to` or silently record no attribution. `by:
+article.author` keeps the trait self-contained; a test that cares about
+*who* acted overrides it or calls the verb itself.
 
 ### Role Traits
 
@@ -231,7 +238,7 @@ factory :article do
       create_list(:comment, evaluator.comments_count, article: article)
     end
 
-    article.publish if evaluator.published
+    article.publish(by: article.author) if evaluator.published
   end
 end
 
@@ -320,7 +327,7 @@ end
 ```ruby
 # Trap — build_stubbed with an after(:create) trait skips the callback entirely
 trait :published do
-  after(:create) { |article| article.publish }
+  after(:create) { |article| article.publish(by: article.author) }
 end
 
 article = build_stubbed(:article, :published)
@@ -405,11 +412,11 @@ FactoryBot.define do
 
     # 3. Traits — states
     trait :published do
-      after(:create) { |article| article.publish }
+      after(:create) { |article| article.publish(by: article.author) }
     end
 
     trait :archived do
-      after(:create) { |article| article.archive }
+      after(:create) { |article| article.archive(by: article.author) }
     end
 
     # 4. Traits — with associations
@@ -453,11 +460,11 @@ factory :card do
   association :creator, factory: :user
 
   trait :closed do
-    after(:create) { |card| card.close }
+    after(:create) { |card| card.close(by: card.creator) }
   end
 
   trait :archived do
-    after(:create) { |card| card.archive }
+    after(:create) { |card| card.archive(by: card.creator) }
   end
 end
 ```

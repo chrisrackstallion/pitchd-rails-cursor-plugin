@@ -321,7 +321,7 @@ describe "#publish" do
     article = create(:article)
 
     expect {
-      article.publish
+      article.publish(by: article.author)
     }.to have_enqueued_job(NotifySubscribersJob).with(article.id)
   end
 end
@@ -458,7 +458,7 @@ RSpec.describe Publishable do
     it "creates a publication record" do
       article = create(:article)
 
-      article.publish
+      article.publish(by: article.author)
 
       expect(article).to be_published
       expect(article.publication).to be_present
@@ -535,10 +535,11 @@ RSpec.describe Account::Onboarding do
 
     it "creates an owner membership for the current user" do
       user = create(:user)
-      Current.user = user
       account = create(:account)
 
-      described_class.new(account).complete(name: "Acme", plan: :basic)
+      Current.set(user: user) do
+        described_class.new(account).complete(name: "Acme", plan: :basic)
+      end
 
       membership = account.memberships.first
       expect(membership.user).to eq(user)
@@ -769,7 +770,7 @@ don't re-test the work itself.
 # Model spec — asserts the job is enqueued (does NOT test what the job does)
 describe "#publish" do
   it "enqueues a notification job" do
-    expect { article.publish }.to have_enqueued_job(NotifySubscribersJob)
+    expect { article.publish(by: article.author) }.to have_enqueued_job(NotifySubscribersJob)
   end
 end
 
@@ -777,8 +778,8 @@ end
 describe NotifySubscribersJob do
   it "sends notification emails" do
     expect {
-      described_class.perform_now(article)
-    }.to change { ActionMailer::Base.deliveries.count }.by(3)
+      described_class.perform_now(article.id)
+    }.to have_enqueued_mail(ArticleMailer, :update).exactly(3).times
   end
 end
 ```

@@ -89,17 +89,25 @@ RSpec.configure do |config|
 end
 ```
 
-Or set the session directly for speed:
+Or set the session cookie directly for speed. The Rails 8 `Authentication`
+concern reads `cookies.signed[:session_id]`, so writing the raw id does not
+authenticate — the value must be signed:
 
 ```ruby
 module AuthenticationHelper
   def sign_in(user)
     session = user.sessions.create!
-    # Set the cookie that Authentication concern expects
-    cookies[:session_id] = session.id
+    jar = ActionDispatch::Cookies::CookieJar.build(
+      ActionDispatch::TestRequest.create, {}
+    )
+    jar.signed[:session_id] = session.id
+    cookies[:session_id] = jar[:session_id]
   end
 end
 ```
+
+If that feels like too much machinery, keep the form-based helper above —
+it is one extra request per spec and tests the real path.
 
 ---
 
@@ -414,9 +422,16 @@ end
 
 ## Rate Limiting
 
+`rate_limit` counts attempts in `Rails.cache`. The test environment
+defaults to `:null_store`, which stores nothing — the limit never trips
+and the spec fails. Use a real store for these specs:
+
 ```ruby
 describe "POST /sessions" do
   it "rate limits after 10 attempts" do
+    memory_store = ActiveSupport::Cache::MemoryStore.new
+    allow(Rails).to receive(:cache).and_return(memory_store)
+
     11.times do
       post session_path, params: { email_address: "test@example.com", password: "wrong" }
     end
@@ -425,6 +440,9 @@ describe "POST /sessions" do
   end
 end
 ```
+
+(Or set `config.cache_store = :memory_store` in `config/environments/test.rb`
+and skip the stub.)
 
 ---
 

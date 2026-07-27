@@ -53,13 +53,14 @@ that's the point. Use `create` for everything else. When in doubt, use `create`.
 RSpec.describe Article, type: :model do
   describe "#publish" do
     it "creates a publication record" do
+      publisher = create(:user)
       article = create(:article)
 
-      article.publish
+      article.publish(by: publisher)
 
       expect(article).to be_published
       expect(article.publication).to be_present
-      expect(article.publication.publisher).to eq(Current.user)
+      expect(article.publication.publisher).to eq(publisher)
     end
 
     it "raises when already published" do
@@ -93,22 +94,23 @@ model specs — they verify business behaviour.
 
 ```ruby
 describe "#close" do
-  it "creates a closure record" do
+  it "creates a closure record attributed to the closer" do
     card = create(:card)
+    closer = create(:user)
 
-    card.close
+    card.close(by: closer)
 
     expect(card).to be_closed
-    expect(card.closure.creator).to eq(Current.user)
+    expect(card.closure.creator).to eq(closer)
   end
 
-  it "accepts a custom closer" do
+  it "defaults the closer to Current.user" do
     card = create(:card)
-    admin = create(:user, :admin)
+    user = create(:user)
 
-    card.close(by: admin)
+    as_user(user) { card.close }
 
-    expect(card.closure.creator).to eq(admin)
+    expect(card.closure.creator).to eq(user)
   end
 end
 
@@ -210,7 +212,7 @@ describe "publishing lifecycle" do
 
     expect(article).not_to be_published
 
-    article.publish
+    article.publish(by: article.author)
     expect(article).to be_published
 
     article.unpublish
@@ -232,7 +234,7 @@ RSpec.describe Publishable do
     it "creates a publication record" do
       article = create(:article)
 
-      article.publish
+      article.publish(by: article.author)
 
       expect(article.publication).to be_present
     end
@@ -266,7 +268,7 @@ describe "email uniqueness" do
     duplicate = build(:user, email: "Alice@Example.com")
 
     expect(duplicate).not_to be_valid
-    expect(duplicate.errors[:email]).to include("has already been taken")
+    expect(duplicate.errors).to be_of_kind(:email, :taken)  # error key, not copy
   end
 end
 
@@ -275,7 +277,8 @@ describe "publishing requirements" do
   it "requires a body to publish" do
     article = create(:article, body: nil)
 
-    expect { article.publish }.to raise_error(ActiveRecord::RecordInvalid)
+    # Actor passed explicitly so the failure can only come from the body rule
+    expect { article.publish(by: article.author) }.to raise_error(ActiveRecord::RecordInvalid)
   end
 end
 ```
@@ -415,15 +418,16 @@ end
 ## Testing with Current Attributes
 
 Set `Current` attributes in tests when model behaviour depends on them.
+Prefer the block form (`Current.set(...) { }`) — it restores the previous
+values when the block exits, so nothing leaks into the next example:
 
 ```ruby
 describe "#publish" do
   it "records the current user as publisher" do
     user = create(:user)
-    Current.user = user
     article = create(:article)
 
-    article.publish
+    Current.set(user: user) { article.publish }
 
     expect(article.publication.publisher).to eq(user)
   end
@@ -442,6 +446,17 @@ end
 
 RSpec.configure do |config|
   config.include CurrentUserHelper
+end
+```
+
+**Match your app's `Current` shape.** `Current.set(user: ...)` works when
+`Current` declares `attribute :user`. With the Rails 8 authentication
+generator, `Current` declares `attribute :session` and derives `user` from
+it — setting `user` directly raises. Set the session instead:
+
+```ruby
+def as_user(user, &block)
+  Current.set(session: user.sessions.create!, &block)
 end
 ```
 
@@ -552,23 +567,24 @@ Group assertions about the same action into one test:
 ```ruby
 # Bad — same setup, same action, split across tests
 it "creates a publication" do
-  article.publish
+  article.publish(by: publisher)
   expect(article.publication).to be_present
 end
 
 it "sets the publisher" do
-  article.publish
-  expect(article.publication.publisher).to eq(Current.user)
+  article.publish(by: publisher)
+  expect(article.publication.publisher).to eq(publisher)
 end
 
 # Good — one action, one test, multiple assertions
 it "publishes with attribution" do
+  publisher = create(:user)
   article = create(:article)
-  article.publish
+  article.publish(by: publisher)
 
   expect(article).to be_published
   expect(article.publication).to be_present
-  expect(article.publication.publisher).to eq(Current.user)
+  expect(article.publication.publisher).to eq(publisher)
 end
 ```
 
