@@ -130,8 +130,10 @@ module Cards
 end
 ```
 
-In the controller, `authorize` resolves to the namespaced policy
-automatically:
+In the controller, pass `policy_class:` explicitly — Pundit resolves
+policies from the *record's* class (`@card` → `CardPolicy`), not from the
+controller's namespace, so authorizing `@card` without it would hit the
+wrong policy:
 
 ```ruby
 module Cards
@@ -156,7 +158,8 @@ end
 ```
 
 Alternatively, if the closure is its own model (state-as-record pattern),
-authorize the closure record directly:
+authorize the closure record directly — Pundit then resolves `ClosurePolicy`
+from the record's class with no `policy_class:` needed:
 
 ```ruby
 module Cards
@@ -172,6 +175,11 @@ module Cards
   end
 end
 ```
+
+If you take this route, write the policy's helpers against
+`record.closeable` (the card), not `record.creator` — you just assigned
+the creator to the current user, so `record.creator == user` would be
+vacuously true for everyone.
 
 ### Headless Policies (No Record)
 
@@ -221,12 +229,19 @@ class ArticlePolicy < ApplicationPolicy
       if user.admin?
         scope.all
       else
-        scope.published.or(scope.where(creator: user))
+        scope.where(creator: user).or(scope.where(id: scope.published.select(:id)))
       end
     end
   end
 end
 ```
+
+`.or` requires **structurally compatible** relations — same joins, same
+`references`. A join-based scope like `published` (`joins(:publication)`)
+cannot be `.or`-ed with a plain `where` directly; Rails raises
+`ArgumentError`. Funnel the joined scope through a subquery
+(`scope.where(id: scope.published.select(:id))`) so both sides of the
+`.or` stay plain.
 
 ### Usage in Controllers
 
@@ -572,7 +587,7 @@ end
 
 Use `policy` helper in views to conditionally show UI elements:
 
-```ruby
+```erb
 <% if policy(@article).update? %>
   <%= link_to "Edit", edit_article_path(@article) %>
 <% end %>

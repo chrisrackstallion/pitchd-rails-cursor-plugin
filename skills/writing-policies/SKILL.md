@@ -78,7 +78,9 @@ class ArticlePolicy < ApplicationPolicy
       if user.admin?
         scope.all
       else
-        scope.where(creator: user).or(scope.published)
+        # `.or` needs structurally compatible relations — `published` is a
+        # join-based scope, so funnel it through a subquery
+        scope.where(creator: user).or(scope.where(id: scope.published.select(:id)))
       end
     end
   end
@@ -163,7 +165,7 @@ Before finishing, verify:
 - [ ] Every controller action calls `authorize` — including index
 - [ ] Index actions use `policy_scope` to filter records, then `authorize` (typically `authorize Model`)
 - [ ] `after_action :verify_authorized` is in `ApplicationController`; `skip_after_action` only where intentional
-- [ ] `after_action :verify_policy_scoped, only: :index` when you want to catch forgotten `policy_scope` (recommended)
+- [ ] `after_action :verify_policy_scoped, only: :index` is in `ApplicationController` — the default posture (matching the controllers skill); `skip_after_action` only where intentional
 - [ ] Policy defaults to deny (inherits from `ApplicationPolicy` which returns `false`)
 - [ ] `new?` delegates to `create?`, `edit?` delegates to `update?`
 - [ ] Policy only receives `user` and `record` — no controller state leaks in

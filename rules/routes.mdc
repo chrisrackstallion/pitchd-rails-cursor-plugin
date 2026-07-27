@@ -11,8 +11,11 @@ alwaysApply: false
 Resources are nouns; HTTP verbs map to the seven actions. Prefer `resources` / `resource` so `rails routes` reads like a table of contents and `*_path` helpers stay predictable.
 
 ```ruby
-# Good — standard resource, dead actions trimmed
-resources :articles, only: %i[ index show new create edit update destroy ]
+# Good — full standard resource
+resources :articles
+
+# Good — dead actions trimmed when the UI has no edit/delete
+resources :articles, only: %i[ index show new create ]
 
 # Bad — RPC verbs where a resource or model method belongs
 post "articles/:id/publish"
