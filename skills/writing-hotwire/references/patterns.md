@@ -235,7 +235,7 @@ For actions that need to update multiple targets on the page. The controller ren
 | `remove` | Remove the target element |
 | `before` | Insert before the target |
 | `after` | Insert after the target |
-| `refresh` | Trigger a page morph (Rails 8+) |
+| `refresh` | Re-fetch the current page, morphing if enabled (Turbo 8+) |
 
 ### Broadcasts with morphing
 
@@ -252,7 +252,8 @@ The layout needs the morphing meta tags:
 
 ## Morphing-friendly views
 
-When using Turbo morphing (the default response strategy), structure views so morphing works well.
+When using Turbo morphing (opt-in via the `turbo-refresh-method` meta tag —
+see § Broadcasts with morphing above), structure views so morphing works well.
 
 ### Stable IDs on everything
 
