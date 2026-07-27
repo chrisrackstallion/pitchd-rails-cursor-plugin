@@ -116,4 +116,4 @@ Canonical patterns: **`skills/writing-jobs/references/patterns.md`**.
 | Wrapping `deliver_later` in a job | Call `deliver_later` directly |
 | No idempotency consideration | Guard clause at the top of `perform` |
 | Silently rescuing all exceptions | `retry_on` / `discard_on` with specific classes |
-| `whenever` or other cron gems for recurring jobs | Solid Queue `recurring_tasks` in `config/solid_queue.yml` |
+| `whenever` or other cron gems for recurring jobs | Solid Queue recurring tasks in `config/recurring.yml` |

@@ -168,8 +168,7 @@ end
 ```
 
 Wait strategies:
-- `:exponentially_longer` — doubles the wait each attempt (2s, 4s, 8s…)
-- `:polynomially_longer` — grows more slowly, good for longer retry windows
+- `:polynomially_longer` — growing backoff (attempts⁴ + jitter); the default choice. Rails 7.1 renamed `:exponentially_longer` to this — the old name is deprecated, don't use it.
 - `N.seconds` — fixed interval
 
 ### discard_on

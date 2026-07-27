@@ -11,13 +11,11 @@ alwaysApply: false
 Rails does not have a service layer. Business logic belongs on the model. If you are reaching for `app/services/`, stop and ask where this logic *actually* lives.
 
 ```ruby
-# Good — domain verb on the model
+# Good — domain verb on the model; the Publication record is the single
+# source of truth (its created_at is the publish time — no duplicate column)
 class Article < ApplicationRecord
   def publish(by: Current.user)
-    transaction do
-      create_publication!(publisher: by)
-      update!(published_at: Time.current)
-    end
+    create_publication!(publisher: by)
   end
 end
 

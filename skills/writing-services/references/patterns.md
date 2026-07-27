@@ -17,19 +17,19 @@ on the model.
 ```ruby
 class Article < ApplicationRecord
   def publish(by: Current.user)
-    transaction do
+    transaction do |txn|
       create_publication!(publisher: by)
-      update!(published_at: Time.current)
-      notify_subscribers_later
+      drafts.delete_all
+
+      txn.after_commit { NotifySubscribersJob.perform_later(id) }
     end
   end
-
-  private
-    def notify_subscribers_later
-      NotifySubscribersJob.perform_later(self)
-    end
 end
 ```
+
+Note the shape: the job is enqueued in `txn.after_commit` (never inside the
+open transaction — see the writing-jobs skill) and receives the id, not the
+record.
 
 ### When Controller Orchestration Is Enough
 
@@ -42,6 +42,7 @@ class TransfersController < ApplicationController
   def create
     @from_account = Account.find(params[:from_account_id])
     @to_account = Account.find(params[:to_account_id])
+    amount = params[:amount].to_d
 
     @from_account.transaction do
       @from_account.withdraw(amount)
@@ -402,11 +403,12 @@ computation — is a job.
 # app/jobs/sync_inventory_job.rb
 class SyncInventoryJob < ApplicationJob
   queue_as :default
-  retry_on Net::TimeoutError, wait: :polynomially_longer, attempts: 5
+  retry_on Faraday::TimeoutError, wait: :polynomially_longer, attempts: 5
 
-  def perform(product)
-    response = InventoryApi.fetch(product.sku)
-    product.update!(stock_count: response.quantity)
+  def perform(product_id)
+    product = Product.find(product_id)
+    response = InventoryApi.new.fetch(product.sku)
+    product.update!(stock_count: response[:quantity])
   end
 end
 ```
@@ -419,7 +421,7 @@ class Order < ApplicationRecord
 
   private
     def fulfill_later
-      FulfillOrderJob.perform_later(self)
+      FulfillOrderJob.perform_later(id)
     end
 end
 ```
@@ -429,7 +431,7 @@ end
 ```ruby
 def create
   @import = Import.create!(import_params)
-  ProcessImportJob.perform_later(@import)
+  ProcessImportJob.perform_later(@import.id)
   redirect_to @import, notice: "Import started."
 end
 ```
@@ -437,7 +439,7 @@ end
 ### Guidelines
 
 - **One job, one responsibility** — `SendWelcomeEmailJob`, not `UserSetupJob`
-- **Pass models, not IDs** — ActiveJob serialises records via GlobalID. Exception: if the record may be deleted before the job runs, pass the ID and handle `ActiveRecord::RecordNotFound` inside `perform`.
+- **Pass IDs, not objects** — find the record fresh in `perform`; this is the plugin-wide job convention (see the writing-jobs skill, which also covers the GlobalID alternative and its `DeserializationError` handling)
 - **Use `retry_on`** for transient failures (network, rate limits)
 - **Use `discard_on`** for permanent failures (record deleted, invalid state)
 - **Idempotent** — jobs may run more than once; guard against double execution
@@ -539,6 +541,8 @@ class ContactImport < ApplicationRecord
                   completed: "completed", failed: "failed" }, default: :pending
 
   def process
+    return if completed?  # idempotency guard — retried jobs are no-ops
+
     update!(status: :processing)
     result = ContactImport::Processor.new(self).run
     update!(status: :completed, processed_count: result.processed, error_count: result.errors.size)
@@ -581,8 +585,8 @@ end
 class ProcessContactImportJob < ApplicationJob
   discard_on ActiveRecord::RecordNotFound
 
-  def perform(import)
-    import.process
+  def perform(import_id)
+    ContactImport.find(import_id).process
   end
 end
 ```
@@ -592,9 +596,8 @@ attachment). The processor is a **PORO** namespaced under the import.
 The job is just the async wrapper.
 
 Per-row errors are accumulated rather than aborting — one bad row should not
-cancel the entire import. The model's `process` method does not `raise` after
-failure so that retried jobs don't encounter a `:failed` status record and
-process correctly on retry.
+cancel the entire import. The `return if completed?` guard makes the job
+idempotent: a retry after success is a no-op instead of a double import.
 
 ---
 
@@ -629,10 +632,15 @@ class Article < ApplicationRecord
 
   private
     def notify_subscribers_later
-      NotifySubscribersJob.perform_later(self)
+      NotifySubscribersJob.perform_later(id)
     end
 end
 ```
+
+This first step is mechanical — it keeps the existing boolean schema and
+only relocates the logic. The follow-up refactor is to replace the
+`published`/`published_at`/`publisher` columns with a `Publication` state
+record (see the writing-models skill § State as Records).
 
 ### Multi-Step Services → POROs Under Models
 

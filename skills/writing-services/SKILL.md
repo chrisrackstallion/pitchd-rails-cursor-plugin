@@ -171,7 +171,7 @@ Before finishing, verify:
 - [ ] Objects that wrap a single model call have been inlined to model methods
 - [ ] Transactions wrap the right scope — ideally on the model's own `transaction`
 - [ ] The object represents a real domain concept, not a procedural wrapper
-- [ ] No result objects or monads — return records or raise exceptions
+- [ ] No success/failure result monads — return records or raise exceptions (a small `Data.define` summary from a bulk operation is fine; a `Result` wrapper around every call is not)
 
 ## References
 
