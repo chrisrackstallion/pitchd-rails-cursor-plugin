@@ -5,7 +5,11 @@
 Default to `resources` with the seven actions. Trim with `only` or `except` so unused routes do not exist.
 
 ```ruby
-resources :articles, only: %i[ index show new create edit update destroy ]
+# Full resource — all seven actions exist in the UI
+resources :articles
+
+# Trimmed — no edit/delete UI, so those routes don't exist
+resources :articles, only: %i[ index show new create ]
 ```
 
 HTTP verbs and routes align with Rails conventions:
@@ -53,7 +57,10 @@ Typical outcome:
 - `GET /tasks/:id` — show (shallow)
 - `PATCH /tasks/:id` — update (shallow)
 
-In shallow member actions, the foreign key param is often `task_id` in `params` — controllers use `params[:task_id]` or `params[:id]` depending on depth; be consistent with `before_action` finders.
+Match finders to each action's depth: nested `index`/`create` receive
+`params[:project_id]` (scope through the parent —
+`@project.tasks.find(...)`), while shallow member actions receive a plain
+`params[:id]` with no parent param at all (`Task.find(params[:id])`).
 
 **Rule of thumb:** If the URL has more than one nested `:id` segment for a normal CRUD screen, reconsider shallowing or a top-level resource.
 

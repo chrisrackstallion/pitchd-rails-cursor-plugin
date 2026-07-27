@@ -134,6 +134,6 @@ Alternatively: `authorize @articles` — Pundit passes the relation as `record` 
 | Giant case/switch in a single permission method | One policy method per CRUD action |
 | Custom verb methods (`close?`, `publish?`) | CRUD only — state changes map to `create?`/`destroy?` on a noun-resource policy |
 | Skipping authorize for any action (including index) | `after_action :verify_authorized` — use `skip_after_action` only when an action intentionally has no authorization |
-| Skipping `policy_scope` on index when the listing is user-specific | `policy_scope` in index; consider `after_action :verify_policy_scoped, only: :index` in `ApplicationController` |
+| Skipping `policy_scope` on index when the listing is user-specific | `policy_scope` in index; `after_action :verify_policy_scoped, only: :index` in `ApplicationController` catches it (the controllers rule treats this as required, `skip_after_action` where intentional) |
 | Policy reaching into `request` or `params` | Policies only see `user` and `record` |
 | Business logic in policies | Policies answer "can this user do this?" — nothing else |

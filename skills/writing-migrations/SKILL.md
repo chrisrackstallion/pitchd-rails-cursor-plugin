@@ -60,17 +60,23 @@ reversed, or when reverting requires a different operation:
 class ChangeArticleStatusToEnum < ActiveRecord::Migration[8.0]
   def up
     add_column :articles, :status, :integer, default: 0, null: false
-    execute "UPDATE articles SET status = 0"
-    remove_column :articles, :published, :boolean
+    execute "UPDATE articles SET status = 1 WHERE published = TRUE"
+    remove_column :articles, :published
   end
 
   def down
     add_column :articles, :published, :boolean, default: false, null: false
-    execute "UPDATE articles SET published = (status = 1)"
-    remove_column :articles, :status, :integer
+    execute "UPDATE articles SET published = TRUE WHERE status = 1"
+    remove_column :articles, :status
   end
 end
 ```
+
+Each direction carries the data across before dropping the old column —
+`up` without the `UPDATE` would silently reset every article to draft. A
+one-shot conversion like this couples DDL and DML by necessity; that is
+acceptable on small tables, but on large live tables use the multi-deploy
+pattern instead (`references/patterns.md` § Renaming a Column Safely).
 
 If a migration truly cannot be reversed (data is destroyed), raise in `down`:
 
@@ -91,15 +97,17 @@ evaluate before running:
 | Operation | Safety | Notes |
 |-----------|--------|-------|
 | `add_column` (nullable) | Safe | No table rewrite |
-| `add_column` with `default:` (Rails 8+) | Safe | Rails writes default at the DB level efficiently |
+| `add_column` with `default:` | Safe on Postgres 11+ / MySQL 8+ | The database applies the default without rewriting rows — a database-version property, not a Rails one |
 | `add_column` NOT NULL, no default, existing rows | Unsafe on large tables | Add nullable first, backfill, then add constraint |
 | `add_index` | Unsafe without `algorithm: :concurrently` | Locks table; use concurrent index on Postgres |
-| `remove_column` | Requires three-step deploy | App must ignore column before it is removed |
+| `remove_column` | Requires two-deploy process | App must ignore the column before it is removed |
 | `rename_column` | Unsafe | App breaks between deploy and migration; use three-step |
 | `change_column_type` | Often unsafe | Full table rewrite; use new column + backfill instead |
 
 For Postgres: `add_index :table, :column, algorithm: :concurrently` adds
-the index without a full table lock. Rails wraps this in `disable_ddl_transaction!`.
+the index without a full table lock. Declare `disable_ddl_transaction!` in
+the migration yourself — concurrent index builds cannot run inside a
+transaction, and Rails does not disable it for you.
 
 **"Does this need a data migration?"**
 

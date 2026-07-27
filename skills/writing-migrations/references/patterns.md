@@ -77,8 +77,9 @@ end
 
 ## Removing Columns
 
-Removing a column while the app still reads or writes it causes errors.
-Use a three-step process across two deploys.
+Removing a column while the app still reads or writes it causes errors —
+Rails caches the column list, so a dropped column raises until every
+process restarts. Use a two-deploy process.
 
 **Deploy 1 — tell ActiveRecord to ignore the column:**
 
@@ -317,12 +318,18 @@ class AddDisplayNameToUsers < ActiveRecord::Migration[8.0]
 end
 ```
 
-Update the model to read from the new column, write to both, and alias the old:
+Update the model to read from the new column with a fallback, and write to
+both columns so no new rows are left behind:
 
 ```ruby
 # app/models/user.rb
 def display_name
   self[:display_name] || self[:name]
+end
+
+def name=(value)
+  self[:display_name] = value
+  super
 end
 ```
 
@@ -344,6 +351,10 @@ Update the model to read fully from the new column once all rows are backfilled
 
 **Deploy 2 — remove the old column (DDL only, after backfill is complete):**
 
+Removing the old column is now an ordinary column removal — follow
+§ Removing Columns above: ignore `name` in the model first (and drop the
+dual-write), then remove the column in the next deploy.
+
 ```ruby
 class RemoveNameFromUsers < ActiveRecord::Migration[8.0]
   def change
@@ -351,5 +362,3 @@ class RemoveNameFromUsers < ActiveRecord::Migration[8.0]
   end
 end
 ```
-
-After the migration runs, remove `ignored_columns` from the model.
