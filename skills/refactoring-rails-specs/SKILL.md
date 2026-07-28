@@ -326,7 +326,7 @@ Before declaring done:
 
 ## Subagent (optional)
 
-This skill can be delegated to the **`pitchd-rails-implementor`** subagent at `.cursor/agents/pitchd-rails-implementor.md` when the work is scoped to a single resource and the parent wants to keep the main context clean. The implementor agent has the writing-tests skill and tooling to execute the verdicts and verify; the parent passes the input spec list, baseline expectations, and a pointer to this skill in the task prompt.
+This skill can be delegated to the **`pitchd-rails-implementor`** subagent at `agents/pitchd-rails-implementor.md` when the work is scoped to a single resource and the parent wants to keep the main context clean. The implementor agent has the writing-tests skill and tooling to execute the verdicts and verify; the parent passes the input spec list, baseline expectations, and a pointer to this skill in the task prompt.
 
 For larger refactors spanning multiple resources, prefer running this skill one resource at a time in the main session — the audit plans are easier to review when the diffs are small.
 
@@ -335,6 +335,6 @@ For larger refactors spanning multiple resources, prefer running this skill one 
 - **Test-writing conventions:** `../writing-tests/SKILL.md` (`references/system-specs.md`, `references/request-specs.md`, `references/model-specs.md`, `references/support-specs.md`, `references/factory-patterns.md`)
 - **Testing rule:** `../../rules/testing.mdc` (ownership table, anti-patterns, budget, Five Gates)
 - **RuboCop:** `../running-rubocop/SKILL.md` — run after every refactor batch
-- **Implementor subagent:** `.cursor/agents/pitchd-rails-implementor.md` — optional delegation
+- **Implementor subagent:** `agents/pitchd-rails-implementor.md` — optional delegation
 - **Reviewer skill / subagent:** `../reviewing-pitchd-rails/SKILL.md` — run after a large refactor to confirm plugin fit
 - **Compass:** `../rails-omakase-compass/SKILL.md` — read only if the refactor surfaces a philosophy question (HTML vs API, server vs client truth); usually not needed

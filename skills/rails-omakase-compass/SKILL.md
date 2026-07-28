@@ -135,10 +135,18 @@ Read only what the task touches:
 | Background jobs / ActiveJob | `writing-jobs` |
 | Database migrations | `writing-migrations` |
 | Tests / RSpec | `writing-tests` |
+| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` |
+| Lint gate | `running-rubocop` |
 
-### Optional external digest
+### Optional external references
 
-For **targeted** HTTP fetches from the third-party [unofficial 37signals coding style guide](https://github.com/marckohlbrugge/unofficial-37signals-coding-style-guide) (Fizzy-derived topics, README TOC → raw `.md` files), use **`referencing-unofficial-37signals-guide`**. **Successful fetches** are required **only to attribute or cite content as coming from that guide** — if a fetch fails, **do not** invent guide text; you may still give **general Rails** guidance using plugin rules and skills without claiming it is from the guide.
+Two fetch-based skills supplement the plugin when it leaves a gap — neither
+overrides plugin rules:
+
+- **`referencing-unofficial-37signals-guide`** — targeted fetches from the third-party [unofficial 37signals coding style guide](https://github.com/marckohlbrugge/unofficial-37signals-coding-style-guide) (Fizzy-derived topics, README TOC → raw `.md` files).
+- **`referencing-rails-guides`** — authoritative Rails API and feature docs (GitHub API index → specific guide `.md`).
+
+**Successful fetches** are required **to attribute or cite content as coming from those sources** — if a fetch fails, **do not** invent text; you may still give **general Rails** guidance using plugin rules and skills without claiming a source.
 
 ## What this skill deliberately omits
 

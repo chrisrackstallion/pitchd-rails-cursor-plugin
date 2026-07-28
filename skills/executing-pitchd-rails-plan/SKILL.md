@@ -22,7 +22,7 @@ loops until the reviewer **Approves**, then hands everything to the **user** for
 sign-off.
 </objective>
 
-**Announce:** "I'm using the executing-pitchd-rails skill (orchestrator mode — no app code)."
+**Announce:** "I'm using the executing-pitchd-rails-plan skill (orchestrator mode — no app code)."
 
 ## When to use
 
@@ -64,7 +64,7 @@ Invoke **`pitchd-rails-implementor`** with a self-contained prompt. Include at m
 - **Work directory**, **Plan path**, **Spec path** (use `none` when absent; if `none`, task text must be plan-complete per implementor rules).
 - Instruction: follow **`skills/implementing-pitchd-rails/SKILL.md`**, no `git commit` unless the user explicitly overrode that elsewhere.
 
-Use the prompt template in **`.cursor/agents/pitchd-rails-implementor.md`** as the shape of the dispatch.
+Use the prompt template in **`agents/pitchd-rails-implementor.md`** as the shape of the dispatch.
 
 ### 2. Delegate Pitchd review
 
@@ -189,4 +189,4 @@ Deliver a short **completion package**:
 - **Plans:** `../writing-pitchd-rails-plans/SKILL.md`
 - **Implement:** `../implementing-pitchd-rails/SKILL.md` — **`pitchd-rails-implementor`**
 - **Review:** `../reviewing-pitchd-rails/SKILL.md` — **`pitchd-rails-reviewer`**
-- **Subagent definitions:** `.cursor/agents/pitchd-rails-implementor.md`, `.cursor/agents/pitchd-rails-reviewer.md`
+- **Subagent definitions:** `agents/pitchd-rails-implementor.md`, `agents/pitchd-rails-reviewer.md`
