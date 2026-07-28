@@ -466,6 +466,59 @@ class ArticlesController < ApplicationController
 end
 ```
 
+### One Gate, One Home
+
+**Never raise `Pundit::NotAuthorizedError` manually.** `authorize` *is* the
+raise: give the policy the record (with `policy_class:` when resolution needs
+it) and a false return raises for you. A hand-rolled raise either bypasses
+the policy or duplicates it — and the duplicate is the copy that rots.
+
+```ruby
+# Bad — hand-rolled gate; the policy is bypassed or duplicated
+def update
+  raise Pundit::NotAuthorizedError unless @article.creator == Current.user
+  @article.update!(article_params)
+  redirect_to @article
+end
+
+# Good — the policy decides; Pundit raises on denial
+def update
+  authorize @article
+  @article.update!(article_params)
+  redirect_to @article
+end
+```
+
+If a permission needs an input the policy can't currently see, put it on the
+record or the `pundit_user` context (see § Pundit User) so the policy can
+decide — do not pre-check in the controller and raise yourself.
+
+**Do not duplicate a gate the policy already owns.** Once `authorize` guards
+an action, do not repeat the same condition inline:
+
+```ruby
+# Bad — the policy already decided this; the inline check is a second,
+# driftable copy
+def destroy
+  authorize @article
+  if Current.user.admin? || @article.creator == Current.user
+    @article.destroy!
+  end
+  redirect_to articles_path
+end
+
+# Good — authorize is the only gate
+def destroy
+  authorize @article
+  @article.destroy!
+  redirect_to articles_path
+end
+```
+
+The same rule in views: `policy(@article).update?` is the sanctioned check —
+never re-derive the logic (`<% if article.creator == Current.user %>`) in
+ERB. One policy method, consulted everywhere; zero copies of its logic.
+
 ### Verification Callbacks
 
 Add these to `ApplicationController` to catch missed authorizations:

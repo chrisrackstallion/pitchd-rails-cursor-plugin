@@ -137,3 +137,5 @@ Alternatively: `authorize @articles` — Pundit passes the relation as `record` 
 | Skipping `policy_scope` on index when the listing is user-specific | `policy_scope` in index; `after_action :verify_policy_scoped, only: :index` in `ApplicationController` catches it (the controllers rule treats this as required, `skip_after_action` where intentional) |
 | Policy reaching into `request` or `params` | Policies only see `user` and `record` |
 | Business logic in policies | Policies answer "can this user do this?" — nothing else |
+| Raising `Pundit::NotAuthorizedError` manually | `authorize record` (with `policy_class:` when needed) — Pundit raises when the policy denies |
+| Re-checking in the controller or view what the policy already decides (inline role/ownership conditionals around an authorized action or in ERB) | One gate, one home: `authorize` in the action, `policy(record).action?` in views — never a second copy of the logic |

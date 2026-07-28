@@ -43,6 +43,31 @@ and mark it as technical debt — do not normalize it.
 
 **Announce at start:** "I'm using the writing-pitchd-rails-plans skill to create the implementation plan."
 
+## Requirements gate (before drafting anything)
+
+Do not start writing the plan from a thin prompt. **Grill the requirements
+first** — a wrong assumption made here multiplies into every task, snippet,
+and spec below it.
+
+1. **Interrogate the request/spec** for gaps across: the user-visible outcome,
+   scope boundaries (what is explicitly *out*), affected resources and their
+   relationships, authorization expectations (who may do what), UX surface
+   (full page vs frame vs stream), data/migration implications, edge cases,
+   and acceptance criteria.
+2. **Ask before drafting.** For every gap or ambiguity, ask the user — use the
+   harness's structured question tool when one is available (e.g.
+   `AskUserQuestion` in Claude Code), which lets you present focused options
+   for several decisions in one round; otherwise ask in chat, one question at
+   a time. Do not pad the plan with guesses phrased as decisions.
+3. **Proceed without answers only on explicit instruction.** If the user says
+   "proceed with assumptions", record every assumption in the plan header
+   under **Assumptions:** so the reviewer (Pass 1) can challenge them — an
+   unstated assumption is invisible to review; a listed one is checkable.
+
+A spec that already answers these questions (e.g. one produced by
+`brainstorming-rails-omakase` and signed off) passes this gate without
+re-interrogation — ask only about what the spec genuinely leaves open.
+
 ## Philosophy (DHH / Pitchd Rails)
 
 - **Vertical slices over layers:** Prefer tasks that complete **one resource's
@@ -188,6 +213,10 @@ different docs location):
 form object, job), Hotwire surface]
 
 **Rails shape:** [Key models, resources, policies]
+
+**Assumptions:** [Only when the user said to proceed without answering
+requirements-gate questions — list each assumption so review can challenge it.
+Omit this line otherwise.]
 
 **Conventions:** `skills/rails-omakase-compass/SKILL.md` (shape), `rules/models.mdc`,
 `rules/routes.mdc`, `rules/controllers.mdc`, `rules/policies.mdc`, `rules/services.mdc`,
@@ -373,9 +402,12 @@ as a **revision request** if it matches phrases like — but not limited to — 
 > "update this", "adjust…", "tweak…", "it should do X instead", "change the…",
 > "rewrite task N", "the approach is wrong"
 
-**Do not** restart the full pass flow. **Do not** ask which pass or section this
-relates to. Treat the user's message as the complete description of a
-**self-contained plan revision** and proceed immediately.
+**Do not** restart the full pass flow. When the message is specific enough to
+act on — what to change, where, and what "fixed" looks like — treat it as the
+complete description of a **self-contained plan revision** and proceed
+immediately, without asking which pass or section it relates to. When the
+message is **vague** on any of those, **ask for clarification first — do not
+assume.** A guessed revision that lands wrong costs more than one question.
 
 ### Revision task loop
 
@@ -385,9 +417,12 @@ Extract from the user's message:
 
 - **What to change** — the section, task, snippet, approach, or field they flagged.
 - **Where in the plan** — infer from context (last pass reviewed, section mentioned).
-  If genuinely ambiguous, ask **one** short question before proceeding.
 - **Acceptance** — what "fixed" looks like (derive from the user's wording;
   do not ask for a formal AC).
+
+If any of the three is unclear from the message plus session context, **ask —
+do not assume.** One focused message (the structured question tool works well
+here) covering everything unclear; proceed once answered.
 
 #### R2. Edit the plan
 
