@@ -1,5 +1,6 @@
 {
   "name": "pitchd-rails",
+  "description": "Rules, skills, and agents for building Rails apps the 37signals way — omakase defaults, REST-shaped boundaries, Hotwire-first front ends, and a full plan → implement → review loop.",
   "owner": {
     "name": "Chris Bellairs",
     "email": "chris@pitchd.ai"
