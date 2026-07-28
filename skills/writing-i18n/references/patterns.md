@@ -139,8 +139,25 @@ en:
 
 Custom validation messages can live under **`activerecord.errors.models.article.attributes.title`** or **`activerecord.errors.models.article`** as needed.
 
-**Enums** — use **`human_attribute_name`** / **`Article.statuses_i18n`** with
-**`activerecord.enums`** when you expose enum labels in the UI.
+**Enums** — Rails has no built-in enum label lookup; give labels a bounded
+key path and translate explicitly:
+
+```yaml
+en:
+  articles:
+    statuses:
+      draft: "Draft"
+      published: "Published"
+```
+
+```erb
+<%= t("articles.statuses.#{article.status}") %>
+```
+
+The dynamic segment is safe here because enum values are a closed set (see
+§ Anti-patterns on dynamic keys). Gems like `enum_help`
+(`Article.statuses_i18n`) layer helpers over similar keys — a team choice,
+not part of omakase Rails.
 
 ---
 

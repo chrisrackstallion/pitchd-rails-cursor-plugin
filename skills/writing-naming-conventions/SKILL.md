@@ -61,7 +61,7 @@ Rails has a name for most things. Use it — do not add suffixes Rails does not 
 
 - **Add:** `Controller`, `Job`, `Mailer`, `Policy`, `Scope` (Pundit), `_spec`, `_path`
 - **Never add:** `Model`, `Class`, `Manager`, `Handler`, `Helper` (on non-helpers), `Service`
-- **Singular vs plural:** models and form objects are singular; controllers, tables, and factory names are plural (as symbols, singular: `:article`)
+- **Singular vs plural:** models, form objects, and factory symbols are singular (`factory :article`); controllers and tables are plural; factory files take the plural (`spec/factories/articles.rb`)
 - **Casing:** classes PascalCase, methods and columns snake_case, constants SCREAMING_SNAKE_CASE, Stimulus identifiers kebab-case
 
 When Rails convention and domain language conflict, **Rails convention wins for class and file names**; **domain language wins for method and variable names**.
@@ -85,7 +85,9 @@ When the role is generic, use the model name: `user_id`.
 When the column encodes a role, use the role: `creator_id`, `approver_id`, `reviewer_id` — even when all three point at the `users` table.
 
 **`status` column?**
-Never. Name what it stores: `publication_state`, `review_stage`, `membership_role`.
+Fine for a single obvious lifecycle enum (`draft` / `published` / `archived` —
+see the models skill § Enum). The moment a second lifecycle dimension appears,
+name each axis: `publication_state`, `review_stage`, `membership_role`.
 
 **`user1` / `user2` in specs?**
 Never. Name the role: `author`, `reviewer`, `admin`, `guest`, `member`.
