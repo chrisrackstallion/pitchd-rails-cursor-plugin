@@ -90,7 +90,7 @@ Document **why** the bundler exists, and **how** to run `bin/dev` /
 ```
 app/javascript/
 ├── application.js                  # entrypoint; loads Turbo + controllers
-└── controllers/
+├── controllers/
 │   ├── index.js                    # registers controllers with Stimulus
 │   ├── application.js              # exports the Stimulus Application instance
 │   ├── clipboard_controller.js     # one behaviour per file
@@ -252,7 +252,7 @@ export default class extends Controller {
 ### Lifecycle
 
 ```js
-connect()      // controller attached (initial render, Turbo navigation, morph re-connect)
+connect()      // controller attached (initial render, Turbo navigation, element replacement)
 disconnect()   // controller detached
 fooValueChanged(value, previous)  // value attribute changed
 fooTargetConnected(element)       // a target element appeared
@@ -282,8 +282,13 @@ fooOutletDisconnected(controller, element)
 
 ### State lives in the DOM, not in closures
 
-Turbo morphing keeps the element but re-runs `connect()`. A controller that
-initialises state in `connect()` and never re-reads the DOM will get stale.
+Turbo morphing rewrites the DOM underneath a connected controller: for a
+preserved element `connect()` does **not** re-run (the closure keeps its old
+value while the markup changes), and an unmatched element is replaced
+outright — a fresh controller instance whose closures reset. Either way,
+closure state and the DOM drift apart. Values stored in `data-*-value`
+attributes survive both cases: morphs that change them fire
+`xValueChanged`, and a fresh instance reads them on `connect()`.
 
 ```js
 // Bad — `this.count` is stranded after morph

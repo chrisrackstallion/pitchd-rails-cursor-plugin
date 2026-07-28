@@ -92,8 +92,8 @@ Map every Stimulus controller and every place it is attached.
 # All controllers
 find app/javascript/controllers -name "*_controller.js"
 
-# All attachments in ERB (controllers and actions)
-grep -rEn 'data-(controller|action|target|[a-z-]+-(value|class|outlet))' app/views
+# All attachments in ERB (controllers, actions, targets, values, classes, outlets)
+grep -rEn 'data-(controller|action|[a-z][a-z0-9-]*-(target|value|class|outlet))' app/views
 
 # Cross-controller wiring (outlets and dispatched events)
 grep -rEn 'static outlets|this\.dispatch\(' app/javascript/controllers
@@ -375,9 +375,9 @@ RSpec.describe "Disclosure", type: :system do
 
     visit article_path(article)
 
-    expect(page).to have_button("Details", aria: { expanded: "false" })
+    expect(page).to have_selector("button[aria-expanded='false']", text: "Details")
     click_button "Details"
-    expect(page).to have_button("Details", aria: { expanded: "true" })
+    expect(page).to have_selector("button[aria-expanded='true']", text: "Details")
     expect(page).to have_content(article.details.summary)
   end
 end

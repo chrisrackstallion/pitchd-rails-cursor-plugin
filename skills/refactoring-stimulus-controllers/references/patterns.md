@@ -217,10 +217,13 @@ render() {
 }
 ```
 
-After a morph, the DOM element is reused. Stimulus runs `connect()` again,
-resetting `this.count` to 0 — but the displayed value might already have been
-"5" before the morph (the textContent is preserved). The controller forgets
-its own state.
+After a morph, one of two things happens — and closure state loses either
+way. A preserved element keeps its controller instance: `connect()` does
+**not** re-run, so `this.count` holds its old value while the morph rewrites
+the element's children from the server's HTML. An unmatched element is
+replaced outright: a fresh controller instance, `this.count` back to 0
+regardless of what the user had counted to. The number on screen and the
+number in the closure disagree.
 
 The fix is to put state in the DOM:
 
@@ -244,8 +247,9 @@ render() {
 }
 ```
 
-Now `data-foo-count-value` is the source of truth — morphing preserves it
-because it's a regular DOM attribute.
+Now `data-foo-count-value` is the source of truth — it's a regular DOM
+attribute, so a morph that changes it fires `countValueChanged`, and a
+replaced element's fresh controller instance reads it on `connect()`.
 
 ---
 
@@ -264,9 +268,9 @@ RSpec.describe "Disclosure", type: :system do
     sign_in create(:user)
     visit page_that_uses_reveal_path
 
-    expect(page).to have_button("Details", aria: { expanded: "false" })
+    expect(page).to have_selector("button[aria-expanded='false']", text: "Details")
     click_button "Details"
-    expect(page).to have_button("Details", aria: { expanded: "true" })
+    expect(page).to have_selector("button[aria-expanded='true']", text: "Details")
   end
 end
 ```
