@@ -2,7 +2,13 @@
 
 A plugin for [Cursor](https://cursor.com) and [Claude Code](https://claude.com/claude-code) with **rules**, **skills**, and **agents** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends) with a few **Pitchd-specific** preferences layered on top.
 
-Cursor metadata lives in [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json); Claude Code metadata lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json). Both manifests point at the same `skills/`, `agents/`, and `rules/` directories — there's no duplication between the two.
+Cursor metadata lives in [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json) and [`.cursor-plugin/marketplace.json`](.cursor-plugin/marketplace.json); Claude Code metadata lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json). Both manifests point at the same `skills/`, `agents/`, and `rules/` directories — there's no duplication between the two.
+
+## Installing in Cursor
+
+Once listed on the Cursor Marketplace, install **Pitchd Rails** from the in-app plugin marketplace.
+
+Until then, use it from a local checkout: clone this repo and open it in (or add it to) your workspace — Cursor reads the `.cursor-plugin` manifest and discovers `rules/`, `skills/`, and `agents/` from the repo root. The repo passes the official [cursor/plugin-template](https://github.com/cursor/plugin-template) validation (`node scripts/validate-template.mjs`).
 
 ## Installing in Claude Code
 
@@ -74,4 +80,4 @@ Thank you to all three projects for the ideas and structure that made this plugi
 
 ## License
 
-MIT — see the repository license file if present.
+MIT — see [LICENSE](LICENSE).
