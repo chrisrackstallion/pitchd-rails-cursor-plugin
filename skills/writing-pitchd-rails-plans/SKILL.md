@@ -84,7 +84,13 @@ resolve the correct path prefix via **`resolving-plugin-root`** — bare
 relative paths only resolve correctly against Cursor's workspace root or a
 raw checkout; a Claude Code plugin install needs the resolved prefix instead.
 
-Use these **while writing the plan** so tasks do not contradict the codebase:
+**This table is a gate, not a suggestion.** Before writing tasks for an area,
+read the matching row (rule + skill). Do not write migration tasks before
+`rules/migrations.mdc`, controller tasks before `rules/controllers.mdc`, spec
+tasks before `skills/writing-tests/SKILL.md` — and so on for every row the
+plan touches. A plan that specifies code for an area whose conventions were
+never loaded is **not ready for review**, regardless of how plausible the
+snippets look:
 
 | Area | Read |
 |------|------|
@@ -276,6 +282,11 @@ After drafting the plan:
    across tasks (no `publish` vs `publish!` drift unless intentional).
 4. **Anti-pattern scan:** Check that no task normalizes a current application
    anti-pattern — even if the existing code does it. Flag and route around it.
+5. **Convention coverage:** List every area the plan touches (migrations,
+   models, policies, routes, controllers, views, Hotwire, i18n, mailers, jobs,
+   tests, …) and confirm you read that area's rule + skill from the table
+   before writing its tasks. Any area written from memory: re-read the row
+   and re-check those tasks now.
 
 Fix issues inline; add tasks for missing requirements.
 
@@ -294,7 +305,7 @@ there.
 ### Pass 1 — Feature / plan shape (`pitchd-rails-reviewer`)
 
 After drafting, delegate to **`pitchd-rails-reviewer`**
-(`.cursor/agents/pitchd-rails-reviewer.md` — [Cursor subagents](https://cursor.com/docs/subagents)).
+(`agents/pitchd-rails-reviewer.md` — [Cursor subagents](https://cursor.com/docs/subagents)).
 **Canonical workflow and report format:** `skills/reviewing-pitchd-rails/SKILL.md`.
 
 **Delegation prompt must include:**

@@ -5,7 +5,7 @@ description: >-
   rails-omakase-compass (solution shape), then applicable writing-* skills and
   rules (tactics). Use when requesting a code review, plan review, PR review, or
   sign-off before merge. For isolated delegation with a clean context, use the
-  pitchd-rails-reviewer subagent (see `.cursor/agents/pitchd-rails-reviewer.md`).
+  pitchd-rails-reviewer subagent (see `agents/pitchd-rails-reviewer.md`).
 ---
 
 # Reviewing Pitchd Rails (plans & implementation)
@@ -81,6 +81,12 @@ From the diff or plan, pick **only** the skills that apply:
 
 Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
 sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
+
+**Coverage rule:** map every changed file (or plan area) to its skill/rule
+pair before concluding. An area reviewed without its skill and rule loaded is
+an area you did not review — do not report `Status: Approved` while any
+touched area's conventions are unread. If a diff touches a layer with no
+matching row (rare), say so in the report rather than silently skipping it.
 
 Prefix these findings **`tactical:`**.
 
@@ -221,7 +227,7 @@ End with a **one-line summary** for quick scanning.
 ## Subagent (optional)
 
 The **`pitchd-rails-reviewer`** custom subagent ([Cursor
-subagents](https://cursor.com/docs/subagents)) at **`.cursor/agents/pitchd-rails-reviewer.md`**
+subagents](https://cursor.com/docs/subagents)) at **`agents/pitchd-rails-reviewer.md`**
 implements **this skill** in an **isolated context** (`readonly: true`,
 `model: inherit`). It does not see parent chat — the delegating agent must pass
 **Phase**, plan path, spec path, and **Scope** in the task prompt. Invoke with

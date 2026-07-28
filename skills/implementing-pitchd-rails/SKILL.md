@@ -6,7 +6,7 @@ description: >-
   writing-* skills and rules/*.mdc for tactics. Use when executing a single task
   from an implementation plan, a vertical slice, or a scoped feature. For
   isolated delegation, use the pitchd-rails-implementor subagent (see
-  .cursor/agents/pitchd-rails-implementor.md).
+  agents/pitchd-rails-implementor.md).
 ---
 
 # Implementing Pitchd Rails (plan tasks & scoped work)
@@ -100,6 +100,13 @@ For each area, open the skill's **SKILL.md** and the relevant
 **`rules/<area>.mdc`** for the same area. The list is a **menu**, not permission
 to add JS or service layers by reflex — apply the **defaults under Load the compass** first.
 
+**Hard rule:** do not write or edit code for a layer before reading that
+layer's `writing-*` SKILL and `rules/<area>.mdc` in this session. Touching a
+migration means `writing-migrations` + `rules/migrations.mdc` are open first;
+touching a spec means `writing-tests` + `rules/testing.mdc`; and so on. "I
+know Rails" is not a substitute — the plugin's conventions are more specific
+than Rails defaults, and several deliberately differ from common practice.
+
 ### 4. Implement
 
 1. Implement **exactly** what the task specifies (and the plan's file layout if given).
@@ -184,7 +191,7 @@ End with a **one-line summary**.
 ## Subagent (optional)
 
 The **`pitchd-rails-implementor`** custom subagent at
-**`.cursor/agents/pitchd-rails-implementor.md`** runs this workflow in an
+**`agents/pitchd-rails-implementor.md`** runs this workflow in an
 **isolated** context (`readonly: false`, `model: inherit`). It does not commit
 code. It does not see parent chat — the delegating agent must pass **full task
 text** (including acceptance criteria and file layout when the plan would have

@@ -545,7 +545,7 @@ Before declaring done:
 ## Subagent (optional)
 
 This skill can be delegated to the **`pitchd-rails-implementor`** subagent at
-`.cursor/agents/pitchd-rails-implementor.md` when the work is scoped to a
+`agents/pitchd-rails-implementor.md` when the work is scoped to a
 single behaviour cluster and the parent wants to keep the main context clean.
 The implementor has the writing-javascript and writing-tests skills and the
 tooling to execute verdicts and verify; the parent passes the cluster, the
@@ -567,7 +567,7 @@ session — audit plans stay reviewable when diffs are small.
 - **Rules:** `../../rules/javascript.mdc`, `../../rules/hotwire.mdc`,
   `../../rules/testing.mdc`
 - **RuboCop:** `../running-rubocop/SKILL.md`
-- **Implementor subagent:** `.cursor/agents/pitchd-rails-implementor.md`
+- **Implementor subagent:** `agents/pitchd-rails-implementor.md`
 - **Reviewer skill / subagent:** `../reviewing-pitchd-rails/SKILL.md`
 - **Compass (only if a philosophy question surfaces):**
   `../rails-omakase-compass/SKILL.md`
