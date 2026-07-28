@@ -144,6 +144,8 @@ is never "does this need a policy?" but "which policy?"
 | Separate policies for new/edit that differ from create/update | `new?` delegates to `create?`, `edit?` delegates to `update?` |
 | Custom verb methods (`close?`, `publish?`, `archive?`) | CRUD methods only — state changes map to `create?`/`destroy?` on a noun-resource policy |
 | Policy returning data or performing side effects | Return `true` / `false` only |
+| Raising `Pundit::NotAuthorizedError` manually | `authorize record` — Pundit raises when the policy denies (`references/patterns.md` § One Gate, One Home) |
+| Duplicating a policy-owned gate in the controller or view | `authorize` in the action, `policy(record).action?` in views — no inline second copy of the logic |
 
 ### 5. Naming Conventions
 

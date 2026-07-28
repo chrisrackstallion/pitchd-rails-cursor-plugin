@@ -236,6 +236,7 @@ end
 | Multiple `before_action` setting the same chain | Base controller concern or inheritance |
 | `rescue => e` in actions | `rescue_from` at the controller class level |
 | Inline `current_user.admin?` permission checks | `authorize @record` delegates to policy |
+| Manually raising `Pundit::NotAuthorizedError`, or re-checking a condition the action already `authorize`d | One gate: `authorize` raises on denial; the policy is the single home for the logic |
 | Pundit policy checks in `before_action` | `authorize` in the action body — keep `before_action` for authentication and finders, not permission rules |
 | Forgetting authorization in an action | `after_action :verify_authorized` catches it |
 | Forgetting `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it |

@@ -96,9 +96,13 @@ to — these:
 > "this needs changing", "that's not right", "can you fix…", "this is wrong",
 > "update this", "adjust…", "tweak…", "it should do X instead", "change the…"
 
-**Do not** re-run the full plan. **Do not** ask clarifying questions about which
-plan task this relates to. Treat the user's message as the complete description
-of a **small, self-contained revision task** and proceed immediately.
+**Do not** re-run the full plan. When the message is specific enough to act on
+— what to change, where, and what "fixed" looks like — treat it as the complete
+description of a **small, self-contained revision task** and proceed
+immediately, without asking which plan task it relates to. When the message is
+**vague** on any of those, **ask for clarification first — do not assume.**
+A guessed revision delegated to the implementor wastes a full
+implement → review loop on the wrong change.
 
 ### Revision task loop
 
@@ -111,10 +115,13 @@ Extract from the user's message:
 
 - **What to change** — the behaviour, output, or code the user flagged.
 - **Where** — infer the file(s) from context (last task completed, files
-  mentioned in the plan or conversation). If genuinely ambiguous, ask **one**
-  short question before proceeding.
+  mentioned in the plan or conversation).
 - **Acceptance** — what "fixed" looks like (derive from the user's wording;
   do not ask for a formal AC).
+
+If any of the three is unclear from the message plus session context, **ask —
+do not assume.** One focused message (the structured question tool works well
+here) covering everything unclear; delegate only once answered.
 
 #### R2. Delegate implementation
 
