@@ -38,6 +38,18 @@ project contract. This skill is **supplementary** official reference.
 Parse the JSON to extract the `name` field for each `.md` file. These are the
 only valid guide filenames. Do **not** guess or infer filenames from memory.
 
+**Step 1 fallback — when the API index fails** (some environments scope or
+block `api.github.com` while `raw.githubusercontent.com` still works — a 403
+from the API in a sandboxed session is the common case):
+
+`https://raw.githubusercontent.com/rails/rails/main/guides/source/documents.yaml`
+
+This is the index that powers guides.rubyonrails.org. Each entry's `url:`
+field names a guide as `<name>.html` — map `.html` → `.md` to get the exact
+source filename (`routing.html` → `routing.md`). It is a verifiable fetch,
+so the no-invention rule still holds: filenames come from a fetched index,
+never from memory.
+
 **Step 2 — Raw guide content (replace `<file-name>` with the exact `.md` name
 from the index, e.g. `routing.md`, `active_record_querying.md`):**
 
@@ -50,6 +62,8 @@ Do **not** use the GitHub HTML UI — use **raw** URLs only.
 1. **Name the topic** (e.g. "query interface", "routing constraints", "callbacks").
 2. **Fetch the directory index** (Step 1) to get the current list of `.md` files.
    Skip this fetch if the index was already retrieved earlier in this conversation.
+   If the API index fails, **fetch the Step 1 fallback** (`documents.yaml` over
+   raw) before giving up — only stop if both index fetches fail.
 3. **Match the topic** to the single best filename from the index.
 4. **Fetch that guide** (Step 2). Fetch a second guide only if the task clearly
    spans two distinct topics. Do **not** bulk-fetch guides speculatively.
@@ -57,8 +71,9 @@ Do **not** use the GitHub HTML UI — use **raw** URLs only.
 
 ## If a fetch fails (mandatory)
 
-If either fetch errors, times out, returns an empty body, a non-200 status, or
-clearly wrong content (e.g. an HTML error page instead of JSON or markdown):
+If a fetch errors, times out, returns an empty body, a non-200 status, or
+clearly wrong content (e.g. an HTML error page instead of JSON, YAML, or
+markdown) — and, for the index, the fallback has also failed:
 
 - **Stop** presenting specifics from the guide.
 - **Report** plainly: which URL failed and why.

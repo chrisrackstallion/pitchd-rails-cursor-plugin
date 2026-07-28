@@ -143,7 +143,7 @@ Read only what the task touches:
 Two fetch-based skills supplement the plugin when it leaves a gap — neither
 overrides plugin rules:
 
-- **`referencing-unofficial-37signals-guide`** — targeted fetches from the third-party [unofficial 37signals coding style guide](https://github.com/marckohlbrugge/unofficial-37signals-coding-style-guide) (Fizzy-derived topics, README TOC → raw `.md` files).
+- **`referencing-unofficial-37signals-guide`** — targeted fetches from the third-party [37signals-skills guide](https://github.com/marckohlbrugge/37signals-skills) (Fizzy-derived topics, README TOC → raw `guide/*.md` files).
 - **`referencing-rails-guides`** — authoritative Rails API and feature docs (GitHub API index → specific guide `.md`).
 
 **Successful fetches** are required **to attribute or cite content as coming from those sources** — if a fetch fails, **do not** invent text; you may still give **general Rails** guidance using plugin rules and skills without claiming a source.
