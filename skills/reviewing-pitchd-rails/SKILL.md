@@ -114,7 +114,11 @@ Do not flag routine implementation details — only decisions and discoveries th
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
 layer for rules; `writing-pitchd-rails-plans` fit; red flags from `writing-pitchd-rails-plans` (services,
 RPC, missing policy, Turbo escalation before simpler options, duplicate test
-coverage).
+coverage). **Frame:** the header's **Problem:** line states a real need (not a
+restated mechanism), the **Approach** follows from it, **Alternatives
+considered:** is present (an explicit "none credible" counts — absence does
+not), and no task works around a framework default. Fighting the framework is
+a `philosophy:` finding even when every tactic is clean.
 
 **Implementation:** Map changed files to skills; compass on overall drift; one
 home per behaviour for tests (`writing-tests`).

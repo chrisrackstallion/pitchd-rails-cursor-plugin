@@ -32,7 +32,10 @@ Plans follow **37signals-style Rails**: **fat models**, **thin controllers**,
 options and defer to the reader. "Use a model concern here" — not "you might
 consider a concern". If the plugin rules say how to do something, the plan
 follows them — even if the current application does it differently. The plan
-shapes the code; the existing code does not shape the plan.
+shapes the code; the existing code does not shape the plan. That decisiveness
+applies to the **finished plan document** — the gates below (**Requirements
+gate**, **Approach gate**) are where doubt belongs. Interrogate first; write
+confidently after.
 
 **Plugin rules beat application patterns:** If the current codebase uses service
 objects, custom routes, or test patterns that contradict plugin rules, the plan
@@ -49,24 +52,63 @@ Do not start writing the plan from a thin prompt. **Grill the requirements
 first** — a wrong assumption made here multiplies into every task, snippet,
 and spec below it.
 
-1. **Interrogate the request/spec** for gaps across: the user-visible outcome,
+1. **Separate the problem from the mechanism.** Restate the underlying
+   problem in one sentence, in outcome terms — what the user or system needs,
+   not how the prompt says to build it. If the request only describes a
+   mechanism ("add a flag to X", "build a service that…"), ask what outcome
+   it serves before drafting anything. A requirement that is really a
+   pre-selected solution goes through the **Approach gate** below on the same
+   footing as any other candidate.
+2. **Interrogate the request/spec** for gaps across: the user-visible outcome,
    scope boundaries (what is explicitly *out*), affected resources and their
    relationships, authorization expectations (who may do what), UX surface
    (full page vs frame vs stream), data/migration implications, edge cases,
    and acceptance criteria.
-2. **Ask before drafting.** For every gap or ambiguity, ask the user — use the
+3. **Ask before drafting.** For every gap or ambiguity, ask the user — use the
    harness's structured question tool when one is available (e.g.
    `AskUserQuestion` in Claude Code), which lets you present focused options
    for several decisions in one round; otherwise ask in chat, one question at
    a time. Do not pad the plan with guesses phrased as decisions.
-3. **Proceed without answers only on explicit instruction.** If the user says
+4. **Proceed without answers only on explicit instruction.** If the user says
    "proceed with assumptions", record every assumption in the plan header
    under **Assumptions:** so the reviewer (Pass 1) can challenge them — an
    unstated assumption is invisible to review; a listed one is checkable.
 
 A spec that already answers these questions (e.g. one produced by
 `brainstorming-rails-omakase` and signed off) passes this gate without
-re-interrogation — ask only about what the spec genuinely leaves open.
+re-interrogation — ask only about what the spec genuinely leaves open. The
+**Approach gate** below still runs even then: a signed-off spec approves a
+shape, so the gate's job shrinks to confirming the plan actually uses it.
+
+## Approach gate (before drafting anything)
+
+The requirements gate settles **what**; this gate decides **how** — and
+whether the "how" that arrived in the prompt survives scrutiny. A plan can be
+fully convention-compliant and still be the wrong solution; this gate is where
+that gets caught, because the reviewer only ever sees the finished plan.
+
+1. **Read `skills/rails-omakase-compass/SKILL.md` first** — before the file
+   map, before any tasks. This read is mandatory for every plan, not just a
+   row in the conventions table below.
+2. **A prompter-suggested approach is an input, not a decision.** Evaluate it
+   against the compass exactly as you would a candidate you generated
+   yourself. "The user asked for it this way" is not a justification a
+   reviewer can check.
+3. **State one credible alternative shape** and a one-line reason the chosen
+   approach wins. If no credible alternative exists, say so explicitly — that
+   claim is itself checkable. Record the outcome in the plan header under
+   **Alternatives considered:**.
+4. **Never fight the framework.** If the chosen approach needs scaffolding to
+   work around Rails, Turbo, or plugin defaults — custom plumbing where a
+   convention exists, client-owned state for a server-owned flow, RPC where
+   REST fits — the approach is wrong, not the framework. Route back to a
+   Rails-native shape.
+5. **If the user's stated approach conflicts with the compass, stop and say
+   so before drafting.** Present the Rails-shaped alternative and let the
+   user decide — a plan built on a disputed frame wastes every task below it.
+   If the right shape is genuinely unclear, recommend a
+   `brainstorming-rails-omakase` pass instead of planning around the
+   uncertainty.
 
 ## Philosophy (DHH / Pitchd Rails)
 
@@ -207,10 +249,18 @@ different docs location):
 > only per the decision tree in that skill. **One behaviour, one spec home.**
 > How the plan is followed or sequenced is up to the user and the implementing agent.
 
+**Problem:** [One sentence — the underlying need in the user's terms: what
+breaks or is missing without this. Distinct from Goal, which describes the
+outcome of the chosen solution.]
+
 **Goal:** [One sentence — user-visible or system outcome]
 
 **Approach:** [2–3 sentences — REST resources, where domain logic lives (model,
 form object, job), Hotwire surface]
+
+**Alternatives considered:** [1–2 rejected shapes with a one-line reason each,
+or an explicit "none credible" — an unstated frame is invisible to review;
+a listed one is checkable.]
 
 **Rails shape:** [Key models, resources, policies]
 
@@ -316,6 +366,11 @@ After drafting the plan:
    tests, …) and confirm you read that area's rule + skill from the table
    before writing its tasks. Any area written from memory: re-read the row
    and re-check those tasks now.
+6. **Frame check:** Re-read the **Problem:** line. Confirm every task serves
+   it, no task exists only to prop up the chosen mechanism, and nothing in the
+   plan works around a framework default. If a task fails this check, the
+   issue is usually the approach, not the task — go back through the
+   **Approach gate** before patching.
 
 Fix issues inline; add tasks for missing requirements.
 
