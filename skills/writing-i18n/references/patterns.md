@@ -20,6 +20,13 @@ en:
       meta_description: "%{title} — published %{date}"
 ```
 
+- **Mirror the application structure** — locale files and key nesting always
+  follow the app's own layout: `articles.index.title` matches
+  `app/views/articles/index.html.erb`, `article_mailer.published.subject`
+  matches the mailer path. This is what makes lazy lookup,
+  `default_i18n_subject`, and `human_attribute_name` resolve by convention —
+  a taxonomy that diverges from the app breaks resolution and forces absolute
+  keys everywhere.
 - **Feature-first** — top level mirrors user-facing areas, not generic buckets
   like `strings` or `text`.
 - **`activerecord.models` / `activerecord.attributes`** — model names and column
@@ -109,13 +116,31 @@ pluralization docs for that locale.
 
 ## Datetime and numbers
 
+**All user-visible dates and times go through I18n.** Format via **`l()`**, with
+the formats themselves declared in locale YAML — never inline `strftime` in
+views or helpers.
+
 - **`l(time)`** / **`l(date)`** — localized format from **`time.formats`** /
   **`date.formats`** in locale files.
 - **`number_to_currency`**, **`number_to_percentage`**, **`number_with_delimiter`**
   — use helpers; configure separators in **`en.yml`** under **`number`**.
 
-Do not hand-roll **`strftime`** in views for user-visible dates unless you have a
-one-off exception — prefer **`l()`** and shared formats.
+```yaml
+en:
+  date:
+    formats:
+      short: "%-d %b"
+  time:
+    formats:
+      published: "%-d %B %Y at %H:%M"
+```
+
+```erb
+<%= l(@article.published_at, format: :published) %>
+```
+
+A hand-rolled **`strftime`** in a template is a smell: it hardcodes one locale's
+convention and bypasses the shared format catalogue.
 
 ---
 
@@ -138,6 +163,28 @@ en:
 ```
 
 Custom validation messages can live under **`activerecord.errors.models.article.attributes.title`** or **`activerecord.errors.models.article`** as needed.
+
+**All user-facing error messages live in I18n** — never hardcoded in models,
+controllers, or views. Rails composes error copy from the attribute label plus
+the message, so the label must be **human-readable**: rename schema-shaped
+attributes — especially join-table foreign keys — to their real-world names.
+
+```yaml
+en:
+  activerecord:
+    models:
+      article_categorization: "Category"
+    attributes:
+      article_categorization:
+        category_id: "Category"
+      article:
+        published_at: "Publication date"
+```
+
+Without the override, a `belongs_to :category` validation on the join model
+surfaces as “Article categorizations category id can't be blank” — with it, the
+user reads “Category must exist”. Any attribute whose column name would read as
+database jargon in an error message gets a label here.
 
 **Enums** — Rails has no built-in enum label lookup; give labels a bounded
 key path and translate explicitly:
@@ -198,6 +245,17 @@ translation in every layer.
 
 - **Concatenation** — `"You have " + count + " items"` → pluralized **`t`** with
   **`count:`**.
+- **`strftime` in templates** — `@article.created_at.strftime("%d/%m/%Y")` →
+  **`l(@article.created_at, format: :short)`** with the format in locale YAML.
+- **Schema jargon in errors** — “Category id can't be blank”, “Article
+  categorizations must exist” → `activerecord.attributes` / `activerecord.models`
+  overrides with real-world names.
+- **Hardcoded error strings** — `errors.add(:base, "Something went wrong")`,
+  flash literals in controllers → keys under the feature or `activerecord.errors`
+  namespace.
+- **Locale taxonomy that diverges from the app** — keys grouped by "type of
+  string" instead of mirroring view/mailer paths → resolution breaks and every
+  call needs an absolute key.
 - **Dynamic key assembly** — `t("status.#{params[:x]}")` with arbitrary user
   **`x`** → allowlist or explicit branches.
 - **Strings in the database** as the source of truth for static UI chrome — use

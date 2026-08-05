@@ -15,10 +15,15 @@ description: >-
 
 <objective>
 Treat locale files as part of the application: namespaced keys, static copy
-in YAML, dynamic values via interpolation. Views use lazy lookup where it reads
-naturally; helpers and shared partials use explicit keys. Rails handles
-pluralization and time formats — do not hand-roll them in templates. Keep
-I18n boring and omakase — no parallel translation architecture.
+in YAML, dynamic values via interpolation. Locale files always mirror the
+application's structure so key resolution (lazy lookup, `default_i18n_subject`,
+`human_attribute_name`) works by convention. Views use lazy lookup where it reads
+naturally; helpers and shared partials use explicit keys. All user-facing error
+messages live in I18n and read as human language — rename schema-shaped
+attributes (join-table foreign keys) to their real-world names. All user-visible
+dates and times are formatted via I18n (`l()` with declared formats). Rails
+handles pluralization and time formats — do not hand-roll them in templates.
+Keep I18n boring and omakase — no parallel translation architecture.
 </objective>
 
 ## Process
@@ -55,6 +60,9 @@ In development, **`config.i18n.raise_on_missing_translations = true`** (if enabl
 - [ ] Pluralization uses `count:` and proper `one` / `other` (and locale-specific keys when required)
 - [ ] No unbounded dynamic key paths from user input
 - [ ] `activerecord` attributes/errors follow Rails structure for forms
+- [ ] Locale file nesting mirrors the app structure (view paths, mailer paths) so keys resolve by convention
+- [ ] All user-facing error messages come from I18n and read as human language — join-table / FK attributes renamed to real-world names via `activerecord.attributes`
+- [ ] All user-visible dates and times go through `l()` with formats declared in locale YAML — no `strftime` in views or helpers
 
 ## References
 

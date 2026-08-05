@@ -14,10 +14,19 @@ Canonical patterns: **`skills/writing-i18n/references/patterns.md`**. Mailer sub
 
 ## Keys
 
+- **Mirror the application structure** — locale files and key nesting follow the app's own layout (`articles.index.title` matches `app/views/articles/index.html.erb`) so lazy lookup and Rails' conventional resolution always find the key. Never invent a parallel taxonomy.
 - **Scope by feature** — `articles.index.title`, `comments.form.submit`, not a flat `title_472`.
 - **`activerecord`** — attributes and errors live under Rails’ expected structure for `human_attribute_name` and form errors.
 - **Lazy lookup in templates** — `t(".heading")` resolves relative to the view path; use for page-specific copy.
 - **Absolute keys** — shared partials, helpers, controllers (`flash`), mailers — `t("articles.published_notice")`.
+
+## Errors
+
+**All user-facing error messages live in I18n** — never hardcode them in models, controllers, or views. Messages must read as **human language**: override `activerecord.attributes` so schema-shaped names never leak into copy — a join-table attribute like `article_categorizations.category_id` is labelled by its real-world name (`Category`), so errors read “Category must exist”, not “Article categorizations category id can't be blank”.
+
+## Dates and Times
+
+**All user-visible dates and times are formatted through I18n** — `l(date)` / `l(time)` with formats declared under `date.formats` / `time.formats`. No `strftime` in views or helpers.
 
 ## Anti-Patterns
 
@@ -26,6 +35,9 @@ Canonical patterns: **`skills/writing-i18n/references/patterns.md`**. Mailer sub
 | `"Hello " + user.name + "!"` in ERB | `t("greeting", name: user.name)` with `%{name}` in YAML |
 | `t("foo.#{key}.bar")` with unbounded `key` | Fixed keys, enum, or explicit allowlist |
 | User-facing strings only in English in `en.yml` and hardcoded elsewhere | One approach per app; translate keys consistently |
+| `time.strftime("%d/%m/%Y")` in a view | `l(time, format: :short)` with the format in locale YAML |
+| Error copy exposing schema names (“Category id can't be blank”) | `activerecord.attributes` override with the real-world name |
+| Hardcoded error strings in models/controllers | Keys under `activerecord.errors` / feature namespace |
 | Storing canonical copy in the DB for static UI | Locale files for static strings; DB for user-authored content |
 
 ## What This Rule Is Not
