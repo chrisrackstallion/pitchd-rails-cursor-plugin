@@ -72,6 +72,7 @@ For an input like `spec/system/articles_spec.rb`, expect to find and read:
 | State-change policies | `spec/policies/articles/*_policy_spec.rb` | Closure, publication policies |
 | Jobs | `spec/jobs/*article*_spec.rb` | What the job does (not whether callers enqueue it) |
 | Mailers | `spec/mailers/*article*_spec.rb` | Mail content (recipient, subject, body) |
+| View (legacy) | `spec/views/articles/**` | Nothing — view specs are never written; any found are MOVE-to-request-spec candidates |
 | Factory | `spec/factories/articles.rb` | Test-data shape |
 | Support | `spec/support/*.rb` | Sign-in helpers, shared modules |
 | Production code | `app/models/article.rb`, `app/controllers/articles_controller.rb`, `app/policies/article_policy.rb` | Read so you know what the specs cover |
@@ -111,6 +112,7 @@ Mark any of these and assign verdicts:
 | Anti-pattern | Default verdict |
 |--------------|----------------|
 | `visit` + assert with no interaction | **MOVE** to request spec with `response.body.include?` |
+| View spec (`spec/views/`, `type: :view`) | **MOVE** the rendering assertion to a request spec (`response.body.include?`), then delete the file — view specs are never kept |
 | `not_to` as the only assertion | **DELETE** (removal receipt) or **MERGE** as secondary assertion next to a positive one |
 | One system spec per field/attribute | **MERGE** into the canonical create flow |
 | CRUD parity: separate system specs for show / edit / delete with identical shape | **MOVE** show/edit/delete to request specs; keep the create as canonical |
@@ -312,6 +314,7 @@ Before declaring done:
 - [ ] No system spec remains unless it passes **all** Five Gates
 - [ ] System-spec count per resource is within budget (typically 1 canonical journey; up to a few for multi-step journeys)
 - [ ] No `visit`-only specs remain in `spec/system/`
+- [ ] No view specs remain — `spec/views/` is empty or absent; rendering assertions live in request specs
 - [ ] No Selenium specs pass under `rack_test`
 - [ ] No per-field or per-attribute system specs
 - [ ] No CRUD parity proliferation (one canonical journey, not one per action)

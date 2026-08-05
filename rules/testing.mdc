@@ -22,7 +22,7 @@ User-facing copy and **`I18n.t`** in assertions: **`rules/i18n.mdc`**, **`skills
 System specs are the **backbone**, not the **coverage**. A small number of integration specs prove the seams hold. The bulk of the suite lives in lower-layer specs that are faster, more focused, and less brittle.
 
 1. **Model specs** — domain logic, scopes, state transitions, business-rule validations. The unit test of Rails. Most behaviour lives here.
-2. **Request specs** — HTTP layer: status codes, redirects, params handling, auth gates, rendering smoke (`response.body.include?`) for index/show, and CRUD round-tripping for resources without a system spec. This is the workhorse layer.
+2. **Request specs** — HTTP layer: status codes, redirects, params handling, auth gates, rendering smoke (`response.body.include?`) for index/show, and CRUD round-tripping for resources without a system spec. This is the workhorse layer. **Request specs own rendering — never write view specs** (`spec/views/`, `type: :view`); they test templates in isolation with stubbed assigns, which is implementation testing.
 3. **Policy specs** — the full role × action matrix for authorization logic.
 4. **System specs** — a tight set of canonical journeys: one happy path per CRUD resource, one per cross-resource journey (signup, checkout, password reset), one per JavaScript behaviour across the entire suite. **The default answer to "add another system spec?" is no — push down a layer.**
 5. **Everything else** — job specs, mailer specs, concern specs. Write them when the object has meaningful logic worth testing in isolation.
@@ -109,7 +109,7 @@ creates maintenance drag when behaviour changes.
 | Domain logic (publish, close, scopes) | Model spec | System/request spec don't re-test the logic |
 | Canonical happy-path journey (form → submit → see result) | System spec — **one per resource** within budget | Request spec doesn't duplicate the canonical journey; lower-priority CRUD actions stay in request specs |
 | HTTP concerns (status codes, redirects, params) | Request spec | System spec doesn't assert status codes |
-| Rendering smoke for index/show pages (key content present in response) | Request spec with `response.body.include?` | System spec doesn't do `visit`-only assertions |
+| Rendering smoke for index/show pages (key content present in response) | Request spec with `response.body.include?` | System spec doesn't do `visit`-only assertions; view specs (`spec/views/`) are never written |
 | CRUD round-trip (record created, redirect lands) for non-canonical actions (edit, delete, show) | Request spec | System spec only covers the canonical flow |
 | Policy logic (who can do what) | Policy spec | Request spec doesn't re-test policy logic; it tests the HTTP gate |
 | Auth gates at the HTTP layer | Request spec — **always**, even if a system spec exists | Auth is critical enough to test at the HTTP layer |
@@ -172,6 +172,7 @@ to assert more things about the same outcome.
 | Testing framework behaviour (validates presence) | Test your domain logic, not Rails |
 | Deep `let` / `subject` chains that obscure setup | Inline setup — each test tells its own story; a single `let` for auth user is fine |
 | Controller specs | Request specs (controller specs are deprecated) |
+| View specs (`spec/views/`, `type: :view`) | Request specs — rendering is tested through the full stack with `response.body.include?`, never in template isolation |
 | `stub_const` / `allow(ENV)` | Use Rails credentials or test configuration |
 | System spec asserting model internals | System spec asserts what the user sees |
 | Re-testing domain logic in integration specs | Model spec owns the logic; integration asserts the outcome |

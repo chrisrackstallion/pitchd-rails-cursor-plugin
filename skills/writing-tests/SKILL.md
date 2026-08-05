@@ -16,7 +16,10 @@ Write tests that give you confidence to ship. System specs are the **backbone**
 of the suite — a small number of integration tests that prove the seams hold.
 They are not the place to chase coverage. Model specs cover domain logic.
 Request specs cover the HTTP layer — including rendering smoke for index/show,
-CRUD round-tripping, and every auth gate. Policy specs cover authorization
+CRUD round-tripping, and every auth gate. Request specs are the rendering
+layer: **never write view specs** (`spec/views/`, `type: :view`) — templates
+are tested through the full stack via `response.body`, not in isolation with
+stubbed assigns. Policy specs cover authorization
 logic. Everything uses real objects, real database records, and real
 rendering.
 
@@ -61,8 +64,8 @@ Is this domain logic (a method on a model — publish, close, scope, state trans
     ├── YES → Policy spec
     └── NO
         Is this an HTTP-layer concern (status code, redirect, auth gate, params,
-        index/show rendering smoke, CRUD round-trip)?
-        ├── YES → Request spec
+        CRUD round-trip) or anything about what a page renders?
+        ├── YES → Request spec (rendering is ALWAYS a request spec — never a view spec)
         └── NO
             Is this the work a job, mailer, or PORO performs?
             ├── YES → Spec matching the object type
@@ -338,6 +341,7 @@ end
 | Shared examples across unrelated specs | Inline the assertion — clarity over DRY |
 | Testing validates/belongs_to declarations | Test domain behaviour, not framework |
 | Controller specs | Request specs — controller specs are deprecated |
+| View specs (`spec/views/`, `type: :view`) | Request specs — rendering is tested through the full stack with `response.body.include?`, never in template isolation |
 | `stub_const` for ENV vars | Use Rails credentials or test config |
 | Asserting exact error messages | Assert error keys or behaviour |
 | Giant setup blocks | Extract to factory traits |
@@ -415,6 +419,7 @@ Before finishing, verify:
 - [ ] Every system spec passes the **Five Gates** (interaction, uniqueness, JS-necessity, single-home, one-story)
 - [ ] System-spec count is within budget: ~1 canonical journey per CRUD resource, 1 per cross-resource journey, 1 per JS behaviour across the suite
 - [ ] No `visit`-and-assert-only specs in `spec/system/` — they live in `spec/requests/` with `response.body.include?`
+- [ ] No view specs (`spec/views/`, `type: :view`) — request specs own all rendering assertions
 - [ ] No Selenium spec passes under `rack_test` — if it does, move it back
 - [ ] System specs assert resource state on the page as the primary signal; flash copy is at most secondary
 - [ ] Request specs verify status codes, redirects, auth gates, and rendering smoke (`response.body.include?`) for resources without a system spec

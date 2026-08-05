@@ -8,9 +8,16 @@ milliseconds, hits real controllers, renders real views, and proves the
 record round-tripped through the database. For everything except the
 canonical happy-path journey, request specs are the right home.
 
-They replace controller specs (which are deprecated) and complement
-system specs by covering everything browsers can't verify cheaply, and
-much of what they *can* verify but shouldn't pay the Selenium tax for.
+They replace controller specs (which are deprecated) **and view specs
+(which are never written)**, and complement system specs by covering
+everything browsers can't verify cheaply, and much of what they *can*
+verify but shouldn't pay the Selenium tax for.
+
+**Request specs own rendering.** Never write a view spec (`spec/views/`,
+`type: :view`) — it renders a template in isolation with stubbed assigns,
+which tests implementation rather than behaviour and drifts from what the
+controller actually renders. Any "does the page show X?" assertion belongs
+in a request spec via `response.body.include?`.
 
 ## What Request Specs Own (Default Home)
 
@@ -465,8 +472,9 @@ end
 
 ## Response Body Assertions
 
-When you need to check content (prefer system specs for this, but
-sometimes request specs are simpler):
+When you need to check rendered content, request specs are the home —
+never a view spec, and not a system spec unless the journey involves
+interaction:
 
 ```ruby
 describe "GET /articles/:id" do
