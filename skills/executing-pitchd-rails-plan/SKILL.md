@@ -32,7 +32,7 @@ sign-off.
 
 ## Hard rules
 
-1. **No application code** from the orchestrator — use the **Task** tool (or equivalent subagent dispatch) for **`pitchd-rails-implementor`** and **`pitchd-rails-reviewer`**. Shell may be used only for **orchestration** (e.g. `git diff`, `git status`) to describe scope to subagents — not to implement features.
+1. **No application code** from the orchestrator — use the **Task** tool (or equivalent subagent dispatch) for **`pitchd-rails-implementor`** and **`pitchd-rails-reviewer`**. Shell may be used only for **orchestration** (e.g. `git diff`, `git status`) to describe scope to subagents — not to implement features. **Carve-out:** `docs/primitives/**` edits are orchestration bookkeeping, not app code — the orchestrator appends provenance lines, syncs Evaluations rows, flips `status:`, keeps the capability's `index.md` line in sync, and amends Intent clauses when revision mode's R1 classification calls for it (a user-directed intent change), directly per **`rules/primitives.mdc`**. Structural primitives work (splitting a capability, backfills, lint passes) is delegated to **`pitchd-rails-primitives-maintainer`**.
 2. **Canonical skills:** Implementor follows **`../implementing-pitchd-rails/SKILL.md`**; reviewer follows **`../reviewing-pitchd-rails/SKILL.md`**.
 3. **Sign-off from the Pitchd reviewer** means the latest **`pitchd-rails-reviewer`** report has **`Status: Approved`** (see that skill’s report format). If **Issues found**, feed them back to the implementor and **repeat** until Approved or the user accepts a documented exception (orchestrator records that choice).
 
@@ -51,6 +51,20 @@ If the user has **not** stated the following, **ask once** and wait for answers:
 
 Also confirm **plan path**, **spec path** (if any), and **work directory** (repo root or app path) so subagent prompts stay complete.
 
+**Capability doc:** if the plan header has a **Capability:** line, read that
+one doc (`docs/primitives/capabilities/<name>.md`) and `docs/primitives/compilation.md`
+now — agents always read `compilation.md` when the tree exists — and never the
+whole tree (`rules/primitives.mdc` reading contract). The capability doc
+supplies the Intent clauses and Shape excerpts pasted into implementor
+prompts, and it is the doc the close-out pass updates. If the line's path
+does not resolve (doc renamed or deleted since planning), check `index.md`
+for a rename; if it is genuinely gone, **stop and flag to the user** — do not
+execute against a missing capability doc. No Capability line:
+if `docs/primitives/` exists, **flag it to the user before proceeding** — the
+plan predates primitives or skipped its gate (the reviewer treats that as a
+plan defect), and executing it silently would drift the tree. Only when the
+app has no tree do you skip everything primitives-related in this run.
+
 ## Per-task loop (repeat until Pitchd reviewer Approves)
 
 For **each** task in scope (in plan order):
@@ -60,7 +74,7 @@ For **each** task in scope (in plan order):
 Invoke **`pitchd-rails-implementor`** with a self-contained prompt. Include at minimum:
 
 - **Task name / id** and **full task text** from the plan (acceptance criteria, file layout — or plan path so the subagent can read it).
-- **Context:** dependencies on prior tasks, architectural notes, anything the subagent cannot infer.
+- **Context:** dependencies on prior tasks, architectural notes, anything the subagent cannot infer. When a capability doc exists, **paste the Intent clauses this task cites, the relevant Shape bullets, and any `compilation.md` constraints the task touches** into Context — the implementor reads zero primitives files; the excerpt is its whole primitives context and the only channel app-wide constraints reach it by.
 - **Work directory**, **Plan path**, **Spec path** (use `none` when absent; if `none`, task text must be plan-complete per implementor rules).
 - Instruction: follow **`skills/implementing-pitchd-rails/SKILL.md`**, no `git commit` unless the user explicitly overrode that elsewhere.
 
@@ -78,7 +92,7 @@ Instruction: follow **`skills/reviewing-pitchd-rails/SKILL.md`** and return the 
 
 ### 3. Branch on status
 
-- **`Status: Approved`** → proceed to **next task** (or to **final DHH pass** if no tasks remain).
+- **`Status: Approved`** → proceed to **next task** (or, if no tasks remain, to **After all tasks are Approved** below).
 - **`Issues found`** → send the **review feedback** (philosophy + tactical items that matter) back to **`pitchd-rails-implementor`** as a **fix pass** for the **same task**. Include reviewer quotes or bullet list so the subagent can act without parent chat history. When re-invoking the reviewer after the fix, pass **User revisions** scoped to what the implementor changed — do not re-review the full task diff. **Loop** until Approved.
 
 ### 4. Escalation from implementor
@@ -119,6 +133,23 @@ Extract from the user's message:
 - **Acceptance** — what "fixed" looks like (derive from the user's wording;
   do not ask for a formal AC).
 
+**Classify against Intent (when a capability doc exists):** read the doc's
+`## Intent` and decide which of two revisions this is — the distinction
+surfaces *before* delegating, not after:
+
+- **The code failed the intent** (bug): "fixed" matches an existing clause.
+  No Intent change and **no provenance line**; if the fix moved or added spec
+  homes, sync the Evaluations rows (and `specs:` frontmatter) once the fix is
+  Approved — a row sync alone is not a provenance event.
+- **The intent changed** ("it should do X instead"): "fixed" contradicts a
+  clause. Amend the clauses (supersede / add, per `rules/primitives.mdc`)
+  alongside the fix. Once the fix is Approved: retire the superseded clause's
+  Evaluations row (tombstone), add or update rows for the amended clauses
+  from the fix's **reported** specs, sync `specs:` frontmatter, and append
+  one provenance line:
+  `YYYY-MM-DD — revised: I<n> amended (X instead of Y) per user feedback.`
+  Report all of it in R5.
+
 If any of the three is unclear from the message plus session context, **ask —
 do not assume.** One focused message (the structured question tool works well
 here) covering everything unclear; delegate only once answered.
@@ -153,7 +184,10 @@ Invoke **`pitchd-rails-reviewer`** with:
   When re-invoking the reviewer after the fix, pass **User revisions** scoped
   to what changed — do not re-review the full revision scope. Loop until Approved.
 - **BLOCKED / NEEDS_CONTEXT** from implementor → stop, present the blocker to
-  the user, and wait for a decision.
+  the user, and wait for a decision. If the user abandons an intent-change
+  revision here, **revert the R1 clause amendments** — no shipped change
+  references them, so the draft-stage edit rule applies
+  (`rules/primitives.mdc`); note the reversal in chat, not provenance.
 
 #### R5. Revision completion report
 
@@ -163,6 +197,8 @@ Deliver a brief summary:
 - Reviewer status (`Approved` after N iteration(s)).
 - Any non-blocking notes from the reviewer worth the user knowing.
 - Whether anything needs manual verification (tests run, RuboCop status).
+- Primitives sync, if any (clause amendments, eval rows, the one provenance
+  line — per the R1 classification).
 
 **Do not** re-present the full original completion package — this is a targeted
 revision report only. If the user's follow-up triggers another revision, repeat
@@ -172,13 +208,35 @@ from **R1**.
 
 ## After all tasks are Approved (Pitchd)
 
-### 5. Optional wiki capture pass
+### 5. Primitives close-out pass (required when the plan has a Capability line)
 
-If any **`pitchd-rails-reviewer`** report contained a **Wiki capture candidates** section with non-empty entries, surface those to the user and offer a focused wiki pass:
+Part of the definition of done — **not an offer to the user**. The orchestrator
+updates the capability doc directly (see the Hard rules carve-out):
 
-> "The reviewer flagged N decisions/patterns worth documenting. Want me to run a wiki capture pass via `pitchd-rails-wiki-maintainer`?"
+1. **Evaluations rows** — fill or update one row per intent clause this plan
+   touched, from the **specs the implementor actually reported** (file +
+   example description) — never from what the plan promised. Superseded
+   clauses get their rows retired with a one-line tombstone; delete-listed
+   specs must actually be gone. Sync the `specs:` frontmatter.
+2. **Status** — flip to **`status: built`** only when every active clause has
+   an Evaluations row; otherwise report the gap instead of flipping.
+3. **Provenance** — append **one** line for the whole run:
 
-If the user says yes, delegate to **`pitchd-rails-wiki-maintainer`** with: goal `ingest`, the list of wiki candidates from the reviewer reports, and `docs/llm-wiki/` as the wiki root. Do not run this automatically — the user decides.
+   ```markdown
+   - YYYY-MM-DD — built [or amended]: docs/plans/<plan>.md; N tasks, approved
+     after M review iterations. [Accepted debt or notable reviewer-approved
+     exceptions, one line.]
+   ```
+
+   Fold in any **`primitives:` provenance candidates** from the reviewer
+   reports (decisions, constraints, accepted debt) — one line each, only those
+   with durable value.
+4. **Index** — update the capability's `docs/primitives/index.md` line to the
+   new status (it still says `planned` from plan approval — sync it, don't
+   merely confirm it).
+
+If a reviewer report proposed a **`compilation.md` amendment**, surface it to
+the user — that file is human-owned; the orchestrator never edits it.
 
 ### 6. Handoff for user sign-off
 
@@ -187,13 +245,15 @@ Deliver a short **completion package**:
 - Execution mode used and **task scope** completed.
 - Per-task outcome (Approved after how many review iterations).
 - **Pitchd reviewer** final notes (if any non-blocking recommendations were in those reports).
+- **Primitives close-out** summary (Step 5): status, eval rows updated, the provenance line appended — or why status could not flip.
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it).
 
-**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Include a prompt about any pending wiki capture pass (Step 5) if not yet actioned.
+**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Surface any proposed `compilation.md` amendments (Step 5) for the user's decision.
 
 ## Related
 
 - **Plans:** `../writing-pitchd-rails-plans/SKILL.md`
 - **Implement:** `../implementing-pitchd-rails/SKILL.md` — **`pitchd-rails-implementor`**
 - **Review:** `../reviewing-pitchd-rails/SKILL.md` — **`pitchd-rails-reviewer`**
-- **Subagent definitions:** `agents/pitchd-rails-implementor.md`, `agents/pitchd-rails-reviewer.md`
+- **Primitives:** `../maintaining-primitives/SKILL.md`, `rules/primitives.mdc` — **`pitchd-rails-primitives-maintainer`** for structural passes
+- **Subagent definitions:** `agents/pitchd-rails-implementor.md`, `agents/pitchd-rails-reviewer.md`, `agents/pitchd-rails-primitives-maintainer.md`

@@ -91,7 +91,7 @@ the failure** and do **not** invent or assert content.
 |-------|---------|
 | **Task name / id** | e.g. "Task 3: Add invitation mailer" |
 | **Task description** | **Full** text of the task from the plan (pasted inline — do not assume access to unsent files). Must include file layout and acceptance criteria when **Plan path** is `none` (pasted text substitutes for reading the plan). |
-| **Context** | Where this fits: dependencies, architecture, prior tasks |
+| **Context** | Where this fits: dependencies, architecture, prior tasks. May include **capability excerpts** (Intent clauses `I1 — …`, Shape bullets, `compilation.md` constraints) from `docs/primitives/` — treat clauses as acceptance-criteria context and Shape/compilation constraints as binding; do **not** open or edit `docs/primitives/` yourself |
 | **Work directory** | Repo root or path to work from (e.g. app root) |
 | **Plan path** | Implementation plan file(s), or `none` — if `none`, **Task description** must carry plan-grade detail |
 | **Spec path** | Requirements/spec, or `none` |
@@ -127,7 +127,10 @@ Implement Task N: [task name]
 
 ## Context
 
-[Scene-setting: where this fits, dependencies, architectural context]
+[Scene-setting: where this fits, dependencies, architectural context. When a
+capability doc exists, paste the Intent clauses this task cites, relevant
+Shape bullets, and any compilation.md constraints the task touches here — the
+subagent must not read docs/primitives/ itself.]
 
 ## Before You Begin
 

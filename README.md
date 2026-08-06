@@ -53,10 +53,10 @@ Use the **`refactoring-rails-specs`** skill. It takes a list of specs (typically
 
 Use the **`refactoring-stimulus-controllers`** skill. It maps every controller and its `data-*` attachments, scores each against single-responsibility, DOM-derived state, lifecycle cleanup, and cross-controller coupling rules, then assigns a verdict — **KEEP / REWRITE / MERGE / SPLIT / DELETE**. After the structural refactor it ensures each Stimulus behaviour has exactly one canonical system spec on the simplest representative page, per `writing-tests`. Pair with **`writing-javascript`** for fresh-write conventions.
 
-### Maintain a compounding LLM wiki (Karpathy pattern)
-> *"Ingest this article into our wiki"* / *"Lint the knowledge base for stale links"*
+### Keep durable primitives (intent, compilation, evaluations, provenance)
+> *"Set up primitives"* / *"Document the billing feature"* / *"Why don't we cap thread depth?"*
 
-Use the **`maintaining-llm-wiki`** skill. It treats **`docs/llm-wiki/`** as a git-backed, agent-maintained markdown graph with immutable **`raw/`** sources, **`index.md`**, **`log.md`**, and a **`SCHEMA.md`** contract — boring defaults first (index + grep), optional local search later. Pair with **`rules/llm-wiki.mdc`** when editing those paths. Delegate focused passes to **`pitchd-rails-wiki-maintainer`**.
+The plugin maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`pitchd-rails-primitives-maintainer`**. Structure rules: **`rules/primitives.mdc`**.
 
 ---
 
@@ -66,7 +66,7 @@ New here? Start with **`rails-omakase-compass`** to understand the philosophy, t
 
 - **`rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more.
 - **`skills/`** — Workflows for planning, implementing, and reviewing Rails work (including layer-specific `writing-*` skills). **`resolving-plugin-root`** is a small internal skill other skills/agents read first, so `rules/*.mdc` and sibling skill references resolve correctly whether this plugin is loaded by Cursor or installed as a Claude Code plugin.
-- **`agents/`** — Subagent definitions for implementation, review, and focused wiki maintenance passes.
+- **`agents/`** — Subagent definitions for implementation, review, and focused primitives maintenance passes.
 
 ## Credits
 

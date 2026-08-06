@@ -1,0 +1,170 @@
+---
+name: maintaining-primitives
+description: >-
+  Maintain the durable primitives tree under docs/primitives/ — capability docs
+  holding intent clauses, shape constraints, evaluation maps, and append-only
+  provenance, plus the human-owned compilation.md. Operations: capture (backfill
+  a capability doc from existing code and specs), trace (answer "why is X like
+  this" with citations), update (sync status, evaluations, provenance), lint
+  (size limits, clause/eval coverage, orphans). Use when backfilling historical
+  features, answering provenance questions, or running a health pass — not for
+  writing app code or plans. For one-time adoption setup use
+  bootstrapping-primitives; for delegation use pitchd-rails-primitives-maintainer.
+---
+
+# Maintaining primitives (durable intent, evaluations, provenance)
+
+**Reading plugin files:** Before your first `Read` of `rules/*.mdc` or a
+sibling `skills/*/SKILL.md`, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
+<objective>
+Keep a small, fixed-shape markdown tree — **`docs/primitives/`** — that holds
+what generated code cannot carry: **intent** (what must be true and why),
+**compilation** (app-specific constraints), **evaluations** (where each intent
+clause is proven in RSpec), and **provenance** (decisions, rejected
+alternatives, accepted debt). Plain **git + markdown**, one file per
+capability, a reading contract of at most three files — the same
+**boring-defaults** instinct as omakase Rails, applied to knowledge.
+</objective>
+
+**Announce:** "I'm using the maintaining-primitives skill."
+
+Structure and boundaries: **`rules/primitives.mdc`** (applies automatically to
+paths under `docs/primitives/`). Skeletons: **`references/templates.md`**.
+One-time adoption (tree scaffold + `compilation.md` interview):
+**`skills/bootstrapping-primitives/SKILL.md`**.
+
+## When to use
+
+- **Backfilling** a capability doc for an existing feature (`capture`).
+- Answering **"why is X like this?"** with citations (`trace`).
+- **Syncing** a doc after work landed outside the standard workflows (`update`).
+- A **health pass** over the tree (`lint`).
+
+**When not to use:** Writing plans (`writing-pitchd-rails-plans` owns Intent
+and Shape authorship during planning), executing plans
+(`executing-pitchd-rails-plan` owns the close-out pass), or app implementation.
+Those workflows write to the tree at their own defined points — this skill
+covers everything outside them.
+
+## The tree
+
+```
+docs/primitives/
+  SCHEMA.md          # Co-owned contract
+  index.md           # One line per capability + status — the only entry point
+  compilation.md     # App-wide constraints. Human-owned — propose, never edit.
+  capabilities/      # One doc per capability: Intent / Shape / Evaluations / Provenance
+```
+
+**Reading contract:** `index.md` + the one target capability doc +
+`compilation.md`. Never more — with **one exception: `lint`**, which is a
+health pass and sweeps every doc in the tree by design. Cross-links are for
+humans — no operation requires traversing them. This is not a wiki; there are
+no topic pages to garden and no graph to walk.
+
+## Operations
+
+| Op | Intent |
+|----|--------|
+| **capture** | Backfill a capability doc from existing code and specs (below). |
+| **trace** | Read `index.md` → the capability doc → answer with citations to clause IDs, provenance lines, and spec paths. If the answer predates the doc, say so — provenance before the backfill line lives in git. |
+| **update** | Sync one doc: status (including human-directed deprecation — `status: deprecated`, a provenance line saying why, and the index line moved to the Deprecated stub section), eval rows against real spec homes, one provenance line per event. Update `index.md` in the same change. |
+| **lint** | Run the checks below across the tree (the one whole-tree operation — exempt from the three-file contract); report findings, fix mechanical ones, leave judgment calls to the human. |
+
+**Structural reshaping** — splitting an oversized capability, merging, or
+renaming — is a human-approved **`update`**: redistribute the Intent clauses
+to the new docs (tombstone pointers from the old doc, IDs never reused), carry
+provenance forward by link rather than rewriting history, and sync `index.md`
+in the same change. Lint only *reports* the split tripwire; the human decides;
+an `update` pass executes.
+
+### capture — backfilling a historical feature
+
+Existing features get docs **lazily** (the first time planned work touches
+them, the planner creates one) or **on demand** via this operation. Never as a
+bulk documentation project — batch requests run one capability at a time with
+human confirmation between, ordered by where change is coming.
+
+1. **Scope** — a feature name or path list from the human. Check `index.md`:
+   if a doc already covers the outcome, this is an `update`, not a capture.
+2. **Specs first** — read the feature's spec files. In a suite following
+   `writing-tests`, behaviour-first system and request spec descriptions
+   *are* draft intent clauses, and each maps to its Evaluations row for free.
+3. **Code second** — models, routes, policies for the Shape bullets (deltas
+   only — nothing derivable from plugin rules or stated in `compilation.md`).
+4. **Gaps are findings** — observable behaviour with no spec home goes into
+   the doc as a clause with an empty eval row marked `unproven` (this doubles
+   as a test-gap report; suggest `writing-tests` follow-up).
+5. **Provenance opens with one line:**
+   `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
+   Do not mine git log for decision archaeology — noisy, low-yield.
+6. **Human confirms the clauses.** Reconstructed intent is marked
+   `intent reconstructed, unconfirmed` in the provenance line until the human
+   has read and corrected the clauses (~10 sentences; minutes). End the capture
+   by asking for that confirmation; once given, **append** a confirmation
+   entry — `YYYY-MM-DD — backfill intent confirmed by human.` Provenance is
+   append-only: never amend the original line.
+7. Add the `index.md` line, `status: built` — the feature exists in
+   production; `unproven` rows record the test gap honestly rather than
+   blocking the status (`rules/primitives.mdc`).
+
+### lint — the checklist
+
+- Every capability doc listed in `index.md`, and vice versa; statuses agree.
+- Row coverage is a **`built`-status obligation**: on a `built` doc, every
+  **active** intent clause has an Evaluations row; every row's spec file
+  exists and `specs:` frontmatter matches. A `built` doc with a missing row or
+  a dead spec path is the top-priority finding — a zombie eval map.
+  (`shaping`/`planned` docs for new work have empty tables by design.)
+  Exception — **in-flight work**: a doc mid-planning or mid-revision (latest
+  event `planned`, or Intent edits from a drafting session or revision loop
+  not yet closed out) legitimately has rowless new clauses until close-out.
+  Report these as in-flight for human confirmation — and as **likely
+  abandoned** when no plan under `docs/plans/` references the capability or
+  the edits are old; unwinding an abandoned draft is a human call.
+- Clause IDs unique, never reused; supersessions have tombstones on both ends.
+- Size tripwires from `rules/primitives.mdc`: >~10 active clauses (split the
+  capability), multi-line provenance entries, doc >~150 lines,
+  `compilation.md` >~50 lines.
+- No content that belongs elsewhere: app code, plan tasks, restated plugin rules.
+- Stray files outside the four allowed types.
+
+## Quick reference
+
+| Do | Avoid |
+|----|-------|
+| Append provenance; correct with a new entry | Editing or deleting provenance lines |
+| Tombstone superseded clauses | Renumbering or reusing clause IDs |
+| Propose `compilation.md` amendments to the human | Editing `compilation.md` directly |
+| Read 3 files max (`lint` excepted) | Traversing links, loading the whole tree outside `lint` |
+| One line per provenance event | A paragraph per event (lint finding) |
+
+## Common mistakes
+
+- **Wiki thinking** — adding topic/synthesis pages "while you're in there."
+  The four file types are the whole tree; scope is the anti-sprawl mechanism.
+- **Per-edit provenance** — five plan revisions are one `planned` event, not
+  five lines.
+- **Capture without confirmation** — reconstructed intent shipped as fact.
+  Unconfirmed clauses mislead every future planner; always close the loop.
+- **Evaluations rows written from intention** — rows come from specs that
+  exist (at close-out, capture, or a planner lazy backfill), never from what
+  a plan promises.
+
+## Delegation
+
+Focused capture/trace/update/lint without Rails app work:
+**`pitchd-rails-primitives-maintainer`** (`agents/pitchd-rails-primitives-maintainer.md`)
+with operation + paths/goals; this skill stays canonical.
+
+## Related
+
+- **`rules/primitives.mdc`** — structure, ownership, size limits.
+- **`bootstrapping-primitives`** — one-time tree scaffold + `compilation.md`.
+- **`writing-pitchd-rails-plans`** — creates/amends Intent and Shape at planning.
+- **`executing-pitchd-rails-plan`** — close-out pass writes Evaluations, status, provenance.
+- **`reviewing-pitchd-rails`** — `primitives:` findings check traceability and eval coverage.

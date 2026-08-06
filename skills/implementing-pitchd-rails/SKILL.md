@@ -58,7 +58,7 @@ outside this task's scope.
 | `writing-pitchd-rails-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
 | `writing-tests` | Tests: DHH/37signals philosophy (system backbone, real objects, behaviour over mocks) plus `rules/testing.mdc`. |
 | `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `rules/rubocop.mdc`. Not a substitute for compass or tests. |
-| `maintaining-llm-wiki` | **Knowledge wiki only** — ingest/query/lint for `docs/llm-wiki/` per `rules/llm-wiki.mdc`; use **`pitchd-rails-wiki-maintainer`** for delegation. Not a substitute for app implementation — if the task is code, stay in this skill. |
+| `maintaining-primitives` | **Primitives tree only** — capability docs, `compilation.md`, provenance under `docs/primitives/` per `rules/primitives.mdc`. Implementation **reads** intent/shape excerpts pasted into the task prompt but **never writes** to the tree — the planner and execution close-out own those write points. If the task is code, stay in this skill. |
 
 **Conflict rule (same as reviewing-pitchd-rails):**
 
@@ -70,6 +70,13 @@ outside this task's scope.
 ### 1. Before you begin
 
 If anything is unclear about **requirements**, **acceptance criteria**, **approach**, **dependencies**, or **assumptions** — **ask now**. Do not guess.
+
+If the task prompt includes **capability excerpts** (Intent clauses like
+`I1 — …`, Shape bullets, and any `compilation.md` constraints from
+`docs/primitives/`), treat the clauses as acceptance-criteria context and the
+Shape bullets and compilation constraints as binding for this task. Do not
+open or edit `docs/primitives/` yourself — the excerpt is your whole
+primitives context by design.
 
 ### 2. Load the compass (when the task touches architecture or boundaries)
 

@@ -1,0 +1,130 @@
+---
+name: bootstrapping-primitives
+description: >-
+  One-time adoption of the primitives tree in a Rails app: scaffold
+  docs/primitives/ (SCHEMA.md, index.md, capabilities/) and draft the
+  human-owned compilation.md via a read-only codebase survey followed by a
+  structured interview. Use when a repo has no docs/primitives/ tree and the
+  team wants durable intent/compilation/evaluations/provenance, or when the
+  user says set up primitives, adopt primitives, or generate compilation.
+  Recurring maintenance and backfill belong to maintaining-primitives, not here.
+---
+
+# Bootstrapping primitives (one-time adoption)
+
+**Reading plugin files:** Before your first `Read` of `rules/*.mdc` or a
+sibling `skills/*/SKILL.md`, resolve the correct path prefix via
+**`resolving-plugin-root`** — these paths (bare or with `../`) only resolve correctly
+against Cursor's workspace root or a raw checkout; a Claude Code plugin
+install needs the resolved prefix instead.
+
+<objective>
+Stand up **`docs/primitives/`** in about one sitting: scaffold the tree, then
+draft **`compilation.md`** — the app-specific compilation primitive — from a
+read-only survey plus a human interview. The deliverable is a **strawman the
+human edits**, not a finished document: `compilation.md` is human-owned from
+its first commit. Everything else (capability docs) accrues per-feature
+afterwards — this skill deliberately does **not** backfill the app.
+</objective>
+
+**Announce:** "I'm using the bootstrapping-primitives skill."
+
+Structure rules: **`rules/primitives.mdc`**. Skeletons:
+**`../maintaining-primitives/references/templates.md`**.
+
+## Preconditions
+
+- **`docs/primitives/` must not already exist.** If it does, this is
+  maintenance — route to **`maintaining-primitives`** instead.
+- A Rails app in the workspace (the survey reads its config).
+
+## Process
+
+### 1. Scaffold the tree
+
+Create from the starters in `references/templates.md` of `maintaining-primitives`:
+
+```
+docs/primitives/
+  SCHEMA.md          # contract starter
+  index.md           # empty catalog
+  capabilities/      # empty (add .keep if the repo tracks empty dirs)
+```
+
+`compilation.md` comes from steps 2–4, not the skeleton alone.
+
+### 2. Survey (read-only)
+
+Read the code that reveals **binding choices**: `Gemfile`, `config/` (queue,
+cache, storage adapters, `database.yml`), deploy config (Kamal / CI files),
+authentication approach, engine or namespace boundaries, anything the repo's
+CLAUDE.md / README declares as policy.
+
+Output: a **candidate list** of detected choices. Detected is not the same as
+binding — that distinction is the interview's job.
+
+### 3. Interview (human)
+
+The survey finds *what*; only the human knows *which choices are constraints*
+and why. Use the harness's structured question tool when available; otherwise
+ask in chat, grouped tightly. Two question shapes:
+
+1. **Per candidate:** "Is this a decision future work must respect, or just how
+   it happens to be today?" Keep only the former.
+2. **What code can't reveal:** boundaries and their reasons, external
+   commitments (contractual, compliance, sales — the "must render without
+   JavaScript" type), operational red lines ("no new datastores"), and any
+   deliberate deviation from plugin defaults.
+
+### 4. Draft `compilation.md`
+
+Apply the filter to every line: **not derivable from the code or the plugin,
+and it would change what an agent proposes.** "We use Solid Queue" is derivable
+— cut. "No Redis; anything proposing it needs an amendment here first" is a
+constraint with teeth — keep. Target **under 50 lines**; if it runs longer, it
+is describing the app rather than constraining it.
+
+Use the skeleton's three headings (Runtime & operations / Boundaries &
+ownership / Constraints with teeth); drop or add headings as the app demands —
+the filter matters, the headings don't.
+
+### 5. Hand to the human
+
+> `compilation.md` drafted at `docs/primitives/compilation.md`. It's yours —
+> please edit: cut anything you wouldn't enforce in review, add what I
+> couldn't see. From here agents read it before every plan and propose
+> amendments via review findings; they won't edit it.
+
+Wait for the human's pass before treating bootstrap as done. Then offer —
+**do not run unprompted** — a first backfill:
+
+> Want to backfill capability docs for any features change is coming to soon?
+> That's the `capture` operation in `maintaining-primitives`
+> (via `pitchd-rails-primitives-maintainer`), one capability at a time.
+
+## What this skill does NOT do
+
+- **No bulk backfill.** Capability docs accrue lazily (the planner creates one
+  the first time planned work touches an undocumented area) or on demand via
+  `capture`. A sixty-doc documentation project is exactly the initiative that
+  produces half-accurate docs and dies.
+- **No app code, no plans.**
+- **No re-runs.** Once the tree exists, `compilation.md` changes only through
+  human edits prompted by review findings; the tree changes through the
+  standard workflow write points.
+
+## Common mistakes
+
+- **Describing instead of constraining** — `compilation.md` lines that restate
+  the Gemfile. Apply the filter; when in doubt, cut.
+- **Skipping the interview** — a survey-only draft encodes the agent's guesses
+  about which choices are load-bearing. The interview is the step that makes
+  the document human-specified.
+- **Backfilling everything while you're at it** — resist; see above.
+
+## Related
+
+- **`maintaining-primitives`** — recurring operations (capture, trace, update, lint).
+- **`rules/primitives.mdc`** — structure, ownership, size limits.
+- **`writing-pitchd-rails-plans`** — first consumer: reads `compilation.md` and
+  the target capability doc at its primitives gate.

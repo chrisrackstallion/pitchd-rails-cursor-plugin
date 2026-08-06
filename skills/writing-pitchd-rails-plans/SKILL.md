@@ -6,7 +6,9 @@ description: >-
   skills and rules. After drafting: review with pitchd-rails-reviewer and apply
   that feedback to the plan file; re-run for final sign-off when Pass 1
   required edits. Use when turning a spec into tasks, planning a feature, or
-  breaking work into checklisted steps. May use
+  breaking work into checklisted steps. When the app has a docs/primitives/
+  tree, planning also creates or amends the feature's capability doc (intent
+  clauses, shape) via the primitives gate. May use
   referencing-unofficial-37signals-guide for supplemental Fizzy-derived topic
   fetches or referencing-rails-guides for authoritative Rails API docs when
   compass and scoped plugin material are insufficient for best-practice clarity.
@@ -109,6 +111,73 @@ that gets caught, because the reviewer only ever sees the finished plan.
    If the right shape is genuinely unclear, recommend a
    `brainstorming-rails-omakase` pass instead of planning around the
    uncertainty.
+
+## Primitives gate (before drafting anything)
+
+Runs when the app has a **`docs/primitives/`** tree (see
+**`rules/primitives.mdc`** and `maintaining-primitives`). If the tree does not
+exist, skip this gate — optionally mention `bootstrapping-primitives` once —
+and omit the **Capability:** header line below.
+
+The reading contract is three files, never more: **`index.md`**, the **one**
+target capability doc, and **`compilation.md`**.
+
+1. **Read `docs/primitives/index.md`.** Does an existing capability own this
+   outcome? If yes, this plan is an **amendment** to that capability — never
+   create a second doc whose intent overlaps an existing one (that is itself
+   a plan defect the reviewer will flag). **One capability per plan — always.**
+   Work spanning two capabilities is two plans (see **When to plan** —
+   independent subsystems split): clause IDs are only unambiguous within one
+   doc, and every downstream mechanism (header line, dispatch excerpts,
+   review scope, close-out) targets exactly one doc. The reading-contract
+   allowance for opening a second capability doc is for **context**, never a
+   second target.
+2. **Read `docs/primitives/compilation.md`.** These are human-owned, app-wide
+   constraints; the plan must not contradict them. If the right approach
+   genuinely requires breaking one, **stop and say so** — the constraint
+   changes by human amendment, not by a plan working around it.
+3. **Read (or create) the capability doc** under
+   `docs/primitives/capabilities/<name>.md`:
+   - **Exists (from brainstorming, `status: shaping`, or earlier work):**
+     confirm and extend. Classify every part of this plan against the Intent
+     clauses — serves an existing clause / **supersedes** one (strike through,
+     tombstone, new ID — never renumber or delete) / adds a new clause. Read
+     `## Provenance` before proposing an approach: do not re-litigate a
+     recorded rejection or "fix" a recorded deliberate decision without
+     saying so explicitly.
+   - **Missing, new feature:** create it now. The requirements-gate answers
+     **are** the Intent section — transcribe them as one-sentence clauses
+     (`I1`, `I2`, …) instead of discarding them into chat history. Draft
+     `## Shape` (deltas only) from the approach-gate outcome.
+   - **Missing, existing feature (lazy backfill):** create it from what the
+     code demonstrably does plus the requirements-gate answers; Evaluations
+     from specs that exist — shipped behaviour with **no** spec home gets a
+     row marked `unproven`, same as a `capture` backfill (an honest test-gap
+     record, not a blocker); provenance opens with
+     `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
+     Set **`status: built`** — the feature is already shipped, and the plan
+     being drafted is an amendment to it (final approval leaves `built` docs
+     at `built`, same as a `capture` backfill). Gate-answer clauses are
+     self-confirming — the user stated them live. Clauses reconstructed
+     **purely from code** (behaviour this plan doesn't touch) are not:
+     present them to the user for a quick confirmation as part of the gate
+     questions, so nothing reconstructed ships as fact unconfirmed
+     (`capture` parity).
+4. **Write Intent and Shape before drafting tasks.** Tasks then cite clause
+   IDs (`serves I1, I4` / `supersedes I4 → I5`) instead of restating
+   requirements — the plan is ephemeral; the capability doc is the durable
+   record. When this gate **creates** a doc (new feature or lazy backfill),
+   add its `docs/primitives/index.md` line at creation, same as `capture` —
+   final approval then updates it.
+
+**Write points:** during drafting this skill writes **Intent** and **Shape**;
+at final approval it also flips `status:` to `planned`, appends the one
+`planned` provenance line, and syncs `index.md` (see **At final approval**
+below). Evaluations rows, `status: built`, and the `built` provenance line
+belong to execution close-out (`executing-pitchd-rails-plan`); do not fill
+them from intention. The one exception is the **lazy backfill** above:
+Evaluations rows transcribed from **already-existing specs** record reality,
+not intention, and are correct to write at plan time.
 
 ## Philosophy (DHH / Pitchd Rails)
 
@@ -249,6 +318,10 @@ different docs location):
 > only per the decision tree in that skill. **One behaviour, one spec home.**
 > How the plan is followed or sequenced is up to the user and the implementing agent.
 
+**Capability:** `docs/primitives/capabilities/<name>.md` — serves I1–I4
+[Clause IDs this plan serves, supersedes, or adds. Omit this line only when
+the app has no `docs/primitives/` tree.]
+
 **Problem:** [One sentence — the underlying need in the user's terms: what
 breaks or is missing without this. Distinct from Goal, which describes the
 outcome of the chosen solution.]
@@ -281,7 +354,11 @@ Use **Ruby** in code fences and **`bundle exec rspec`** for commands — never
 Python/pytest unless the spec is literally a non-Ruby subproject.
 
 ````markdown
-### Task N: [Resource or slice name]
+### Task N: [Resource or slice name] (serves I1, I4)
+
+[The clause citation replaces restated requirements — the capability doc owns
+intent. Use `(supersedes I4 → I5)` when the task changes intent. Omit the
+parenthetical only when the app has no primitives tree.]
 
 **Files:**
 - Create: `db/migrate/XXXXXXXXXXXXXX_add_foo_to_bars.rb`
@@ -371,6 +448,12 @@ After drafting the plan:
    plan works around a framework default. If a task fails this check, the
    issue is usually the approach, not the task — go back through the
    **Approach gate** before patching.
+7. **Primitives trace (when the tree exists):** Every task's behaviour maps to
+   an active Intent clause in the capability doc; every clause this plan
+   touches appears in the header's **Capability:** line; supersessions are
+   explicit in both plan and doc; nothing contradicts `compilation.md` or the
+   doc's recorded Shape and Provenance. Untraceable behaviour means either a
+   missing clause (add it) or scope creep (cut it).
 
 Fix issues inline; add tasks for missing requirements.
 
@@ -445,6 +528,23 @@ raises issues, fix the plan and re-run **scoped to the fixes only** — set
 sections; do not send the full plan again. One scoped fix cycle is usually
 enough — if a second loop is needed, repeat the same scoped pattern.
 
+### At final approval — primitives sync (when the tree exists)
+
+Once the plan is finally approved (Pass 1 with no edits, or Pass 2 Approved):
+
+1. Flip the capability doc's frontmatter to **`status: planned`** (leave
+   `built` docs at `built` — an amendment plan does not un-build a capability).
+2. Append **one** provenance line covering the whole planning session —
+   **provenance records events, not edits**; five drafting revisions are still
+   one `planned` event:
+
+   ```markdown
+   - YYYY-MM-DD — planned: docs/plans/YYYY-MM-DD-<feature>.md. [Rejected
+     alternatives from the header's Alternatives considered, one line.]
+   ```
+
+3. Add or update the capability's line in `docs/primitives/index.md`.
+
 ## Revision mode
 
 ### When to enter revision mode
@@ -485,10 +585,18 @@ Apply the change directly to the plan document on disk. This skill edits the pla
 there is no implementor subagent for plan edits. Scope the edit tightly — do not
 rewrite unrelated sections or re-run the self-review on unchanged content.
 
+**Primitives sync (when the tree exists):** classify the revision. Tactics
+only (snippets, file map, task order) → capability doc untouched. Changes to
+**what the feature does** (scope, outcome) → amend the Intent clauses in the
+same edit as the plan (add / supersede; pre-approval clauses not yet
+referenced by an approved plan may simply be edited). No provenance line per
+revision — the single `planned` line at final approval covers the session.
+
 After editing:
 
 - **Summarize what changed** — concise bullet list of which sections were affected
-  (header fields, file map, task list, snippets, approach, deferred items, etc.).
+  (header fields, file map, task list, snippets, approach, deferred items, etc.),
+  including any Intent clause changes in the capability doc.
 
 #### R3. Delegate a scoped review
 

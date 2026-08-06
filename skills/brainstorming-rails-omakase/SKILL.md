@@ -78,12 +78,12 @@ Unexamined assumptions waste the most effort on "small" changes. The spec can be
 
 Create a task for each item and complete **in order**:
 
-1. **Ground in Pitchd order** — For every substantive turn and before locking a design direction, apply **Grounding order (always)** for the areas this brainstorm touches (compass → scoped **`writing-*`** + **`rules/*.mdc`** → supplementary refs if needed → then relevant app files). Re-run when the topic shifts to a new area (e.g. from routes to jobs).
+1. **Ground in Pitchd order** — For every substantive turn and before locking a design direction, apply **Grounding order (always)** for the areas this brainstorm touches (compass → scoped **`writing-*`** + **`rules/*.mdc`** → supplementary refs if needed → then relevant app files). Re-run when the topic shifts to a new area (e.g. from routes to jobs). When the app has a `docs/primitives/` tree, this grounding includes `docs/primitives/index.md` (an existing capability makes this brainstorm an **amendment** to it, not a new doc) and `compilation.md` (human-owned constraints that bound every approach you propose) — read both **before proposing approaches**, not after the design is agreed.
 2. **Offer visual companion** (if upcoming questions are visual) — **its own message only**; see Visual Companion below.
 3. **Ask clarifying questions** — one per message; purpose, constraints, success criteria.
 4. **Propose 2–3 approaches** — trade-offs in **Rails terms** (resources vs RPC, HTML vs JSON, sync vs job, model vs controller vs policy), consistent with what you already loaded. For each approach, **state explicitly where the domain logic will live** (model method, callback, scope, concern) — not implicit.
 5. **Present design in sections** — scaled to complexity; approval after each section.
-6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override).
+6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override). **When the app has a `docs/primitives/` tree**, also create or update the capability doc (`docs/primitives/capabilities/<name>.md`): the spec's agreed outcomes become one-sentence Intent clauses (`I1`, `I2`, …) and the chosen direction a rough `## Shape` — per `rules/primitives.mdc`. `status: shaping` applies only to docs this brainstorm **creates**; when updating an existing doc (shaping an amendment to a `planned` or `built` capability), leave its status untouched — a brainstorm never downgrades status. What's explicitly out of scope is worth a provenance line. The planner's primitives gate confirms and extends this doc instead of re-deriving intent.
 7. **Spec self-review** — placeholders, contradictions, ambiguity, scope; fix inline.
 8. **User reviews written spec** — wait for approval or revision requests.
 9. **Transition to planning** — invoke **`writing-pitchd-rails-plans`** only.
@@ -167,6 +167,7 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 **Documentation**
 
 - Write the validated spec to **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** (unless the user names another path).
+- When the app has a `docs/primitives/` tree, seed the capability doc per checklist step 6 (`status: shaping`; Intent clauses from the spec's outcomes; one `shaped` provenance line noting explicit scope exclusions) and add its `index.md` line.
 - Commit the spec when the repo is yours to commit; otherwise leave changes ready for the human.
 
 **Spec self-review**

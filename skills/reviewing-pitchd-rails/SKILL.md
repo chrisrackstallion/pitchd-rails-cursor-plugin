@@ -98,15 +98,48 @@ Prefix these findings **`tactical:`**.
   different shape (API-first, SPA, etc.); then treat it as a documented
   exception and review tactics for consistency with that choice.
 
-### 5. Wiki capture candidates
+### 5. Primitives checks
 
-When reviewing implementation, note any of these in the **Wiki capture candidates** section of the report (non-blocking, optional):
+Runs when the app has a **`docs/primitives/`** tree (see `rules/primitives.mdc`).
+Read the **one** capability doc named by the plan header's **Capability:** line
+(or located via `docs/primitives/index.md`) plus `compilation.md` — never the
+whole tree. No tree → note "No primitives tree" in the report and skip.
+Prefix these findings **`primitives:`**. They are checkable properties, not
+suggestions:
 
-- **Architectural decisions** with explicit rationale (e.g. "job over callback because X").
-- **Non-obvious constraints** found in the codebase (e.g. N+1 traps, locking behaviour, required counter-caches).
-- **Patterns codified** for the first time in this app (e.g. how a Turbo Stream broadcast is structured, a Solid Queue pattern, a policy shape).
+- **Traceability** — every behaviour in the plan or diff maps to an active
+  Intent clause. Untraceable behaviour is a finding: either a missing clause
+  or scope creep. A plan whose header lacks the **Capability:** line when the
+  tree exists is a finding.
+- **No overlap** — a new capability doc whose intent overlaps an existing one
+  is a plan defect (should be an amendment).
+- **Compilation and Shape** — nothing contradicts `compilation.md` or the
+  doc's recorded Shape; a change that needs a constraint amended says so
+  explicitly rather than working around it. These are `philosophy:`-grade.
+- **Supersession hygiene** — intent changes are explicit (tombstone + new ID,
+  never renumbered or silently deleted). Plan phase: the plan **schedules**
+  row retirement and deletion of the superseded clause's now-dead specs.
+  Post-close-out: retired clauses have their rows retired and those specs
+  actually deleted (a live spec enforcing a dead clause is a zombie). During
+  per-task loops that state is pending, not a finding.
+- **Eval coverage** — plan phase: every touched clause gets a spec home in the
+  plan's tasks. Rows for **new** work are written at close-out — a plan
+  pre-filling them from intention is a finding; rows transcribed from
+  **already-existing specs** (lazy backfill, prior capture, earlier
+  close-outs) and `unproven` rows (`rules/primitives.mdc`) are legitimately
+  present at plan time. Implementation phase, **per-task reviews**: rows are
+  not yet written — close-out fills them after all tasks approve — so check
+  that the task delivered the spec homes its cited clauses need, not the
+  rows. **Post-close-out reviews only:** every touched clause has a row
+  pointing at real reported specs; `status: built` with a missing row is a
+  finding.
+- **Provenance conflicts** — the work does not re-litigate a recorded
+  rejection or undo a recorded deliberate decision without saying so.
 
-Do not flag routine implementation details — only decisions and discoveries that would otherwise vanish into chat history.
+**Provenance candidates (non-blocking):** decisions with rationale, non-obvious
+constraints discovered, knowingly accepted debt — list them in the report's
+**primitives:** section so the execution close-out pass can file them as
+one-line provenance entries. Not routine implementation details.
 
 ### 6. What to check by phase
 
@@ -221,8 +254,13 @@ _Implementation and both phases only. Omit this section for plan-only reviews._
 **Separate follow-ups (handle outside this feature):**
 - [confidence: X.X] `[path]`: [Direct statement — why separate.]
 
-### Wiki capture candidates (optional)
-Notable decisions, constraints, or patterns codified during this work that are worth filing into `docs/llm-wiki/` via `pitchd-rails-wiki-maintainer`. Only include entries that add durable value — not every implementation detail.
+### primitives: (traceability, compilation, evals, provenance)
+_Only when the app has a `docs/primitives/` tree; otherwise state "No primitives tree" and omit the findings._
+
+- [confidence: X.X] `[file or area]`: [Direct statement — untraceable behaviour, compilation/Shape contradiction, missing eval row, supersession hygiene, provenance conflict.] — `rules/primitives.mdc`
+  **Verified:** [Capability doc + code you read to confirm.]
+
+**Provenance candidates (non-blocking):** decisions, constraints, or accepted debt worth a one-line provenance entry at close-out. Only durable value — not every implementation detail.
 - ...
 ```
 
