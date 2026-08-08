@@ -644,4 +644,7 @@ from **R1**.
 To **run** an approved plan without the main agent writing app code, use
 **`../executing-pitchd-rails-plan/SKILL.md`**: delegate each task to
 **`pitchd-rails-implementor`**, review with **`pitchd-rails-reviewer`** in a loop
-until Approved, then hand off to the user for sign-off.
+until Approved, then hand off to the user for sign-off. In **step-by-step** mode
+that skill stops after each Approved task for the user to review and commit it —
+so each task in this plan is also a **commit checkpoint**, which is what the
+granularity guidance above is sizing.
