@@ -132,6 +132,15 @@ target capability doc, and **`compilation.md`**.
    review scope, close-out) targets exactly one doc. The reading-contract
    allowance for opening a second capability doc is for **context**, never a
    second target.
+
+   **This does not mean one plan per capability.** The rule forbids a plan
+   spanning two capabilities; the reverse is expected. A capability large
+   enough to ship in stages gets **several sequenced plans**, each an
+   amendment to the same doc serving its own clauses — which is what the
+   spec's `## Delivery sequence` enumerates
+   (`brainstorming-rails-omakase`). Later plans leave a `built` doc at
+   `built` and append their own provenance line, exactly like any other
+   amendment.
 2. **Read `docs/primitives/compilation.md`.** These are human-owned, app-wide
    constraints; the plan must not contradict them. If the right approach
    genuinely requires breaking one, **stop and say so** — the constraint
@@ -207,6 +216,13 @@ not intention, and are correct to write at plan time.
   mainline noise would confuse review (optional but recommended).
 - If the spec spans **independent subsystems**, split into **separate plans**
   (one deployable slice each), or separate epics with clear boundaries.
+- If the spec has a **`## Delivery sequence`**, it has already done that
+  decomposition — **plan one slice**, not the whole spec. Take the slice's
+  clause IDs as this plan's scope; everything outside them is a later plan, not
+  deferred work to mention in this one. If the spec covers a large capability
+  and has **no** delivery sequence, say so and propose the split before
+  drafting — a single plan for a multi-slice feature is the large-plan problem
+  the sequence exists to prevent.
 
 ## Save location
 
