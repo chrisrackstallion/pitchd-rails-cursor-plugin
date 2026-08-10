@@ -132,6 +132,15 @@ target capability doc, and **`compilation.md`**.
    review scope, close-out) targets exactly one doc. The reading-contract
    allowance for opening a second capability doc is for **context**, never a
    second target.
+
+   **This does not mean one plan per capability.** The rule forbids a plan
+   spanning two capabilities; the reverse is expected. A capability large
+   enough to ship in stages gets **several sequenced plans**, each an
+   amendment to the same doc serving its own clauses — which is what the
+   spec's `## Delivery sequence` enumerates
+   (`brainstorming-rails-omakase`). Later plans leave a `built` doc at
+   `built` and append their own provenance line, exactly like any other
+   amendment.
 2. **Read `docs/primitives/compilation.md`.** These are human-owned, app-wide
    constraints; the plan must not contradict them. If the right approach
    genuinely requires breaking one, **stop and say so** — the constraint
@@ -207,12 +216,22 @@ not intention, and are correct to write at plan time.
   mainline noise would confuse review (optional but recommended).
 - If the spec spans **independent subsystems**, split into **separate plans**
   (one deployable slice each), or separate epics with clear boundaries.
+- If the spec has a **`## Delivery sequence`**, it has already done that
+  decomposition — **plan one slice**, not the whole spec. Take the slice's
+  clause IDs as this plan's scope; everything outside them is a later plan, not
+  deferred work to mention in this one. If the spec covers a large capability
+  and has **no** delivery sequence, say so and propose the split before
+  drafting — a single plan for a multi-slice feature is the large-plan problem
+  the sequence exists to prevent.
 
 ## PR and deployment scope
 
-The unit of delivery is the **pull request**. The best practice is fixed here
-so every plan applies the same one — decide the delivery shape **before**
-writing tasks and declare it in the header's **Delivery:** line:
+The unit of delivery is the **pull request**. The spec's **`## Delivery
+sequence`** (`brainstorming-rails-omakase`) decomposes a capability into
+deployable slices — one plan each; this section sizes what **one plan**
+produces. The best practice is fixed here so every plan applies the same
+one — decide the delivery shape **before** writing tasks and declare it in
+the header's **Delivery:** line:
 
 1. **One plan, one PR, one deployable slice — by default.** The whole task
    list lands as a single PR a reviewer can hold in their head in one
@@ -220,9 +239,12 @@ writing tasks and declare it in the header's **Delivery:** line:
 2. **Size heuristic:** target **≤ ~400 changed lines of application code**
    per PR (specs ride along and don't count against the target; generated
    files excluded). Past that, review quality drops — split. Crossing ~800
-   is not a judgment call: it is two plans.
-3. **Split by dependency seam, not by layer.** When work exceeds one PR, cut
-   it into **sequentially shippable vertical increments**, each independently
+   is not a judgment call: the slice is too big — send it back to the spec's
+   **Delivery sequence** and split it into two slices (two plans), by seam,
+   not by layer.
+3. **Split by dependency seam, not by layer.** Whether cutting slices at the
+   sequence level or drawing PR boundaries inside one plan, cut
+   **sequentially shippable vertical increments**, each independently
    valuable and safe with only the PRs before it. Never "all models PR, then
    all controllers PR", and never a PR that is only correct once a future PR
    lands.
@@ -365,10 +387,11 @@ a listed one is checkable.]
 
 **Rails shape:** [Key models, resources, policies]
 
-**Delivery:** [`one PR` (default), or the PR boundaries by task — e.g.
-`PR 1: Tasks 1–3 (schema + model + policy); PR 2: Tasks 4–6 (UI, wires the
-entry point)` — each boundary an independently deployable vertical increment.
-See PR and deployment scope.]
+**Delivery:** [`one PR` (default). Multi-PR boundaries are the rare
+mechanical case — e.g. `PR 1: Tasks 1–4; PR 2: Task 5 (contract-step
+migration after deploy)` — each boundary an independently deployable vertical
+increment. A feature-scope overrun is not a multi-PR plan; it goes back to
+the spec's Delivery sequence as another slice. See PR and deployment scope.]
 
 **Assumptions:** [Only when the user said to proceed without answering
 requirements-gate questions — list each assumption so review can challenge it.
@@ -495,7 +518,9 @@ After drafting the plan:
    ~400-line target, or declared seam-based boundaries in the **Delivery:**
    line, each independently deployable. A migration whose contract step rides
    in the same PR as its expand step, or a task only safe once a later PR
-   lands, fails this check.
+   lands, fails this check. An estimate past ~800 means the slice itself is
+   too big — route it back to the spec's **Delivery sequence** as a split,
+   not a fatter plan.
 9. **Primitives trace (when the tree exists):** Every task's behaviour maps to
    an active Intent clause in the capability doc; every clause this plan
    touches appears in the header's **Capability:** line; supersessions are
@@ -692,4 +717,7 @@ from **R1**.
 To **run** an approved plan without the main agent writing app code, use
 **`../executing-pitchd-rails-plan/SKILL.md`**: delegate each task to
 **`pitchd-rails-implementor`**, review with **`pitchd-rails-reviewer`** in a loop
-until Approved, then hand off to the user for sign-off.
+until Approved, then hand off to the user for sign-off. In **step-by-step** mode
+that skill stops after each Approved task for the user to review and commit it —
+so each task in this plan is also a **commit checkpoint**, which is what the
+granularity guidance above is sizing.

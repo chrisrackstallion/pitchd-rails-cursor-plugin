@@ -4,7 +4,9 @@ description: >-
   Orchestrates execution of a written Rails implementation plan in a DHH /
   37signals omakase style without writing application code: delegates each task
   to pitchd-rails-implementor, reviews via pitchd-rails-reviewer, and loops on
-  feedback until Approved before user sign-off. Use when the user says execute
+  feedback until Approved. In step-by-step mode it then stops after each
+  Approved task so the user can review and commit it before the next one
+  starts, keeping the reviewable unit small. Use when the user says execute
   the plan, run the plan, implement the plan, ship planned tasks, or wants a
   subset of plan tasks done in full with Pitchd conventions. Also handles
   post-execution revision requests — when the user says something needs changing,
@@ -42,7 +44,7 @@ If the user has **not** stated the following, **ask once** and wait for answers:
 
 | Question | Options |
 |----------|---------|
-| **Execution mode** | **Step-by-step** — one plan task at a time; after each task is Approved, proceed to the next (no code from orchestrator). **Full run** — run the entire selected task list in one session: still **one task at a time** for implement → review loops, but **do not** pause for user confirmation between tasks unless a blocker needs a human decision. |
+| **Execution mode** | **Step-by-step** (recommended) — one plan task at a time; after each task is Approved, **stop** and hand it to the user to review and commit (see **Task stop** below). Do **not** start the next task until the user says to continue. **Full run** — run the entire selected task list in one session: still **one task at a time** for implement → review loops, but **do not** pause between tasks unless a blocker needs a human decision; the user reviews and commits once, at the end. |
 | **Scope** | Full plan vs **named task ids/numbers** (subset). |
 
 **Subset:** If the user asks for specific tasks only, build an **ordered list** from the plan and execute **only** those tasks end-to-end (each with its own implement → review loop).
@@ -92,10 +94,43 @@ Instruction: follow **`skills/reviewing-pitchd-rails/SKILL.md`** and return the 
 
 ### 3. Branch on status
 
-- **`Status: Approved`** → proceed to **next task** (or, if no tasks remain, to **After all tasks are Approved** below).
+- **`Status: Approved`** → in **step-by-step** mode, run the **Task stop** below before anything else; in **full run** mode, proceed straight to the **next task** (or, if no tasks remain, to **After all tasks are Approved** below).
 - **`Issues found`** → send the **review feedback** (philosophy + tactical items that matter) back to **`pitchd-rails-implementor`** as a **fix pass** for the **same task**. Include reviewer quotes or bullet list so the subagent can act without parent chat history. When re-invoking the reviewer after the fix, pass **User revisions** scoped to what the implementor changed — do not re-review the full task diff. **Loop** until Approved.
 
-### 4. Escalation from implementor
+### 4. Task stop (step-by-step mode)
+
+An Approved task is a **commit checkpoint for the user**, not a cue to continue.
+The implementor never commits (`../implementing-pitchd-rails/SKILL.md`) — version
+control is the human's. So when a task is Approved: **stop, report, and wait.**
+
+Gather the file list read-only (`git status --short`, `git diff --stat` — orchestration,
+per Hard rule 1) and present:
+
+- **Task** — id and one-line summary of what now works.
+- **Files changed** — created / modified, from `git diff --stat`.
+- **Verification** — the commands the implementor **reported running** and their
+  results, including `bin/rubocop` exit 0. Quote its report; never restate a test
+  run as green that no subagent reported.
+- **Not verified** — say plainly that the **full spec suite has not been run** for
+  this task (see **What green means per task** below), so the user knows what the
+  checkpoint does and does not cover.
+- **Reviewer** — `Approved` after N iteration(s), plus any non-blocking notes.
+- **Suggested commit subject** — one line in the repo's existing commit style, so
+  committing does not require re-reading the diff.
+
+Then **stop**. Do not delegate the next task until the user gives an explicit
+go-ahead. If the user commits, amends, or asks for a change first, that is theirs
+to do — treat any "that's not right" response as **Revision mode** below.
+
+#### What green means per task
+
+Per task, green is the implementor's existing gate: the **specs covering the slice**
+plus **`bin/rubocop` zero offences** (`../implementing-pitchd-rails/SKILL.md`).
+**Do not** require a full-suite run at every task stop — these commits land on a
+branch, not in production, and branch CI covers cross-task regressions at the PR
+gate. The full suite runs **once per plan run**, on the last task (see step 6).
+
+### 5. Escalation from implementor
 
 If the implementor returns **BLOCKED** or **NEEDS_CONTEXT**, **stop** and present the report to the **user**. Do not invent architecture; wait for decisions or smaller tasks.
 
@@ -208,11 +243,12 @@ from **R1**.
 
 ## After all tasks are Approved (Pitchd)
 
-### 5. Whole-run coherence review (required for multi-task runs)
+### 6. Whole-run coherence review (required for multi-task runs)
 
 Per-task reviews only ever see one task's diff — defects that span tasks are
-structurally invisible to them. Before the primitives close-out, invoke
-**`pitchd-rails-reviewer`** once more over the **entire run's combined scope**:
+structurally invisible to them. Before the final verification and primitives
+close-out, invoke **`pitchd-rails-reviewer`** once more over the **entire
+run's combined scope**:
 
 - **Phase:** `implementation`
 - **Scope:** every file changed across the run (gather read-only via
@@ -231,7 +267,23 @@ scoped via **User revisions** to what changed. Loop until Approved.
 **Skip only** when the run executed a **single task** — that task's own review
 already saw the whole diff.
 
-### 6. Primitives close-out pass (required when the plan has a Capability line)
+### 7. Final full-suite verification
+
+Per-task stops deliberately skip the full suite (step 4). Run it **once**, at the
+end — after the coherence review's fix passes have settled — so the branch is
+not handed over on unverified cross-task state.
+
+Delegate it — the orchestrator does not run app test suites (Hard rule 1). Either
+add it to the **last task's** implementor prompt as a closing step, or dispatch a
+**verification-only** pass to `pitchd-rails-implementor`: run the full spec suite
+and `bin/rubocop`, change no code, report results.
+
+If it comes back red, that is a **regression across tasks** — feed the failures
+back as a fix pass for the task that caused them and loop as in step 3. If the
+user declines the run, say so in the handoff and do not describe the branch as
+green.
+
+### 8. Primitives close-out pass (required when the plan has a Capability line)
 
 Part of the definition of done — **not an offer to the user**. The orchestrator
 updates the capability doc directly (see the Hard rules carve-out):
@@ -261,19 +313,20 @@ updates the capability doc directly (see the Hard rules carve-out):
 If a reviewer report proposed a **`compilation.md` amendment**, surface it to
 the user — that file is human-owned; the orchestrator never edits it.
 
-### 7. Handoff for user sign-off
+### 9. Handoff for user sign-off
 
 Deliver a short **completion package**:
 
 - Execution mode used and **task scope** completed.
 - Per-task outcome (Approved after how many review iterations).
-- **Whole-run coherence review** outcome (Step 5): Approved after N iterations, or skipped (single-task run).
+- **Whole-run coherence review** outcome (Step 6): Approved after N iterations, or skipped (single-task run).
+- **Full-suite result** (Step 7): the command run and its outcome, or that it was skipped.
 - **Pitchd reviewer** final notes (if any non-blocking recommendations were in those reports).
-- **Primitives close-out** summary (Step 6): status, eval rows updated, the provenance line appended — or why status could not flip.
-- Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it).
+- **Primitives close-out** summary (Step 8): status, eval rows updated, the provenance line appended — or why status could not flip.
+- Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it). In **step-by-step** mode the user has been committing per task, so name only what remains after the last stop.
 - The plan header's **Delivery:** boundaries restated (which tasks compose which PR), so the user cuts PRs as planned — the orchestrator never commits or opens PRs itself.
 
-**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Surface any proposed `compilation.md` amendments (Step 6) for the user's decision.
+**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Surface any proposed `compilation.md` amendments (Step 8) for the user's decision.
 
 ## Related
 

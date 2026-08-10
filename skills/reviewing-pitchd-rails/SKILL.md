@@ -154,8 +154,10 @@ per-task reading hides it. **Delivery scope:** the header carries a
 **Delivery:** line and the plan honours `writing-pitchd-rails-plans` § PR and
 deployment scope — one PR within the ~400-changed-app-line target, or
 declared seam-based PR boundaries, each an independently deployable vertical
-increment; a layer-split boundary, a contract-step migration riding with its
-expand step, or a task only safe once a later PR lands is a finding.
+increment; when the spec has a `## Delivery sequence`, the plan covers
+exactly **one slice** of it. A layer-split boundary, a contract-step
+migration riding with its expand step, a task only safe once a later PR
+lands, or a plan spanning multiple slices is a finding.
 **Frame:** the header's **Problem:** line states a real need (not a
 restated mechanism), the **Approach** follows from it, **Alternatives
 considered:** is present (an explicit "none credible" counts — absence does

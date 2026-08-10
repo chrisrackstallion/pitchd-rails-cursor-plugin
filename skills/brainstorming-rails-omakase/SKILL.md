@@ -83,7 +83,7 @@ Create a task for each item and complete **in order**:
 3. **Ask clarifying questions** — one per message; purpose, constraints, success criteria.
 4. **Propose 2–3 approaches** — trade-offs in **Rails terms** (resources vs RPC, HTML vs JSON, sync vs job, model vs controller vs policy), consistent with what you already loaded. For each approach, **state explicitly where the domain logic will live** (model method, callback, scope, concern) — not implicit.
 5. **Present design in sections** — scaled to complexity; approval after each section.
-6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override). **When the app has a `docs/primitives/` tree**, also create or update the capability doc (`docs/primitives/capabilities/<name>.md`): the spec's agreed outcomes become one-sentence Intent clauses (`I1`, `I2`, …) and the chosen direction a rough `## Shape` — per `rules/primitives.mdc`. `status: shaping` applies only to docs this brainstorm **creates**; when updating an existing doc (shaping an amendment to a `planned` or `built` capability), leave its status untouched — a brainstorm never downgrades status. What's explicitly out of scope is worth a provenance line. The planner's primitives gate confirms and extends this doc instead of re-deriving intent.
+6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override). End it with **`## Delivery sequence`** (see **Delivery sequence (in the spec)**) — the ordered deployable slices, one plan each. **When the app has a `docs/primitives/` tree**, also create or update the capability doc (`docs/primitives/capabilities/<name>.md`): the spec's agreed outcomes become one-sentence Intent clauses (`I1`, `I2`, …) and the chosen direction a rough `## Shape` — per `rules/primitives.mdc`. `status: shaping` applies only to docs this brainstorm **creates**; when updating an existing doc (shaping an amendment to a `planned` or `built` capability), leave its status untouched — a brainstorm never downgrades status. What's explicitly out of scope is worth a provenance line. The planner's primitives gate confirms and extends this doc instead of re-deriving intent.
 7. **Spec self-review** — placeholders, contradictions, ambiguity, scope; fix inline.
 8. **User reviews written spec** — wait for approval or revision requests.
 9. **Transition to planning** — invoke **`writing-pitchd-rails-plans`** only.
@@ -141,6 +141,45 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 
 **Design for clear Rails boundaries:** Vertical slices (resource/feature cohesion), one obvious home for domain rules (models, concerns — not generic service registries). If the brainstorm drifts toward "generic executor," "repository on thin models," or duplicated rules in JS, stop and realign with **`rails-omakase-compass`**.
 
+### Delivery sequence (in the spec)
+
+Every spec ends with a **`## Delivery sequence`**: an ordered list of the
+**deployable slices** this capability ships in, each naming the Intent clauses it
+satisfies. Clause IDs are already the currency between spec, capability doc, and
+plan — reuse them rather than restating requirements.
+
+```markdown
+## Delivery sequence
+
+1. **Invitation records** (I1, I2) — schema, model, policy. Deployable: nothing
+   links to it yet.
+2. **Sending and accepting** (I3, I4) — routes, controllers, mailer, views.
+   Deployable: the flow works end to end for admins.
+3. **Expiry and resend** (I5) — deployable: refines a flow already live.
+```
+
+Rules for the sequence:
+
+- **A slice must be worth shipping on its own**, not merely severable. If an
+  early slice delivers nothing a user or the system benefits from and only
+  exists to make the list longer, fold it into the next one. **One slice is a
+  valid answer** — most features are one deployable change, and inventing
+  boundaries to satisfy this section is worse than not having it.
+- **Never split a vertical slice horizontally.** "Migration slice, then model
+  slice, then controller slice" is the anti-pattern
+  (`writing-pitchd-rails-plans`), not a delivery sequence. Each slice runs
+  schema → model → policy → routes → controller → views for the part it covers.
+- **Additive first.** Prefer sequences where early slices add unreached code over
+  ones needing feature flags; reach for a flag only when a slice genuinely
+  changes behaviour already in front of users.
+- **Every active clause lands in exactly one slice.** A clause in no slice is
+  unshipped scope; a clause in two is an unclear boundary.
+
+**One plan per slice, written just-in-time.** The sequence is the spec's; the
+plans are written **one at a time, as each slice comes up** — not all up front.
+Drafting later plans before earlier slices are executed spends full review passes
+on documents that execution will invalidate.
+
 **Working in existing codebases:** Follow patterns that match **plugin rules**. Where the app contradicts those rules, the spec should describe the **correct** Rails-shaped direction for new work (same rule as **`implementing-pitchd-rails`** and **`writing-pitchd-rails-plans`**) and note integration friction — not silently entrench anti-patterns.
 
 ## The process (mirrors superpowers brainstorming)
@@ -148,7 +187,8 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 **Understanding the idea**
 
 - After **Grounding order (always)**, use what you read in the app (step 4) to describe current state — verify claims; do not assume tables or routes exist without checking when that matters.
-- If the request bundles multiple independent subsystems, decompose first; brainstorm one slice per cycle (spec → plan → implementation).
+- If the request bundles multiple **independent subsystems**, decompose first; brainstorm one slice per cycle (spec → plan → implementation). Each subsystem is its own capability, its own spec, its own plan.
+- If the request is **one** capability that is simply **too large to ship in one go**, do **not** split the brainstorm — split the **delivery**. A big feature is usually one cohesive subsystem with a lot of surface, so the "independent subsystems" test above never fires on it and the result is a single enormous plan. One spec and one capability doc still cover the whole outcome; the spec's **`## Delivery sequence`** (see **Delivery sequence (in the spec)** above) breaks it into deployable slices that become **separate, sequenced plans**.
 - One question per message; prefer multiple choice when it speeds alignment.
 - Clarify purpose, constraints, success criteria.
 
@@ -174,10 +214,13 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 
 1. Placeholder scan — no TBD that blocks planning.
 2. Internal consistency — behaviour vs boundaries.
-3. Scope — one implementation plan or explicit split; each plan sized to
-   ship as one reviewable PR (see `writing-pitchd-rails-plans` § PR and
-   deployment scope), so oversized scope is cut here, not discovered at
-   planning.
+3. **Scope and delivery** — `## Delivery sequence` is present and each slice is
+   independently deployable **and** worth shipping alone; every active clause
+   lands in exactly one slice; no slice is a horizontal layer split; each slice
+   is sized to ship as one reviewable PR (see `writing-pitchd-rails-plans`
+   § PR and deployment scope), so oversized scope is cut here, not discovered
+   at planning. A **single-slice** sequence is correct for most features —
+   check that any split earns itself rather than that a split exists.
 4. Ambiguity — resolve dual interpretations.
 
 **User review gate**
@@ -189,6 +232,7 @@ Wait for response; revise and re-review until approved.
 **Planning**
 
 - Invoke **`writing-pitchd-rails-plans`** with the spec as input. **Only** that skill follows this one.
+- When the spec has **more than one** slice in its `## Delivery sequence`, plan the **first slice only** — name the slice and its clause IDs in the handoff so the planner scopes to it. Later slices are planned when they come up, against a codebase the earlier slices have already changed.
 
 ## Key principles
 
@@ -227,6 +271,9 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 | Speculative polymorphism | Build for what exists today; extract when the second concrete case actually arrives. |
 | Over-normalized schema for unproven domain richness | Prefer simple foreign keys and denormalized columns; add junction tables and polymorphic joins when domain complexity is demonstrated. |
 | Async for "separation of concerns" | Job if it's slow, unreliable, or high-volume. Not as an architectural default. |
+| Big cohesive feature sent to planning as one plan | "Independent subsystems" does not fire on a single large capability. Use `## Delivery sequence` — one spec, deployable slices, one plan each. |
+| Splitting a spec into slices that cannot ship alone | Severable is not shippable. Fold it into the next slice, or keep one slice. |
+| Drafting every slice's plan up front | Plan one slice at a time; execution of slice 1 changes what slice 2's plan should say. |
 | Skipping user approval of the **file** | Chat agreement is not enough — gate on reviewed spec on disk. |
 
 ## Related
