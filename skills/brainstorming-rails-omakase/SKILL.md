@@ -216,9 +216,11 @@ on documents that execution will invalidate.
 2. Internal consistency — behaviour vs boundaries.
 3. **Scope and delivery** — `## Delivery sequence` is present and each slice is
    independently deployable **and** worth shipping alone; every active clause
-   lands in exactly one slice; no slice is a horizontal layer split. A
-   **single-slice** sequence is correct for most features — check that any split
-   earns itself rather than that a split exists.
+   lands in exactly one slice; no slice is a horizontal layer split; each slice
+   is sized to ship as one reviewable PR (see `writing-pitchd-rails-plans`
+   § PR and deployment scope), so oversized scope is cut here, not discovered
+   at planning. A **single-slice** sequence is correct for most features —
+   check that any split earns itself rather than that a split exists.
 4. Ambiguity — resolve dual interpretations.
 
 **User review gate**

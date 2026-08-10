@@ -47,6 +47,10 @@ end
   capability is a distinct concept
 - **One concern, one concept** — `Closeable` handles closing/reopening;
   it should not also handle archiving
+- **Every method earns its place** — before adding a method, question
+  whether the concern is where it belongs. It belongs only if it is part
+  of the capability every includer gets; a method only one includer uses,
+  or that isn't about the capability, goes on that model instead
 
 ### When to Extract
 

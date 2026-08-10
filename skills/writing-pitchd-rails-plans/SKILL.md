@@ -224,6 +224,40 @@ not intention, and are correct to write at plan time.
   drafting — a single plan for a multi-slice feature is the large-plan problem
   the sequence exists to prevent.
 
+## PR and deployment scope
+
+The unit of delivery is the **pull request**. The spec's **`## Delivery
+sequence`** (`brainstorming-rails-omakase`) decomposes a capability into
+deployable slices — one plan each; this section sizes what **one plan**
+produces. The best practice is fixed here so every plan applies the same
+one — decide the delivery shape **before** writing tasks and declare it in
+the header's **Delivery:** line:
+
+1. **One plan, one PR, one deployable slice — by default.** The whole task
+   list lands as a single PR a reviewer can hold in their head in one
+   sitting. Main stays deployable after every merge.
+2. **Size heuristic:** target **≤ ~400 changed lines of application code**
+   per PR (specs ride along and don't count against the target; generated
+   files excluded). Past that, review quality drops — split. Crossing ~800
+   is not a judgment call: the slice is too big — send it back to the spec's
+   **Delivery sequence** and split it into two slices (two plans), by seam,
+   not by layer.
+3. **Split by dependency seam, not by layer.** Whether cutting slices at the
+   sequence level or drawing PR boundaries inside one plan, cut
+   **sequentially shippable vertical increments**, each independently
+   valuable and safe with only the PRs before it. Never "all models PR, then
+   all controllers PR", and never a PR that is only correct once a future PR
+   lands.
+4. **Schema changes follow expand → migrate → contract across PRs.** The
+   additive migration ships in the same PR as the code that uses it;
+   destructive or contracting steps (dropping columns, tightening constraints
+   on old data) go in a follow-up PR after the deploy proves them safe — see
+   `rules/migrations.mdc`.
+5. **Dark until wired — no feature-flag framework.** For multi-PR features,
+   earlier PRs ship code that is unreachable (routes and links not yet
+   wired); the final PR wires the entry point. Omakase incremental delivery
+   without a flag dependency.
+
 ## Save location
 
 Default: **`docs/plans/YYYY-MM-DD-<feature-name>.md`** in the app repo (create
@@ -353,6 +387,12 @@ a listed one is checkable.]
 
 **Rails shape:** [Key models, resources, policies]
 
+**Delivery:** [`one PR` (default). Multi-PR boundaries are the rare
+mechanical case — e.g. `PR 1: Tasks 1–4; PR 2: Task 5 (contract-step
+migration after deploy)` — each boundary an independently deployable vertical
+increment. A feature-scope overrun is not a multi-PR plan; it goes back to
+the spec's Delivery sequence as another slice. See PR and deployment scope.]
+
 **Assumptions:** [Only when the user said to proceed without answering
 requirements-gate questions — list each assumption so review can challenge it.
 Omit this line otherwise.]
@@ -443,6 +483,10 @@ the codebase, do not extend it. Name it, cite the rule, and route around it.
 - **Turbo Streams** before **redirect** / **frame** solutions when the UX allows
   (`rules/controllers.mdc`, `skills/writing-hotwire/SKILL.md`).
 - **One vertical slice split** across many tasks that **never** pass CI in between.
+- **The same method or behaviour defined on more than one entity** across tasks —
+  shared behaviour gets **one home**: a concern or the owning model
+  (`rules/models.mdc`). Per-entity copies drift the moment one changes; tasks
+  drafted entity-by-entity hide this, so it must be caught at the plan level.
 
 ## Self-review
 
@@ -452,19 +496,32 @@ After drafting the plan:
 2. **Placeholder scan:** Search for forbidden vague phrases (see above).
 3. **Naming consistency:** Method names, policy methods, and route helpers match
    across tasks (no `publish` vs `publish!` drift unless intentional).
-4. **Anti-pattern scan:** Check that no task normalizes a current application
+4. **Duplication scan:** Read the plan as a whole — not task by task — and
+   search for the same method name or behaviour defined on more than one
+   model or entity across tasks. Each hit is a defect: rewrite the tasks so
+   the behaviour has one home — a concern or the owning model
+   (`rules/models.mdc`) — and the other tasks reference it.
+5. **Anti-pattern scan:** Check that no task normalizes a current application
    anti-pattern — even if the existing code does it. Flag and route around it.
-5. **Convention coverage:** List every area the plan touches (migrations,
+6. **Convention coverage:** List every area the plan touches (migrations,
    models, policies, routes, controllers, views, Hotwire, i18n, mailers, jobs,
    tests, …) and confirm you read that area's rule + skill from the table
    before writing its tasks. Any area written from memory: re-read the row
    and re-check those tasks now.
-6. **Frame check:** Re-read the **Problem:** line. Confirm every task serves
+7. **Frame check:** Re-read the **Problem:** line. Confirm every task serves
    it, no task exists only to prop up the chosen mechanism, and nothing in the
    plan works around a framework default. If a task fails this check, the
    issue is usually the approach, not the task — go back through the
    **Approach gate** before patching.
-7. **Primitives trace (when the tree exists):** Every task's behaviour maps to
+8. **Delivery check:** Estimate the changed application-code lines the plan
+   produces and hold it against **PR and deployment scope**: one PR under the
+   ~400-line target, or declared seam-based boundaries in the **Delivery:**
+   line, each independently deployable. A migration whose contract step rides
+   in the same PR as its expand step, or a task only safe once a later PR
+   lands, fails this check. An estimate past ~800 means the slice itself is
+   too big — route it back to the spec's **Delivery sequence** as a split,
+   not a fatter plan.
+9. **Primitives trace (when the tree exists):** Every task's behaviour maps to
    an active Intent clause in the capability doc; every clause this plan
    touches appears in the header's **Capability:** line; supersessions are
    explicit in both plan and doc; nothing contradicts `compilation.md` or the

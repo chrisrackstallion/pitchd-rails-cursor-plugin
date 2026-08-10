@@ -158,6 +158,7 @@ Before finishing, verify:
 - [ ] No logic that belongs in a service sitting on the model (multi-model, external calls)
 - [ ] No logic that belongs on the model sitting in a service (single-model operations)
 - [ ] Concerns are self-contained (associations + scopes + methods together)
+- [ ] Every concern method earns its place — each is part of the capability all includers get; methods only one includer uses, or that aren't about the capability, live on that model instead
 - [ ] Database constraints back up any model validations
 - [ ] Scopes handle all domain queries — no raw `where` chains in controllers
 - [ ] Callbacks are limited to async dispatch and derived data

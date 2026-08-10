@@ -147,14 +147,29 @@ one-line provenance entries. Not routine implementation details.
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
 layer for rules; `writing-pitchd-rails-plans` fit; red flags from `writing-pitchd-rails-plans` (services,
 RPC, missing policy, Turbo escalation before simpler options, duplicate test
-coverage). **Frame:** the header's **Problem:** line states a real need (not a
+coverage). **Cross-task duplication:** read the task list as a whole — the
+same method or behaviour defined on more than one entity across tasks is a
+finding (one home: a concern or the owning model, `rules/models.mdc`);
+per-task reading hides it. **Delivery scope:** the header carries a
+**Delivery:** line and the plan honours `writing-pitchd-rails-plans` § PR and
+deployment scope — one PR within the ~400-changed-app-line target, or
+declared seam-based PR boundaries, each an independently deployable vertical
+increment; when the spec has a `## Delivery sequence`, the plan covers
+exactly **one slice** of it. A layer-split boundary, a contract-step
+migration riding with its expand step, a task only safe once a later PR
+lands, or a plan spanning multiple slices is a finding.
+**Frame:** the header's **Problem:** line states a real need (not a
 restated mechanism), the **Approach** follows from it, **Alternatives
 considered:** is present (an explicit "none credible" counts — absence does
 not), and no task works around a framework default. Fighting the framework is
 a `philosophy:` finding even when every tactic is clean.
 
 **Implementation:** Map changed files to skills; compass on overall drift; one
-home per behaviour for tests (`writing-tests`).
+home per behaviour for tests (`writing-tests`). **One home per behaviour for
+code too:** scan the scope as a whole, not file by file — grep the changed
+files for method definitions that repeat across entities. The same method
+defined on multiple models is a `tactical:` finding: shared behaviour belongs
+in a concern or on the owning model (`rules/models.mdc`).
 
 ### 7. Surroundings pass (pre-existing code in touched files)
 
@@ -203,6 +218,26 @@ a thin wrapper around Active Record is not a service object."
 Suppress only findings you cannot verify at all. Do not suppress because the issue
 seems small — small plugin violations are still violations.
 
+**Necessity gate for everything that is not a rule violation.** Recommendations
+and judgment-based feedback go through a filter before they reach the report:
+is this change actually necessary, or does it add complexity to the
+implementation, the tests, or both? A recommendation that adds indirection,
+another object, another layer of specs, or configuration for a hypothetical
+future need is over-engineering wearing a review's clothes — drop it. The
+omakase posture applies to the reviewer too: the boring, direct version that
+satisfies the rules is the goal, not the most defensively engineered one.
+Concretely, before writing a recommendation ask:
+
+- Does acting on it make the code **simpler or more correct** — or merely
+  more elaborate?
+- Does it create **new test surface** beyond the one-home-per-behaviour rule
+  (`rules/testing.mdc`)?
+- Would the implementor have to add a method, object, or abstraction that
+  fails the "earns its place" test (`rules/models.mdc`, `rules/services.mdc`)?
+
+If a recommendation fails this gate, it does not belong in the report at any
+confidence level. Rule violations are exempt — they are always reported.
+
 ## Report format
 
 Produce a single Markdown report with these sections. Every finding carries a
@@ -240,6 +275,9 @@ The pattern's existence does not excuse it — name it clearly. Split by urgency
   **Why deferred:** [Scope or risk reason.]
 
 ### Recommendations (non-blocking)
+_Necessity-gated (§8): only recommendations whose benefit outweighs the
+implementation and test complexity they add. No speculative hardening,
+no extra layers, no nice-to-haves._
 - [confidence: X.X] ...
 
 ### Surroundings (pre-existing code in touched files)
