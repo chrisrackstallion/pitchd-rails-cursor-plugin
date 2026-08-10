@@ -147,14 +147,21 @@ one-line provenance entries. Not routine implementation details.
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
 layer for rules; `writing-pitchd-rails-plans` fit; red flags from `writing-pitchd-rails-plans` (services,
 RPC, missing policy, Turbo escalation before simpler options, duplicate test
-coverage). **Frame:** the header's **Problem:** line states a real need (not a
+coverage). **Cross-task duplication:** read the task list as a whole — the
+same method or behaviour defined on more than one entity across tasks is a
+finding (one home: a concern or the owning model, `rules/models.mdc`);
+per-task reading hides it. **Frame:** the header's **Problem:** line states a real need (not a
 restated mechanism), the **Approach** follows from it, **Alternatives
 considered:** is present (an explicit "none credible" counts — absence does
 not), and no task works around a framework default. Fighting the framework is
 a `philosophy:` finding even when every tactic is clean.
 
 **Implementation:** Map changed files to skills; compass on overall drift; one
-home per behaviour for tests (`writing-tests`).
+home per behaviour for tests (`writing-tests`). **One home per behaviour for
+code too:** scan the scope as a whole, not file by file — grep the changed
+files for method definitions that repeat across entities. The same method
+defined on multiple models is a `tactical:` finding: shared behaviour belongs
+in a concern or on the owning model (`rules/models.mdc`).
 
 ### 7. Surroundings pass (pre-existing code in touched files)
 

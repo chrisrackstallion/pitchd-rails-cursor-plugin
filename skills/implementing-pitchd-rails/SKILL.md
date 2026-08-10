@@ -117,9 +117,16 @@ than Rails defaults, and several deliberately differ from common practice.
 ### 4. Implement
 
 1. Implement **exactly** what the task specifies (and the plan's file layout if given).
-2. **Tests:** Follow `writing-tests` and `rules/testing.mdc`. If the task says **TDD**, follow that order (red → green → refactor).
-3. **Verify:** Run the tests and any checks the repo uses for what you changed. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
-4. **Self-review** (below) before reporting.
+2. **Search before defining:** before adding a new public method, grep the app
+   (and the plan's other tasks, when a plan path was given) for the same method
+   name on other entities. If the behaviour already exists — or the plan defines
+   it on another model — do **not** write a second copy: reuse the existing home,
+   or name the shared capability as a concern-extraction candidate
+   (`rules/models.mdc`) in your report. Restructuring beyond task scope is the
+   orchestrator's call — escalate it, never silently duplicate.
+3. **Tests:** Follow `writing-tests` and `rules/testing.mdc`. If the task says **TDD**, follow that order (red → green → refactor).
+4. **Verify:** Run the tests and any checks the repo uses for what you changed. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
+5. **Self-review** (below) before reporting.
 
 **Do not create git commits** (no `git commit`). The parent or human owns version control; leave changes for them to commit unless the delegating prompt says otherwise.
 
@@ -158,6 +165,8 @@ If a cop cannot be satisfied with a **correct** code fix and needs a human polic
 **Quality:** Best work? Names accurate? Code maintainable?
 
 **Discipline:** YAGNI? Only what was requested? Plugin rules applied (not just existing app patterns)?
+
+**Duplication:** No method you added already exists on another entity? You searched before defining (Implement step 2)?
 
 **Testing:** Behaviour verified (not only mocked internals)? TDD if required? Right spec layer per `writing-tests`?
 

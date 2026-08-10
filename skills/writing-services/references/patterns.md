@@ -194,6 +194,11 @@ end
   not a result object
 - **Let exceptions propagate** — use bang methods internally; the controller
   or caller handles the exception
+- **Every method earns its place** — before adding a method, question
+  whether the PORO is where it belongs. Each public method should be a
+  verb of the named concept; a method that operates on the model alone
+  goes back on the model, presentation goes to a helper. A PORO that
+  accumulates unrelated methods is a service object with a nicer name
 
 ### File Organisation
 

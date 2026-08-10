@@ -208,7 +208,30 @@ from **R1**.
 
 ## After all tasks are Approved (Pitchd)
 
-### 5. Primitives close-out pass (required when the plan has a Capability line)
+### 5. Whole-run coherence review (required for multi-task runs)
+
+Per-task reviews only ever see one task's diff — defects that span tasks are
+structurally invisible to them. Before the primitives close-out, invoke
+**`pitchd-rails-reviewer`** once more over the **entire run's combined scope**:
+
+- **Phase:** `implementation`
+- **Scope:** every file changed across the run (gather read-only via
+  `git diff` / `git status`). State that this is a **final sign-off** pass so
+  the reviewer reads full scope; omit **User revisions**.
+- **Focus (name it in the prompt):** cross-task coherence the per-task loops
+  could not see — the **same method or behaviour defined on more than one
+  entity** (one home: a concern or the owning model, `rules/models.mdc`),
+  duplicated logic across tasks, naming drift between tasks, and duplicate
+  test coverage across layers (`rules/testing.mdc`).
+
+**Issues found** → route each finding back to **`pitchd-rails-implementor`**
+as a fix pass (same shape as the per-task loop), then re-run this review
+scoped via **User revisions** to what changed. Loop until Approved.
+
+**Skip only** when the run executed a **single task** — that task's own review
+already saw the whole diff.
+
+### 6. Primitives close-out pass (required when the plan has a Capability line)
 
 Part of the definition of done — **not an offer to the user**. The orchestrator
 updates the capability doc directly (see the Hard rules carve-out):
@@ -238,17 +261,18 @@ updates the capability doc directly (see the Hard rules carve-out):
 If a reviewer report proposed a **`compilation.md` amendment**, surface it to
 the user — that file is human-owned; the orchestrator never edits it.
 
-### 6. Handoff for user sign-off
+### 7. Handoff for user sign-off
 
 Deliver a short **completion package**:
 
 - Execution mode used and **task scope** completed.
 - Per-task outcome (Approved after how many review iterations).
+- **Whole-run coherence review** outcome (Step 5): Approved after N iterations, or skipped (single-task run).
 - **Pitchd reviewer** final notes (if any non-blocking recommendations were in those reports).
-- **Primitives close-out** summary (Step 5): status, eval rows updated, the provenance line appended — or why status could not flip.
+- **Primitives close-out** summary (Step 6): status, eval rows updated, the provenance line appended — or why status could not flip.
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it).
 
-**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Surface any proposed `compilation.md` amendments (Step 5) for the user's decision.
+**Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Surface any proposed `compilation.md` amendments (Step 6) for the user's decision.
 
 ## Related
 
