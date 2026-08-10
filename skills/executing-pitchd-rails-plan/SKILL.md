@@ -271,6 +271,7 @@ Deliver a short **completion package**:
 - **Pitchd reviewer** final notes (if any non-blocking recommendations were in those reports).
 - **Primitives close-out** summary (Step 6): status, eval rows updated, the provenance line appended — or why status could not flip.
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it).
+- The plan header's **Delivery:** boundaries restated (which tasks compose which PR), so the user cuts PRs as planned — the orchestrator never commits or opens PRs itself.
 
 **Stop** and ask the **user** explicitly for **sign-off** before the orchestrator treats the engagement as closed. Surface any proposed `compilation.md` amendments (Step 6) for the user's decision.
 

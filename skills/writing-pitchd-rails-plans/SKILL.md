@@ -208,6 +208,34 @@ not intention, and are correct to write at plan time.
 - If the spec spans **independent subsystems**, split into **separate plans**
   (one deployable slice each), or separate epics with clear boundaries.
 
+## PR and deployment scope
+
+The unit of delivery is the **pull request**. The best practice is fixed here
+so every plan applies the same one — decide the delivery shape **before**
+writing tasks and declare it in the header's **Delivery:** line:
+
+1. **One plan, one PR, one deployable slice — by default.** The whole task
+   list lands as a single PR a reviewer can hold in their head in one
+   sitting. Main stays deployable after every merge.
+2. **Size heuristic:** target **≤ ~400 changed lines of application code**
+   per PR (specs ride along and don't count against the target; generated
+   files excluded). Past that, review quality drops — split. Crossing ~800
+   is not a judgment call: it is two plans.
+3. **Split by dependency seam, not by layer.** When work exceeds one PR, cut
+   it into **sequentially shippable vertical increments**, each independently
+   valuable and safe with only the PRs before it. Never "all models PR, then
+   all controllers PR", and never a PR that is only correct once a future PR
+   lands.
+4. **Schema changes follow expand → migrate → contract across PRs.** The
+   additive migration ships in the same PR as the code that uses it;
+   destructive or contracting steps (dropping columns, tightening constraints
+   on old data) go in a follow-up PR after the deploy proves them safe — see
+   `rules/migrations.mdc`.
+5. **Dark until wired — no feature-flag framework.** For multi-PR features,
+   earlier PRs ship code that is unreachable (routes and links not yet
+   wired); the final PR wires the entry point. Omakase incremental delivery
+   without a flag dependency.
+
 ## Save location
 
 Default: **`docs/plans/YYYY-MM-DD-<feature-name>.md`** in the app repo (create
@@ -337,6 +365,11 @@ a listed one is checkable.]
 
 **Rails shape:** [Key models, resources, policies]
 
+**Delivery:** [`one PR` (default), or the PR boundaries by task — e.g.
+`PR 1: Tasks 1–3 (schema + model + policy); PR 2: Tasks 4–6 (UI, wires the
+entry point)` — each boundary an independently deployable vertical increment.
+See PR and deployment scope.]
+
 **Assumptions:** [Only when the user said to proceed without answering
 requirements-gate questions — list each assumption so review can challenge it.
 Omit this line otherwise.]
@@ -457,7 +490,13 @@ After drafting the plan:
    plan works around a framework default. If a task fails this check, the
    issue is usually the approach, not the task — go back through the
    **Approach gate** before patching.
-8. **Primitives trace (when the tree exists):** Every task's behaviour maps to
+8. **Delivery check:** Estimate the changed application-code lines the plan
+   produces and hold it against **PR and deployment scope**: one PR under the
+   ~400-line target, or declared seam-based boundaries in the **Delivery:**
+   line, each independently deployable. A migration whose contract step rides
+   in the same PR as its expand step, or a task only safe once a later PR
+   lands, fails this check.
+9. **Primitives trace (when the tree exists):** Every task's behaviour maps to
    an active Intent clause in the capability doc; every clause this plan
    touches appears in the header's **Capability:** line; supersessions are
    explicit in both plan and doc; nothing contradicts `compilation.md` or the

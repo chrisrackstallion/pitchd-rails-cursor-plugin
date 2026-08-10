@@ -174,7 +174,10 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 
 1. Placeholder scan — no TBD that blocks planning.
 2. Internal consistency — behaviour vs boundaries.
-3. Scope — one implementation plan or explicit split.
+3. Scope — one implementation plan or explicit split; each plan sized to
+   ship as one reviewable PR (see `writing-pitchd-rails-plans` § PR and
+   deployment scope), so oversized scope is cut here, not discovered at
+   planning.
 4. Ambiguity — resolve dual interpretations.
 
 **User review gate**
