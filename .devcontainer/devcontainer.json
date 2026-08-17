@@ -6,7 +6,7 @@
   },
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "remoteUser": "root",
-  "postCreateCommand": "npm run validate",
+  "postCreateCommand": "bundle install",
   "customizations": {
     "vscode": {
       "settings": {
