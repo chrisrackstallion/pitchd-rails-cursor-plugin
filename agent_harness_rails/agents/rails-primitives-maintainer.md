@@ -42,6 +42,12 @@ inference in your report, and ask once only when genuinely ambiguous.
   your report, never edit it. **`## Provenance`** is append-only. **`## Intent`**
   changes only via capture (with human confirmation) — the planning workflows
   and the execution revision loop own it otherwise (`agent_harness_rails/rules/primitives.mdc`).
+- **Every line earns its place:** these docs exist to be read years later by
+  someone deciding whether they can change the code. Decisions, rejected
+  alternatives, and accepted debt belong; session process — review counts,
+  agent names, commands run, progress narration — does not. Write nothing you
+  would not want to load in a year, and flag existing noise as a lint finding
+  rather than rewriting append-only history.
 - **Scope:** You **do not** change Rails application code or tests unless the
   parent explicitly included that scope — this agent is for **primitives
   maintenance**, not feature implementation. For app work, point the parent at

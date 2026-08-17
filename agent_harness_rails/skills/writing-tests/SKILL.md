@@ -401,7 +401,23 @@ end
 
 Every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
-### 7. Naming Conventions
+**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is a legitimate way to confirm your own deletion landed. It is scaffolding, not coverage: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
+
+### 7. Running Specs
+
+Run the **narrowest slice that covers what you changed** — one spec file, or one
+example while chasing a failure. A full-suite run costs minutes; a targeted run
+costs seconds, and that time is paid by everyone waiting on the work.
+
+`bin/rspec` with no arguments is **earned**, not routine: a cross-cutting change
+(factory, `spec/support/`, `rails_helper.rb`, shared concern, schema), a
+spec-refactor session that moved or deleted specs, or the single final
+verification before handoff. Everything else leaves cross-slice regressions to
+branch CI. Full rule and the situation table: **`agent_harness_rails/rules/testing.mdc`**
+§ Running Specs. Never call the suite green off a slice run — report the command
+you ran.
+
+### 8. Naming Conventions
 
 | Thing | Convention | Examples |
 |-------|-----------|----------|
@@ -414,7 +430,7 @@ Every test must have at least one positive assertion. A test that consists only 
 | Traits | Adjective or state | `:published`, `:archived`, `:with_comments` |
 | System specs | User action or flow | `"User publishes an article"`, `"Admin manages users"` |
 
-### 8. Verification
+### 9. Verification
 
 Before finishing, verify:
 
@@ -441,6 +457,8 @@ Before finishing, verify:
 - [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
 - [ ] Job/mailer callers assert enqueuing only — the job/mailer spec owns the work
 - [ ] No standalone `not_to` assertions — every test has at least one positive assertion; `not_to` is only used alongside a positive one
+- [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
+- [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without one of the earned reasons (§7)
 
 ## References
 

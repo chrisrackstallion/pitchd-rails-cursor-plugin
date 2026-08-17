@@ -208,9 +208,12 @@ Execute in an order that keeps the page working and the diff reviewable:
    the same commit / batch.
 4. **Run the focused slice after each step:**
    ```bash
-   bin/rspec spec/system  # or the relevant subset
+   bin/rspec spec/system/articles_spec.rb  # the specs for this behaviour only
    ```
-   Green before the next step. If red, fix immediately.
+   The specs exercising the controllers in this batch — not all of
+   `spec/system/`, which is the slowest directory in the suite
+   (`agent_harness_rails/rules/testing.mdc` § Running Specs). Green before the
+   next step. If red, fix immediately.
 5. **Run RuboCop on touched Ruby files** (`bin/rubocop`) — controllers are
    JS but ERB partials and spec files often co-change.
 

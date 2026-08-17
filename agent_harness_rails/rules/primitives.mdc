@@ -137,6 +137,25 @@ confirmed, deprecated) — not per edit. Each line: date, what happened, link to
 alternatives or knowingly accepted debt when there were any. Multi-line entries
 are a lint finding — the section must stay cheap to load and cheap to append.
 
+**Every line earns its place with a future reader.** The test: a developer or
+agent reading this doc in a year, deciding whether to change the code, is
+better off for that line. Decisions, rejected alternatives, and accepted debt
+pass. **Mid-task process does not** — how the work got done is git's job, not
+provenance's:
+
+| Keep out | Why |
+|----------|-----|
+| Review iteration counts, task counts, fix-pass tallies | Says how the sausage was made; changes no future decision |
+| Who or what agent did the work, which skill or subagent ran | Not a property of the capability |
+| Commands run, suites passed, lint status | Evaluations rows and CI are where proof lives |
+| Progress narration ("started X", "continuing Y", "blocked then unblocked") | Only events land — a thing that happened and stayed true |
+| Restated intent clauses or Shape bullets | Already above in the doc |
+
+The same test governs the whole tree: **`## Intent`**, **`## Shape`**, and
+**`compilation.md`** hold only what a future reader must know to change the
+code correctly. Process, status chatter, and anything derivable from the code
+or the harness has no home here.
+
 ## Size discipline (lint tripwires)
 
 | Limit | Finding when exceeded |

@@ -99,7 +99,8 @@ a planner lazy backfill — never from what a plan promises. A `shaping` or
 
 - YYYY-MM-DD — [one line per event: shaped / planned / built / amended /
   revised / backfilled / confirmed / deprecated; link plan or PR; rejected
-  alternatives; accepted debt.]
+  alternatives; accepted debt. Nothing a future reader would not act on —
+  no review counts, agent names, or commands run.]
 ```
 
 ## Worked lifecycle lines (for reference)
@@ -108,7 +109,7 @@ a planner lazy backfill — never from what a plan promises. A `shaping` or
 - 2026-08-04 — shaped via brainstorming session; reactions explicitly out of scope.
 - 2026-08-05 — planned: docs/plans/2026-08-05-comment-threads.md. Rejected
   separate Thread model (threading is comment shape, not an addressable resource).
-- 2026-08-07 — built; 4 tasks, approved after 2 review iterations. Accepted:
+- 2026-08-07 — built: docs/plans/2026-08-05-comment-threads.md. Accepted:
   depth cap is validation-only, no DB constraint.
 - 2026-09-18 — planned: docs/plans/2026-09-18-deep-comment-threads.md.
   Rejected raising the cap (same cliff, deferred).

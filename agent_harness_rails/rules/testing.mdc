@@ -222,6 +222,27 @@ end
 
 The rule: every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
+**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is a legitimate way to confirm your own deletion actually landed. It is scaffolding, not coverage: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed — the next reader inherits a spec that documents no behaviour and passes forever.
+
+## Running Specs
+
+Run the **narrowest slice that covers what you changed**. A full-suite run costs minutes of wall clock; a targeted run costs seconds. Typing `bin/rspec` with no arguments because it is the easiest command to reach for is a real cost, paid by everyone waiting on the work.
+
+| Situation | Run |
+|-----------|-----|
+| Edited one model, controller, job, mailer, or policy | That object's spec file — `bin/rspec spec/models/article_spec.rb` |
+| Working a single failure | That one example — `bin/rspec spec/models/article_spec.rb:42` |
+| Finished a task or vertical slice | The specs covering the slice — the spec files for the objects you touched, across layers, for that resource |
+
+A **full-suite run is earned, not routine**. Run `bin/rspec` when:
+
+- A **cross-cutting** file changed — a factory, anything in `spec/support/`, `rails_helper.rb`, a shared concern, the schema.
+- A **spec-refactor session** moved, merged, or deleted specs (`agent_harness_rails/skills/refactoring-rails-specs/SKILL.md`).
+- **Final verification** before handoff — once, at the end of a plan run, not at every task (`agent_harness_rails/skills/executing-rails-plan/SKILL.md`).
+- No CI covers the branch and it is about to be handed over as green.
+
+Otherwise leave cross-slice regressions to branch CI. And never describe the suite as green off a slice run — report the command you actually ran.
+
 ## Database Strategy
 
 Transactional fixtures cover everything — including system specs. Since

@@ -298,14 +298,19 @@ updates the capability doc directly (see the Hard rules carve-out):
 3. **Provenance** — append **one** line for the whole run:
 
    ```markdown
-   - YYYY-MM-DD — built [or amended]: docs/plans/<plan>.md; N tasks, approved
-     after M review iterations. [Accepted debt or notable reviewer-approved
-     exceptions, one line.]
+   - YYYY-MM-DD — built [or amended]: docs/plans/<plan>.md. [Accepted debt,
+     rejected alternatives, or notable reviewer-approved exceptions, one line.]
    ```
+
+   **No run mechanics** — task counts, review iteration counts, fix passes,
+   which subagents ran, commands executed. Those belong in this run's handoff
+   report (step 9) and git, not in a doc someone reads in a year to decide
+   whether they can change the code (`agent_harness_rails/rules/primitives.mdc`
+   § Provenance).
 
    Fold in any **`primitives:` provenance candidates** from the reviewer
    reports (decisions, constraints, accepted debt) — one line each, only those
-   with durable value.
+   that pass the same earns-its-place test.
 4. **Index** — update the capability's `docs/primitives/index.md` line to the
    new status (it still says `planned` from plan approval — sync it, don't
    merely confirm it).

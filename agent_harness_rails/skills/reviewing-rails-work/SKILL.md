@@ -133,7 +133,10 @@ suggestions:
 **Provenance candidates (non-blocking):** decisions with rationale, non-obvious
 constraints discovered, knowingly accepted debt — list them in the report's
 **primitives:** section so the execution close-out pass can file them as
-one-line provenance entries. Not routine implementation details.
+one-line provenance entries. Not routine implementation details, and never run
+mechanics (review iterations, fix passes, commands, who did the work) — a
+candidate must be something a reader a year out would act on
+(`agent_harness_rails/rules/primitives.mdc` § Provenance).
 
 ### 6. What to check by phase
 

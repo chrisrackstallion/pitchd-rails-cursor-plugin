@@ -119,7 +119,7 @@ than Rails defaults, and several deliberately differ from common practice.
    (`agent_harness_rails/rules/models.mdc`) in your report. Restructuring beyond
    task scope is the orchestrator's call — escalate it, never silently duplicate.
 3. **Tests:** Follow `writing-tests` and `agent_harness_rails/rules/testing.mdc`. If the task says **TDD**, follow that order (red → green → refactor).
-4. **Verify:** Run the tests and any checks the repo uses for what you changed. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`agent_harness_rails/rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
+4. **Verify:** Run the **narrowest spec slice that covers what you changed** — the spec files for the objects you touched, not `bin/rspec` bare. A full-suite run is earned (cross-cutting change, spec-refactor session, final pre-handoff verification), not the default; wall clock spent on it is paid by everyone waiting (`agent_harness_rails/rules/testing.mdc` § Running Specs). Report the commands you actually ran — never call the suite green off a slice. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`agent_harness_rails/rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
 5. **Self-review** (below) before reporting.
 
 **Do not create git commits** (no `git commit`). The parent or human owns version control; leave changes for them to commit unless the delegating prompt says otherwise.
@@ -162,7 +162,7 @@ If a cop cannot be satisfied with a **correct** code fix and needs a human polic
 
 **Duplication:** No method you added already exists on another entity? You searched before defining (Implement step 2)?
 
-**Testing:** Behaviour verified (not only mocked internals)? TDD if required? Right spec layer per `writing-tests`?
+**Testing:** Behaviour verified (not only mocked internals)? TDD if required? Right spec layer per `writing-tests`? Every spec you are leaving behind asserts behaviour a user or caller gets — no spec whose only job is to prove a former feature is gone; any `not_to` scaffolding you wrote to confirm a deletion is deleted (`agent_harness_rails/rules/testing.mdc`).
 
 **RuboCop (when the app uses it):** **`bin/rubocop` zero offences** on the completion run? No inline or config suppressions added?
 

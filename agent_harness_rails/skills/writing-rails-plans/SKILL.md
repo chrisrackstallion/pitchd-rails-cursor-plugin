@@ -611,6 +611,11 @@ Once the plan is finally approved (Pass 1 with no edits, or Pass 2 Approved):
      alternatives from the header's Alternatives considered, one line.]
    ```
 
+   Nothing about how the plan got written — reviewer passes, questions asked,
+   sections rewritten. The line is for a reader a year out deciding whether
+   they can change this code (`agent_harness_rails/rules/primitives.mdc`
+   § Provenance).
+
 3. Add or update the capability's line in `docs/primitives/index.md`.
 
 ## Revision mode

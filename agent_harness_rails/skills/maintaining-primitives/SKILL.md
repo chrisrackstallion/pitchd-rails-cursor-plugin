@@ -125,6 +125,11 @@ human confirmation between, ordered by where change is coming.
   capability), multi-line provenance entries, doc >~150 lines,
   `compilation.md` >~50 lines.
 - No content that belongs elsewhere: app code, plan tasks, restated harness rules.
+- **Process noise** — provenance lines carrying review or task counts, agent or
+  skill names, commands run, or progress narration. Every line must earn its
+  place with a reader deciding whether to change the code
+  (`agent_harness_rails/rules/primitives.mdc` § Provenance). Report as a
+  finding; provenance is append-only, so the fix is a human call, not a rewrite.
 - Stray files outside the four allowed types.
 
 ## Quick reference
@@ -136,6 +141,7 @@ human confirmation between, ordered by where change is coming.
 | Propose `compilation.md` amendments to the human | Editing `compilation.md` directly |
 | Read 3 files max (`lint` excepted) | Traversing links, loading the whole tree outside `lint` |
 | One line per provenance event | A paragraph per event (lint finding) |
+| Lines a future reader would act on: decisions, rejected alternatives, debt | Run mechanics: review counts, task counts, agent names, commands, progress narration |
 
 ## Common mistakes
 
@@ -143,6 +149,10 @@ human confirmation between, ordered by where change is coming.
   The four file types are the whole tree; scope is the anti-sprawl mechanism.
 - **Per-edit provenance** — five plan revisions are one `planned` event, not
   five lines.
+- **Process noise as provenance** — "approved after 3 review iterations",
+  "implemented by rails-implementor", "suite green". None of it changes a future
+  decision; all of it makes the section more expensive to read and append. The
+  event, its reasoning, and what was rejected are the payload.
 - **Capture without confirmation** — reconstructed intent shipped as fact.
   Unconfirmed clauses mislead every future planner; always close the loop.
 - **Evaluations rows written from intention** — rows come from specs that
