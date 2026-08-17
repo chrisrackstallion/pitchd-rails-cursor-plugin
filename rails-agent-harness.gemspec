@@ -34,9 +34,11 @@ Gem::Specification.new do |spec|
                .select { |path| File.file?(path) }
                .reject { |path| File.basename(path).start_with?(".") }
 
+  # rubocop.yml is shipped so apps can `inherit_gem` it — see the README.
   spec.files = payload +
                Dir.glob("lib/**/*.rb") +
-               [ "exe/rails-agent-harness", "LICENSE", "README.md" ].select { |f| File.exist?(f) }
+               [ "exe/rails-agent-harness", "LICENSE", "README.md", "rubocop.yml" ]
+                 .select { |f| File.exist?(f) }
 
   spec.bindir = "exe"
   spec.executables = [ "rails-agent-harness" ]

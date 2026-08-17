@@ -26,6 +26,16 @@ RSpec.describe "gem packaging" do
     expect(spec.executables).to eq([ "rails-agent-harness" ])
   end
 
+  it "ships rubocop.yml so apps can inherit_gem it" do
+    expect(spec.files).to include("rubocop.yml")
+  end
+
+  it "depends on nothing at runtime" do
+    # RuboCop in particular: the gem ships a YAML file, so requiring the linter
+    # would force it into every consumer's bundle and fight their version pin.
+    expect(spec.dependencies).to be_empty
+  end
+
   it "excludes editor links, docs, and dev tooling" do
     expect(spec.files.grep(%r{\A\.(claude|cursor)/})).to be_empty
     expect(spec.files.grep(%r{\Adocs/})).to be_empty

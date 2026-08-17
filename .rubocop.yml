@@ -1,14 +1,16 @@
-# This repo eats its own cooking: rails-agent-harness/rules/rubocop.mdc names
-# rubocop-rails-omakase as the ruleset source of truth, so inherit it rather than
-# invent a competing style. Consumers do the same in their own app — the harness
-# deliberately ships no config pack.
+# This repo eats its own cooking: the same two-layer inheritance a consuming app
+# is told to use in the README — omakase as the ruleset source of truth, then the
+# harness's own thin layer on top.
 inherit_gem:
   rubocop-rails-omakase: rubocop.yml
 
+inherit_from:
+  - rubocop.yml
+
 AllCops:
+  # The minimum Ruby consumers may be on (spec.required_ruby_version), not the
+  # latest — cops must not suggest syntax an older consuming app cannot run.
   TargetRubyVersion: 3.1
-  NewCops: enable
-  SuggestExtensions: false
   Exclude:
     - "rails-agent-harness/**/*"
     - "vendor/**/*"

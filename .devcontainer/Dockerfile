@@ -2,9 +2,12 @@
 # Debian/glibc: supported base for Cursor and VS Code remote server (Alpine/musl is not).
 #
 # Ruby, not Node: this repo is a gem. Its own tooling is bundler, rspec, and
-# rubocop; the payload under rails-agent-harness/ is markdown. Matches
-# required_ruby_version in rails-agent-harness.gemspec.
-FROM ruby:3.4-bookworm
+# rubocop; the payload under rails-agent-harness/ is markdown.
+#
+# Latest Ruby here and in CI, deliberately ahead of the gemspec's
+# required_ruby_version — that floor stays low so consuming Rails apps on older
+# Rubies can still install the harness. Development runs current; support is wide.
+FROM ruby:4.0-bookworm
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \

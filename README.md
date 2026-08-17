@@ -62,11 +62,35 @@ Two constraints worth knowing:
 - **Keep skills flat.** One level: `skills/<name>/SKILL.md`. Claude Code discovers exactly that shape and does not recurse into subdirectories, so a nested skill is invisible to it even though Cursor would find it.
 - **Names are global.** Both editors key on the `name:` in frontmatter, so an app skill can't reuse a vendored name.
 
+### Inheriting the RuboCop config
+
+The gem ships a `rubocop.yml` your app can inherit, so the linter and the harness agree:
+
+```yaml
+# .rubocop.yml in your app
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+  rails-agent-harness: rubocop.yml
+```
+
+Order matters. The harness config is a **thin layer over omakase**, not a replacement — [`rules/rubocop.mdc`](rails-agent-harness/rules/rubocop.mdc) names `rubocop-rails-omakase` as the ruleset source of truth, so the harness never restates or contradicts its cop settings. It adds `NewCops: enable`, on the principle that a pending cop is a deferred offence.
+
+**The gem does not depend on RuboCop, and shouldn't.** It ships a YAML file; reading it requires nothing. RuboCop and `rubocop-rails-omakase` belong in your app's own Gemfile, at whatever versions you pin — a hard dependency here would force RuboCop into the bundle of every app that installs the harness, including ones that don't lint, and would fight your own version constraint.
+
+Most of what the harness asks for is process rather than configuration — zero offences before work is complete, fix in code, never `# rubocop:disable`, never a `.rubocop_todo.yml`. No config can enforce that; the `running-rubocop` skill and the rule are what hold agents to it.
+
 ### Your editor will show the harness twice
 
 Both editors expand a symlinked directory inline in the file tree, so `rails-agent-harness/skills/` and `.claude/skills/` appear as separate copies of the same content. They are one set of files — same inode, edit either path. Nothing to clean up.
 
 ## What you can do
+
+### Shape an idea before planning it
+> *"I want to let people follow projects, not sure how it should work"*
+
+Use the **`brainstorming-rails-omakase`** skill. It turns a half-formed idea into an approved requirements spec through dialogue, with omakase Rails as the constraint — server-owned truth, REST gravity, fat models, Hotwire-first, no premature service layer. One question at a time, two or three approaches with their trade-offs stated in Rails terms, and each approach naming **where the domain logic will live**. It ends by writing a spec to `docs/brainstorms/` with a **delivery sequence**: the ordered deployable slices, one plan each. A hard gate stops it writing code or migrations before you've approved the spec.
+
+Reach for it when the scope is unclear or several directions look valid. When you already know what you want built, go straight to a plan.
 
 ### Write a plan
 > *"Write a plan for adding comment threads to posts"*
@@ -117,13 +141,14 @@ Every internal reference is written in one canonical form — `rails-agent-harne
 
 ## Credits
 
-This harness stands on the shoulders of two excellent Cursor plugin ecosystems and one reference guide:
+This harness stands on the shoulders of two excellent Cursor plugin ecosystems, one reference guide, and one book:
 
+- **Chad Fowler** and his book **[Regenerative Software](https://www.linkedin.com/posts/fowlerchad_im-genuinely-excited-to-share-the-early-share-7488974712543277056-iRQi/)** — the inspiration for the **primitives** tree. Durable intent, the constraints code compiles into, evaluations that prove each clause, and append-only provenance all come from that thinking: the record of *why* outlives any particular implementation.
 - **[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)** (Every) — for strong **planning**, **execution**, and **review** skills and patterns; the **DHH Rails reviewer** persona in particular is a highlight.
 - **[Superpowers](https://github.com/obra/superpowers)** — for disciplined **planning** and **execution** workflows.
 - **[37signals-skills](https://github.com/marckohlbrugge/37signals-skills)** (Marc Köhlbrugge, formerly `unofficial-37signals-coding-style-guide`) — the community-maintained guide to 37signals coding patterns, fetched selectively as a supplemental reference.
 
-Thank you to all three projects for the ideas and structure that made this harness possible.
+Thank you to all four for the ideas and structure that made this harness possible.
 
 ## License
 
