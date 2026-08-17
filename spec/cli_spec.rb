@@ -3,7 +3,7 @@
 require "spec_helper"
 require "stringio"
 
-RSpec.describe RailsAgentHarness::CLI do
+RSpec.describe AgentHarnessRails::CLI do
   def run(*argv)
     out = StringIO.new
     err = StringIO.new
@@ -19,7 +19,7 @@ RSpec.describe RailsAgentHarness::CLI do
         status, out, err = run(invocation)
 
         expect(status).to eq(0)
-        expect(out).to include("usage: rails-agent-harness")
+        expect(out).to include("usage: agent_harness_rails")
         expect(err).to be_empty
       end
     end
@@ -28,7 +28,7 @@ RSpec.describe RailsAgentHarness::CLI do
       status, out, = run("install", "--help", "--path", project)
 
       expect(status).to eq(0)
-      expect(out).to include("usage: rails-agent-harness")
+      expect(out).to include("usage: agent_harness_rails")
       expect(Dir.children(project)).to be_empty
     end
   end
@@ -39,7 +39,7 @@ RSpec.describe RailsAgentHarness::CLI do
 
       expect(status).to eq(1)
       expect(out).to be_empty
-      expect(err).to include("usage: rails-agent-harness")
+      expect(err).to include("usage: agent_harness_rails")
     end
 
     it "names an unknown command before the usage" do
@@ -61,7 +61,7 @@ RSpec.describe RailsAgentHarness::CLI do
     status, out, = run("version")
 
     expect(status).to eq(0)
-    expect(out.strip).to eq(RailsAgentHarness::VERSION)
+    expect(out.strip).to eq(AgentHarnessRails::VERSION)
   end
 
   it "installs and checks a project end to end" do

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require_relative "../rails_agent_harness"
+require_relative "../agent_harness_rails"
 require_relative "manifest"
 require_relative "migration"
 
-module RailsAgentHarness
+module AgentHarnessRails
   # Vendors the payload into a project and points the editor directories at it.
   #
   # Editor directories hold nothing but links: one per surface, relative, so a
@@ -59,9 +59,12 @@ module RailsAgentHarness
       plan.each { |relative, verdict| result.collisions << relative if verdict == :collision }
       return result unless result.clean?
 
+      # Only real moves are reported. Duplicates — app copies byte-identical to
+      # the vendored file — are dropped quietly, as the README promises; counting
+      # them as "moved" made every copy-mode update claim a full migration.
       if migration_plan&.any?
         migration.apply(migration_plan)
-        result.migrated.concat(migration_plan.moves + migration_plan.duplicates)
+        result.migrated.concat(migration_plan.moves)
       end
 
       owns = {}
@@ -71,7 +74,7 @@ module RailsAgentHarness
         case verdict
         when :write
           FileUtils.mkdir_p(File.dirname(destination))
-          FileUtils.cp(File.join(RailsAgentHarness.payload, relative), destination)
+          FileUtils.cp(File.join(AgentHarnessRails.payload, relative), destination)
           result.written << relative
           owns[relative] = Manifest.digest(destination)
         when :unchanged
@@ -122,7 +125,7 @@ module RailsAgentHarness
     private
 
     def source_files
-      base = RailsAgentHarness.payload
+      base = AgentHarnessRails.payload
       Dir.glob(File.join(base, "**", "*"), File::FNM_DOTMATCH)
          .select { |path| File.file?(path) }
          .map { |path| path.delete_prefix("#{base}/") }
@@ -138,7 +141,7 @@ module RailsAgentHarness
       return :write unless File.exist?(destination)
 
       # Already current: nothing to copy, whether or not a manifest exists yet.
-      source = File.join(RailsAgentHarness.payload, relative)
+      source = File.join(AgentHarnessRails.payload, relative)
       return :unchanged if Manifest.digest(destination) == Manifest.digest(source)
 
       return :write if previous.unmodified?(relative, destination)

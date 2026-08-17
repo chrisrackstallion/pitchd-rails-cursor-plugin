@@ -7,13 +7,13 @@ require "yaml"
 # the things most worth asserting are that it is actually included and that the
 # constants and the gemspec agree.
 RSpec.describe "gem packaging" do
-  let(:spec) { Gem::Specification.load(File.expand_path("../rails-agent-harness.gemspec", __dir__)) }
+  let(:spec) { Gem::Specification.load(File.expand_path("../agent_harness_rails.gemspec", __dir__)) }
 
   it "names the payload directory identically to the constant" do
     # The gemspec hardcodes the directory rather than loading the library.
-    source = File.read(File.expand_path("../rails-agent-harness.gemspec", __dir__))
+    source = File.read(File.expand_path("../agent_harness_rails.gemspec", __dir__))
 
-    expect(source).to include(%("#{RailsAgentHarness::PAYLOAD_DIR}/**/*"))
+    expect(source).to include(%("#{AgentHarnessRails::PAYLOAD_DIR}/**/*"))
   end
 
   it "ships the payload, including nested references/" do
@@ -23,8 +23,8 @@ RSpec.describe "gem packaging" do
   end
 
   it "ships the library and executable" do
-    expect(spec.files).to include("lib/rails_agent_harness.rb", "exe/rails-agent-harness")
-    expect(spec.executables).to eq([ "rails-agent-harness" ])
+    expect(spec.files).to include("lib/agent_harness_rails.rb", "exe/agent_harness_rails")
+    expect(spec.executables).to eq([ "agent_harness_rails" ])
   end
 
   it "ships rubocop.yml so apps can inherit_gem it" do
@@ -49,15 +49,20 @@ RSpec.describe "gem packaging" do
   end
 
   it "does not define a top-level Rails constant" do
-    # A gem named rails-agent-harness conventionally maps to Rails::Agent::Harness,
-    # which would reopen Rails inside an application. It deliberately does not.
-    expect(RailsAgentHarness.name).to eq("RailsAgentHarness")
+    # One flat constant matching the gem name — nothing under Rails::, which
+    # would reopen the Rails constant inside an application.
+    expect(AgentHarnessRails.name).to eq("AgentHarnessRails")
     expect(defined?(Rails)).to be_nil
   end
 
+  it "matches its require to its name, per the rubygems naming guide" do
+    expect(spec.name).to eq("agent_harness_rails")
+    expect(File).to exist(File.expand_path("../lib/#{spec.name}.rb", __dir__))
+  end
+
   it "reports its own payload path" do
-    expect(RailsAgentHarness.payload).to eq(File.join(RailsAgentHarness.root, "rails-agent-harness"))
-    expect(Dir).to exist(RailsAgentHarness.payload)
+    expect(AgentHarnessRails.payload).to eq(File.join(AgentHarnessRails.root, "rails-agent-harness"))
+    expect(Dir).to exist(AgentHarnessRails.payload)
   end
 
   describe "ruby floor" do

@@ -3,19 +3,23 @@
 #   # .rubocop.yml in your app
 #   inherit_gem:
 #     rubocop-rails-omakase: rubocop.yml
-#     rails-agent-harness: rubocop.yml
+#     agent_harness_rails: rubocop.yml
 #
 # Order matters — this file is a thin layer over omakase, not a replacement for
 # it. rails-agent-harness/rules/rubocop.mdc names rubocop-rails-omakase as the
 # ruleset source of truth, so the harness deliberately does not restate or
 # contradict its cop settings.
 #
+# NewCops is deliberately NOT set here: a shipped config that auto-enables cops
+# would change your lint results whenever *your* RuboCop version bumps, through
+# no change of your own. Whether new cops are pending or enabled is your app's
+# call. (This repo enables them for itself in its own .rubocop.yml, and the
+# harness's process rule — fix offences, never disable — covers whichever way
+# you choose.)
+#
 # Most of what that rule asks for is process rather than configuration — zero
 # offences before work is complete, fix in code, never `# rubocop:disable`, never
 # a .rubocop_todo.yml. Config cannot enforce those; agents reading the rule do.
 # What belongs here is only what is genuinely cop-level.
 AllCops:
-  # New cops enabled rather than pending: the harness position is that offences
-  # get fixed, not deferred. A pending cop is a deferred offence.
-  NewCops: enable
   SuggestExtensions: false

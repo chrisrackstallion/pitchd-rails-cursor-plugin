@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 require "optparse"
-require_relative "../rails_agent_harness"
+require_relative "../agent_harness_rails"
 require_relative "installer"
 
-module RailsAgentHarness
+module AgentHarnessRails
   # Command line entry point. Returns exit codes rather than calling exit, so the
   # whole thing is testable without forking.
   class CLI
     USAGE = <<~TEXT
-      usage: rails-agent-harness <command> [options]
+      usage: agent_harness_rails <command> [options]
 
       commands:
         install    vendor the harness into this project and link the editor directories
@@ -25,11 +25,11 @@ module RailsAgentHarness
         -h, --help     print this help
 
       examples:
-        rails-agent-harness install                  # from the project root
-        rails-agent-harness install --path ../myapp  # from anywhere
-        rails-agent-harness install --mode copy      # e.g. a mounted volume without symlinks
-        rails-agent-harness check                    # in CI: exits 1 on drift
-        rails-agent-harness update                   # after bumping the gem
+        agent_harness_rails install                  # from the project root
+        agent_harness_rails install --path ../myapp  # from anywhere
+        agent_harness_rails install --mode copy      # e.g. a mounted volume without symlinks
+        agent_harness_rails check                    # in CI: exits 1 on drift
+        agent_harness_rails update                   # after bumping the gem
 
       On install, skills, rules, and agents already in .claude/ or .cursor/ are
       moved into #{PAYLOAD_DIR}/ first, so the symlinks cannot shadow or delete
@@ -52,8 +52,8 @@ module RailsAgentHarness
       when "install" then install
       when "update" then update
       when "check" then check
-      when "root" then @out.puts(RailsAgentHarness.payload) || 0
-      when "version" then @out.puts(VERSION) || 0
+      when "root" then say(AgentHarnessRails.payload)
+      when "version" then say(VERSION)
       when "help" then usage(0)
       else
         @err.puts "unknown command: #{command}"
@@ -65,6 +65,11 @@ module RailsAgentHarness
     end
 
     private
+
+    def say(text)
+      @out.puts(text)
+      0
+    end
 
     # OptionParser#parse works on a dup of the array, so the -h callback sets a
     # flag rather than mutating @argv, which the parser would never see.
@@ -108,7 +113,7 @@ module RailsAgentHarness
 
       case status
       when :uninstalled
-        @err.puts "no harness found in #{@options[:path]} — run `rails-agent-harness install`"
+        @err.puts "no harness found in #{@options[:path]} — run `agent_harness_rails install`"
         1
       when :ok
         @out.puts "harness #{VERSION} matches this gem"

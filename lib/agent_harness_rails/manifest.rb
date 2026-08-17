@@ -3,7 +3,7 @@
 require "digest"
 require "json"
 
-module RailsAgentHarness
+module AgentHarnessRails
   # Record of which payload files this gem owns in a consuming app, and the
   # checksum each had when written.
   #

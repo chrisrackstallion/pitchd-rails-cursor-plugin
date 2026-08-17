@@ -5,7 +5,7 @@ require "spec_helper"
 # The editor directories become symlinks, so anything the app already had in them
 # would be shadowed (link mode) or deleted (copy mode, which rm_rf's the target).
 # These examples pin the rescue.
-RSpec.describe RailsAgentHarness::Migration do
+RSpec.describe AgentHarnessRails::Migration do
   def write(relative, body)
     path = File.join(project, relative)
     FileUtils.mkdir_p(File.dirname(path))
@@ -69,7 +69,7 @@ RSpec.describe RailsAgentHarness::Migration do
     end
 
     it "drops an app copy that is byte-identical to what the gem ships" do
-      source = File.join(RailsAgentHarness.payload, "rules/models.mdc")
+      source = File.join(AgentHarnessRails.payload, "rules/models.mdc")
       write(".cursor/rules/models.mdc", File.read(source))
 
       result = install
@@ -121,8 +121,8 @@ RSpec.describe RailsAgentHarness::Migration do
     it "refuses rather than replacing a populated editor directory" do
       write(".claude/skills/our-skill/SKILL.md", "keep me\n")
 
-      expect { RailsAgentHarness::Installer.new(project_root: project, migrate: false).install }
-        .to raise_error(RailsAgentHarness::Error, /--no-migrate/)
+      expect { AgentHarnessRails::Installer.new(project_root: project, migrate: false).install }
+        .to raise_error(AgentHarnessRails::Error, /--no-migrate/)
 
       expect(File.read(File.join(project, ".claude/skills/our-skill/SKILL.md"))).to eq("keep me\n")
     end

@@ -11,6 +11,9 @@ AllCops:
   # The minimum Ruby consumers may be on (spec.required_ruby_version), not the
   # latest — cops must not suggest syntax an older consuming app cannot run.
   TargetRubyVersion: 3.1
+  # This repo holds itself to new cops immediately; the shipped rubocop.yml
+  # deliberately leaves the choice to each consuming app.
+  NewCops: enable
   Exclude:
     - "rails-agent-harness/**/*"
     - "vendor/**/*"

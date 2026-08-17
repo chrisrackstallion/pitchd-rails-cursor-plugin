@@ -3,7 +3,7 @@
 require "fileutils"
 require "digest"
 
-module RailsAgentHarness
+module AgentHarnessRails
   # Moves skills, rules, and agents an app already had in .claude/ or .cursor/
   # into the harness payload, before those directories are replaced by symlinks.
   #
@@ -41,7 +41,7 @@ module RailsAgentHarness
       end
     end
 
-    def initialize(project_root:, payload_dir:, source_dir: RailsAgentHarness.payload)
+    def initialize(project_root:, payload_dir:, source_dir: AgentHarnessRails.payload)
       @project_root = project_root
       @payload_dir = payload_dir
       @source_dir = source_dir

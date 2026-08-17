@@ -1,8 +1,13 @@
 # Changelog
 
-## 0.1.0 — unreleased
+All notable changes to this project are documented in this file. The format is
+based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
 
 Initial version, in local use while the harness proves itself.
+
+### Added
 
 - `install` vendors the skills, rules, and agent definitions into
   `rails-agent-harness/` and links `.claude/` and `.cursor/` at it, migrating any

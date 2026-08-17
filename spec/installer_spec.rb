@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe RailsAgentHarness::Installer do
+RSpec.describe AgentHarnessRails::Installer do
   describe "#install" do
     it "vendors the payload and records ownership" do
       result = install
@@ -10,7 +10,7 @@ RSpec.describe RailsAgentHarness::Installer do
       expect(result).to be_clean
       expect(result.written).to include(owned_relative_path)
       expect(File).to exist(payload_path(owned_relative_path))
-      expect(manifest["version"]).to eq(RailsAgentHarness::VERSION)
+      expect(manifest["version"]).to eq(AgentHarnessRails::VERSION)
       expect(manifest["owns"]).to include(owned_relative_path)
     end
 
@@ -91,10 +91,10 @@ RSpec.describe RailsAgentHarness::Installer do
       File.write(stale, "retired\n")
 
       # Pretend the previous version owned it, with the digest it has now.
-      path = payload_path(RailsAgentHarness::Manifest::FILENAME)
+      path = payload_path(AgentHarnessRails::Manifest::FILENAME)
       data = JSON.parse(File.read(path))
-      data[RailsAgentHarness::Manifest::INSTALLER_KEY]["owns"]["rules/retired.mdc"] =
-        RailsAgentHarness::Manifest.digest(stale)
+      data[AgentHarnessRails::Manifest::INSTALLER_KEY]["owns"]["rules/retired.mdc"] =
+        AgentHarnessRails::Manifest.digest(stale)
       File.write(path, JSON.pretty_generate(data))
 
       result = install
@@ -107,10 +107,10 @@ RSpec.describe RailsAgentHarness::Installer do
       install
       stale = payload_path("rules/retired.mdc")
       File.write(stale, "original\n")
-      path = payload_path(RailsAgentHarness::Manifest::FILENAME)
+      path = payload_path(AgentHarnessRails::Manifest::FILENAME)
       data = JSON.parse(File.read(path))
-      data[RailsAgentHarness::Manifest::INSTALLER_KEY]["owns"]["rules/retired.mdc"] =
-        RailsAgentHarness::Manifest.digest(stale)
+      data[AgentHarnessRails::Manifest::INSTALLER_KEY]["owns"]["rules/retired.mdc"] =
+        AgentHarnessRails::Manifest.digest(stale)
       File.write(path, JSON.pretty_generate(data))
       File.write(stale, "app changed it\n")
 
@@ -132,7 +132,7 @@ RSpec.describe RailsAgentHarness::Installer do
 
     it "rejects an unknown mode" do
       expect { described_class.new(project_root: project, mode: :hardlink) }
-        .to raise_error(RailsAgentHarness::Error, /link or :copy/)
+        .to raise_error(AgentHarnessRails::Error, /link or :copy/)
     end
   end
 
@@ -181,9 +181,9 @@ RSpec.describe RailsAgentHarness::Installer do
 
     it "blocks when the vendored version predates the gem" do
       install
-      path = payload_path(RailsAgentHarness::Manifest::FILENAME)
+      path = payload_path(AgentHarnessRails::Manifest::FILENAME)
       data = JSON.parse(File.read(path))
-      data[RailsAgentHarness::Manifest::INSTALLER_KEY]["version"] = "0.0.1"
+      data[AgentHarnessRails::Manifest::INSTALLER_KEY]["version"] = "0.0.1"
       File.write(path, JSON.pretty_generate(data))
 
       status, findings = check

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "rails_agent_harness/version"
+require_relative "agent_harness_rails/version"
 
 # Rails conventions for coding agents — skills, rules, and agent definitions
 # vendored into an application so Cursor and Claude Code can both read them from
@@ -11,9 +11,9 @@ require_relative "rails_agent_harness/version"
 # payload and links the editor directories at it; after that the files are read
 # by the agent, from the app.
 #
-# Deliberately NOT namespaced as Rails::Agent::Harness — that would reopen the
-# `Rails` constant inside a Rails application.
-module RailsAgentHarness
+# One flat constant matching the gem name — deliberately nothing under `Rails::`,
+# which would reopen the Rails constant inside a Rails application.
+module AgentHarnessRails
   # Directory name used both inside this gem and inside a consuming app, so one
   # path string (`rails-agent-harness/rules/models.mdc`) is correct in both.
   PAYLOAD_DIR = "rails-agent-harness"
@@ -36,6 +36,6 @@ module RailsAgentHarness
   end
 end
 
-# The whole library, so `require "rails_agent_harness"` yields a working
+# The whole library, so `require "agent_harness_rails"` yields a working
 # Installer. The CLI is left to exe/ — it exists for the executable, not callers.
-require_relative "rails_agent_harness/installer"
+require_relative "agent_harness_rails/installer"

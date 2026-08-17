@@ -1,5 +1,5 @@
 {
-  "name": "rails-agent-harness",
+  "name": "agent_harness_rails",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."

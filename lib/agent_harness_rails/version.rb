@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-module RailsAgentHarness
+module AgentHarnessRails
   VERSION = "0.1.0"
 end

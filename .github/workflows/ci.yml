@@ -22,19 +22,41 @@ jobs:
       - name: Check harness references
         run: bin/check-references
 
-      - name: Specs
-        run: bundle exec rspec
-
-      - name: RuboCop
-        run: bundle exec rubocop
+      - name: Specs and RuboCop
+        run: bundle exec rake
 
       - name: Build gem
-        run: gem build rails-agent-harness.gemspec
+        run: gem build agent_harness_rails.gemspec
 
       # Installing into a scratch project proves the payload, the links, and the
       # manifest all survive packaging — and that check passes on a fresh install.
       - name: Install into a fixture app and verify
         run: |
           mkdir -p /tmp/fixture-app
-          ./exe/rails-agent-harness install --path /tmp/fixture-app
-          ./exe/rails-agent-harness check --path /tmp/fixture-app
+          ruby -Ilib exe/agent_harness_rails install --path /tmp/fixture-app
+          ruby -Ilib exe/agent_harness_rails check --path /tmp/fixture-app
+
+  # The gem itself has zero runtime dependencies, but the dev bundle does not —
+  # its transitive activesupport needs a newer Ruby than the declared floor. So
+  # the floor job skips Bundler entirely: bare rspec plus the executable is
+  # exactly what "works on required_ruby_version" means for this gem.
+  floor:
+    name: Ruby floor (3.1)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+
+      - name: Specs
+        run: |
+          gem install rspec -v "~> 3.13" --no-document
+          rspec
+
+      - name: Install into a fixture app and verify
+        run: |
+          mkdir -p /tmp/fixture-app
+          ruby -Ilib exe/agent_harness_rails install --path /tmp/fixture-app
+          ruby -Ilib exe/agent_harness_rails check --path /tmp/fixture-app

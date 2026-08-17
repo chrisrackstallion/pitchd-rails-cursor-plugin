@@ -1,4 +1,4 @@
-# rails-agent-harness
+# agent_harness_rails
 
 Rails conventions for coding agents — **rules**, **skills**, and **agent definitions** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends).
 
@@ -9,16 +9,16 @@ Ships as a gem that **vendors itself into your app**, so [Cursor](https://cursor
 ```ruby
 # Gemfile
 group :development do
-  gem "rails-agent-harness", require: false
+  gem "agent_harness_rails", require: false
 end
 ```
 
 ```bash
 bundle install
-bundle exec rails-agent-harness install
+bundle exec agent_harness_rails install
 ```
 
-That vendors the harness into `rails-agent-harness/` and points each editor directory at it:
+That vendors the harness into `rails-agent-harness/` and points each editor directory at it. (The gem is named `agent_harness_rails`, following Ruby gem naming — underscores, require matches the name. The directory it vendors keeps the harness's own name.)
 
 ```
 myapp/
@@ -32,7 +32,7 @@ myapp/
   .cursor/rules/harness -> ../../rails-agent-harness/rules
 ```
 
-Commit all of it, links included. A teammate clones the repo and it works — no `bundle` step needed to *use* the harness, only to update it.
+Commit all of it, links included. A teammate on macOS or Linux clones the repo and it works — no `bundle` step needed to *use* the harness, only to update it. Windows needs one extra step: see [Windows](#windows) below.
 
 ### Already have skills, rules, or agents in `.claude/` or `.cursor/`?
 
@@ -46,12 +46,19 @@ Migrated files stay **yours** — they aren't recorded in `.manifest.json`, so `
 
 | Command | What it does |
 | --- | --- |
-| `rails-agent-harness install` | migrate any existing editor content, vendor the harness, create the links (idempotent) |
-| `rails-agent-harness update` | re-vendor after `bundle update`, reporting what changed |
-| `rails-agent-harness check` | verify the vendored harness matches the gem — use in CI |
-| `rails-agent-harness root` | print the payload path inside the gem |
+| `agent_harness_rails install` | migrate any existing editor content, vendor the harness, create the links (idempotent) |
+| `agent_harness_rails update` | re-vendor after `bundle update`, reporting what changed |
+| `agent_harness_rails check` | verify the vendored harness matches the gem — use in CI |
+| `agent_harness_rails root` | print the payload path inside the gem |
 
-On Windows or any filesystem without usable symlinks, pass `--mode=copy` for real directories instead of links.
+### Windows
+
+Git for Windows checks out committed symlinks as **plain text files** containing the link path unless symlink support is on — which needs Developer Mode (or admin) plus `core.symlinks=true` *before* cloning. Neither editor resolves those text files, so a stock-Windows teammate cloning a link-mode repo gets a harness that silently doesn't load. Two ways out:
+
+- **Enable symlinks, then clone**: turn on Developer Mode, `git config --global core.symlinks true`, and re-clone. The committed links then work exactly as on macOS and Linux.
+- **Or switch to copies locally**: run `bundle exec agent_harness_rails install --mode copy` after cloning. It replaces the broken link files with real directories. This shows up as a local change against the committed links — don't commit it unless the whole team is moving to copy mode.
+
+The same `--mode=copy` applies to any filesystem without usable symlinks.
 
 ### Adding your own skills
 
@@ -70,10 +77,10 @@ The gem ships a `rubocop.yml` your app can inherit, so the linter and the harnes
 # .rubocop.yml in your app
 inherit_gem:
   rubocop-rails-omakase: rubocop.yml
-  rails-agent-harness: rubocop.yml
+  agent_harness_rails: rubocop.yml
 ```
 
-Order matters. The harness config is a **thin layer over omakase**, not a replacement — [`rules/rubocop.mdc`](rails-agent-harness/rules/rubocop.mdc) names `rubocop-rails-omakase` as the ruleset source of truth, so the harness never restates or contradicts its cop settings. It adds `NewCops: enable`, on the principle that a pending cop is a deferred offence.
+Order matters. The harness config is a **thin layer over omakase**, not a replacement — [`rules/rubocop.mdc`](rails-agent-harness/rules/rubocop.mdc) names `rubocop-rails-omakase` as the ruleset source of truth, so the harness never restates or contradicts its cop settings. It deliberately does **not** set `NewCops` either: a shipped config that auto-enables cops would change your lint results whenever your RuboCop version bumps. Whether new cops are pending or enabled is your app's call — though the harness position is that a pending cop is a deferred offence, and this repo enables them for itself.
 
 **The gem does not depend on RuboCop, and shouldn't.** It ships a YAML file; reading it requires nothing. RuboCop and `rubocop-rails-omakase` belong in your app's own Gemfile, at whatever versions you pin — a hard dependency here would force RuboCop into the bundle of every app that installs the harness, including ones that don't lint, and would fight your own version constraint.
 
