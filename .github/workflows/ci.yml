@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+
+      # Every internal reference must resolve and be written in the canonical
+      # rails-agent-harness/... form. Nothing else catches a typo'd path, which
+      # would otherwise fail silently inside an agent at runtime.
+      - name: Check harness references
+        run: bin/check-references
+
+      - name: Specs
+        run: bundle exec rspec
+
+      - name: RuboCop
+        run: bundle exec rubocop
+
+      - name: Build gem
+        run: gem build rails-agent-harness.gemspec
+
+      # Installing into a scratch project proves the payload, the links, and the
+      # manifest all survive packaging — and that check passes on a fresh install.
+      - name: Install into a fixture app and verify
+        run: |
+          mkdir -p /tmp/fixture-app
+          ./exe/rails-agent-harness install --path /tmp/fixture-app
+          ./exe/rails-agent-harness check --path /tmp/fixture-app
