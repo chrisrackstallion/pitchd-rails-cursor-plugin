@@ -223,8 +223,11 @@ end
 
 ### Testing Concerns
 
-Test concerns through a real model that includes them, not through a
-test double or anonymous class.
+Concern behaviour does not live in model specs. Every concern with behaviour
+gets its own spec file at `spec/models/concerns/<concern>_spec.rb`, tested
+through a real model that includes it — not a test double or anonymous class.
+A model spec touches a concern method only when the model **overrides or
+extends** it, and then tests only the delta.
 
 ```ruby
 # spec/models/concerns/publishable_spec.rb

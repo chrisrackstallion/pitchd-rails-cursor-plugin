@@ -66,7 +66,8 @@ For an input like `spec/system/articles_spec.rb`, expect to find and read:
 | Layer | Likely location | What it should own |
 |-------|----------------|---------------------|
 | Model | `spec/models/article_spec.rb` | Domain logic, scopes, callbacks, business-rule validations |
-| Concerns | `spec/models/concerns/<concern>_spec.rb` | Concern behaviour when shared across models |
+| Concerns | `spec/models/concerns/<concern>_spec.rb` | The concern's whole contract — single home; including-model specs re-test overrides only |
+| POROs | `spec/models/<model>/<object>_spec.rb` | The PORO's behaviour, at the path mirroring `app/models/` |
 | Request | `spec/requests/articles_spec.rb` | HTTP layer, auth gates, rendering smoke, non-canonical CRUD |
 | Policy | `spec/policies/article_policy_spec.rb` | Role × action matrix |
 | State-change policies | `spec/policies/articles/*_policy_spec.rb` | Closure, publication policies |

@@ -445,7 +445,9 @@ end
 
 ## Concern Specs
 
-Test concerns through a real model that includes them. Don't create
+Every concern with behaviour gets its **own spec file** at
+`spec/models/concerns/<concern>_spec.rb` — the single home for the concern's
+contract. Test it through a real model that includes it; don't create
 anonymous test classes or use doubles.
 
 ### Structure
@@ -497,15 +499,14 @@ end
 
 ### When to Write Concern Specs
 
-- The concern has non-trivial logic (state machines, complex scopes)
-- The concern is used by multiple models and you want one canonical test
-- The concern has edge cases worth documenting
+Always, when the concern has behaviour — methods, scopes, callbacks. The
+concern spec is the single home for that contract whether one model includes
+the concern or five do. A model spec never stands in for it.
 
 ### When NOT to Write Concern Specs
 
-- The concern just declares associations with no logic
-- The model spec already covers the behaviour thoroughly
-- The concern is simple enough that model specs are sufficient
+- The concern only declares associations or configuration with no behaviour
+  of its own — then there is nothing to test anywhere
 
 ---
 
@@ -809,17 +810,16 @@ end
 
 ### Concern Specs and Model Specs
 
-If a concern is simple and only used by one model, test it through that
-model's spec — don't create a separate concern spec. Write a dedicated
-concern spec when:
+Every concern with behaviour has its own spec file — the model spec never
+stands in for it. The split is:
 
-- The concern is used by multiple models
-- You want one canonical test covering the concern's contract
-- The concern has complex logic worth testing in isolation
-
-When a concern spec exists, the model spec for each including model does
-NOT need to re-test the concern's behaviour. The model spec trusts the
-concern spec.
+- **Concern spec** (`spec/models/concerns/<concern>_spec.rb`) owns the
+  concern's whole contract: methods, scopes, callbacks. Pick one real
+  including model to exercise it through.
+- **Including-model specs** assert nothing about concern behaviour — they
+  trust the concern spec. The one exception: when a model **overrides or
+  extends** a concern method, that model's spec tests the override — and
+  only the delta, not the inherited behaviour around it.
 
 ## Guidelines
 
@@ -833,4 +833,4 @@ concern spec.
 - **Don't test that Rails works** — `has_many` declarations, built-in validations
 - **Callers assert enqueuing, not performing** — `have_enqueued_job`, not inline `perform_now`
 - **Don't re-test across layers** — model spec says "job enqueued"; job spec says "job works"
-- **One home per concern** — test in concern spec OR model spec, not both
+- **One home per concern** — the concern's own spec file; including-model specs test overrides only

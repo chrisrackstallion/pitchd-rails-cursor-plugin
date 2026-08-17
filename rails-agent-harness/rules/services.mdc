@@ -45,6 +45,8 @@ end
 
 When a model method grows too complex or an operation involves several steps within a single aggregate, extract to a PORO namespaced under the primary model. These live in `app/models/`, not `app/services/`.
 
+A PORO is not a junk drawer. Every method must earn its place — before adding one, question whether the PORO is where it belongs. Each public method should be a verb of the named concept; a method that operates on the model alone goes back on the model, presentation goes to a helper.
+
 ```ruby
 # app/models/account/onboarding.rb
 class Account::Onboarding

@@ -34,6 +34,7 @@ Extract shared capabilities into concerns. Name them as adjectives describing wh
 - 50–150 lines each, self-contained with associations + scopes + methods
 - Not for mere organisation — extract when genuine reuse exists or a single file grows unwieldy
 - Extract when a model exceeds ~300 lines with distinct capability clusters
+- Every method must earn its place — before adding one, question whether the concern is where it belongs. A method belongs only if it is part of the capability; one that a single includer uses, or that isn't about the capability, goes on that model instead
 
 ## State as Records, Not Booleans
 

@@ -183,7 +183,12 @@ appropriate lower layer.
   merge them into one test.
 
 **"Where does this test live?"**
-- Tests live in `spec/` mirroring `app/` structure
+- Tests live in `spec/` mirroring `app/` structure — models, concerns, POROs,
+  jobs, mailers, policies each at the mirrored path
+  (`app/models/concerns/publishable.rb` → `spec/models/concerns/publishable_spec.rb`,
+  `app/models/account/onboarding.rb` → `spec/models/account/onboarding_spec.rb`)
+- Concern behaviour lives in the concern's own spec file — an including
+  model's spec tests a concern method only when the model overrides it
 - System specs live in `spec/system/` organized by feature
 - Factories live in `spec/factories/` one file per model
 
@@ -217,6 +222,7 @@ trust the lower layer from above:
 ├─────────────┤  Owns: domain verbs, scopes, state transitions, business rules, callbacks
 │ Model spec  │  (largest layer — most behaviour lives here)
 │             │  Is trusted by: system, request, and policy specs
+│             │  Trusts: concern specs for included behaviour (tests overrides only)
 │             │  Does NOT test: HTTP, UI, or authorization concerns
 ├─────────────┤  Owns: the work the job/mailer performs
 │ Support spec│  Callers assert enqueuing only (have_enqueued_job / have_enqueued_mail)

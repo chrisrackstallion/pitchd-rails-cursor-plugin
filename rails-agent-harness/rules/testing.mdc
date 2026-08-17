@@ -25,7 +25,7 @@ System specs are the **backbone**, not the **coverage**. A small number of integ
 2. **Request specs** — HTTP layer: status codes, redirects, params handling, auth gates, rendering smoke (`response.body.include?`) for index/show, and CRUD round-tripping for resources without a system spec. This is the workhorse layer. **Request specs own rendering — never write view specs** (`spec/views/`, `type: :view`); they test templates in isolation with stubbed assigns, which is implementation testing.
 3. **Policy specs** — the full role × action matrix for authorization logic.
 4. **System specs** — a tight set of canonical journeys: one happy path per CRUD resource, one per cross-resource journey (signup, checkout, password reset), one per JavaScript behaviour across the entire suite. **The default answer to "add another system spec?" is no — push down a layer.**
-5. **Everything else** — job specs, mailer specs, concern specs. Write them when the object has meaningful logic worth testing in isolation.
+5. **Everything else** — job specs, mailer specs, concern specs, PORO specs. **Concerns with behaviour always get their own spec file** (`spec/models/concerns/`) — that file is the single home for the concern's contract; an including model's spec re-tests a concern method only when the model **overrides or extends** it, and then only the delta. Jobs, mailers, and POROs get specs when the object has meaningful logic worth testing in isolation.
 
 ### System-Spec Budget
 
@@ -241,13 +241,19 @@ For RSpec that means the `parallel_tests` gem (Rails' built-in
 
 ## Test File Naming
 
+The spec tree mirrors the application architecture: every file under `app/`
+has its spec at the mirrored path under `spec/` — models, concerns, POROs,
+jobs, mailers, policies each in their own directory. A spec whose subject
+lives somewhere else in `app/` than the spec's path implies is misfiled.
+
 | Type | Location | Naming |
 |------|----------|--------|
 | Model | `spec/models/article_spec.rb` | Matches model name |
+| Concern | `spec/models/concerns/publishable_spec.rb` | Matches concern name — every concern with behaviour gets one |
+| PORO / form object | `spec/models/account/onboarding_spec.rb` | Mirrors the object's path under `app/models/` |
 | Request | `spec/requests/articles_spec.rb` | Matches controller/resource |
 | System | `spec/system/articles_spec.rb` | Matches feature or user flow |
 | Factory | `spec/factories/articles.rb` | Plural model name |
 | Job | `spec/jobs/notify_subscribers_job_spec.rb` | Matches job name |
 | Mailer | `spec/mailers/notification_mailer_spec.rb` | Matches mailer name |
-| Concern | `spec/models/concerns/publishable_spec.rb` | Matches concern name |
 | Policy | `spec/policies/article_policy_spec.rb` | Matches policy name |
