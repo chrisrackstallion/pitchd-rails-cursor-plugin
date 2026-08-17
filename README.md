@@ -1,42 +1,77 @@
-# pitchd-rails (Cursor + Claude Code plugin)
+# rails-agent-harness
 
-A plugin for [Cursor](https://cursor.com) and [Claude Code](https://claude.com/claude-code) with **rules**, **skills**, and **agents** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends) with a few **Pitchd-specific** preferences layered on top.
+Rails conventions for coding agents — **rules**, **skills**, and **agent definitions** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends).
 
-Cursor metadata lives in [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json) and [`.cursor-plugin/marketplace.json`](.cursor-plugin/marketplace.json); Claude Code metadata lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json). Both manifests point at the same `skills/`, `agents/`, and `rules/` directories — there's no duplication between the two.
+Ships as a gem that **vendors itself into your app**, so [Cursor](https://cursor.com) and [Claude Code](https://claude.com/claude-code) both read the same files from the project directory alone. No editor plugin to install, nothing outside the repo, nothing per-machine.
 
-## Installing in Cursor
+## Install
 
-Once listed on the Cursor Marketplace, install **Pitchd Rails** from the in-app plugin marketplace.
-
-Until then, use it from a local checkout: clone this repo and open it in (or add it to) your workspace — Cursor reads the `.cursor-plugin` manifest and discovers `rules/`, `skills/`, and `agents/` from the repo root. The repo passes the official [cursor/plugin-template](https://github.com/cursor/plugin-template) validation (`node scripts/validate-template.mjs`).
-
-## Installing in Claude Code
-
-Clone this repo locally, then from any Claude Code session:
-
-```
-/plugin marketplace add /path/to/pitchd-rails-cursor-plugin
-/plugin install pitchd-rails-cursor-plugin@pitchd-rails
+```ruby
+# Gemfile
+group :development do
+  gem "rails-agent-harness", require: false
+end
 ```
 
-This adds the local checkout as a marketplace (via [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)) and installs the plugin from it — `skills/` and `agents/` are auto-discovered, so the workflows below work the same way they do in Cursor. Pull the repo to pick up updates, then run `/plugin marketplace update pitchd-rails` (or reinstall) to refresh.
+```bash
+bundle install
+bundle exec rails-agent-harness install
+```
+
+That vendors the harness into `rails-agent-harness/` and points each editor directory at it:
+
+```
+myapp/
+  rails-agent-harness/          # the harness — commit this
+    skills/  rules/  agents/
+    .manifest.json              # which files the gem owns
+  .claude/skills        -> ../rails-agent-harness/skills
+  .claude/agents        -> ../rails-agent-harness/agents
+  .cursor/skills        -> ../rails-agent-harness/skills
+  .cursor/agents        -> ../rails-agent-harness/agents
+  .cursor/rules/harness -> ../../rails-agent-harness/rules
+```
+
+Commit all of it, links included. A teammate clones the repo and it works — no `bundle` step needed to *use* the harness, only to update it.
+
+| Command | What it does |
+| --- | --- |
+| `rails-agent-harness install` | vendor the harness and create the links (idempotent) |
+| `rails-agent-harness update` | re-vendor after `bundle update`, reporting what changed |
+| `rails-agent-harness check` | verify the vendored harness matches the gem — use in CI |
+| `rails-agent-harness root` | print the payload path inside the gem |
+
+On Windows or any filesystem without usable symlinks, pass `--mode=copy` for real directories instead of links.
+
+### Adding your own skills
+
+Put them straight into `rails-agent-harness/skills/` alongside the vendored ones — that's why the directory is named for the harness rather than for us. `install` tracks only the files it owns in `.manifest.json`; anything else it leaves alone, and it refuses to overwrite a file it doesn't own rather than clobbering your work.
+
+Two constraints worth knowing:
+
+- **Keep skills flat.** One level: `skills/<name>/SKILL.md`. Claude Code discovers exactly that shape and does not recurse into subdirectories, so a nested skill is invisible to it even though Cursor would find it.
+- **Names are global.** Both editors key on the `name:` in frontmatter, so an app skill can't reuse a vendored name.
+
+### Your editor will show the harness twice
+
+Both editors expand a symlinked directory inline in the file tree, so `rails-agent-harness/skills/` and `.claude/skills/` appear as separate copies of the same content. They are one set of files — same inode, edit either path. Nothing to clean up.
 
 ## What you can do
 
 ### Write a plan
 > *"Write a plan for adding comment threads to posts"*
 
-Use the **`writing-pitchd-rails-plans`** skill. It turns a spec or feature description into a checklisted implementation plan — exact file paths, real Ruby snippets, RSpec commands, and REST-shaped decomposition. A philosophy check and a tactical pass run before you see the final plan.
+Use the **`writing-rails-plans`** skill. It turns a spec or feature description into a checklisted implementation plan — exact file paths, real Ruby snippets, RSpec commands, and REST-shaped decomposition. A philosophy check and a tactical pass run before you see the final plan.
 
 ### Execute a plan
 > *"Execute the plan"*
 
-Use the **`executing-pitchd-rails-plan`** skill. An orchestrator delegates each task to a `pitchd-rails-implementor` subagent, then runs `pitchd-rails-reviewer` after each task and loops on feedback until every item is approved.
+Use the **`executing-rails-plan`** skill. An orchestrator delegates each task to a `rails-implementor` subagent, then runs `rails-reviewer` after each task and loops on feedback until every item is approved.
 
 ### Review existing code
 > *"Review this PR"* / *"Review the code I just wrote"*
 
-Use the **`reviewing-pitchd-rails`** skill. It runs a two-layer review: **philosophy** (is this the right kind of Rails solution?) via `rails-omakase-compass`, then **tactics** (is it implemented correctly?) via the relevant `writing-*` skills and rules. During implementation reviews it also checks the **surroundings** — pre-existing code in touched files — flagging quick wins and deferred follow-ups in the same report.
+Use the **`reviewing-rails-work`** skill. It runs a two-layer review: **philosophy** (is this the right kind of Rails solution?) via `rails-omakase-compass`, then **tactics** (is it implemented correctly?) via the relevant `writing-*` skills and rules. During implementation reviews it also checks the **surroundings** — pre-existing code in touched files — flagging quick wins and deferred follow-ups in the same report.
 
 ### Query for Rails best practice
 > *"How should I handle this in Rails?"* / *"What's the right pattern for background jobs here?"*
@@ -56,7 +91,7 @@ Use the **`refactoring-stimulus-controllers`** skill. It maps every controller a
 ### Keep durable primitives (intent, compilation, evaluations, provenance)
 > *"Set up primitives"* / *"Document the billing feature"* / *"Why don't we cap thread depth?"*
 
-The plugin maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`pitchd-rails-primitives-maintainer`**. Structure rules: **`rules/primitives.mdc`**.
+The harness maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`rails-primitives-maintainer`**. Structure rules: **`rails-agent-harness/rules/primitives.mdc`**.
 
 ---
 
@@ -64,19 +99,21 @@ New here? Start with **`rails-omakase-compass`** to understand the philosophy, t
 
 ## What's inside
 
-- **`rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more.
-- **`skills/`** — Workflows for planning, implementing, and reviewing Rails work (including layer-specific `writing-*` skills). **`resolving-plugin-root`** is a small internal skill other skills/agents read first, so `rules/*.mdc` and sibling skill references resolve correctly whether this plugin is loaded by Cursor or installed as a Claude Code plugin.
-- **`agents/`** — Subagent definitions for implementation, review, and focused primitives maintenance passes.
+- **`rails-agent-harness/rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more. Cursor attaches them by glob; skills open them by path.
+- **`rails-agent-harness/skills/`** — Workflows for planning, implementing, and reviewing Rails work, including layer-specific `writing-*` skills.
+- **`rails-agent-harness/agents/`** — Subagent definitions for implementation, review, query, and primitives maintenance.
+
+Every internal reference is written in one canonical form — `rails-agent-harness/rules/models.mdc` — which resolves identically from this repo's root and from a consuming app's root. `bin/check-references` enforces that in CI, so a mistyped path fails the build instead of failing silently inside an agent.
 
 ## Credits
 
-This plugin stands on the shoulders of two excellent Cursor plugin ecosystems and one reference guide:
+This harness stands on the shoulders of two excellent Cursor plugin ecosystems and one reference guide:
 
 - **[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)** (Every) — for strong **planning**, **execution**, and **review** skills and patterns; the **DHH Rails reviewer** persona in particular is a highlight.
 - **[Superpowers](https://github.com/obra/superpowers)** — for disciplined **planning** and **execution** workflows.
 - **[37signals-skills](https://github.com/marckohlbrugge/37signals-skills)** (Marc Köhlbrugge, formerly `unofficial-37signals-coding-style-guide`) — the community-maintained guide to 37signals coding patterns, fetched selectively as a supplemental reference.
 
-Thank you to all three projects for the ideas and structure that made this plugin possible.
+Thank you to all three projects for the ideas and structure that made this harness possible.
 
 ## License
 

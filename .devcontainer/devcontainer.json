@@ -1,5 +1,5 @@
 {
-  "name": "pitchd-rails-cursor-plugin",
+  "name": "rails-agent-harness",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
