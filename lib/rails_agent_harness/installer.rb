@@ -3,6 +3,7 @@
 require "fileutils"
 require_relative "../rails_agent_harness"
 require_relative "manifest"
+require_relative "migration"
 
 module RailsAgentHarness
   # Vendors the payload into a project and points the editor directories at it.
@@ -22,15 +23,17 @@ module RailsAgentHarness
     }.freeze
 
     Result = Struct.new(:written, :unchanged, :overridden, :pruned, :links, :collisions,
+                        :migrated, :migration_clashes,
                         keyword_init: true) do
       def clean?
-        collisions.empty?
+        collisions.empty? && migration_clashes.empty?
       end
     end
 
-    def initialize(project_root:, mode: :link, out: $stdout)
+    def initialize(project_root:, mode: :link, migrate: true, out: $stdout)
       @project_root = File.expand_path(project_root)
       @mode = mode.to_sym
+      @migrate = migrate
       @out = out
       raise Error, "mode must be :link or :copy" unless [ :link, :copy ].include?(@mode)
     end
@@ -44,11 +47,22 @@ module RailsAgentHarness
     def install
       previous = Manifest.load(payload_dir)
       result = Result.new(written: [], unchanged: [], overridden: [], pruned: [], links: [],
-                          collisions: [])
+                          collisions: [], migrated: [], migration_clashes: [])
+
+      # Rescue the app's own skills/rules/agents from the editor directories before
+      # symlinks replace them. Planned, not applied, so a clash aborts untouched.
+      migration = Migration.new(project_root: project_root, payload_dir: payload_dir)
+      migration_plan = @migrate ? migration.plan : nil
+      result.migration_clashes.concat(migration_plan.clashes) if migration_plan
 
       plan = source_files.to_h { |relative| [ relative, classify(relative, previous) ] }
       plan.each { |relative, verdict| result.collisions << relative if verdict == :collision }
       return result unless result.clean?
+
+      if migration_plan&.any?
+        migration.apply(migration_plan)
+        result.migrated.concat(migration_plan.moves + migration_plan.duplicates)
+      end
 
       owns = {}
       plan.each do |relative, verdict|
@@ -150,7 +164,7 @@ module RailsAgentHarness
         absolute = File.join(project_root, target)
         FileUtils.mkdir_p(File.dirname(absolute))
 
-        mode == :link ? create_link(absolute, target, subdir) : create_copy(absolute, subdir)
+        mode == :link ? create_link(absolute, target, subdir) : create_copy(absolute, target, subdir)
       end
     end
 
@@ -162,17 +176,27 @@ module RailsAgentHarness
 
         File.unlink(absolute)
       elsif File.exist?(absolute)
-        raise Error, "#{target} exists and is not a symlink — move it aside or use --mode=copy"
+        # Migration empties and removes these, so anything still here is either
+        # migration-disabled or not a directory at all.
+        raise Error, "#{target} exists and is not a symlink — move it aside, " \
+                     "or drop --no-migrate so its contents move into #{PAYLOAD_DIR}/"
       end
 
       File.symlink(expected, absolute)
       "linked    #{target} -> #{expected}"
     end
 
-    def create_copy(absolute, subdir)
+    # Only ever removes a directory migration has already emptied of app content,
+    # or one this installer previously copied. Refuses anything else rather than
+    # rm_rf'ing work it does not own.
+    def create_copy(absolute, target, subdir)
+      if File.exist?(absolute) && !@migrate
+        raise Error, "#{target} exists and migration is disabled — move it aside or drop --no-migrate"
+      end
+
       FileUtils.rm_rf(absolute)
       FileUtils.cp_r(File.join(payload_dir, subdir), absolute)
-      "copied    #{absolute.delete_prefix("#{project_root}/")}"
+      "copied    #{target}"
     end
 
     # `.cursor/rules/harness` sits one level deeper than `.claude/skills`, so the

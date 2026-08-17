@@ -34,9 +34,19 @@ myapp/
 
 Commit all of it, links included. A teammate clones the repo and it works — no `bundle` step needed to *use* the harness, only to update it.
 
+### Already have skills, rules, or agents in `.claude/` or `.cursor/`?
+
+`install` **moves them into `rails-agent-harness/` first**, before the symlinks go in. Those directories become links, so anything left in them would be shadowed — and in `--mode=copy`, overwritten. Migration happens for both editors' `skills/` and `agents/`, and for `.cursor/rules/*.mdc`.
+
+You come out ahead: a skill that only Claude Code could see because it lived in `.claude/skills/` is now visible to Cursor too, from the one shared directory.
+
+Migrated files stay **yours** — they aren't recorded in `.manifest.json`, so `update` never touches them. If one of your names collides with a vendored one, `install` refuses and changes nothing rather than picking a winner; rename yours, or delete it to accept the harness version. An identical copy is recognised as such and quietly dropped in favour of the vendored file.
+
+`--no-migrate` opts out, in which case `install` refuses to touch a populated editor directory at all.
+
 | Command | What it does |
 | --- | --- |
-| `rails-agent-harness install` | vendor the harness and create the links (idempotent) |
+| `rails-agent-harness install` | migrate any existing editor content, vendor the harness, create the links (idempotent) |
 | `rails-agent-harness update` | re-vendor after `bundle update`, reporting what changed |
 | `rails-agent-harness check` | verify the vendored harness matches the gem — use in CI |
 | `rails-agent-harness root` | print the payload path inside the gem |
