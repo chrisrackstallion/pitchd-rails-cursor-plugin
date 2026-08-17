@@ -21,7 +21,10 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1"
 
+  spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   # Explicit include list rather than exclusion: the payload is the point, and
@@ -37,7 +40,7 @@ Gem::Specification.new do |spec|
   # rubocop.yml is shipped so apps can `inherit_gem` it — see the README.
   spec.files = payload +
                Dir.glob("lib/**/*.rb") +
-               [ "exe/rails-agent-harness", "LICENSE", "README.md", "rubocop.yml" ]
+               [ "exe/rails-agent-harness", "LICENSE", "README.md", "CHANGELOG.md", "rubocop.yml" ]
                  .select { |f| File.exist?(f) }
 
   spec.bindir = "exe"

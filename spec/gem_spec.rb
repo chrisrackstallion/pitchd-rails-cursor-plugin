@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "yaml"
 
 # Guards the packaging contract. The payload is the whole point of this gem, so
 # the things most worth asserting are that it is actually included and that the
@@ -57,5 +58,22 @@ RSpec.describe "gem packaging" do
   it "reports its own payload path" do
     expect(RailsAgentHarness.payload).to eq(File.join(RailsAgentHarness.root, "rails-agent-harness"))
     expect(Dir).to exist(RailsAgentHarness.payload)
+  end
+
+  describe "ruby floor" do
+    # CI runs a newer Ruby than the floor, so the linter is what holds the line:
+    # with TargetRubyVersion at the floor, RuboCop rejects syntax the floor
+    # cannot parse. That only works while the two versions agree.
+    it "lints against the same Ruby version the gemspec declares" do
+      floor = spec.required_ruby_version.requirements.first.last
+      target = YAML.safe_load_file(File.expand_path("../.rubocop.yml", __dir__))
+                   .dig("AllCops", "TargetRubyVersion")
+
+      expect(target.to_s).to eq(floor.segments.first(2).join("."))
+    end
+
+    it "declares the floor as a minimum, not a pin" do
+      expect(spec.required_ruby_version.requirements.map(&:first)).to eq([ ">=" ])
+    end
   end
 end

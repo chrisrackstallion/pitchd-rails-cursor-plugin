@@ -22,9 +22,19 @@ module RailsAgentHarness
         --path PATH    project root (default: current directory)
         --mode MODE    link (default) or copy, for filesystems without symlinks
         --no-migrate   leave existing .claude/.cursor content alone and fail instead
+        -h, --help     print this help
+
+      examples:
+        rails-agent-harness install                  # from the project root
+        rails-agent-harness install --path ../myapp  # from anywhere
+        rails-agent-harness install --mode copy      # e.g. a mounted volume without symlinks
+        rails-agent-harness check                    # in CI: exits 1 on drift
+        rails-agent-harness update                   # after bumping the gem
 
       On install, skills, rules, and agents already in .claude/ or .cursor/ are
-      moved into #{PAYLOAD_DIR}/ first, so the symlinks cannot shadow or delete them.
+      moved into #{PAYLOAD_DIR}/ first, so the symlinks cannot shadow or delete
+      them. Local edits to vendored files are kept; `check` reports them as
+      overridden without failing.
     TEXT
 
     def initialize(argv, out: $stdout, err: $stderr)
@@ -56,15 +66,18 @@ module RailsAgentHarness
 
     private
 
+    # OptionParser#parse works on a dup of the array, so the -h callback sets a
+    # flag rather than mutating @argv, which the parser would never see.
     def parse!
+      help = false
       parser = OptionParser.new do |o|
         o.on("--path PATH") { |v| @options[:path] = v }
         o.on("--mode MODE") { |v| @options[:mode] = v.to_sym }
         o.on("--[no-]migrate") { |v| @options[:migrate] = v }
-        o.on("-h", "--help") { @argv.unshift("help") }
+        o.on("-h", "--help") { help = true }
       end
       rest = parser.parse(@argv)
-      rest.first
+      help ? "help" : rest.first
     end
 
     def installer

@@ -55,9 +55,13 @@ module RailsAgentHarness
       owns[relative_path] == self.class.digest(absolute_path)
     end
 
+    # Written to a temp file and renamed, so a crash mid-write cannot leave a
+    # half-written manifest that `load` would then reject as invalid JSON.
     def write(payload_dir)
       body = { INSTALLER_KEY => { "version" => version, "owns" => owns.sort.to_h } }
-      File.write(path_within(payload_dir), "#{JSON.pretty_generate(body)}\n")
+      path = path_within(payload_dir)
+      File.write("#{path}.tmp", "#{JSON.pretty_generate(body)}\n")
+      File.rename("#{path}.tmp", path)
     end
 
     def path_within(payload_dir)

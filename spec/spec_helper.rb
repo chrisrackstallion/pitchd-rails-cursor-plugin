@@ -4,8 +4,8 @@ require "fileutils"
 require "tmpdir"
 require "json"
 
+# The root file loads the whole library; the CLI is separate, as in exe/.
 require_relative "../lib/rails_agent_harness"
-require_relative "../lib/rails_agent_harness/installer"
 require_relative "../lib/rails_agent_harness/cli"
 
 RSpec.configure do |config|

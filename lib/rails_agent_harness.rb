@@ -35,3 +35,7 @@ module RailsAgentHarness
     end
   end
 end
+
+# The whole library, so `require "rails_agent_harness"` yields a working
+# Installer. The CLI is left to exe/ — it exists for the executable, not callers.
+require_relative "rails_agent_harness/installer"
