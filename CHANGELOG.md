@@ -18,3 +18,6 @@ Initial version, in local use while the harness proves itself.
   gem no longer ships.
 - Ships `rubocop.yml` for consuming apps to `inherit_gem` as a thin layer over
   rubocop-rails-omakase.
+- `install` closes with where to author new harness files, and — when it migrated
+  files — that the install commits with `git add -A`, since git cannot name a
+  path through the editor links.

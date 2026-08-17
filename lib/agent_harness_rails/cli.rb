@@ -101,7 +101,20 @@ module AgentHarnessRails
       report("kept local edits to", result.overridden)
       report("removed no-longer-shipped", result.pruned)
       result.links.each { |line| @out.puts "  #{line}" }
+      report_link_notes(result) if @options[:mode] == :link
       0
+    end
+
+    # Both notes are one git rule with two faces: a pathspec may not traverse a
+    # symlink. So new files have to be staged at their real path, and a migrated
+    # file git tracked at its old path — now beneath a link, unnameable — can only
+    # have its deletion staged in bulk. Said here, because this is the moment the
+    # links appear and the moves have just happened.
+    def report_link_notes(result)
+      @out.puts "  note: author new skills, rules, and agents under #{PAYLOAD_DIR}/ — git cannot stage a path through a link"
+      return if result.migrated.empty?
+
+      @out.puts "        commit this install with `git add -A`: git tracked the moved files at paths it can no longer name"
     end
 
     def update

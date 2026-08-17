@@ -44,6 +44,8 @@ Migrated files stay **yours** — they aren't recorded in `.manifest.json`, so `
 
 `--no-migrate` opts out, in which case `install` refuses to touch a populated editor directory at all.
 
+If git was tracking those files at their old paths, **commit the install with `git add -A`** — the deletions now sit beneath a symlink and cannot be staged by name. See [Git cannot name paths through the links](#git-cannot-name-paths-through-the-links).
+
 | Command | What it does |
 | --- | --- |
 | `agent_harness_rails install` | migrate any existing editor content, vendor the harness, create the links (idempotent) |
@@ -68,6 +70,7 @@ Two constraints worth knowing:
 
 - **Keep skills flat.** One level: `skills/<name>/SKILL.md`. Claude Code discovers exactly that shape and does not recurse into subdirectories, so a nested skill is invisible to it even though Cursor would find it.
 - **Names are global.** Both editors key on the `name:` in frontmatter, so an app skill can't reuse a vendored name.
+- **Write to `agent_harness_rails/`, not through `.claude/` or `.cursor/`.** Writing through a link works; committing that path doesn't — see [Git cannot name paths through the links](#git-cannot-name-paths-through-the-links).
 
 ### Inheriting the RuboCop config
 
@@ -89,6 +92,33 @@ Most of what the harness asks for is process rather than configuration — zero 
 ### Your editor will show the harness twice
 
 Both editors expand a symlinked directory inline in the file tree, so `agent_harness_rails/skills/` and `.claude/skills/` appear as separate copies of the same content. They are one set of files — same inode, edit either path. Nothing to clean up.
+
+### Git cannot name paths through the links
+
+Git tracks the **symlinks** in `.claude/` and `.cursor/` — never the files behind them. Any pathspec that traverses one is refused, even when the file is sitting right there:
+
+```
+$ git add .cursor/skills/writing-spec-text-assertions/SKILL.md
+fatal: pathspec '.cursor/skills/writing-spec-text-assertions/SKILL.md' is beyond a symbolic link
+```
+
+It shows up in two shapes.
+
+**Committing the install itself.** Migration moved files git was tracking at their old `.cursor/` and `.claude/` paths, so git wants those deletions staged — and those paths now sit beneath a link, so they cannot be named at all. Stage in bulk:
+
+```bash
+git add -A
+```
+
+That records the deletions, the new symlinks, and the vendored harness together — the whole install, which is what you're committing anyway. (`git add -u` alone if you want only the deletions; `git rm --cached` also reaches them, since it works on the index.)
+
+**A new file authored through a link.** The write is fine — it landed in `agent_harness_rails/skills/` — so stage it there:
+
+```bash
+git add agent_harness_rails/skills/writing-spec-text-assertions/SKILL.md
+```
+
+Then author under `agent_harness_rails/` from then on. `.cursor/skills/` is where skills *look* like they live, so it is the path an agent writes to unless told otherwise — worth saying explicitly when you ask one to add a skill.
 
 ## What you can do
 
