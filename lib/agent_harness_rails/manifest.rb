@@ -14,7 +14,7 @@ module AgentHarnessRails
   # and refuse to overwrite anything the app wrote.
   class Manifest
     FILENAME = ".manifest.json"
-    INSTALLER_KEY = "rails-agent-harness"
+    INSTALLER_KEY = "agent_harness_rails"
 
     attr_reader :version, :owns
 

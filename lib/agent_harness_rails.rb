@@ -15,8 +15,8 @@ require_relative "agent_harness_rails/version"
 # which would reopen the Rails constant inside a Rails application.
 module AgentHarnessRails
   # Directory name used both inside this gem and inside a consuming app, so one
-  # path string (`rails-agent-harness/rules/models.mdc`) is correct in both.
-  PAYLOAD_DIR = "rails-agent-harness"
+  # path string (`agent_harness_rails/rules/models.mdc`) is correct in both.
+  PAYLOAD_DIR = "agent_harness_rails"
 
   # Subdirectories of the payload, in the order a reader meets them.
   PAYLOAD_SUBDIRS = %w[skills rules agents].freeze

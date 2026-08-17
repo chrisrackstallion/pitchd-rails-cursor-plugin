@@ -6,7 +6,7 @@
 #     agent_harness_rails: rubocop.yml
 #
 # Order matters — this file is a thin layer over omakase, not a replacement for
-# it. rails-agent-harness/rules/rubocop.mdc names rubocop-rails-omakase as the
+# it. agent_harness_rails/rules/rubocop.mdc names rubocop-rails-omakase as the
 # ruleset source of truth, so the harness deliberately does not restate or
 # contradict its cop settings.
 #

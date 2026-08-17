@@ -4,7 +4,7 @@ require_relative "lib/agent_harness_rails/version"
 
 Gem::Specification.new do |spec|
   # Underscored so the gem name, the require, and the AgentHarnessRails constant
-  # all match. The harness it vendors keeps its own name: rails-agent-harness/.
+  # all match. The harness it vendors keeps its own name: agent_harness_rails/.
   spec.name = "agent_harness_rails"
   spec.version = AgentHarnessRails::VERSION
   spec.authors = [ "Chris Bellairs" ]
@@ -38,7 +38,7 @@ Gem::Specification.new do |spec|
   # Dir.chdir keeps the globs anchored to this file, so `gem build` works from
   # any working directory.
   spec.files = Dir.chdir(__dir__) do
-    payload = Dir.glob("rails-agent-harness/**/*", File::FNM_DOTMATCH)
+    payload = Dir.glob("agent_harness_rails/**/*", File::FNM_DOTMATCH)
                  .select { |path| File.file?(path) }
                  .reject { |path| File.basename(path).start_with?(".") }
 

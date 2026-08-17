@@ -10,7 +10,7 @@ module AgentHarnessRails
   #
   # Editor directories hold nothing but links: one per surface, relative, so a
   # clone works with no per-machine step. Skills stay FLAT under
-  # rails-agent-harness/skills/ because Claude Code discovers exactly
+  # agent_harness_rails/skills/ because Claude Code discovers exactly
   # <root>/<name>/SKILL.md and does not recurse.
   class Installer
     # target => path within the payload it points at

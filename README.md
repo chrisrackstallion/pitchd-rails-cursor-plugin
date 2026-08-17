@@ -18,25 +18,25 @@ bundle install
 bundle exec agent_harness_rails install
 ```
 
-That vendors the harness into `rails-agent-harness/` and points each editor directory at it. (The gem is named `agent_harness_rails`, following Ruby gem naming — underscores, require matches the name. The directory it vendors keeps the harness's own name.)
+That vendors the harness into `agent_harness_rails/` and points each editor directory at it — one name throughout: the gem, the require, the command, and the vendored directory all match.
 
 ```
 myapp/
-  rails-agent-harness/          # the harness — commit this
+  agent_harness_rails/          # the harness — commit this
     skills/  rules/  agents/
     .manifest.json              # which files the gem owns
-  .claude/skills        -> ../rails-agent-harness/skills
-  .claude/agents        -> ../rails-agent-harness/agents
-  .cursor/skills        -> ../rails-agent-harness/skills
-  .cursor/agents        -> ../rails-agent-harness/agents
-  .cursor/rules/harness -> ../../rails-agent-harness/rules
+  .claude/skills        -> ../agent_harness_rails/skills
+  .claude/agents        -> ../agent_harness_rails/agents
+  .cursor/skills        -> ../agent_harness_rails/skills
+  .cursor/agents        -> ../agent_harness_rails/agents
+  .cursor/rules/harness -> ../../agent_harness_rails/rules
 ```
 
 Commit all of it, links included. A teammate on macOS or Linux clones the repo and it works — no `bundle` step needed to *use* the harness, only to update it. Windows needs one extra step: see [Windows](#windows) below.
 
 ### Already have skills, rules, or agents in `.claude/` or `.cursor/`?
 
-`install` **moves them into `rails-agent-harness/` first**, before the symlinks go in. Those directories become links, so anything left in them would be shadowed — and in `--mode=copy`, overwritten. Migration happens for both editors' `skills/` and `agents/`, and for `.cursor/rules/*.mdc`.
+`install` **moves them into `agent_harness_rails/` first**, before the symlinks go in. Those directories become links, so anything left in them would be shadowed — and in `--mode=copy`, overwritten. Migration happens for both editors' `skills/` and `agents/`, and for `.cursor/rules/*.mdc`.
 
 You come out ahead: a skill that only Claude Code could see because it lived in `.claude/skills/` is now visible to Cursor too, from the one shared directory.
 
@@ -62,7 +62,7 @@ The same `--mode=copy` applies to any filesystem without usable symlinks.
 
 ### Adding your own skills
 
-Put them straight into `rails-agent-harness/skills/` alongside the vendored ones — that's why the directory is named for the harness rather than for us. `install` tracks only the files it owns in `.manifest.json`; anything else it leaves alone, and it refuses to overwrite a file it doesn't own rather than clobbering your work.
+Put them straight into `agent_harness_rails/skills/` alongside the vendored ones — that's why the directory is named for the harness rather than for us. `install` tracks only the files it owns in `.manifest.json`; anything else it leaves alone, and it refuses to overwrite a file it doesn't own rather than clobbering your work.
 
 Two constraints worth knowing:
 
@@ -80,7 +80,7 @@ inherit_gem:
   agent_harness_rails: rubocop.yml
 ```
 
-Order matters. The harness config is a **thin layer over omakase**, not a replacement — [`rules/rubocop.mdc`](rails-agent-harness/rules/rubocop.mdc) names `rubocop-rails-omakase` as the ruleset source of truth, so the harness never restates or contradicts its cop settings. It deliberately does **not** set `NewCops` either: a shipped config that auto-enables cops would change your lint results whenever your RuboCop version bumps. Whether new cops are pending or enabled is your app's call — though the harness position is that a pending cop is a deferred offence, and this repo enables them for itself.
+Order matters. The harness config is a **thin layer over omakase**, not a replacement — [`rules/rubocop.mdc`](agent_harness_rails/rules/rubocop.mdc) names `rubocop-rails-omakase` as the ruleset source of truth, so the harness never restates or contradicts its cop settings. It deliberately does **not** set `NewCops` either: a shipped config that auto-enables cops would change your lint results whenever your RuboCop version bumps. Whether new cops are pending or enabled is your app's call — though the harness position is that a pending cop is a deferred offence, and this repo enables them for itself.
 
 **The gem does not depend on RuboCop, and shouldn't.** It ships a YAML file; reading it requires nothing. RuboCop and `rubocop-rails-omakase` belong in your app's own Gemfile, at whatever versions you pin — a hard dependency here would force RuboCop into the bundle of every app that installs the harness, including ones that don't lint, and would fight your own version constraint.
 
@@ -88,7 +88,7 @@ Most of what the harness asks for is process rather than configuration — zero 
 
 ### Your editor will show the harness twice
 
-Both editors expand a symlinked directory inline in the file tree, so `rails-agent-harness/skills/` and `.claude/skills/` appear as separate copies of the same content. They are one set of files — same inode, edit either path. Nothing to clean up.
+Both editors expand a symlinked directory inline in the file tree, so `agent_harness_rails/skills/` and `.claude/skills/` appear as separate copies of the same content. They are one set of files — same inode, edit either path. Nothing to clean up.
 
 ## What you can do
 
@@ -132,7 +132,7 @@ Use the **`refactoring-stimulus-controllers`** skill. It maps every controller a
 ### Keep durable primitives (intent, compilation, evaluations, provenance)
 > *"Set up primitives"* / *"Document the billing feature"* / *"Why don't we cap thread depth?"*
 
-The harness maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`rails-primitives-maintainer`**. Structure rules: **`rails-agent-harness/rules/primitives.mdc`**.
+The harness maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`rails-primitives-maintainer`**. Structure rules: **`agent_harness_rails/rules/primitives.mdc`**.
 
 ---
 
@@ -140,11 +140,11 @@ New here? Start with **`rails-omakase-compass`** to understand the philosophy, t
 
 ## What's inside
 
-- **`rails-agent-harness/rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more. Cursor attaches them by glob; skills open them by path.
-- **`rails-agent-harness/skills/`** — Workflows for planning, implementing, and reviewing Rails work, including layer-specific `writing-*` skills.
-- **`rails-agent-harness/agents/`** — Subagent definitions for implementation, review, query, and primitives maintenance.
+- **`agent_harness_rails/rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more. Cursor attaches them by glob; skills open them by path.
+- **`agent_harness_rails/skills/`** — Workflows for planning, implementing, and reviewing Rails work, including layer-specific `writing-*` skills.
+- **`agent_harness_rails/agents/`** — Subagent definitions for implementation, review, query, and primitives maintenance.
 
-Every internal reference is written in one canonical form — `rails-agent-harness/rules/models.mdc` — which resolves identically from this repo's root and from a consuming app's root. `bin/check-references` enforces that in CI, so a mistyped path fails the build instead of failing silently inside an agent.
+Every internal reference is written in one canonical form — `agent_harness_rails/rules/models.mdc` — which resolves identically from this repo's root and from a consuming app's root. `bin/check-references` enforces that in CI, so a mistyped path fails the build instead of failing silently inside an agent.
 
 ## Credits
 

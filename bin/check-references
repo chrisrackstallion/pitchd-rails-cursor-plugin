@@ -17,10 +17,10 @@
 #   bin/check-references -v       # also list every distinct reference
 
 REPO_ROOT = File.expand_path("..", __dir__)
-HARNESS_DIR = "rails-agent-harness"
+HARNESS_DIR = "agent_harness_rails"
 PAYLOAD_DIRS = %w[skills rules agents].freeze
 
-# Where the payload lives: inside rails-agent-harness/ once moved, else the root.
+# Where the payload lives: inside agent_harness_rails/ once moved, else the root.
 PREFIX = Dir.exist?(File.join(REPO_ROOT, HARNESS_DIR, "skills")) ? "#{HARNESS_DIR}/" : ""
 
 SKILL_NAMES = Dir.children(File.join(REPO_ROOT, PREFIX, "skills")).select do |name|

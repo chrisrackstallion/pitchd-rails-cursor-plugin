@@ -17,7 +17,7 @@ jobs:
           bundler-cache: true
 
       # Every internal reference must resolve and be written in the canonical
-      # rails-agent-harness/... form. Nothing else catches a typo'd path, which
+      # agent_harness_rails/... form. Nothing else catches a typo'd path, which
       # would otherwise fail silently inside an agent at runtime.
       - name: Check harness references
         run: bin/check-references

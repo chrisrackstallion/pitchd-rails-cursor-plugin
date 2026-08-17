@@ -15,5 +15,5 @@ AllCops:
   # deliberately leaves the choice to each consuming app.
   NewCops: enable
   Exclude:
-    - "rails-agent-harness/**/*"
+    - "agent_harness_rails/**/*"
     - "vendor/**/*"

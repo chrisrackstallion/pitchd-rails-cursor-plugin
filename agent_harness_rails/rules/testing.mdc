@@ -1,0 +1,259 @@
+---
+description: Rails testing conventions inspired by DHH/37signals philosophy, adapted for RSpec and FactoryBot. Apply when working with specs and tests.
+globs: spec/**/*.rb
+alwaysApply: false
+---
+
+# Testing Conventions
+
+## Philosophy
+
+Test behaviour, not implementation. Write tests that give you confidence to ship, not tests that break when you refactor. Prefer real objects over mocks. Hit the database. Render the views. Click the buttons — but only when the journey itself is the feature under test.
+
+User-facing copy and **`I18n.t`** in assertions: **`agent_harness_rails/rules/i18n.mdc`**, **`agent_harness_rails/skills/writing-i18n/references/patterns.md`** § Testing.
+
+> **Tooling note:** DHH and 37signals use Minitest with fixtures. The testing
+> *philosophy* here — system tests as backbone, real objects, behaviour over
+> implementation — is theirs. The tooling (RSpec, FactoryBot, Capybara DSL)
+> is an adaptation of that philosophy for teams that prefer RSpec.
+
+## Test Pyramid (DHH Style)
+
+System specs are the **backbone**, not the **coverage**. A small number of integration specs prove the seams hold. The bulk of the suite lives in lower-layer specs that are faster, more focused, and less brittle.
+
+1. **Model specs** — domain logic, scopes, state transitions, business-rule validations. The unit test of Rails. Most behaviour lives here.
+2. **Request specs** — HTTP layer: status codes, redirects, params handling, auth gates, rendering smoke (`response.body.include?`) for index/show, and CRUD round-tripping for resources without a system spec. This is the workhorse layer. **Request specs own rendering — never write view specs** (`spec/views/`, `type: :view`); they test templates in isolation with stubbed assigns, which is implementation testing.
+3. **Policy specs** — the full role × action matrix for authorization logic.
+4. **System specs** — a tight set of canonical journeys: one happy path per CRUD resource, one per cross-resource journey (signup, checkout, password reset), one per JavaScript behaviour across the entire suite. **The default answer to "add another system spec?" is no — push down a layer.**
+5. **Everything else** — job specs, mailer specs, concern specs, PORO specs. **Concerns with behaviour always get their own spec file** (`spec/models/concerns/`) — that file is the single home for the concern's contract; an including model's spec re-tests a concern method only when the model **overrides or extends** it, and then only the delta. Jobs, mailers, and POROs get specs when the object has meaningful logic worth testing in isolation.
+
+### System-Spec Budget
+
+Anchor on these numbers. Anything beyond requires a justification ("this seam broke in production", "this composition is not covered anywhere else").
+
+| Scope | Default budget |
+|-------|----------------|
+| Per CRUD resource | **1** canonical happy-path spec |
+| Per non-trivial form | **1** validation-error spec |
+| Per cross-resource journey | **1** end-to-end spec |
+| Per JavaScript behaviour (Stimulus controller, Turbo pattern) | **1** spec across the entire suite, on the simplest page |
+| Per UI authorization rule | **0** by default (use policy + request specs) |
+
+### The Five Gates for System Specs
+
+Every system spec must pass all five before it earns its place. If any gate fails, write the test at a lower layer instead. Full text and rationale: **`agent_harness_rails/skills/writing-tests/references/system-specs.md`**.
+
+1. **Interaction gate** — the spec calls `fill_in`, `click_*`, `select`, `check`, or `attach_file`. `visit` + assert with no interaction is a view spec; move to a request spec asserting `response.body.include?`.
+2. **Uniqueness gate** — the journey is materially different from existing system specs for this resource or area.
+3. **JavaScript-necessity gate** — Selenium is justified (the spec provably fails under `rack_test`), and the Stimulus controller / Turbo pattern is not already exercised by another system spec.
+4. **Single-home gate** — the assertion is not already owned by a model, request, policy, job, or mailer spec.
+5. **One-story gate** — the spec tells exactly one user story; no drive-by assertions about nav, footer, sidebar, or unrelated widgets.
+
+## RSpec Conventions
+
+```ruby
+# Describe the class or feature, not the test
+RSpec.describe Article, type: :model do
+  # One context per scenario
+  context "when published" do
+    # Test names read as sentences
+    it "is visible to readers" do
+      article = create(:article, :published)
+      expect(article).to be_published
+    end
+  end
+end
+```
+
+- `describe` for the class or method under test
+- `context` for a specific scenario (always starts with "when" or "with")
+- `it` for the assertion (reads as a sentence)
+- One assertion per test when practical — multiple assertions are fine when testing one behaviour
+- Avoid deep `let` / `subject` chains that obscure what's being tested — inline setup is clearer. A single `let` for the authenticated user is pragmatic; five nested `let`s are not.
+
+## FactoryBot
+
+Use `create` by default — hit the database. Use `build` only when persistence is irrelevant to the test. Use `build_stubbed` rarely — the speed gain is marginal and the behaviour drift from real records can mask bugs.
+
+```ruby
+# Define minimal factories — only required fields
+FactoryBot.define do
+  factory :article do
+    title { "Sample Article" }
+    association :author, factory: :user
+
+    trait :published do
+      # Pass the actor explicitly — factories run outside a request,
+      # so a verb defaulting to `by: Current.user` would get nil
+      after(:create) { |article| article.publish(by: article.author) }
+    end
+  end
+end
+```
+
+- Traits for states: `:published`, `:archived`, `:with_comments`
+- Sequences for uniqueness: `sequence(:email) { |n| "user#{n}@example.com" }`
+- No inheritance hierarchies — keep factories flat with traits
+- Override in the test when the value matters to the assertion
+
+## Each Behaviour Has One Home
+
+Every behaviour is tested in exactly one place. Duplication across spec types
+is waste — it slows the suite, obscures what each layer actually proves, and
+creates maintenance drag when behaviour changes.
+
+### Ownership by Layer
+
+| Behaviour | Tested in | NOT tested in |
+|-----------|-----------|---------------|
+| Domain logic (publish, close, scopes) | Model spec | System/request spec don't re-test the logic |
+| Canonical happy-path journey (form → submit → see result) | System spec — **one per resource** within budget | Request spec doesn't duplicate the canonical journey; lower-priority CRUD actions stay in request specs |
+| HTTP concerns (status codes, redirects, params) | Request spec | System spec doesn't assert status codes |
+| Rendering smoke for index/show pages (key content present in response) | Request spec with `response.body.include?` | System spec doesn't do `visit`-only assertions; view specs (`spec/views/`) are never written |
+| CRUD round-trip (record created, redirect lands) for non-canonical actions (edit, delete, show) | Request spec | System spec only covers the canonical flow |
+| Policy logic (who can do what) | Policy spec | Request spec doesn't re-test policy logic; it tests the HTTP gate |
+| Auth gates at the HTTP layer | Request spec — **always**, even if a system spec exists | Auth is critical enough to test at the HTTP layer |
+| Job performs work correctly | Job spec | Model spec just asserts `have_enqueued_job` |
+| Mailer content | Mailer spec | Request spec just asserts delivery was enqueued |
+
+Mailer classes, previews, `deliver_later`, and template layout: **`agent_harness_rails/rules/mailers.mdc`**, **`agent_harness_rails/skills/writing-mailers/references/patterns.md`**.
+
+### The Rule
+
+If a system spec already proves the user can create an article (fills form,
+clicks save, sees the article), **don't** write a request spec that posts
+the same params and checks the same record was created. The request spec
+should only exist if it tests something the system spec can't: a specific
+status code, a redirect chain, or rate limiting.
+
+If a model spec proves `article.publish` creates a publication record,
+the system spec just clicks "Publish" and asserts the page shows "Published"
+— it doesn't also check `article.publication.present?`.
+
+### Within a Single Spec File
+
+Don't test the same path twice with different wording:
+
+```ruby
+# Bad — two tests for one behaviour
+it "publishes the article" do
+  article.publish
+  expect(article).to be_published
+end
+
+it "creates a publication record" do
+  article.publish
+  expect(article.publication).to be_present
+end
+
+# Good — one test, multiple assertions for one behaviour
+it "publishes the article" do
+  article.publish
+
+  expect(article).to be_published
+  expect(article.publication).to be_present
+  expect(article.publication.publisher).to eq(Current.user)
+end
+```
+
+Multiple assertions in one test are fine when they verify the same action.
+Split tests when the *setup* differs (different context), not when you want
+to assert more things about the same outcome.
+
+## What NOT to Do
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Mocking ActiveRecord | Use real records via FactoryBot |
+| Testing private methods | Test through public interface |
+| `allow_any_instance_of` | Inject the dependency or test through the real path |
+| Shared examples for unrelated specs | Inline the assertion — duplication is fine |
+| `before(:all)` for database records | `before(:each)` or inline `create` |
+| Testing framework behaviour (validates presence) | Test your domain logic, not Rails |
+| Deep `let` / `subject` chains that obscure setup | Inline setup — each test tells its own story; a single `let` for auth user is fine |
+| Controller specs | Request specs (controller specs are deprecated) |
+| View specs (`spec/views/`, `type: :view`) | Request specs — rendering is tested through the full stack with `response.body.include?`, never in template isolation |
+| `stub_const` / `allow(ENV)` | Use Rails credentials or test configuration |
+| System spec asserting model internals | System spec asserts what the user sees |
+| Re-testing domain logic in integration specs | Model spec owns the logic; integration asserts the outcome |
+| Separate tests for each assertion on one action | Multiple assertions in one test for one behaviour |
+| Testing the same happy path in model + request + system | One home per behaviour — pick the right layer |
+| Standalone `not_to` assertions that only prove absence | Assert the positive behaviour the user *does* see; `not_to` is a side-effect assertion, not a primary one |
+| System spec that only `visit`s and asserts content (no interaction) | Request spec with `response.body.include?` |
+| One system spec per CRUD action (show/edit/delete) on the same resource | One canonical happy-path system spec; other CRUD actions to request specs |
+| One system spec per field, attribute, or validation rule | Per-field belongs to model/request specs; one system spec exercises the form as a whole |
+| Re-testing the same Stimulus controller / Turbo pattern in multiple system specs | One system spec per JS behaviour across the entire suite |
+| Selenium driver for a spec that passes under `rack_test` | Use `rack_test`; Selenium is for genuinely JS-required behaviour only |
+| Asserting flash copy as the primary success signal | Resource state on the page is the primary signal; flash is at most secondary |
+| Drive-by assertions on nav/footer/sidebar inside a feature spec | One story per spec; assert only what belongs to the journey under test |
+| System spec for UI authorization with no product requirement | Policy spec (logic) + request spec (HTTP gate) |
+
+### Do not write specs to prove code was removed
+
+A spec whose only assertion is `not_to have_*` does not test behaviour — it tests absence. Such tests pass trivially (including when the feature never existed), document nothing about what users *can* do, and break silently if the element is renamed.
+
+```ruby
+# Bad — proves nothing except an element is absent; passes even if the page is empty
+it "does not show an excluded agencies section" do
+  expect(page).not_to have_link("New Excluded Agency")
+end
+
+# Good — tests what the user actually sees and can do on this page
+it "shows the agencies list without the excluded agency option" do
+  visit agencies_path
+  expect(page).to have_content("Agencies")
+  expect(page).to have_link("New Agency")
+end
+```
+
+`not_to` is valid as a **secondary assertion** when it confirms a visible state change alongside a positive assertion:
+
+```ruby
+# Fine — not_to confirms the item is gone after deletion, paired with a positive outcome
+it "user deletes an article" do
+  article = create(:article, title: "To Delete")
+  visit article_path(article)
+  click_button "Delete"
+
+  expect(page).to have_content("Article deleted.")  # primary
+  expect(page).not_to have_content("To Delete")     # confirms removal
+end
+```
+
+The rule: every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
+
+## Database Strategy
+
+Transactional fixtures cover everything — including system specs. Since
+Rails 5.1 the test thread and the app server thread share one database
+connection, so `database_cleaner` and truncation strategies are legacy
+setup, not requirements.
+
+```ruby
+# rails_helper.rb
+config.use_transactional_fixtures = true
+```
+
+For parallel test execution, ensure each process has its own database.
+For RSpec that means the `parallel_tests` gem (Rails' built-in
+`parallelize` is Minitest-only) — and beware that shared state
+(sequences, unique constraints) can cause flakiness across processes.
+
+## Test File Naming
+
+The spec tree mirrors the application architecture: every file under `app/`
+has its spec at the mirrored path under `spec/` — models, concerns, POROs,
+jobs, mailers, policies each in their own directory. A spec whose subject
+lives somewhere else in `app/` than the spec's path implies is misfiled.
+
+| Type | Location | Naming |
+|------|----------|--------|
+| Model | `spec/models/article_spec.rb` | Matches model name |
+| Concern | `spec/models/concerns/publishable_spec.rb` | Matches concern name — every concern with behaviour gets one |
+| PORO / form object | `spec/models/account/onboarding_spec.rb` | Mirrors the object's path under `app/models/` |
+| Request | `spec/requests/articles_spec.rb` | Matches controller/resource |
+| System | `spec/system/articles_spec.rb` | Matches feature or user flow |
+| Factory | `spec/factories/articles.rb` | Plural model name |
+| Job | `spec/jobs/notify_subscribers_job_spec.rb` | Matches job name |
+| Mailer | `spec/mailers/notification_mailer_spec.rb` | Matches mailer name |
+| Policy | `spec/policies/article_policy_spec.rb` | Matches policy name |

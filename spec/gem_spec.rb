@@ -17,9 +17,9 @@ RSpec.describe "gem packaging" do
   end
 
   it "ships the payload, including nested references/" do
-    expect(spec.files).to include("rails-agent-harness/rules/models.mdc")
-    expect(spec.files).to include("rails-agent-harness/skills/writing-tests/references/system-specs.md")
-    expect(spec.files).to include("rails-agent-harness/agents/rails-reviewer.md")
+    expect(spec.files).to include("agent_harness_rails/rules/models.mdc")
+    expect(spec.files).to include("agent_harness_rails/skills/writing-tests/references/system-specs.md")
+    expect(spec.files).to include("agent_harness_rails/agents/rails-reviewer.md")
   end
 
   it "ships the library and executable" do
@@ -61,7 +61,7 @@ RSpec.describe "gem packaging" do
   end
 
   it "reports its own payload path" do
-    expect(AgentHarnessRails.payload).to eq(File.join(AgentHarnessRails.root, "rails-agent-harness"))
+    expect(AgentHarnessRails.payload).to eq(File.join(AgentHarnessRails.root, "agent_harness_rails"))
     expect(Dir).to exist(AgentHarnessRails.payload)
   end
 
