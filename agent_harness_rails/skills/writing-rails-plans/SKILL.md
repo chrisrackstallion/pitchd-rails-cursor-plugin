@@ -148,21 +148,24 @@ target capability doc, and **`compilation.md`**.
 3. **Read (or create) the capability doc** under
    `docs/primitives/capabilities/<name>.md`:
    - **Exists (from brainstorming, `status: shaping`, or earlier work):**
-     confirm and extend. Classify every part of this plan against the Intent
-     clauses — serves an existing clause / **supersedes** one (strike through,
-     tombstone, new ID — never renumber or delete) / adds a new clause. Read
+     confirm and extend. Classify every part of this plan against the `intent:`
+     clauses — serves an existing clause / **supersedes** one (`superseded_by:`
+     plus `superseded_on:`, new id — never renumber or delete) / adds a new
+     clause. Read
      `## Provenance` before proposing an approach: do not re-litigate a
      recorded rejection or "fix" a recorded deliberate decision without
      saying so explicitly.
    - **Missing, new feature:** create it now. The requirements-gate answers
-     **are** the Intent section — transcribe them as one-sentence clauses
-     (`I1`, `I2`, …) instead of discarding them into chat history. Draft
-     `## Shape` (deltas only) from the approach-gate outcome.
+     **are** the `intent:` clauses — transcribe them into frontmatter as
+     one-sentence `clause:` entries (`I1`, `I2`, …) instead of discarding them
+     into chat history. Draft `## Shape` (deltas only) from the approach-gate
+     outcome. Skeleton:
+     `agent_harness_rails/skills/maintaining-primitives/references/templates.md`.
    - **Missing, existing feature (lazy backfill):** create it from what the
-     code demonstrably does plus the requirements-gate answers; Evaluations
-     from specs that exist — shipped behaviour with **no** spec home gets a
-     row marked `unproven`, same as a `capture` backfill (an honest test-gap
-     record, not a blocker); provenance opens with
+     code demonstrably does plus the requirements-gate answers; `evaluations:`
+     from specs that exist and carry the `intent:` tag — shipped behaviour with
+     **no** spec home gets `unproven: true`, same as a `capture` backfill (an
+     honest test-gap record, not a blocker); provenance opens with
      `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
      Set **`status: built`** — the feature is already shipped, and the plan
      being drafted is an amendment to it (final approval leaves `built` docs
@@ -172,20 +175,20 @@ target capability doc, and **`compilation.md`**.
      present them to the user for a quick confirmation as part of the gate
      questions, so nothing reconstructed ships as fact unconfirmed
      (`capture` parity).
-4. **Write Intent and Shape before drafting tasks.** Tasks then cite clause
-   IDs (`serves I1, I4` / `supersedes I4 → I5`) instead of restating
+4. **Write the `intent:` clauses and Shape before drafting tasks.** Tasks then cite clause
+   ids (`serves I1, I4` / `supersedes I4 → I5`) instead of restating
    requirements — the plan is ephemeral; the capability doc is the durable
    record. When this gate **creates** a doc (new feature or lazy backfill),
    add its `docs/primitives/index.md` line at creation, same as `capture` —
    final approval then updates it.
 
-**Write points:** during drafting this skill writes **Intent** and **Shape**;
+**Write points:** during drafting this skill writes the **`intent:` clauses** and **Shape**;
 at final approval it also flips `status:` to `planned`, appends the one
 `planned` provenance line, and syncs `index.md` (see **At final approval**
-below). Evaluations rows, `status: built`, and the `built` provenance line
+below). `evaluations:`, `status: built`, and the `built` provenance line
 belong to execution close-out (`executing-rails-plan`); do not fill
 them from intention. The one exception is the **lazy backfill** above:
-Evaluations rows transcribed from **already-existing specs** record reality,
+`evaluations:` transcribed from **already-existing specs** record reality,
 not intention, and are correct to write at plan time.
 
 ## Philosophy (DHH / Rails Agent Harness)

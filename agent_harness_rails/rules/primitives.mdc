@@ -18,10 +18,16 @@ The tree holds the four primitives that outlive generated code:
 
 | Primitive | Where it lives |
 |-----------|----------------|
-| **Intent** — what the system must do and why | `## Intent` section of each capability doc |
+| **Intent** — what the system must do and why | `intent:` clauses in each capability doc's YAML frontmatter |
 | **Compilation** — architecture generated code compiles into | Generic Rails shape: this harness (compass + rules). App-specific: `compilation.md` |
-| **Evaluations** — executable proof behaviour survived change | `## Evaluations` section, rows pointing at RSpec homes |
+| **Evaluations** — executable proof behaviour survived change | `evaluations:` on each clause, naming the RSpec files that prove it |
 | **Provenance** — lineage of decisions and rejected alternatives | `## Provenance` section, append-only |
+
+Intent and evaluations live in **frontmatter, not prose**, because they are the
+two primitives a machine must read: **`rails-evals`** checks that every active
+clause on a `built` doc is proven and that every proof still points at a live
+clause. Shape and provenance stay prose — they are for humans, and no parser
+improves them.
 
 ## Layout (fixed — no other file types)
 
@@ -30,7 +36,8 @@ docs/primitives/
   SCHEMA.md          # Co-owned contract (agent + human)
   index.md           # One line per capability + status — the only entry point
   compilation.md     # App-wide constraints. Human-owned.
-  capabilities/      # One file per capability, four fixed sections
+  capabilities/      # One file per capability: intent + evaluations in frontmatter,
+                     # then ## Shape and ## Provenance
 ```
 
 **No topic pages, synthesis pages, or hubs.** Content that does not answer
@@ -54,21 +61,21 @@ tree by design.
   reach it via excerpts pasted into its dispatch prompt), agents propose
   amendments as review findings, and **never edit it directly** (exception:
   the drafting step of `bootstrapping-primitives`, which ends with human edit).
-- **`## Intent`** — Human-co-owned: clauses transcribe the user's answers to
-  requirements-gate or brainstorm questions. Written or amended only by the
+- **`intent:` clauses** — Human-co-owned: clauses transcribe the user's answers
+  to requirements-gate or brainstorm questions. Written or amended only by the
   planning workflows (`brainstorming-rails-omakase` seeds,
   `writing-rails-plans` confirms/amends), a `capture` backfill (with
   human confirmation), or the execution revision loop when the **user's**
   revision changes intent (`executing-rails-plan` R1 classification).
   Never silently rewritten by an implementor — every amendment traces to an
   explicit user decision.
-- **`## Shape`** / **`## Evaluations`** / frontmatter — Agent-maintained at the
+- **`## Shape`** / **`evaluations:`** / `status:` — Agent-maintained at the
   defined write points: brainstorm (seeds the doc: `status: shaping`, rough
   Shape), planner (Shape; `status: planned` at final approval, except
   amendment plans leave `built` docs at `built`; during a lazy backfill,
-  `status: built` plus Evaluations rows transcribed from already-existing
-  specs), execution (close-out: Evaluations, `status: built`; revision loop:
-  Evaluations sync when a fix moves or adds spec homes), maintainer agent
+  `status: built` plus `evaluations:` transcribed from already-existing
+  specs), execution (close-out: `evaluations:`, `status: built`; revision loop:
+  `evaluations:` sync when a fix moves or adds spec homes), maintainer agent
   (capture, update — including human-directed deprecation — lint, structural
   changes).
 - **`## Provenance`** — **Append-only.** Never edit or delete an entry; a wrong
@@ -78,34 +85,47 @@ tree by design.
 
 ## Capability doc format
 
-Frontmatter + four fixed H2 sections, in this order — fixed order is what makes
-docs traversable without search:
+Frontmatter carrying intent and evaluations, then two fixed H2 sections in this
+order — fixed order is what makes docs traversable without search:
 
 ```markdown
 ---
 status: shaping | planned | built | deprecated
-specs:
-  - spec/system/comment_threads_spec.rb
+intent:
+  - id: I1
+    clause: A reader can reply to any comment.
+    evaluations:
+      - spec/system/comment_threads_spec.rb
+  - id: I4
+    clause: Threads never nest deeper than 3 levels.
+    superseded_by: [ I5, I6 ]
+    superseded_on: 2026-09-18
 ---
 # Capability name
 
-## Intent
 ## Shape
-## Evaluations
 ## Provenance
 ```
+
+There is **no `## Intent` or `## Evaluations` section** — the clause and the
+specs that prove it are one record in frontmatter, so a clause list and an
+evaluation table cannot fall out of step. There is **no `specs:` key** either;
+`rails-evals` derives the reverse index from every clause's `evaluations`.
+
+The key is **`superseded_on:`**, not `on:` — YAML resolves a bare `on` to the
+boolean `true`, so an `on:` key silently loses its date.
 
 Skeletons: `agent_harness_rails/skills/maintaining-primitives/references/templates.md`.
 
 ### Intent clauses
 
-- Stable IDs (`I1`, `I2`, …), assigned once, **never renumbered or reused** —
-  provenance entries and old plans reference them.
-- One sentence each, outcome terms.
-- Superseding: strike through the old clause, add
-  `*Superseded by I<n>, YYYY-MM-DD.*`, add the new clause with a **new** ID.
-  Never delete — tombstones are how a future agent learns a cap existed, why,
-  and why it went.
+- **`id:`** — stable (`I1`, `I2`, …), assigned once, **never renumbered or
+  reused**; provenance entries and old plans reference them.
+- **`clause:`** — one sentence, outcome terms.
+- **Superseding:** add `superseded_by: [ I5 ]` and `superseded_on: YYYY-MM-DD`
+  to the old clause, and add the new clause with a **new** id. Never delete the
+  old entry — tombstones are how a future agent learns a cap existed, why, and
+  why it went. `retired_on:` covers a clause withdrawn with no replacement.
 - **Draft stage:** clauses not yet referenced by any approved plan may simply
   be edited in place; the supersession mechanics above bind once a plan
   referencing them is approved.
@@ -118,17 +138,53 @@ don't repeat.
 
 ### Evaluations
 
-One row per **active** intent clause → the spec file (and example description)
-that proves it. All evaluations are RSpec — system specs are the browser
-evaluations. Row coverage is a **`built`-status obligation**: a `built` doc
-missing a row for an active clause is the gap reviews and lint flag;
-`shaping` and `planned` docs for new work have empty tables by design. (A
-backfilled row marked `unproven` counts — it honestly records a test gap in
-an already-shipped feature rather than pretending the feature isn't built.
-And a `built` doc **mid-amendment or mid-revision** — latest provenance event
-is `planned`, or a revision loop is in progress — legitimately has rowless
-new clauses until close-out; lint treats that as in-flight, not a finding.) Retired clauses keep a one-line
-tombstone row (`*retired YYYY-MM-DD with clause*`).
+Each **active** clause carries `evaluations:` — the RSpec files that prove it.
+System specs are the browser evaluations. The named spec file must carry a
+matching **`intent:` metadata tag** (below); a path alone is a claim, the tag is
+the proof.
+
+Coverage is a **`built`-status obligation**: a `built` doc with an active clause
+and no `evaluations:` is the gap reviews and `rails-evals` flag. `shaping` and
+`planned` docs for new work have none by design. Two honest exceptions, both
+reported as warnings rather than failures:
+
+- **`unproven: true`** on a clause — records a real test gap in an
+  already-shipped feature rather than pretending the feature isn't built.
+- **Mid-amendment or mid-revision** — a `built` doc whose latest provenance
+  event is `planned`, or with a revision loop in progress, legitimately has
+  uncovered new clauses until close-out.
+
+### Tagging the proof
+
+The spec example carries the clause id as RSpec metadata:
+
+```ruby
+it "shows replies nested under their parent", intent: "comment_threads#I2" do
+```
+
+Valid on a `describe`/`context` (inherited by the group) and as a list —
+`intent: %w[comment_threads#I2 comment_threads#I3]`. The capability is the doc's
+filename without `.md`.
+
+Metadata rather than a comment, so the same tag runs the proof:
+
+```bash
+bundle exec rspec --tag 'intent:comment_threads#I2'
+```
+
+Renaming an example cannot break the link; deleting it breaks it loudly.
+
+### Checked mechanically
+
+```bash
+rails-evals                    # from the app root; exits 1 on findings
+```
+
+It checks clause ↔ evaluation and nothing else: unproven built clauses, evaluations
+naming a file that does not exist or does not carry the tag, tags naming a clause
+that is absent or superseded, duplicate ids, dangling supersessions, and docs
+still in the retired prose format. Everything below — sizes, index sync, provenance
+style — is judgment, and stays with the `lint` operation in `maintaining-primitives`.
 
 ### Provenance
 
@@ -147,11 +203,11 @@ provenance's:
 |----------|-----|
 | Review iteration counts, task counts, fix-pass tallies | Says how the sausage was made; changes no future decision |
 | Who or what agent did the work, which skill or subagent ran | Not a property of the capability |
-| Commands run, suites passed, lint status | Evaluations rows and CI are where proof lives |
+| Commands run, suites passed, lint status | `evaluations:` and CI are where proof lives |
 | Progress narration ("started X", "continuing Y", "blocked then unblocked") | Only events land — a thing that happened and stayed true |
 | Restated intent clauses or Shape bullets | Already above in the doc |
 
-The same test governs the whole tree: **`## Intent`**, **`## Shape`**, and
+The same test governs the whole tree: **`intent:` clauses**, **`## Shape`**, and
 **`compilation.md`** hold only what a future reader must know to change the
 code correctly. Process, status chatter, and anything derivable from the code
 or the harness has no home here.
@@ -169,9 +225,8 @@ or the harness has no home here.
 
 - Prefer **relative links** inside the tree.
 - Capability filenames follow the app's resource names (`agent_harness_rails/rules/naming.mdc`)
-  so code → doc lookup works by grep.
-- `specs:` frontmatter lists every spec home referenced in Evaluations — it is
-  the reverse index from spec file to capability.
+  so code → doc lookup works by grep — and because the filename is what an
+  `intent:` tag names, a rename means retagging its examples.
 - Keep **Rails app code** out of this tree; it holds decisions and pointers,
   not application source.
 
@@ -179,4 +234,5 @@ or the harness has no home here.
 
 Edits here are **documentation** — they do not replace `agent_harness_rails/rules/testing.mdc`,
 `implementing-rails-task`, or app implementation tasks. The specs the
-Evaluations rows point at remain the executable truth; the rows are the map.
+`evaluations:` point at remain the executable truth; the frontmatter is the map,
+and `rails-evals` is what keeps the map honest.

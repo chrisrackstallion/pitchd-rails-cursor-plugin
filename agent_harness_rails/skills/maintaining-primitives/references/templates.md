@@ -68,32 +68,23 @@ and not derivable from the code belongs here.
 
 ## Capability doc skeleton
 
+Intent and evaluations are frontmatter — one record per clause, so a clause list
+and an evaluation table cannot disagree. Shape and provenance stay prose.
+
 ```markdown
 ---
 status: shaping
-specs: []
+intent:
+  - id: I1
+    clause: [One sentence, outcome terms — what must be true for the user or system.]
+    evaluations: []
 ---
 # [Capability name]
-
-## Intent
-
-- **I1** — [One sentence, outcome terms — what must be true for the user or
-  system.]
 
 ## Shape
 
 - [Deltas only: constraints specific to this capability, not derivable from
   harness rules, not stated in compilation.md. Link, don't repeat.]
-
-## Evaluations
-
-[Rows are written from specs that exist — at execution close-out, capture, or
-a planner lazy backfill — never from what a plan promises. A `shaping` or
-`planned` doc for new work has an empty table.]
-
-| Clause | Proven at |
-|--------|-----------|
-| I1 | [spec/system/..._spec.rb — "example description"] |
 
 ## Provenance
 
@@ -102,6 +93,52 @@ a planner lazy backfill — never from what a plan promises. A `shaping` or
   alternatives; accepted debt. Nothing a future reader would not act on —
   no review counts, agent names, or commands run.]
 ```
+
+`evaluations:` is filled from specs that **exist** — at execution close-out,
+capture, or a planner lazy backfill — never from what a plan promises. A
+`shaping` or `planned` doc for new work leaves it empty.
+
+## Tagging the proof
+
+Each named spec file must carry the clause id as RSpec metadata, or `rails-evals`
+reports the evaluation as untagged — a path alone is a claim, the tag is proof:
+
+```ruby
+# spec/system/comment_threads_spec.rb
+it "shows replies nested under their parent", intent: "comment_threads#I2" do
+```
+
+On a group, inherited by every example inside it, and as a list:
+
+```ruby
+describe "threading", intent: %w[comment_threads#I2 comment_threads#I3] do
+```
+
+The same tag runs the proof: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
+
+## Built doc, fully wired
+
+```markdown
+---
+status: built
+intent:
+  - id: I1
+    clause: A reader can reply to any comment.
+    evaluations:
+      - spec/system/comment_threads_spec.rb
+  - id: I2
+    clause: Replies show nested under their parent.
+    evaluations:
+      - spec/system/comment_threads_spec.rb
+      - spec/requests/comments_spec.rb
+  - id: I3
+    clause: A reader sees who replied and when.
+    unproven: true
+---
+```
+
+`unproven: true` records a real test gap in already-shipped behaviour — reported
+as a warning, not a failure. It is honesty, not a way to silence the check.
 
 ## Worked lifecycle lines (for reference)
 
@@ -121,10 +158,24 @@ a planner lazy backfill — never from what a plan promises. A `shaping` or
 - 2026-10-03 — backfill intent confirmed by human.
 ```
 
-Supersession in place:
+Supersession in place — the old clause stays as a tombstone with its successors
+and date recorded as data; only the new clause carries evaluations:
 
-```markdown
-- ~~**I4** — Threads never nest deeper than 3 levels.~~
-  *Superseded by I5 + I6, 2026-09-18.*
-- **I5** — A reader can reply at any depth.
+```yaml
+intent:
+  - id: I4
+    clause: Threads never nest deeper than 3 levels.
+    superseded_by: [ I5, I6 ]
+    superseded_on: 2026-09-18
+  - id: I5
+    clause: A reader can reply at any depth.
+    evaluations:
+      - spec/system/comment_threads_spec.rb
 ```
+
+The key is **`superseded_on:`**, not `on:` — YAML resolves a bare `on` to the
+boolean `true`, so an `on:` key silently loses its date. A clause withdrawn with
+no replacement uses `retired_on: YYYY-MM-DD` instead.
+
+Retagging is part of the amendment: examples tagged `#I4` must move to `#I5`, or
+`rails-evals` reports them as pointing at a superseded clause.

@@ -71,6 +71,32 @@ end
 - One assertion per test when practical — multiple assertions are fine when testing one behaviour
 - Avoid deep `let` / `subject` chains that obscure what's being tested — inline setup is clearer. A single `let` for the authenticated user is pragmatic; five nested `let`s are not.
 
+## Tagging the Intent a Spec Proves
+
+When the app has a **`docs/primitives/`** tree, the example that proves an intent
+clause carries the clause id as RSpec metadata:
+
+```ruby
+it "shows replies nested under their parent", intent: "comment_threads#I2" do
+```
+
+Also valid on a `describe` / `context` — inherited by every example in the group
+— and as a list: `intent: %w[comment_threads#I2 comment_threads#I3]`. The
+capability is the doc's filename without `.md`
+(`agent_harness_rails/rules/primitives.mdc`).
+
+- **Only evaluation examples are tagged.** Most specs prove behaviour without
+  proving a *clause*; those stay untagged. Tagging everything makes the map
+  useless.
+- The capability doc's `evaluations:` must list the spec file, and the file must
+  carry the tag. **`rails-evals`** checks both directions and fails when either
+  side drifts.
+- The tag is also a selector — `bundle exec rspec --tag 'intent:comment_threads#I2'`
+  runs exactly the proof.
+
+Metadata rather than a comment for that reason: renaming an example cannot break
+the link, and deleting it breaks the link loudly.
+
 ## FactoryBot
 
 Use `create` by default — hit the database. Use `build` only when persistence is irrelevant to the test. Use `build_stubbed` rarely — the speed gain is marginal and the behaviour drift from real records can mask bugs.

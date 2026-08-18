@@ -22,18 +22,38 @@ RSpec.describe "gem packaging" do
     expect(spec.files).to include("agent_harness_rails/agents/rails-reviewer.md")
   end
 
-  it "ships the library and executable" do
-    expect(spec.files).to include("lib/agent_harness_rails.rb", "exe/agent_harness_rails")
-    expect(spec.executables).to eq([ "agent_harness_rails" ])
+  it "ships the library and both executables" do
+    expect(spec.files).to include("lib/agent_harness_rails.rb", "exe/agent_harness_rails", "exe/rails-evals")
+    expect(spec.executables).to contain_exactly("agent_harness_rails", "rails-evals")
   end
 
-  it "ships rubocop.yml so apps can inherit_gem it" do
-    expect(spec.files).to include("rubocop.yml")
+  it "ships every file rails-evals needs to run in a consuming app" do
+    # A missing lib/ file here breaks the executable only once installed
+    # elsewhere, which is an expensive place to notice it.
+    expect(spec.files).to include(*Dir.glob("lib/agent_harness_rails/evals/*.rb", base: File.expand_path("..", __dir__))
+                                        .map { |path| "lib/agent_harness_rails/evals/#{File.basename(path)}" })
+  end
+
+  it "ships every custom cop and the config that describes them" do
+    # RuboCop loads config/default.yml by path when the department is required,
+    # so leaving it out of the gem breaks cop loading in a consuming app and
+    # nowhere else.
+    root = File.expand_path("..", __dir__)
+    cops = Dir.glob("lib/rubocop/cop/agent_harness_rails/*.rb", base: root)
+
+    expect(cops).not_to be_empty
+    expect(spec.files).to include("config/default.yml", "lib/rubocop/agent_harness_rails.rb", *cops)
+  end
+
+  it "ships both rubocop configs so apps can inherit_gem them" do
+    expect(spec.files).to include("rubocop.yml", "rubocop-harness.yml")
   end
 
   it "depends on nothing at runtime" do
-    # RuboCop in particular: the gem ships a YAML file, so requiring the linter
-    # would force it into every consumer's bundle and fight their version pin.
+    # RuboCop in particular. The gem ships cop files and YAML, but RuboCop is
+    # what loads them, from the app's own bundle, and only when the app opts in
+    # by inheriting rubocop-harness.yml. A hard dependency would force the
+    # linter into every consumer's bundle and fight their version pin.
     expect(spec.dependencies).to be_empty
   end
 
@@ -42,6 +62,7 @@ RSpec.describe "gem packaging" do
     expect(spec.files.grep(%r{\Adocs/})).to be_empty
     expect(spec.files.grep(%r{\Abin/})).to be_empty
     expect(spec.files.grep(%r{\Aspec/})).to be_empty
+    expect(spec.files.grep(%r{\Afixtures/})).to be_empty
   end
 
   it "excludes dotfiles that would ride along with FNM_DOTMATCH" do

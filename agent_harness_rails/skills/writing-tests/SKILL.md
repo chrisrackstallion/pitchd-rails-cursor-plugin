@@ -430,7 +430,34 @@ you ran.
 | Traits | Adjective or state | `:published`, `:archived`, `:with_comments` |
 | System specs | User action or flow | `"User publishes an article"`, `"Admin manages users"` |
 
-### 9. Verification
+### 9. Tagging the Intent a Spec Proves
+
+**Only when the app has a `docs/primitives/` tree.** The example proving an
+intent clause carries the clause id as RSpec metadata:
+
+```ruby
+it "shows replies nested under their parent", intent: "comment_threads#I2" do
+```
+
+Rules, format, and the group/list forms: **`agent_harness_rails/rules/testing.mdc`**
+§ Tagging the Intent a Spec Proves. Two things to get right here:
+
+1. **Tag only evaluation examples.** Most specs prove behaviour without proving a
+   *clause*. A suite where everything is tagged has no map left.
+2. **The capability doc must list the file too** — `evaluations:` on that clause.
+   Both sides, or the link is half-made.
+
+Then check it:
+
+```bash
+rails-evals
+```
+
+It fails on a clause with no proof, a tag naming a clause that does not exist or
+has been superseded, and an `evaluations:` entry whose file lacks the tag. Run it
+after adding or moving a tagged spec.
+
+### 10. Verification
 
 Before finishing, verify:
 
@@ -459,6 +486,7 @@ Before finishing, verify:
 - [ ] No standalone `not_to` assertions — every test has at least one positive assertion; `not_to` is only used alongside a positive one
 - [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
 - [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without one of the earned reasons (§7)
+- [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag, the clause lists the file in `evaluations:`, and **`rails-evals`** is green
 
 ## References
 

@@ -22,6 +22,9 @@ jobs:
       - name: Check harness references
         run: bin/check-references
 
+      # `rake` with no task runs the default: :spec then :rubocop (see Rakefile).
+      # Named here because the command alone does not say so, and a reader
+      # checking whether CI runs the suite should not have to open another file.
       - name: Specs and RuboCop
         run: bundle exec rake
 
@@ -37,9 +40,15 @@ jobs:
           ruby -Ilib exe/agent_harness_rails check --path /tmp/fixture-app
 
   # The gem itself has zero runtime dependencies, but the dev bundle does not —
-  # its transitive activesupport needs a newer Ruby than the declared floor. So
-  # the floor job skips Bundler entirely: bare rspec plus the executable is
-  # exactly what "works on required_ruby_version" means for this gem.
+  # `parallel` alone needs Ruby 3.3, well above the declared floor. So this job
+  # skips Bundler entirely and installs only what the suite needs, at versions
+  # that still support the floor.
+  #
+  # RuboCop is among them deliberately. Without it, spec_helper's
+  # RUBOCOP_AVAILABLE guard skips every cop spec and this job verifies 88 of 159
+  # examples while being named as though it covers the gem. The cops are the
+  # larger half of what the gem ships; a floor job that never loads them is
+  # reassurance rather than evidence.
   floor:
     name: Ruby floor (3.1)
     runs-on: ubuntu-latest
@@ -50,9 +59,23 @@ jobs:
         with:
           ruby-version: "3.1"
 
+      # No version pins beyond rspec's: resolving whatever these gems currently
+      # offer for Ruby 3.1 is the point — if a dependency drops the floor, this
+      # job should be where that surfaces.
+      #
+      # The harness installs itself because spec/rubocop_config_spec.rb exercises
+      # `inherit_gem`, the mechanism the README documents, which resolves the gem
+      # through RubyGems by name. Under Bundler the gemspec path source supplies
+      # that; here nothing would, and the specs would fail on a missing gem
+      # rather than on anything real. It also means this job checks the built
+      # artifact rather than the checkout.
       - name: Specs
         run: |
           gem install rspec -v "~> 3.13" --no-document
+          gem install rubocop rubocop-rails rubocop-rspec rubocop-rspec_rails \
+                      rubocop-capybara rubocop-factory_bot --no-document
+          gem build agent_harness_rails.gemspec
+          gem install ./agent_harness_rails-*.gem --no-document
           rspec
 
       - name: Install into a fixture app and verify

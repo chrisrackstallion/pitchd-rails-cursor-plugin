@@ -51,7 +51,7 @@ docs/primitives/
   SCHEMA.md          # Co-owned contract
   index.md           # One line per capability + status — the only entry point
   compilation.md     # App-wide constraints. Human-owned — propose, never edit.
-  capabilities/      # One doc per capability: Intent / Shape / Evaluations / Provenance
+  capabilities/      # One per capability: intent + evaluations in frontmatter, Shape / Provenance
 ```
 
 **Reading contract:** `index.md` + the one target capability doc +
@@ -66,8 +66,8 @@ no topic pages to garden and no graph to walk.
 |----|--------|
 | **capture** | Backfill a capability doc from existing code and specs (below). |
 | **trace** | Read `index.md` → the capability doc → answer with citations to clause IDs, provenance lines, and spec paths. If the answer predates the doc, say so — provenance before the backfill line lives in git. |
-| **update** | Sync one doc: status (including human-directed deprecation — `status: deprecated`, a provenance line saying why, and the index line moved to the Deprecated stub section), eval rows against real spec homes, one provenance line per event. Update `index.md` in the same change. |
-| **lint** | Run the checks below across the tree (the one whole-tree operation — exempt from the three-file contract); report findings, fix mechanical ones, leave judgment calls to the human. |
+| **update** | Sync one doc: status (including human-directed deprecation — `status: deprecated`, a provenance line saying why, and the index line moved to the Deprecated stub section), `evaluations:` against real spec homes and their `intent:` tags, one provenance line per event. Update `index.md` in the same change. |
+| **lint** | Run **`rails-evals`** first, then the judgment checks below across the tree (the one whole-tree operation — exempt from the three-file contract); report findings, fix mechanical ones, leave judgment calls to the human. |
 
 **Structural reshaping** — splitting an oversized capability, merging, or
 renaming — is a human-approved **`update`**: redistribute the Intent clauses
@@ -87,11 +87,13 @@ human confirmation between, ordered by where change is coming.
    if a doc already covers the outcome, this is an `update`, not a capture.
 2. **Specs first** — read the feature's spec files. In a suite following
    `writing-tests`, behaviour-first system and request spec descriptions
-   *are* draft intent clauses, and each maps to its Evaluations row for free.
+   *are* draft intent clauses, and each maps to its `evaluations:` for free.
+   Add the `intent:` tag to the examples as you go — a clause naming a spec
+   that does not carry the tag is a finding, not a capture.
 3. **Code second** — models, routes, policies for the Shape bullets (deltas
    only — nothing derivable from harness rules or stated in `compilation.md`).
 4. **Gaps are findings** — observable behaviour with no spec home goes into
-   the doc as a clause with an empty eval row marked `unproven` (this doubles
+   the doc as a clause with no `evaluations:` and `unproven: true` (this doubles
    as a test-gap report; suggest `writing-tests` follow-up).
 5. **Provenance opens with one line:**
    `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
@@ -106,21 +108,34 @@ human confirmation between, ordered by where change is coming.
    production; `unproven` rows record the test gap honestly rather than
    blocking the status (`agent_harness_rails/rules/primitives.mdc`).
 
-### lint — the checklist
+### lint — run the tool, then judge
+
+**Step 1 — `rails-evals`.** It settles everything mechanical: clause coverage on
+`built` docs, evaluations naming a file that does not exist or does not carry
+the tag, tags naming an absent or superseded clause, duplicate ids, dangling
+supersessions, and docs still in the retired prose format.
+
+```bash
+rails-evals                    # exits 1 on findings
+rails-evals --format json      # when you want to summarise a large tree
+```
+
+Report its findings as-is — they have file:line and a code, so do not restate
+them in prose. Fix the unambiguous ones (a stale path, a missing tag). Leave
+anything that changes what a clause *means* to the human.
+
+Two of its warnings are not failures and must not be "fixed" into silence:
+`clause/unproven-accepted` (an honestly recorded test gap) and
+`clause/in-flight` (a doc mid-amendment).
+
+**Step 2 — the judgment checks the tool cannot make:**
 
 - Every capability doc listed in `index.md`, and vice versa; statuses agree.
-- Row coverage is a **`built`-status obligation**: on a `built` doc, every
-  **active** intent clause has an Evaluations row; every row's spec file
-  exists and `specs:` frontmatter matches. A `built` doc with a missing row or
-  a dead spec path is the top-priority finding — a zombie eval map.
-  (`shaping`/`planned` docs for new work have empty tables by design.)
-  Exception — **in-flight work**: a doc mid-planning or mid-revision (latest
-  event `planned`, or Intent edits from a drafting session or revision loop
-  not yet closed out) legitimately has rowless new clauses until close-out.
-  Report these as in-flight for human confirmation — and as **likely
-  abandoned** when no plan under `docs/plans/` references the capability or
-  the edits are old; unwinding an abandoned draft is a human call.
-- Clause IDs unique, never reused; supersessions have tombstones on both ends.
+- An in-flight doc that is actually **abandoned** — `rails-evals` reports the
+  rowless clauses, but only a reader can tell a live amendment from a draft
+  nobody returned to. Check whether any plan under `docs/plans/` still
+  references the capability, and how old the edits are. Unwinding one is a
+  human call.
 - Size tripwires from `agent_harness_rails/rules/primitives.mdc`: >~10 active clauses (split the
   capability), multi-line provenance entries, doc >~150 lines,
   `compilation.md` >~50 lines.
@@ -155,9 +170,9 @@ human confirmation between, ordered by where change is coming.
   event, its reasoning, and what was rejected are the payload.
 - **Capture without confirmation** — reconstructed intent shipped as fact.
   Unconfirmed clauses mislead every future planner; always close the loop.
-- **Evaluations rows written from intention** — rows come from specs that
-  exist (at close-out, capture, or a planner lazy backfill), never from what
-  a plan promises.
+- **`evaluations:` written from intention** — entries come from specs that
+  exist and carry the tag (at close-out, capture, or a planner lazy backfill),
+  never from what a plan promises.
 
 ## Delegation
 
@@ -170,5 +185,5 @@ with operation + paths/goals; this skill stays canonical.
 - **`agent_harness_rails/rules/primitives.mdc`** — structure, ownership, size limits.
 - **`bootstrapping-primitives`** — one-time tree scaffold + `compilation.md`.
 - **`writing-rails-plans`** — creates/amends Intent and Shape at planning.
-- **`executing-rails-plan`** — close-out pass writes Evaluations, status, provenance.
+- **`executing-rails-plan`** — close-out pass writes `evaluations:`, status, provenance.
 - **`reviewing-rails-work`** — `primitives:` findings check traceability and eval coverage.

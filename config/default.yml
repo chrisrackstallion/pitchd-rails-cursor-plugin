@@ -1,0 +1,178 @@
+# Defaults for the AgentHarnessRails cop department.
+#
+# Injected by lib/rubocop/agent_harness_rails.rb, which an app loads only by
+# inheriting rubocop-harness.yml. Every cop names the rule file it enforces in
+# its Reference, so an offence leads back to the prose that explains it.
+#
+# Each cop is scoped by Include rather than by checking paths in Ruby, so an app
+# with an unusual layout can widen or narrow it without patching a cop.
+
+AgentHarnessRails:
+  Enabled: true
+
+AgentHarnessRails/ServiceObject:
+  Description: >-
+    Business logic belongs on the model, in a PORO namespaced under it, or in a
+    job — not in an app/services/ wrapper.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/services.mdc
+  Include:
+    - "**/app/**/*.rb"
+    - "**/lib/**/*.rb"
+  Suffixes:
+    - Service
+    - Manager
+    - Handler
+    - Interactor
+    - Operation
+    - Command
+
+AgentHarnessRails/GenericOperationMethod:
+  Description: >-
+    Name the domain verb (complete, import, publish) rather than call/execute/run.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/services.mdc
+  Include:
+    - "**/app/models/**/*.rb"
+  ForbiddenMethods:
+    - call
+    - execute
+    - run
+  # `perform` is the ActiveJob contract; `each` and `to_s` are Ruby's.
+  AllowedMethods:
+    - perform
+
+AgentHarnessRails/NonRestfulAction:
+  Description: >-
+    A public controller method outside the seven REST actions wants to be a
+    resource of its own.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/controllers.mdc
+  Include:
+    - "**/app/controllers/**/*.rb"
+  AllowedActions:
+    - index
+    - show
+    - new
+    - create
+    - edit
+    - update
+    - destroy
+
+AgentHarnessRails/CsrfSkip:
+  Description: Do not disable CSRF verification.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/controllers.mdc
+  Include:
+    - "**/app/controllers/**/*.rb"
+
+AgentHarnessRails/EnqueueOutsideCommit:
+  Description: >-
+    Enqueue from after_*_commit, not from callbacks that run inside the
+    transaction.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/jobs.mdc
+  Include:
+    - "**/app/models/**/*.rb"
+
+AgentHarnessRails/MailerDeliverNow:
+  Description: Prefer deliver_later so sending does not block the request.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/mailers.mdc
+  Include:
+    - "**/app/**/*.rb"
+  # deliver_now is correct in all three of these.
+  Exclude:
+    - "**/spec/**/*"
+    - "**/test/**/*"
+    - "**/*_preview.rb"
+    - "**/lib/tasks/**/*"
+
+AgentHarnessRails/PolicyVerbMethod:
+  Description: Policy permission methods are CRUD + `?`; state changes get a noun-resource policy.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/policies.mdc
+  Include:
+    - "**/app/policies/**/*.rb"
+  AllowedMethods:
+    - index?
+    - show?
+    - new?
+    - create?
+    - edit?
+    - update?
+    - destroy?
+
+AgentHarnessRails/PolicyContext:
+  Description: Policies see only `user` and `record`, never the request.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/policies.mdc
+  Include:
+    - "**/app/policies/**/*.rb"
+
+AgentHarnessRails/DeepNestedResources:
+  Description: "Nest routes one level, then use `shallow: true` or split the resource."
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/routes.mdc
+  Include:
+    - "**/config/routes.rb"
+    - "**/config/routes/**/*.rb"
+  Max: 2
+
+AgentHarnessRails/MigrationDataChange:
+  Description: Keep backfills out of schema migrations.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/migrations.mdc
+  Include:
+    - "**/db/migrate/**/*.rb"
+
+AgentHarnessRails/SpecSleep:
+  Description: Do not sleep in specs; matchers wait, assertions are explicit.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+    - "**/test/**/*.rb"
+
+AgentHarnessRails/StubbedSubject:
+  Description: Do not stub the object under test, or every instance of a class.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/ViewSpec:
+  Description: View specs are never written; request specs own rendering.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/NegativeOnlySpec:
+  Description: Every example needs at least one positive assertion.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/IntentTag:
+  Description: "Intent metadata reads `<capability>#I<n>`."
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/primitives.mdc
+  Include:
+    - "**/spec/**/*.rb"

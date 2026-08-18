@@ -52,6 +52,7 @@ If git was tracking those files at their old paths, **commit the install with `g
 | `agent_harness_rails update` | re-vendor after `bundle update`, reporting what changed |
 | `agent_harness_rails check` | verify the vendored harness matches the gem — use in CI |
 | `agent_harness_rails root` | print the payload path inside the gem |
+| `rails-evals` | check every intent clause in `docs/primitives/` is proven by a spec — use in CI ([below](#checking-that-intent-is-proven)) |
 
 ### Windows
 
@@ -85,9 +86,59 @@ inherit_gem:
 
 Order matters. The harness config is a **thin layer over omakase**, not a replacement — [`rules/rubocop.mdc`](agent_harness_rails/rules/rubocop.mdc) names `rubocop-rails-omakase` as the ruleset source of truth, so the harness never restates or contradicts its cop settings. It deliberately does **not** set `NewCops` either: a shipped config that auto-enables cops would change your lint results whenever your RuboCop version bumps. Whether new cops are pending or enabled is your app's call — though the harness position is that a pending cop is a deferred offence, and this repo enables them for itself.
 
-**The gem does not depend on RuboCop, and shouldn't.** It ships a YAML file; reading it requires nothing. RuboCop and `rubocop-rails-omakase` belong in your app's own Gemfile, at whatever versions you pin — a hard dependency here would force RuboCop into the bundle of every app that installs the harness, including ones that don't lint, and would fight your own version constraint.
+**The gem does not depend on RuboCop, and shouldn't.** It ships YAML and cop files; RuboCop is what loads them, from your bundle, and only when you opt in below. RuboCop and `rubocop-rails-omakase` belong in your app's own Gemfile, at whatever versions you pin — a hard dependency here would force RuboCop into the bundle of every app that installs the harness, including ones that don't lint, and would fight your own version constraint.
 
-Most of what the harness asks for is process rather than configuration — zero offences before work is complete, fix in code, never `# rubocop:disable`, never a `.rubocop_todo.yml`. No config can enforce that; the `running-rubocop` skill and the rule are what hold agents to it.
+### Enforcing the rules, not just describing them
+
+`rubocop.yml` above changes almost nothing. Two further files, each opt-in, turn the slice of these rules a parser can settle into actual cops:
+
+```yaml
+# .rubocop.yml in your app
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+  agent_harness_rails:
+    - rubocop.yml                 # thin omakase layer, as above
+    - rubocop-harness.yml         # harness rules — needs nothing extra
+    - rubocop-harness-rspec.yml   # needs rubocop-rspec and friends in your Gemfile
+```
+
+`rubocop-harness.yml` enables around a hundred existing `Rails/*`, `Naming/*`, `Lint/*` and `Security/*` cops that encode rules already written down here, configures `Layout/ClassStructure` and `Rails/ActionOrder` to the model and controller ordering the rules document, and adds fifteen custom `AgentHarnessRails/*` cops for the rules no existing cop covers — no service objects, non-REST controller actions, enqueueing inside a transaction, policies reaching for `params`, view specs, `sleep` in specs, examples whose only assertion is `not_to`. Each names the `.mdc` file it enforces.
+
+**Why separate from `rubocop.yml`:** omakase disables every `Lint`, `Rails`, `Metrics`, `Naming` and `Style` cop and re-enables only formatting. That is a deliberate position — DHH's Rails does not lint semantics. Turning these on is a real change of stance, so you choose it rather than inheriting it on a gem bump.
+
+**You can turn any of it off.** Your own `.rubocop.yml` wins:
+
+```yaml
+Layout/ClassStructure:
+  Enabled: false            # We order models by reading flow, not macro type.
+
+AgentHarnessRails:
+  Enabled: false            # Or drop the whole custom department.
+```
+
+That is a standing, human-owned decision, and the harness distinguishes it from suppressing an offence to get a branch green — which stays forbidden. Agents are told to leave your opt-outs alone rather than re-enable them or work around them ([`rules/rubocop.mdc`](agent_harness_rails/rules/rubocop.mdc) § The one carve-out).
+
+**What no config can reach:** RuboCop parses Ruby, so ERB, Stimulus, and Tailwind get nothing — roughly a quarter of the rules stay review-only. Neither can config enforce the process: zero offences before work is complete, fix in code, never `# rubocop:disable`, never a `.rubocop_todo.yml`. The `running-rubocop` skill and the rule are what hold agents to those.
+
+### Checking that intent is proven
+
+`rails-evals` is the other half: a linter for the [primitives tree](#keep-durable-primitives-intent-compilation-evaluations-provenance). Each capability doc declares its intent clauses and the specs that prove them in YAML frontmatter; each proving example carries the clause id as RSpec metadata:
+
+```ruby
+it "shows replies nested under their parent", intent: "comment_threads#I2" do
+```
+
+```console
+$ rails-evals
+docs/primitives/capabilities/comment_threads.md:12:1: E: I3 has no evaluation — a built clause must name the spec that proves it [clause/unproven]
+spec/system/billing_spec.rb:12:5: E: intent tag "billing#I9" names no such clause [tag/unresolved]
+
+3 capabilities inspected, 14 clauses, 2 offences detected
+```
+
+It checks both directions — a clause with no proof, and a proof pointing at a clause that no longer exists — so the map cannot quietly stop matching the suite. It parses statically: no database, no Rails environment, runs in any CI job. The same tag runs the proof on demand: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
+
+Scope is deliberately narrow, so a green run means one thing. Tree health — index sync, size limits, provenance style — stays with the `maintaining-primitives` skill, where it needs judgment rather than a parser.
 
 ### Your editor will show the harness twice
 
@@ -162,7 +213,7 @@ Use the **`refactoring-stimulus-controllers`** skill. It maps every controller a
 ### Keep durable primitives (intent, compilation, evaluations, provenance)
 > *"Set up primitives"* / *"Document the billing feature"* / *"Why don't we cap thread depth?"*
 
-The harness maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`rails-primitives-maintainer`**. Structure rules: **`agent_harness_rails/rules/primitives.mdc`**.
+The harness maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. Intent and evaluations live in each doc's YAML frontmatter so **[`rails-evals`](#checking-that-intent-is-proven)** can check them; a record nothing verifies is a record that quietly stops being true. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`rails-primitives-maintainer`**. Structure rules: **`agent_harness_rails/rules/primitives.mdc`**.
 
 ---
 

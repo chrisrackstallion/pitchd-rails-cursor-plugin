@@ -1,0 +1,177 @@
+# The spec half of the harness enforcement layer — opt-in, and separate again.
+#
+#   # .rubocop.yml in your app
+#   inherit_gem:
+#     rubocop-rails-omakase: rubocop.yml
+#     agent_harness_rails:
+#       - rubocop.yml
+#       - rubocop-harness.yml
+#       - rubocop-harness-rspec.yml   # this file
+#
+# REQUIRES these in your own Gemfile — this gem depends on nothing at runtime and
+# will not pull them in for you:
+#
+#   gem "rubocop-rspec", require: false
+#   gem "rubocop-rspec_rails", require: false
+#   gem "rubocop-capybara", require: false
+#   gem "rubocop-factory_bot", require: false
+#
+# Split from rubocop-harness.yml because those are three real gems. An app that
+# does not lint its specs should not be forced to add them, and RuboCop cannot
+# enable a cop conditionally — an unknown cop name is a hard error, not a warning.
+#
+# agent_harness_rails/rules/testing.mdc is the largest rule in the harness, and
+# most of what it asks for already exists as a cop in these packs. What is left —
+# the Five Gates, the system-spec budget, one home per behaviour — is judgment,
+# and stays with review. The harness's own spec cops (SpecSleep, ViewSpec,
+# NegativeOnlySpec, StubbedSubject, IntentTag) live in rubocop-harness.yml.
+
+plugins:
+  - rubocop-rspec
+  - rubocop-rspec_rails
+  - rubocop-capybara
+  - rubocop-factory_bot
+
+# ---------------------------------------------------------------------------
+# Naming and shape — agent_harness_rails/rules/naming.mdc § Tests and Factories
+# ---------------------------------------------------------------------------
+# "context always starts with when or with"
+RSpec/ContextWording:
+  Enabled: true
+  Prefixes:
+    - when
+    - with
+    - without
+
+# "it blocks: third-person present, no should"
+RSpec/ExampleWording:
+  Enabled: true
+
+RSpec/DescribeClass:
+  Enabled: true
+RSpec/DescribeMethod:
+  Enabled: true
+RSpec/NamedSubject:
+  Enabled: true
+RSpec/VariableName:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Real objects over mocks — agent_harness_rails/rules/testing.mdc
+# ---------------------------------------------------------------------------
+RSpec/AnyInstance:
+  Enabled: true
+RSpec/SubjectStub:
+  Enabled: true
+RSpec/VerifiedDoubles:
+  Enabled: true
+RSpec/StubbedMock:
+  Enabled: true
+RSpec/MessageSpies:
+  Enabled: true
+RSpec/ReceiveMessages:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Setup discipline — "no before(:all) for database records",
+# "avoid deep let/subject chains that obscure setup"
+# ---------------------------------------------------------------------------
+RSpec/BeforeAfterAll:
+  Enabled: true
+RSpec/LetSetup:
+  Enabled: true
+RSpec/ScatteredLet:
+  Enabled: true
+RSpec/ScatteredSetup:
+  Enabled: true
+RSpec/LetBeforeExamples:
+  Enabled: true
+
+# OPINIONATED. The rule argues against nesting that obscures what is under test,
+# but the exact number is a team call — raise it or turn it off rather than
+# reshaping specs to satisfy a default.
+RSpec/NestedGroups:
+  Enabled: true
+  Max: 3
+
+# ---------------------------------------------------------------------------
+# Assertions — agent_harness_rails/rules/testing.mdc
+# ---------------------------------------------------------------------------
+RSpec/PredicateMatcher:
+  Enabled: true
+RSpec/ExpectActual:
+  Enabled: true
+RSpec/ExpectInHook:
+  Enabled: true
+RSpec/IdenticalEqualityAssertion:
+  Enabled: true
+RSpec/RepeatedExample:
+  Enabled: true
+RSpec/RepeatedDescription:
+  Enabled: true
+RSpec/RepeatedExampleGroupBody:
+  Enabled: true
+RSpec/VoidExpect:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Rails-shaped specs — the RSpecRails department, from rubocop-rspec_rails
+# ---------------------------------------------------------------------------
+RSpecRails/AvoidSetupHook:
+  Enabled: true
+RSpecRails/HttpStatus:
+  Enabled: true
+RSpecRails/MinitestAssertions:
+  Enabled: true
+RSpecRails/NegationBeValid:
+  Enabled: true
+RSpecRails/InferredSpecType:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Factories — agent_harness_rails/rules/testing.mdc § FactoryBot
+# ---------------------------------------------------------------------------
+FactoryBot/AttributeDefinedStatically:
+  Enabled: true
+FactoryBot/ConsistentParenthesesStyle:
+  Enabled: true
+FactoryBot/CreateList:
+  Enabled: true
+FactoryBot/ExcessiveCreateList:
+  Enabled: true
+FactoryBot/FactoryClassName:
+  Enabled: true
+FactoryBot/FactoryNameStyle:
+  Enabled: true
+FactoryBot/RedundantFactoryOption:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# System specs — agent_harness_rails/rules/testing.mdc § System-Spec Budget
+# ---------------------------------------------------------------------------
+Capybara/SpecificActions:
+  Enabled: true
+Capybara/SpecificFinders:
+  Enabled: true
+
+# rubocop-capybara 3.0 moved its RSpec-specific cops under Capybara/RSpec/.
+Capybara/RSpec/CurrentPathExpectation:
+  Enabled: true
+Capybara/RSpec/NegationMatcher:
+  Enabled: true
+Capybara/RSpec/SpecificMatcher:
+  Enabled: true
+Capybara/RSpec/VisibilityMatcher:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Opting out
+# ---------------------------------------------------------------------------
+# As in rubocop-harness.yml: put the override in your own .rubocop.yml with the
+# reason, and it wins.
+#
+#   RSpec/NestedGroups:
+#     Enabled: false          # Our matrix specs nest by role, then by state.
+#
+#   RSpec/MultipleExpectations is deliberately NOT enabled here: the rule
+#   explicitly allows several assertions about one action, and says so twice.

@@ -34,7 +34,7 @@ sign-off.
 
 ## Hard rules
 
-1. **No application code** from the orchestrator — use the **Task** tool (or equivalent subagent dispatch) for **`rails-implementor`** and **`rails-reviewer`**. Shell may be used only for **orchestration** (e.g. `git diff`, `git status`) to describe scope to subagents — not to implement features. **Carve-out:** `docs/primitives/**` edits are orchestration bookkeeping, not app code — the orchestrator appends provenance lines, syncs Evaluations rows, flips `status:`, keeps the capability's `index.md` line in sync, and amends Intent clauses when revision mode's R1 classification calls for it (a user-directed intent change), directly per **`agent_harness_rails/rules/primitives.mdc`**. Structural primitives work (splitting a capability, backfills, lint passes) is delegated to **`rails-primitives-maintainer`**.
+1. **No application code** from the orchestrator — use the **Task** tool (or equivalent subagent dispatch) for **`rails-implementor`** and **`rails-reviewer`**. Shell may be used only for **orchestration** (e.g. `git diff`, `git status`) to describe scope to subagents — not to implement features. **Carve-out:** `docs/primitives/**` edits are orchestration bookkeeping, not app code — the orchestrator appends provenance lines, syncs `evaluations:`, flips `status:`, keeps the capability's `index.md` line in sync, and amends Intent clauses when revision mode's R1 classification calls for it (a user-directed intent change), directly per **`agent_harness_rails/rules/primitives.mdc`**. Structural primitives work (splitting a capability, backfills, lint passes) is delegated to **`rails-primitives-maintainer`**.
 2. **Canonical skills:** Implementor follows **`agent_harness_rails/skills/implementing-rails-task/SKILL.md`**; reviewer follows **`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`**.
 3. **Sign-off from the harness reviewer** means the latest **`rails-reviewer`** report has **`Status: Approved`** (see that skill’s report format). If **Issues found**, feed them back to the implementor and **repeat** until Approved or the user accepts a documented exception (orchestrator records that choice).
 
@@ -174,13 +174,13 @@ surfaces *before* delegating, not after:
 
 - **The code failed the intent** (bug): "fixed" matches an existing clause.
   No Intent change and **no provenance line**; if the fix moved or added spec
-  homes, sync the Evaluations rows (and `specs:` frontmatter) once the fix is
+  homes, sync `evaluations:` (and the specs' `intent:` tags) once the fix is
   Approved — a row sync alone is not a provenance event.
 - **The intent changed** ("it should do X instead"): "fixed" contradicts a
   clause. Amend the clauses (supersede / add, per `agent_harness_rails/rules/primitives.mdc`)
   alongside the fix. Once the fix is Approved: retire the superseded clause's
-  Evaluations row (tombstone), add or update rows for the amended clauses
-  from the fix's **reported** specs, sync `specs:` frontmatter, and append
+  clause (tombstone), add or update `evaluations:` for the amended clauses
+  from the fix's **reported** specs, retag those examples, and append
   one provenance line:
   `YYYY-MM-DD — revised: I<n> amended (X instead of Y) per user feedback.`
   Report all of it in R5.
@@ -232,7 +232,7 @@ Deliver a brief summary:
 - Reviewer status (`Approved` after N iteration(s)).
 - Any non-blocking notes from the reviewer worth the user knowing.
 - Whether anything needs manual verification (tests run, RuboCop status).
-- Primitives sync, if any (clause amendments, eval rows, the one provenance
+- Primitives sync, if any (clause amendments, `evaluations:`, the one provenance
   line — per the R1 classification).
 
 **Do not** re-present the full original completion package — this is a targeted
@@ -288,14 +288,24 @@ green.
 Part of the definition of done — **not an offer to the user**. The orchestrator
 updates the capability doc directly (see the Hard rules carve-out):
 
-1. **Evaluations rows** — fill or update one row per intent clause this plan
-   touched, from the **specs the implementor actually reported** (file +
-   example description) — never from what the plan promised. Superseded
-   clauses get their rows retired with a one-line tombstone; delete-listed
-   specs must actually be gone. Sync the `specs:` frontmatter.
-2. **Status** — flip to **`status: built`** only when every active clause has
-   an Evaluations row; otherwise report the gap instead of flipping.
-3. **Provenance** — append **one** line for the whole run:
+1. **Evaluations** — fill or update `evaluations:` on each intent clause this
+   plan touched, from the **specs the implementor actually reported** — never
+   from what the plan promised. The named spec must also carry the
+   **`intent:` tag** (`agent_harness_rails/rules/testing.mdc`); add it if the
+   implementor did not, since the path alone is a claim and the tag is the
+   proof. Delete-listed specs must actually be gone.
+2. **Run `rails-evals`** — it is the check, not a formality:
+
+   ```bash
+   rails-evals
+   ```
+
+   Green is a precondition for step 3. Its two warnings —
+   `clause/unproven-accepted` and `clause/in-flight` — do not block, and must
+   not be silenced into passing.
+3. **Status** — flip to **`status: built`** only when `rails-evals` reports no
+   errors for this capability; otherwise report the gap instead of flipping.
+4. **Provenance** — append **one** line for the whole run:
 
    ```markdown
    - YYYY-MM-DD — built [or amended]: docs/plans/<plan>.md. [Accepted debt,
@@ -311,7 +321,7 @@ updates the capability doc directly (see the Hard rules carve-out):
    Fold in any **`primitives:` provenance candidates** from the reviewer
    reports (decisions, constraints, accepted debt) — one line each, only those
    that pass the same earns-its-place test.
-4. **Index** — update the capability's `docs/primitives/index.md` line to the
+5. **Index** — update the capability's `docs/primitives/index.md` line to the
    new status (it still says `planned` from plan approval — sync it, don't
    merely confirm it).
 
@@ -327,7 +337,7 @@ Deliver a short **completion package**:
 - **Whole-run coherence review** outcome (Step 6): Approved after N iterations, or skipped (single-task run).
 - **Full-suite result** (Step 7): the command run and its outcome, or that it was skipped.
 - **harness reviewer** final notes (if any non-blocking recommendations were in those reports).
-- **Primitives close-out** summary (Step 8): status, eval rows updated, the provenance line appended — or why status could not flip.
+- **Primitives close-out** summary (Step 8): status, `evaluations:` updated, `rails-evals` result, the provenance line appended — or why status could not flip.
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it). In **step-by-step** mode the user has been committing per task, so name only what remains after the last stop.
 - The plan header's **Delivery:** boundaries restated (which tasks compose which PR), so the user cuts PRs as planned — the orchestrator never commits or opens PRs itself.
 

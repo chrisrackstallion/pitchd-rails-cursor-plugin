@@ -17,3 +17,6 @@ AllCops:
   Exclude:
     - "agent_harness_rails/**/*"
     - "vendor/**/*"
+    # A fixture Rails app, deliberately shaped like a consumer's code rather
+    # than like this gem's.
+    - "fixtures/**/*"

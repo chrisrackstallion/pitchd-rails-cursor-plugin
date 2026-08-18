@@ -32,10 +32,30 @@ In the **Rails app root**, understand:
 |------|-----|
 | `.rubocop.yml` | Ruleset and `require:` for `rubocop-rails` etc. |
 | `inherit_gem` | e.g. `rubocop-rails-omakase: rubocop.yml` — **pack** vs **`rubocop-rails`** **harness** gem. |
+| `agent_harness_rails: rubocop-harness.yml` | Present ⇒ the app opted into the **harness cop layer** (below). |
 
 **Forbidden:** adding disables or excludes in YAML to avoid fixing your code. **Do not** use or maintain **`.rubocop_todo.yml`** — fix offences, then **delete** that file. **Allowed:** editing **application code** so cops pass.
 
 If the app has **no** RuboCop setup, do not invent one unless the **task** asks for it.
+
+### Harness cops, and the opt-outs you must not touch
+
+If `rubocop-harness.yml` is inherited, `AgentHarnessRails/*` offences are harness
+**rule violations with a citation** — each cop names the `.mdc` it enforces
+(`rubocop --show-cops AgentHarnessRails/ServiceObject` prints the `Reference`).
+Read that rule; the fix is the rule's, not a guess from the message.
+
+You may also find a cop switched **off** in the app's own `.rubocop.yml`:
+
+```yaml
+Layout/ClassStructure:
+  Enabled: false            # We order models by reading flow, not macro type.
+```
+
+That is a **human-owned standing decision** (`agent_harness_rails/rules/rubocop.mdc`
+§ The one carve-out). **Leave it exactly as it is** — do not re-enable it, do not
+work around it, do not report it as a finding, and do not add one of your own.
+If you think it is wrong, say so as a review observation and let the human decide.
 
 ## 2. Entrypoint (match CI)
 
@@ -57,6 +77,20 @@ If the app has **no** RuboCop setup, do not invent one unless the **task** asks 
 ## 5. Rare blocker
 
 - If a cop cannot be satisfied with a **correct** fix and needs product or policy input, report **BLOCKED** (see **`implementing-rails-task`**) with cop name, offence, attempts, and what you need from the user. **Do not** merge or finish with offences or suppressions.
+- When the blocker is a **harness cop that is genuinely wrong for this app** —
+  not wrong for this branch — the escalation is the same **BLOCKED**, plus the
+  opt-out you would propose:
+
+  > BLOCKED — `AgentHarnessRails/NonRestfulAction` fires on every action in
+  > `Admin::DashboardController`, which is an RPC-shaped internal tool by
+  > design. Proposed, for you to add if you agree:
+  >
+  > ```yaml
+  > AgentHarnessRails/NonRestfulAction:
+  >   Exclude: [ "app/controllers/admin/**/*" ]   # Admin tools are RPC by decision.
+  > ```
+
+  Propose it; do not apply it. The opt-out is the human's to make.
 
 ## 6. Verification pairing
 

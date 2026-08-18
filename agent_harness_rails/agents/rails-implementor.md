@@ -136,7 +136,8 @@ dependencies, or anything unclear — ask before starting.
 Once clear:
 1. Implement exactly what the task specifies (compass + writing-* + rules).
 2. Write tests per writing-tests / agent_harness_rails/rules/testing.mdc (TDD if task says so).
-3. Verify: run the **narrowest spec slice covering your change** (not the full suite — see agent_harness_rails/rules/testing.mdc § Running Specs) **and**, if the app uses RuboCop, **`skills/running-rubocop`** — **`bin/rubocop` exit 0, zero offences** before DONE/review; fix in code only (no disable comments or cop suppressions in YAML). **BLOCKED** if truly unfixable — see implementing-rails-task.
+3. Verify: run the **narrowest spec slice covering your change** (not the full suite — see agent_harness_rails/rules/testing.mdc § Running Specs) **and**, if the app uses RuboCop, **`skills/running-rubocop`** — **`bin/rubocop` exit 0, zero offences** before DONE/review; fix in code only (no disable comments or cop suppressions in YAML). A cop already switched off in the app's `.rubocop.yml` is a human decision — leave it. **BLOCKED** if truly unfixable — see implementing-rails-task.
+   When the Context block cites Intent clauses, tag the spec that proves each one — `intent: "<capability>#I<n>"` (agent_harness_rails/rules/testing.mdc § Tagging the Intent a Spec Proves) — and name those specs in your report. You still do not open `docs/primitives/`; the orchestrator files the evaluations from what you report.
 4. Self-review per implementing-rails-task.
 5. Report back using the skill's report format.
 

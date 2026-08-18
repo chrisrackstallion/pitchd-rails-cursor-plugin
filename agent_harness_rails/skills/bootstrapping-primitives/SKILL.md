@@ -47,6 +47,15 @@ docs/primitives/
 
 `compilation.md` comes from steps 2–4, not the skeleton alone.
 
+Capability docs carry their intent clauses and evaluations in **YAML
+frontmatter**, not prose sections — that is what lets **`rails-evals`** check
+that every clause is proven (`agent_harness_rails/rules/primitives.mdc`). The
+first docs arrive later, from planning or a `capture` backfill; the scaffold
+just makes room for them.
+
+Mention `rails-evals` to the user once, here: it ships with this gem and belongs
+in CI beside RuboCop, so the tree cannot quietly rot.
+
 ### 2. Survey (read-only)
 
 Read the code that reveals **binding choices**: `Gemfile`, `config/` (queue,
