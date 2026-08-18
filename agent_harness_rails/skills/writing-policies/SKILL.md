@@ -19,8 +19,8 @@ authorization in one predictable place rather than scattered across models
 and controllers.
 </objective>
 
-> **Philosophy note:** DHH would keep authorization in model methods and
-> controller guards. Pundit is an extra file per model, but the trade-off is
+> **Philosophy note:** vanilla Rails would keep authorization in model methods
+> and controller guards. Pundit is an extra file per model, but the trade-off is
 > worth it: every action is authorized, every index is scoped, and
 > `verify_authorized` catches anything you miss.
 > You always know where to look.

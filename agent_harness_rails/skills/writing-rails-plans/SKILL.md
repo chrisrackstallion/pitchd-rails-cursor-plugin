@@ -1,20 +1,20 @@
 ---
 name: writing-rails-plans
 description: >-
-  Write implementation plans for multi-step Rails work before application code.
-  Plans follow vertical REST slices, DHH/37signals conventions, and this harness's
-  skills and rules. After drafting: review with rails-reviewer and apply
-  that feedback to the plan file; re-run for final sign-off when Pass 1
-  required edits. Use when turning a spec into tasks, planning a feature, or
-  breaking work into checklisted steps. When the app has a docs/primitives/
-  tree, planning also creates or amends the feature's capability doc (intent
-  clauses, shape) via the primitives gate. May use
-  referencing-unofficial-37signals-guide for supplemental Fizzy-derived topic
+  Write implementation plans for multi-step Rails work before application
+  code. Plans follow vertical REST slices, opinionated Rails best practice,
+  and this harness's skills and rules. After drafting: review with
+  rails-reviewer and apply that feedback to the plan file; re-run for final
+  sign-off when Pass 1 required edits. Use when turning a spec into tasks,
+  planning a feature, or breaking work into checklisted steps. When the app
+  has a docs/primitives/ tree, planning also creates or amends the feature's
+  capability doc (intent clauses, shape) via the primitives gate. May use
+  referencing-unofficial-37signals-guide for supplemental third-party topic
   fetches or referencing-rails-guides for authoritative Rails API docs when
-  compass and scoped harness material are insufficient for best-practice clarity.
-  Also handles post-session revision requests — when the user says something
-  needs changing or isn't right after the skill has run, treat it as a
-  self-contained plan revision and run a scoped reviewer pass.
+  compass and scoped harness material are insufficient for best-practice
+  clarity. Also handles post-session revision requests — when the user says
+  something needs changing or isn't right after the skill has run, treat it as
+  a self-contained plan revision and run a scoped reviewer pass.
 ---
 
 # Writing Rails Implementation Plans
@@ -25,12 +25,12 @@ your codebase: exact paths, real Ruby snippets, **RSpec** commands with expected
 outcomes, and **Rails-shaped** decomposition. Assume the reader knows Ruby and
 Rails but not your app — not that they need hand-holding on "what a test is."
 
-Plans follow **37signals-style Rails**: **fat models**, **thin controllers**,
+Plans follow **opinionated best-practice Rails**: **fat models**, **thin controllers**,
 **REST-first routing**, **Pundit** at the boundary, **Hotwire** for HTML UX,
 **no fake service layer** — and the **testing philosophy** in
 `agent_harness_rails/skills/writing-tests/SKILL.md` / `agent_harness_rails/rules/testing.mdc` (RSpec + FactoryBot).
 
-**Voice:** Write plans with DHH-level confidence. Make decisions; do not present
+**Voice:** Write plans with conviction. Make decisions; do not present
 options and defer to the reader. "Use a model concern here" — not "you might
 consider a concern". If the harness rules say how to do something, the plan
 follows them — even if the current application does it differently. The plan
@@ -191,7 +191,7 @@ them from intention. The one exception is the **lazy backfill** above:
 `evaluations:` transcribed from **already-existing specs** record reality,
 not intention, and are correct to write at plan time.
 
-## Philosophy (DHH / Rails Agent Harness)
+## Philosophy (Rails Agent Harness)
 
 - **Vertical slices over layers:** Prefer tasks that complete **one resource's
   slice** (schema → model → policy → routes → controller → views → specs) over
@@ -300,7 +300,7 @@ snippets look:
 
 When **`rails-omakase-compass`**, this skill's philosophy section, and the scoped **`agent_harness_rails/rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap, two sources are available — use the one that fits:
 
-- **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for 37signals / Fizzy-derived patterns and philosophy not spelled out in the harness (README TOC → raw `.md`).
+- **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns and philosophy from the third-party community guide, when not spelled out in the harness (README TOC → raw `.md`).
 - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (GitHub API index → specific guide `.md`).
 
 Both **inform** the plan — they do **not** override harness rules or skills; **tactics in this harness win** on HOW, same as the compass conflict rule in **`implementing-rails-task`**. If a fetch fails or returns nothing usable, **report** that; **do not** invent or assert content.

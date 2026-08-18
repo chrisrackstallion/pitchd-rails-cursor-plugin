@@ -1,5 +1,5 @@
 ---
-description: Tailwind and CSS in Rails — tailwindcss-rails, utility-first ERB, @apply policy, config (v3 vs v4), no parallel design systems. DHH/37signals omakase. Apply when editing stylesheets, Tailwind config, or global CSS; class placement in templates defers to views rules.
+description: Tailwind and CSS in Rails — tailwindcss-rails, utility-first ERB, @apply policy, config (v3 vs v4), no parallel design systems. Opinionated Rails best practice, omakase-aligned. Apply when editing stylesheets, Tailwind config, or global CSS; class placement in templates defers to views rules.
 globs: app/assets/**/*.css, config/tailwind.config.js, config/tailwind.config.ts, config/tailwind.config.mjs, app/javascript/**/*.css
 alwaysApply: false
 ---

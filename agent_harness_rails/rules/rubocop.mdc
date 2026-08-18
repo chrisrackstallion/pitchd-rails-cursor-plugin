@@ -78,6 +78,6 @@ are judgment. The layer narrows what review has to catch; it does not replace it
 
 ## What green does not mean
 
-- Passing RuboCop does **not** prove DHH-style design (REST, fat models, thin controllers). It is still **required** before completion — pair with **tests** per the repo.
+- Passing RuboCop does **not** prove well-shaped Rails design (REST, fat models, thin controllers). It is still **required** before completion — pair with **tests** per the repo.
 
 For procedure and escalation detail, use **`agent_harness_rails/skills/running-rubocop/SKILL.md`**.

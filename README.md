@@ -1,6 +1,6 @@
 # agent_harness_rails
 
-Rails conventions for coding agents — **rules**, **skills**, and **agent definitions** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends).
+Rails conventions for coding agents — **rules**, **skills**, and **agent definitions** for building **Rails** applications the way we like: **opinionated Rails best practice** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends).
 
 Ships as a gem that **vendors itself into your app**, so [Cursor](https://cursor.com) and [Claude Code](https://claude.com/claude-code) both read the same files from the project directory alone. No editor plugin to install, nothing outside the repo, nothing per-machine.
 
@@ -103,7 +103,7 @@ inherit_gem:
 
 `rubocop-harness.yml` enables around a hundred existing `Rails/*`, `Naming/*`, `Lint/*` and `Security/*` cops that encode rules already written down here, configures `Layout/ClassStructure` and `Rails/ActionOrder` to the model and controller ordering the rules document, and adds fifteen custom `AgentHarnessRails/*` cops for the rules no existing cop covers — no service objects, non-REST controller actions, enqueueing inside a transaction, policies reaching for `params`, view specs, `sleep` in specs, examples whose only assertion is `not_to`. Each names the `.mdc` file it enforces.
 
-**Why separate from `rubocop.yml`:** omakase disables every `Lint`, `Rails`, `Metrics`, `Naming` and `Style` cop and re-enables only formatting. That is a deliberate position — DHH's Rails does not lint semantics. Turning these on is a real change of stance, so you choose it rather than inheriting it on a gem bump.
+**Why separate from `rubocop.yml`:** omakase disables every `Lint`, `Rails`, `Metrics`, `Naming` and `Style` cop and re-enables only formatting. That is a deliberate position — omakase Rails does not lint semantics. Turning these on is a real change of stance, so you choose it rather than inheriting it on a gem bump.
 
 **You can turn any of it off.** Your own `.rubocop.yml` wins:
 
@@ -197,7 +197,7 @@ Use the **`reviewing-rails-work`** skill. It runs a two-layer review: **philosop
 ### Query for Rails best practice
 > *"How should I handle this in Rails?"* / *"What's the right pattern for background jobs here?"*
 
-Use the **`rails-omakase-compass`** skill. It answers whether a direction fits 37signals-shaped Rails — omakase defaults, REST gravity, server-owned truth, majestic monolith — and points you at the right `writing-*` skill for tactical detail. It can also pull from the unofficial 37signals guide via **`referencing-unofficial-37signals-guide`**.
+Use the **`rails-omakase-compass`** skill. It answers whether a direction fits opinionated best-practice Rails — omakase defaults, REST gravity, server-owned truth, majestic monolith — and points you at the right `writing-*` skill for tactical detail. It can also pull from a third-party community guide via **`referencing-unofficial-37signals-guide`**.
 
 ### Refactor an existing test suite
 > *"The system specs are too heavy"* / *"Rebalance the article specs to the right layers"*
@@ -231,9 +231,9 @@ Every internal reference is written in one canonical form — `agent_harness_rai
 This harness stands on the shoulders of two excellent Cursor plugin ecosystems, one reference guide, and one book:
 
 - **Chad Fowler** and his book **[Regenerative Software](https://www.linkedin.com/posts/fowlerchad_im-genuinely-excited-to-share-the-early-share-7488974712543277056-iRQi/)** — the inspiration for the **primitives** tree. Durable intent, the constraints code compiles into, evaluations that prove each clause, and append-only provenance all come from that thinking: the record of *why* outlives any particular implementation.
-- **[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)** (Every) — for strong **planning**, **execution**, and **review** skills and patterns; the **DHH Rails reviewer** persona in particular is a highlight.
+- **[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)** (Every) — for strong **planning**, **execution**, and **review** skills and patterns; its opinionated Rails reviewer persona in particular is a highlight.
 - **[Superpowers](https://github.com/obra/superpowers)** — for disciplined **planning** and **execution** workflows.
-- **[37signals-skills](https://github.com/marckohlbrugge/37signals-skills)** (Marc Köhlbrugge, formerly `unofficial-37signals-coding-style-guide`) — the community-maintained guide to 37signals coding patterns, fetched selectively as a supplemental reference.
+- **[37signals-skills](https://github.com/marckohlbrugge/37signals-skills)** (Marc Köhlbrugge, formerly `unofficial-37signals-coding-style-guide`) — a community-maintained, explicitly unofficial guide to Rails coding patterns, fetched selectively as a supplemental reference.
 
 Thank you to all four for the ideas and structure that made this harness possible.
 

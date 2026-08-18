@@ -3,11 +3,12 @@ name: writing-css-tailwind
 description: >-
   Style Rails apps with Tailwind the Rails way — tailwindcss-rails, CSS
   entrypoints, v3 vs v4 config shapes, @apply policy, theme extension,
-  responsive/dark conventions, accessibility, Stimulus class toggles. DHH/37signals:
-  utility-first markup in ERB (see writing-views), partials over parallel design
-  systems, no CSS-in-JS for Hotwire-first UIs. Use when editing Tailwind config,
-  application stylesheets, global CSS, or clarifying styling vs views (templates)
-  and javascript (asset pipeline).
+  responsive/dark conventions, accessibility, Stimulus class toggles.
+  Opinionated Rails best practice: utility-first markup in ERB (see
+  writing-views), partials over parallel design systems, no CSS-in-JS for
+  Hotwire-first UIs. Use when editing Tailwind config, application
+  stylesheets, global CSS, or clarifying styling vs views (templates) and
+  javascript (asset pipeline).
 ---
 
 # Writing CSS and Tailwind (Rails)

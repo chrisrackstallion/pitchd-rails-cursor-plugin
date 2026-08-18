@@ -1,5 +1,5 @@
 ---
-description: Rails background job conventions — DHH/37signals style. Apply when working with ActiveJob subclasses, background processing, or async work.
+description: Rails background job conventions — opinionated Rails best practice. Apply when working with ActiveJob subclasses, background processing, or async work.
 globs: app/jobs/**/*.rb
 alwaysApply: false
 ---

@@ -1,5 +1,5 @@
 ---
-description: ActionMailer — thin mailers, previews, deliver_later, multipart templates. DHH/37signals. Apply when editing mailers, mailer views, or mailer specs/previews.
+description: ActionMailer — thin mailers, previews, deliver_later, multipart templates. Opinionated Rails best practice. Apply when editing mailers, mailer views, or mailer specs/previews.
 globs: app/mailers/**/*.rb, app/views/**/*_mailer/**/*, spec/mailers/**/*.rb, test/mailers/**/*.rb
 alwaysApply: false
 ---

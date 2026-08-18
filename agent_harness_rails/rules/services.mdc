@@ -1,5 +1,5 @@
 ---
-description: Where logic lives without app/services — models, POROs, forms, jobs. DHH/37signals. Apply when placing operations, form objects, jobs, or pushing back on service objects.
+description: Where logic lives without app/services — models, POROs, forms, jobs. Opinionated Rails best practice. Apply when placing operations, form objects, jobs, or pushing back on service objects.
 globs: app/services/**/*.rb, app/models/**/form.rb, app/models/**/*_form.rb
 alwaysApply: false
 ---

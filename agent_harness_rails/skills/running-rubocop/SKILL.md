@@ -6,7 +6,7 @@ description: >-
   linting Ruby/Rake, verifying before review, or the user mentions RuboCop.
 ---
 
-# Running RuboCop (Rails, omakase-aligned, DHH-shaped context)
+# Running RuboCop (Rails, omakase-aligned)
 
 <objective>
 Make **`bin/rubocop`** pass with **no offences** — by **correct code changes**

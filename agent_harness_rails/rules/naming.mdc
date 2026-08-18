@@ -1,5 +1,5 @@
 ---
-description: Naming conventions across the Rails stack — DHH/37signals style. Apply when creating files, classes, methods, columns, routes, variables, or reviewing any naming decision.
+description: Naming conventions across the Rails stack — opinionated Rails best practice. Apply when creating files, classes, methods, columns, routes, variables, or reviewing any naming decision.
 globs: app/**/*.rb, config/routes.rb, db/migrate/**/*.rb, spec/**/*.rb
 alwaysApply: false
 ---

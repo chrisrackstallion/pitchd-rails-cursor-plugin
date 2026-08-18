@@ -1,5 +1,5 @@
 ---
-description: Rails routing — REST-first URLs, shallow nesting, helpers, constraints. DHH/37signals. Apply when editing config/routes.rb or adding routes.
+description: Rails routing — REST-first URLs, shallow nesting, helpers, constraints. Opinionated Rails best practice. Apply when editing config/routes.rb or adding routes.
 globs: config/routes.rb, config/routes/**/*.rb
 alwaysApply: false
 ---

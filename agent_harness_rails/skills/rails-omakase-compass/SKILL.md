@@ -1,17 +1,18 @@
 ---
 name: rails-omakase-compass
 description: >-
-  High-level decision lens for Rails work in the 37signals tradition —
-  omakase defaults, server-owned truth, REST gravity, majestic monolith, and
-  when to simplify vs extract. Use before debating architecture, when choosing
-  HTML vs API, or when a change feels "off-Rails"; defers HOW to writing-* skills
-  and agent_harness_rails/rules/*.mdc. Not for Stimulus/Turbo syntax, plan templates, or file layout.
+  High-level decision lens for Rails work grounded in opinionated Rails best
+  practice — omakase defaults, server-owned truth, REST gravity, majestic
+  monolith, and when to simplify vs extract. Use before debating architecture,
+  when choosing HTML vs API, or when a change feels "off-Rails"; defers HOW to
+  writing-* skills and agent_harness_rails/rules/*.mdc. Not for Stimulus/Turbo
+  syntax, plan templates, or file layout.
 ---
 
 # Rails Omakase Compass
 
 <objective>
-Answer **whether** a direction fits **37signals-shaped Rails** and **this
+Answer **whether** a direction fits **opinionated best-practice Rails** and **this
 harness’s stack** — not **how** to implement it. Tactical detail lives in
 `skills/writing-*` and `agent_harness_rails/rules/*.mdc`; this skill is the **compass**: defaults,
 tradeoffs, smells as **questions**, and **documented exceptions**.

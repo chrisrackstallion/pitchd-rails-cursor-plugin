@@ -1,5 +1,5 @@
 ---
-description: Rails testing conventions inspired by DHH/37signals philosophy, adapted for RSpec and FactoryBot. Apply when working with specs and tests.
+description: Rails testing conventions grounded in opinionated Rails best practice, adapted for RSpec and FactoryBot. Apply when working with specs and tests.
 globs: spec/**/*.rb
 alwaysApply: false
 ---
@@ -12,12 +12,12 @@ Test behaviour, not implementation. Write tests that give you confidence to ship
 
 User-facing copy and **`I18n.t`** in assertions: **`agent_harness_rails/rules/i18n.mdc`**, **`agent_harness_rails/skills/writing-i18n/references/patterns.md`** § Testing.
 
-> **Tooling note:** DHH and 37signals use Minitest with fixtures. The testing
-> *philosophy* here — system tests as backbone, real objects, behaviour over
-> implementation — is theirs. The tooling (RSpec, FactoryBot, Capybara DSL)
-> is an adaptation of that philosophy for teams that prefer RSpec.
+> **Tooling note:** the testing *philosophy* here — system tests as backbone,
+> real objects, behaviour over implementation — is the vanilla-Rails position,
+> which ships Minitest with fixtures. The tooling (RSpec, FactoryBot, Capybara
+> DSL) is an adaptation of that philosophy for teams that prefer RSpec.
 
-## Test Pyramid (DHH Style)
+## Test Pyramid
 
 System specs are the **backbone**, not the **coverage**. A small number of integration specs prove the seams hold. The bulk of the suite lives in lower-layer specs that are faster, more focused, and less brittle.
 

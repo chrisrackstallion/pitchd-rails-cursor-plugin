@@ -1,5 +1,5 @@
 ---
-description: Rails I18n — key structure, lazy lookup, interpolation, no string soup in views. DHH/37signals. Apply when editing locales, user-facing strings in views/helpers, or flash copy.
+description: Rails I18n — key structure, lazy lookup, interpolation, no string soup in views. Opinionated Rails best practice. Apply when editing locales, user-facing strings in views/helpers, or flash copy.
 globs: config/locales/**/*.yml, config/locales/**/*.yaml, config/locales.yml, config/initializers/i18n.rb, app/views/**/*.erb, app/helpers/**/*.rb
 alwaysApply: false
 ---

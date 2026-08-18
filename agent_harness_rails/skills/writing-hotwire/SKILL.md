@@ -1,12 +1,13 @@
 ---
 name: writing-hotwire
 description: >-
-  Build Hotwire-first UIs — Turbo Drive, Frames, Streams, morphing, broadcasts,
-  and Stimulus — with server-rendered HTML as the source of truth. DHH/37signals
-  style: redirect before frames before streams; small Stimulus controllers; no
-  accidental SPA. Use when adding Turbo frames or streams, Stimulus behaviour,
-  real-time updates, modal/inline-edit flows, or when front-end work drifts
-  toward client-side routing or JSON-first CRUD for same-origin pages.
+  Build Hotwire-first UIs — Turbo Drive, Frames, Streams, morphing,
+  broadcasts, and Stimulus — with server-rendered HTML as the source of truth.
+  Opinionated Rails best practice: redirect before frames before streams;
+  small Stimulus controllers; no accidental SPA. Use when adding Turbo frames
+  or streams, Stimulus behaviour, real-time updates, modal/inline-edit flows,
+  or when front-end work drifts toward client-side routing or JSON-first CRUD
+  for same-origin pages.
 ---
 
 # Writing Hotwire (Turbo + Stimulus)
@@ -17,7 +18,7 @@ updates and Stimulus handles focused DOM behaviour. The HTML the server sends
 is the contract — not a parallel data model in JavaScript. Prefer full-page
 redirects and morphing over bespoke stream choreography; use Turbo Streams when
 multiple DOM targets must update in one response; use Stimulus when HTML plus
-Turbo is not enough. Follow DHH/37signals conventions: omakase stack, clarity
+Turbo is not enough. Follow opinionated Rails best practice: omakase stack, clarity
 over client-side framework patterns, and progressive enhancement.
 </objective>
 

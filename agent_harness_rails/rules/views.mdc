@@ -1,5 +1,5 @@
 ---
-description: Rails view conventions — DHH/37signals style. Apply when working with views, partials, helpers, and layouts.
+description: Rails view conventions — opinionated Rails best practice. Apply when working with views, partials, helpers, and layouts.
 globs: app/views/**/*.erb, app/helpers/**/*.rb
 alwaysApply: false
 ---

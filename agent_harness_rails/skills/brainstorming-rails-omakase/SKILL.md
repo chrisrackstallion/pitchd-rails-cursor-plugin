@@ -6,13 +6,12 @@ description: >-
   server-owned truth, REST vs RPC-shaped endpoints, premature service objects or
   SPA layers, or duplication of business rules in JavaScript. Symptoms include
   reaching for new gems or microservices first, CRUD flows dressed as bespoke
-  protocols, or designs that would fight omakase defaults in a 37signals-shaped
-  app.
+  protocols, or designs that would fight omakase defaults in an omakase-shaped app.
 ---
 
 # Brainstorming Into Rails-Shaped Designs
 
-Turn ideas into an approved **requirements spec** through dialogue, with **omakase / DHH-shaped Rails** as the constraint: majestic monolith, server-owned truth, REST gravity, fat models and thin orchestration, Hotwire-first HTML, and **harness** tactics (`agent_harness_rails/rules/*.mdc`, `writing-*` skills) as the implementation ceiling.
+Turn ideas into an approved **requirements spec** through dialogue, with **omakase Rails best practice** as the constraint: majestic monolith, server-owned truth, REST gravity, fat models and thin orchestration, Hotwire-first HTML, and **harness** tactics (`agent_harness_rails/rules/*.mdc`, `writing-*` skills) as the implementation ceiling.
 
 **Announce:** "I'm using the brainstorming-rails-omakase skill."
 
@@ -27,7 +26,7 @@ Use the **same order** as **`agent_harness_rails/agents/rails-query.md`** so thi
 2. **Scoped tactical layer** — Read **`agent_harness_rails/skills/writing-*/SKILL.md`** files that match the brainstorm topic (see **Topic → assets** below). Pair with **`agent_harness_rails/rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are designing.
 
 3. **Supplementary reference — required when compass and writing-* leave a gap** — Consult these when a pattern isn't clearly covered above; treat as a required consult for those gaps, not optional enrichment:
-   - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — 37signals / Fizzy-derived patterns or "what would DHH-style say about X."
+   - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — supplemental patterns and philosophy from the third-party community guide.
    - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — authoritative Rails API and feature docs.
 
    Both **inform** the brainstorm — they do **not** override harness rules or skills. If a fetch fails, **report that** per the skill; **do not** invent or assert content from memory.

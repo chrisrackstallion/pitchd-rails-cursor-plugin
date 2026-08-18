@@ -9,7 +9,7 @@
 #
 # Why this is a separate file, and opt-in: omakase disables every Lint, Rails,
 # Metrics, Naming and Style cop and re-enables only formatting. That is a
-# deliberate stance — DHH's Rails does not lint semantics. Turning these on is a
+# deliberate stance — omakase Rails does not lint semantics. Turning these on is a
 # real change of position, so an app chooses it rather than inheriting it on a
 # gem bump. rubocop.yml keeps its promise of never contradicting omakase.
 #

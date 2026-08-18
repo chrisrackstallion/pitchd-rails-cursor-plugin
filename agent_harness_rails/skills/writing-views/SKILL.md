@@ -1,7 +1,7 @@
 ---
 name: writing-views
 description: >-
-  Write Rails views, partials, and helpers following DHH/37signals conventions —
+  Write Rails views, partials, and helpers following opinionated Rails best practice —
   ERB templates as HTML-first documents, strict-local partials, collection
   rendering, helpers for presentation logic, Tailwind utility-first styling,
   layouts with content_for. Stimulus and Turbo — writing-hotwire skill. User-
@@ -22,7 +22,7 @@ they don't compute it. Partials are the unit of reuse. Helpers format data for
 display. Tailwind utilities style directly in the markup. Stimulus data
 attributes provide interactivity; Hotwire (Turbo + Stimulus) is documented in
 the writing-hotwire skill. Tailwind **build** and **global** CSS policy —
-writing-css-tailwind skill. Follow DHH/37signals conventions: ERB, strict locals,
+writing-css-tailwind skill. Follow opinionated Rails best practice: ERB, strict locals,
 utility-first CSS in templates, collection rendering, and clarity over cleverness.
 </objective>
 

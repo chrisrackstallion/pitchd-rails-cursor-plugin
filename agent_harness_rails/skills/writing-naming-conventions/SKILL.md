@@ -2,10 +2,11 @@
 name: writing-naming-conventions
 description: >-
   Name files, classes, methods, columns, routes, and variables following Rails
-  conventions and DHH/37signals domain language. Use when creating new files or
-  classes, renaming anything, reviewing naming decisions, or when the user asks
-  what to call something in a Rails app. Covers every layer: models, concerns,
-  controllers, jobs, mailers, policies, database, routes, tests, and locals.
+  conventions and opinionated best-practice domain language. Use when creating
+  new files or classes, renaming anything, reviewing naming decisions, or when
+  the user asks what to call something in a Rails app. Covers every layer:
+  models, concerns, controllers, jobs, mailers, policies, database, routes,
+  tests, and locals.
 ---
 
 # Writing Naming Conventions

@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Why Pundit
 
-DHH would keep authorization in model methods and controller `before_action` guards. Pundit earns its dependency: one policy per model, one method per action, one place to look. Every controller action calls `authorize`. Every index calls `policy_scope`. Default posture: `after_action :verify_authorized` (and `verify_policy_scoped` on index) so a missed `authorize` or `policy_scope` raises during the request (in all environments, unless you customize Pundit or disable those callbacks). For actions that intentionally have no authorization (public pages, health checks), use `skip_after_action` explicitly — see the policies skill § Skipping Verification.
+Vanilla Rails would keep authorization in model methods and controller `before_action` guards. Pundit earns its dependency: one policy per model, one method per action, one place to look. Every controller action calls `authorize`. Every index calls `policy_scope`. Default posture: `after_action :verify_authorized` (and `verify_policy_scoped` on index) so a missed `authorize` or `policy_scope` raises during the request (in all environments, unless you customize Pundit or disable those callbacks). For actions that intentionally have no authorization (public pages, health checks), use `skip_after_action` explicitly — see the policies skill § Skipping Verification.
 
 Policies answer **authorization** (“who may do this?”), not business rules (“what happens when they do?”). Domain logic stays on the model; policies compose model predicates.
 

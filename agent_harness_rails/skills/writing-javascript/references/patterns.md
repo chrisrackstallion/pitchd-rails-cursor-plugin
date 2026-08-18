@@ -520,7 +520,7 @@ For **`data-turbo-*`**, frame targeting, stream templates, morphing, and
   trees.
 - **`innerHTML = userInput`** — XSS waiting to happen.
 - **`alert()` and `console.log`** in production code paths.
-- **Micro-frontends** and module federation for a typical Basecamp-shaped
+- **Micro-frontends** and module federation for a typical monolith-shaped
   Rails app — out of scope and opposite of omakase.
 
 ---

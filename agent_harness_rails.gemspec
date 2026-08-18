@@ -14,8 +14,8 @@ Gem::Specification.new do |spec|
   spec.description = <<~TEXT.gsub("\n", " ").strip
     Vendors a harness of skills, rules, and agent definitions into a Rails
     application so Cursor and Claude Code can read them from the project
-    directory alone. Conventions follow DHH and 37signals: omakase defaults,
-    server-owned truth, REST-shaped boundaries, Hotwire-first front ends, and a
+    directory alone. Conventions follow opinionated Rails best practice: omakase
+    defaults, server-owned truth, REST-shaped boundaries, Hotwire-first front ends, and a
     plan / implement / review loop.
   TEXT
 

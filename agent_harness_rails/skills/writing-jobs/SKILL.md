@@ -1,7 +1,7 @@
 ---
 name: writing-jobs
 description: >-
-  Write Rails background jobs following DHH/37signals conventions — thin jobs
+  Write Rails background jobs following opinionated Rails best practice — thin jobs
   that delegate to model methods, idempotent execution, after_commit timing,
   and retry discipline. Use when writing ActiveJob subclasses, scheduling
   background work, handling async processing, or when the user mentions jobs,

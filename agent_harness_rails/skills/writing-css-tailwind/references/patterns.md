@@ -111,7 +111,7 @@ Field-level error styling and flash markup are **views** concerns — **`agent_h
 
 ---
 
-## Anti-patterns (37signals-shaped)
+## Anti-patterns
 
 | Problem | Direction |
 |---------|-----------|

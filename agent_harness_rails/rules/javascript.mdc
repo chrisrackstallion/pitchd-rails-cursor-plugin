@@ -1,5 +1,5 @@
 ---
-description: JavaScript in a Rails app — importmaps vs bundling, Stimulus controller anatomy, modern JS quality, accessibility and security boundary. Server-rendered HTML first; JavaScript enhances, it does not replace. DHH/37signals omakase.
+description: JavaScript in a Rails app — importmaps vs bundling, Stimulus controller anatomy, modern JS quality, accessibility and security boundary. Server-rendered HTML first; JavaScript enhances, it does not replace. Opinionated Rails best practice, omakase-aligned.
 globs: config/importmap.rb, app/javascript/**/*.js, app/javascript/**/*.mjs, package.json, package-lock.json, yarn.lock, pnpm-lock.yaml, Procfile.dev, vite.config.ts, vite.config.js, vite.config.mjs
 alwaysApply: false
 ---

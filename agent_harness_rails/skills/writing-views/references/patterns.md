@@ -179,7 +179,7 @@ Each model type needs a matching partial in its conventional location.
 
 ## Tailwind
 
-Tailwind is the 37signals CSS strategy. Utility classes go directly in
+Tailwind is this harness's CSS strategy. Utility classes go directly in
 ERB markup. The HTML *is* the component in Rails — partials provide
 reuse, not CSS abstractions.
 

@@ -89,5 +89,5 @@ the official Rails guides without a successful fetch.
 |----------------|------|
 | `rails-omakase-compass` | omakase-shaped defaults and tradeoffs — consult for "whether." |
 | `writing-*`, `agent_harness_rails/rules/*.mdc` | **How** we ship — primary project contract. |
-| `referencing-unofficial-37signals-guide` | 37signals-derived patterns and philosophy. |
+| `referencing-unofficial-37signals-guide` | Supplemental patterns from the third-party community guide. |
 | This skill | **Authoritative** Rails feature docs fetched on demand. |

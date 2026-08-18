@@ -1,5 +1,5 @@
 ---
-description: Rails controller conventions — DHH/37signals style. Apply when working with controllers.
+description: Rails controller conventions — opinionated Rails best practice. Apply when working with controllers.
 globs: app/controllers/**/*.rb
 alwaysApply: false
 ---

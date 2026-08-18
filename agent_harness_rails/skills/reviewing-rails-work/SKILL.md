@@ -18,7 +18,7 @@ compass inside this file — read it first when reviewing.
 
 Be direct. State violations as violations, not suggestions. "This violates
 `agent_harness_rails/rules/services.mdc`" — not "you might want to consider". The harness rules exist
-because DHH and 37signals have already made these decisions; the job here is to
+because these decisions have already been made; the job here is to
 apply them, not re-debate them.
 </objective>
 

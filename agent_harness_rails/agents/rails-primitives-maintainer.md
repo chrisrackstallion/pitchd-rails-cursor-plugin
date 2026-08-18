@@ -42,7 +42,7 @@ If the prompt names no operation, infer it from the request ("document the
 billing feature" → `capture`; "why is X like this" → `trace`), state the
 inference in your report, and ask once only when genuinely ambiguous.
 
-## DHH / 37signals perspective
+## Opinionated Rails best practice
 
 - **Defaults:** One fixed-shape tree under **`docs/primitives/`** — four file
   types, no wiki pages, no graph to walk. Index + grep; no search

@@ -1,12 +1,12 @@
 ---
 name: writing-tests
 description: >-
-  Write Rails tests following DHH/37signals testing philosophy, adapted for
-  RSpec and FactoryBot — system specs as the backbone, real objects over mocks,
-  behaviour-driven testing over implementation testing. Use
-  when writing specs, adding test coverage, debugging test failures, creating
-  factories, or when the user mentions tests, specs, RSpec, FactoryBot,
-  Capybara, system tests, request specs, or test coverage.
+  Write Rails tests following opinionated Rails best-practice testing
+  philosophy, adapted for RSpec and FactoryBot — system specs as the backbone,
+  real objects over mocks, behaviour-driven testing over implementation
+  testing. Use when writing specs, adding test coverage, debugging test
+  failures, creating factories, or when the user mentions tests, specs, RSpec,
+  FactoryBot, Capybara, system tests, request specs, or test coverage.
 ---
 
 # Writing Rails Tests
@@ -29,9 +29,9 @@ maintain; each one must earn its place against the budget and gates in
 `references/system-specs.md`.
 
 The testing *philosophy* — system tests as backbone, behaviour over
-implementation, integration over isolation — comes from DHH and 37signals.
-The tooling (RSpec, FactoryBot) is an adaptation; 37signals uses Minitest
-with fixtures. The principles are the same.
+implementation, integration over isolation — is the vanilla-Rails position.
+The tooling (RSpec, FactoryBot) is an adaptation; Rails ships Minitest with
+fixtures. The principles are the same.
 </objective>
 
 ## Process

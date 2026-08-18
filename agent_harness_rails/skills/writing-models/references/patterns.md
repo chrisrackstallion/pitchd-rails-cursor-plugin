@@ -505,7 +505,7 @@ class User < ApplicationRecord
   has_secure_password
 end
 
-user = User.create!(email: "david@hey.com", password: "secret", password_confirmation: "secret")
+user = User.create!(email: "user@example.com", password: "secret", password_confirmation: "secret")
 user.authenticate("secret") # => user
 user.authenticate("wrong")  # => false
 ```

@@ -1,7 +1,7 @@
 ---
 name: writing-routes
 description: >-
-  Declare Rails routes in DHH/37signals style — REST-first resources, shallow
+  Declare Rails routes in opinionated best-practice style — REST-first resources, shallow
   nesting, clear path helpers, constraints for wiring not auth, boring
   routes.rb. Use when editing config/routes.rb, adding resources, namespaces,
   member/collection routes, API boundaries, or when the user mentions routing,
@@ -15,7 +15,7 @@ Shape URLs and `config/routes.rb` so they read like a table of contents:
 REST as default, shallow nesting where parents scope identity, member vs
 collection used correctly, constraints for real routing predicates only,
 and no clever meta-programming that hides the map of the app. Follow
-DHH/37signals instincts — boring routes, predictable helpers, monolith-friendly
+Opinionated best-practice instincts — boring routes, predictable helpers, monolith-friendly
 clarity.
 </objective>
 

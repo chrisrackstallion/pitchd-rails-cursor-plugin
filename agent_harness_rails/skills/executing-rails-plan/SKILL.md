@@ -1,17 +1,17 @@
 ---
 name: executing-rails-plan
 description: >-
-  Orchestrates execution of a written Rails implementation plan in a DHH /
-  37signals omakase style without writing application code: delegates each task
-  to rails-implementor, reviews via rails-reviewer, and loops on
-  feedback until Approved. In step-by-step mode it then stops after each
-  Approved task so the user can review and commit it before the next one
+  Orchestrates execution of a written Rails implementation plan in an
+  opinionated best-practice omakase style without writing application code:
+  delegates each task to rails-implementor, reviews via rails-reviewer, and
+  loops on feedback until Approved. In step-by-step mode it then stops after
+  each Approved task so the user can review and commit it before the next one
   starts, keeping the reviewable unit small. Use when the user says execute
   the plan, run the plan, implement the plan, ship planned tasks, or wants a
   subset of plan tasks done in full with harness conventions. Also handles
-  post-execution revision requests — when the user says something needs changing,
-  isn't right, or requests a fix after the skill has run, treat it as a
-  self-contained revision task and run the same implement → review loop.
+  post-execution revision requests — when the user says something needs
+  changing, isn't right, or requests a fix after the skill has run, treat it
+  as a self-contained revision task and run the same implement → review loop.
 ---
 
 # Executing a Rails Agent Harness plan (orchestrator)

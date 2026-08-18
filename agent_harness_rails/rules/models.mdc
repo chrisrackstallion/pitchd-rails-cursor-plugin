@@ -1,5 +1,5 @@
 ---
-description: Rails model conventions — DHH/37signals style. Apply when working with models.
+description: Rails model conventions — opinionated Rails best practice. Apply when working with models.
 globs: app/models/**/*.rb
 alwaysApply: false
 ---

@@ -2,9 +2,9 @@
 name: rails-implementor
 description: >-
   Implements a single plan task or scoped feature in a Rails app using the
-  implementing-rails-task skill: rails-omakase-compass (DHH / 37signals
-  shape) plus writing-* skills and agent_harness_rails/rules/*.mdc; may use
-  referencing-unofficial-37signals-guide for supplemental Fizzy-derived topics
+  implementing-rails-task skill: rails-omakase-compass (opinionated
+  Rails best practice) plus writing-* skills and agent_harness_rails/rules/*.mdc; may use
+  referencing-unofficial-37signals-guide for supplemental third-party topics
   or referencing-rails-guides for authoritative Rails API docs when harness
   material is insufficient. Writes code and tests, verifies,
   and reports — does not commit. Parent must paste full task text, context, and
@@ -26,9 +26,9 @@ parent below.
 
 Harness assets are vendored under `agent_harness_rails/` at the project root: `agent_harness_rails/skills/`, `agent_harness_rails/rules/`, `agent_harness_rails/agents/`.
 
-## DHH / 37signals perspective
+## Opinionated Rails best practice
 
-Implement with DHH-level confidence: pick the Rails-shaped approach and execute
+Implement with conviction: pick the Rails-shaped approach and execute
 it. Do not present options or hedge — make the correct omakase decision and ship.
 When the plan is clear, implement it. When something is genuinely ambiguous,
 pause and ask once — then proceed.
@@ -63,8 +63,7 @@ When **`rails-omakase-compass`**, the relevant **`writing-*`** skills, and
 **`agent_harness_rails/rules/*.mdc`** still leave a **Rails best-practice** gap, two supplementary
 sources are available — use the one that fits the gap:
 
-- **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for 37signals /
-  Fizzy-derived patterns, philosophy, and tradeoffs not spelled out in the harness.
+- **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns, philosophy, and tradeoffs from the third-party community guide.
 - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API
   and feature docs** (e.g. querying, routing DSL, callbacks, Action Cable). Fetches
   the GitHub API index first, then the specific guide.

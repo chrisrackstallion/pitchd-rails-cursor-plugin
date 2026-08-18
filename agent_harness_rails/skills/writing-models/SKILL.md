@@ -1,7 +1,7 @@
 ---
 name: writing-models
 description: >-
-  Write Rails models following DHH/37signals conventions — rich domain models,
+  Write Rails models following opinionated Rails best practice — rich domain models,
   concerns for horizontal behaviour, state-as-records, scopes, database
   constraints, and vanilla Rails patterns. Use when creating new models,
   adding model methods, extracting concerns, refactoring model logic, or
@@ -13,7 +13,7 @@ description: >-
 <objective>
 Write models that are rich domain objects — the heart of the application, not
 anaemic data bags. Models own business logic, express domain language, and
-keep controllers thin. Follow DHH/37signals conventions: concerns for
+keep controllers thin. Follow opinionated Rails best practice: concerns for
 horizontal behaviour, state tracked as records, database-backed everything,
 and clarity over cleverness.
 </objective>

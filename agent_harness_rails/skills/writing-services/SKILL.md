@@ -2,7 +2,7 @@
 name: writing-services
 description: >-
   Where application logic lives in Rails without an app/services layer —
-  DHH/37signals style: rich models, concerns, model-namespaced POROs,
+  opinionated Rails best practice: rich models, concerns, model-namespaced POROs,
   ActiveModel form objects, and jobs. Use when deciding where behaviour
   belongs, or when the user mentions services, service objects, POROs, forms,
   jobs, operations, interactors, or use cases.
@@ -13,8 +13,7 @@ description: >-
 <objective>
 Rails has no service layer. Business logic belongs on models. When an operation
 outgrows a single model method, extract to a PORO namespaced under the primary
-model, a form object, or a job — never to `app/services/`. Follow DHH/37signals
-conventions: rich domain models, minimal indirection, objects that represent
+model, a form object, or a job — never to `app/services/`. Follow opinionated Rails best practice: rich domain models, minimal indirection, objects that represent
 real concepts, and clarity over architecture astronautics.
 </objective>
 

@@ -1,7 +1,7 @@
 ---
 name: writing-controllers
 description: >-
-  Write Rails controllers following DHH/37signals conventions — thin CRUD
+  Write Rails controllers following opinionated Rails best practice — thin CRUD
   controllers, REST-mapped resources, redirect-first Hotwire responses, concerns
   for shared behaviour, and strong parameters with params.expect. Use when
   creating new controllers, adding actions, extracting concerns, handling
@@ -15,8 +15,7 @@ description: >-
 Write controllers that are thin orchestrators — they receive a request,
 delegate to the model, and respond. Every custom action maps to CRUD on a
 new resource. Responses use the simplest Turbo mechanism that works:
-full-page redirect first, then frames, then streams. Follow DHH/37signals
-conventions: REST purity, rich models, vanilla controller code, and
+full-page redirect first, then frames, then streams. Follow opinionated Rails best practice: REST purity, rich models, vanilla controller code, and
 clarity over cleverness.
 </objective>
 

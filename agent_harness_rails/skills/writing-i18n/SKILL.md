@@ -3,7 +3,7 @@ name: writing-i18n
 description: >-
   Organize Rails I18n — YAML structure, lazy lookup in views, absolute keys in
   helpers and controllers, interpolation and pluralization, datetime/number
-  formats, and Active Record error messages. DHH/37signals style: boring keys,
+  formats, and Active Record error messages. Opinionated Rails best practice: boring keys,
   framework-first, no string concatenation in templates. Use when adding or
   changing locales, extracting user-facing copy from ERB, flash messages, or
   validation messages; not for translation vendor tooling or SPA i18n-js.

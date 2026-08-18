@@ -2,11 +2,11 @@
 name: implementing-rails-task
 description: >-
   Implement a plan task in a Rails app using harness conventions: first
-  rails-omakase-compass (DHH / 37signals-shaped omakase), then applicable
-  writing-* skills and agent_harness_rails/rules/*.mdc for tactics. Use when executing a single task
-  from an implementation plan, a vertical slice, or a scoped feature. For
-  isolated delegation, use the rails-implementor subagent (see
-  agent_harness_rails/agents/rails-implementor.md).
+  rails-omakase-compass (opinionated best-practice omakase), then applicable
+  writing-* skills and agent_harness_rails/rules/*.mdc for tactics. Use when
+  executing a single task from an implementation plan, a vertical slice, or a
+  scoped feature. For isolated delegation, use the rails-implementor subagent
+  (see agent_harness_rails/agents/rails-implementor.md).
 ---
 
 # Implementing Rails Agent Harness (plan tasks & scoped work)
@@ -17,7 +17,7 @@ Ship **correct, boring, omakase-shaped Rails** that matches **this harness**:
 and `agent_harness_rails/rules/*.mdc`. Implement what the task asks — no extra framework, no
 drive-by refactors outside scope.
 
-**Voice:** Implement with DHH-level confidence. Pick the Rails-shaped approach
+**Voice:** Implement with conviction. Pick the Rails-shaped approach
 and execute it. Do not hedge about which pattern to use — make the correct omakase
 decision and ship. When the plan is clear, implement it. When something is
 genuinely ambiguous, pause and ask once — then proceed.
@@ -50,7 +50,7 @@ outside this task's scope.
 | `rails-omakase-compass` | **Whether** the approach fits majestic monolith / server truth / REST — read **before** coding when the task involves boundaries or product shape. |
 | `writing-*` + `agent_harness_rails/rules/*.mdc` | **How** to write routes, models, controllers, Hotwire, tests, etc., for this repo. |
 | `writing-rails-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
-| `writing-tests` | Tests: DHH/37signals philosophy (system backbone, real objects, behaviour over mocks) plus `agent_harness_rails/rules/testing.mdc`. |
+| `writing-tests` | Tests: opinionated best-practice philosophy (system backbone, real objects, behaviour over mocks) plus `agent_harness_rails/rules/testing.mdc`. |
 | `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `agent_harness_rails/rules/rubocop.mdc`. Not a substitute for compass or tests. |
 | `maintaining-primitives` | **Primitives tree only** — capability docs, `compilation.md`, provenance under `docs/primitives/` per `agent_harness_rails/rules/primitives.mdc`. Implementation **reads** intent/shape excerpts pasted into the task prompt but **never writes** to the tree — the planner and execution close-out own those write points. If the task is code, stay in this skill. |
 
