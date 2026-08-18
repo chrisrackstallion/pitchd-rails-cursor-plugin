@@ -84,6 +84,36 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
   finding is that the capability should split), and `reviewing-rails-work` plus
   `maintaining-primitives`' `lint` report umbrella clauses with the per-action
   sentences written out.
+- **An explicit admissibility test for clauses, and an intent-impact statement in
+  brainstorms and plans.** `primitives.mdc` § Intent clauses now states the
+  boundary directly: a clause is acceptable only if it is **observable**,
+  **falsifiable**, **one behaviour**, and **durable** — still worth stating after
+  the implementation is rewritten. The durable test is the one to run first, since
+  it disposes of architecture, technology choices, refactors, and task lists in a
+  single move, and a table names each of those with the home it actually belongs in
+  (`## Shape`, `compilation.md`, the plan's task list, or nothing at all).
+  Architecture and refactors are Compilation, never Intent.
+
+  Plans now carry a required **Intent impact** table in the header — every touched
+  clause, its change (`new` / `amended` / `superseded by I<n>` / `unchanged —
+  regression contract`), and the layer its proof will land at — so what a plan
+  promises is reviewable before any code exists. The `Proof lands at` column is a
+  plan and stays in the plan file; `evaluations:` are still filled at close-out
+  from what was actually reported. Brainstorm specs gain a matching `## Intent`
+  block separating new clauses from impacted ones, with the proving layer named
+  coarsely: if the only honest answer is "a journey spec", the clause wants
+  splitting before a plan is built around it.
+
+  This makes **Shape-only work expressible**, which it previously was not — the
+  planner's primitives gate had three branches (serves / supersedes / adds) and a
+  refactor fits none, so it pressured an agent into inventing a clause. A fourth
+  branch leaves `intent:` and `status:` untouched, turns the active clauses into the
+  plan's regression contract, records constraints in `## Shape`, and appends a
+  `refactored` provenance line (new in the event vocabulary) only when a constraint
+  actually changed. Close-out reconciles declared against actual, and treats an
+  `unchanged` clause whose evaluation had its **assertions** edited as a
+  mislabelled amendment — a refactor may move an evaluation's file, never change
+  what it asserts.
 
   The workflows that write or check evaluations were updated to carry the test
   rather than repeat it — `writing-rails-plans` plans the spec homes a quantifier

@@ -155,6 +155,16 @@ target capability doc, and **`compilation.md`**.
      `## Provenance` before proposing an approach: do not re-litigate a
      recorded rejection or "fix" a recorded deliberate decision without
      saying so explicitly.
+   - **Exists, and this plan changes no behaviour (refactor, migration,
+     architecture change):** the fourth classification, and the one with no
+     `intent:` edit in it. Leave every clause and `status:` untouched; the active
+     clauses become the plan's **regression contract** — list them as
+     `unchanged` rows in the Intent impact table and write `no intent delta`.
+     Record what future work must respect in `## Shape`, and append a
+     `refactored` provenance line only when a constraint actually changed;
+     tidying that leaves no constraint behind earns no entry. If a clause's
+     wording has to change for the work to be correct, this is **not** this
+     branch — it is an amendment, and it takes the supersession mechanics above.
    - **Missing, new feature:** create it now. The requirements-gate answers
      **are** the `intent:` clauses — transcribe them into frontmatter as
      one-sentence `clause:` entries (`I1`, `I2`, …) instead of discarding them
@@ -386,8 +396,29 @@ different docs location):
 > How the plan is followed or sequenced is up to the user and the implementing agent.
 
 **Capability:** `docs/primitives/capabilities/<name>.md` — serves I1–I4
-[Clause IDs this plan serves, supersedes, or adds. Omit this line only when
-the app has no `docs/primitives/` tree.]
+[Clause IDs this plan serves, supersedes, or adds. Omit this line and the table
+below only when the app has no `docs/primitives/` tree.]
+
+**Intent impact:** every clause this plan touches, and where its proof will land.
+
+| Clause | Change | Proof lands at |
+|--------|--------|----------------|
+| I1 A reader can reply to any comment | unchanged — regression contract | `spec/system/comment_threads_spec.rb` (exists) |
+| I5 Only the author can delete a comment | new | `spec/policies/comment_policy_spec.rb` + `spec/requests/comments_spec.rb` (Task 3) |
+| I4 Anyone can delete a comment | superseded by I5 | row retires at close-out; spec deleted in Task 3 |
+
+`Change` is one of **new**, **amended**, **superseded by I\<n>**, or **unchanged
+— regression contract**. That last value is not filler: it is the explicit list of
+promises this plan must not break, and it is what makes a **Shape-only plan**
+expressible — a refactor's table is all regression-contract rows, and it says
+`no intent delta` where new clauses would go.
+
+`Proof lands at` is a **plan**, and it lives in this file only. It is never copied
+into the doc's `evaluations:` — those are filled at close-out from the specs the
+implementor actually reported, never from intention. Declaring the layer up front
+is still the point: a clause whose only conceivable proof is a wide journey spec
+is a clause that wants splitting, and this table is where that becomes visible
+(`agent_harness_rails/rules/primitives.mdc` § Intent clauses).
 
 **Problem:** [One sentence — the underlying need in the user's terms: what
 breaks or is missing without this. Distinct from Goal, which describes the

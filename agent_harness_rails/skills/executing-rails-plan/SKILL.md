@@ -295,6 +295,15 @@ updates the capability doc directly (see the Hard rules carve-out):
    implementor did not, since the path alone is a claim and the tag is the
    proof. Delete-listed specs must actually be gone.
 
+   **Reconcile against the plan's Intent impact table.** It declared every
+   touched clause, its change, and the layer its proof would land at; close-out
+   is where declaration meets fact. A declared row no spec delivered is a gap, not
+   a rounding error. A clause listed `unchanged — regression contract` whose
+   evaluation had its **assertions** edited is the one to stop on: a refactor may
+   move an evaluation's file, never change what it asserts, so an edited assertion
+   means behaviour moved and the plan was a mislabelled amendment — say so rather
+   than filing the row.
+
    **Read the reported examples against the clause before filling the row.**
    Breaking the clause has to turn one of them red
    (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).

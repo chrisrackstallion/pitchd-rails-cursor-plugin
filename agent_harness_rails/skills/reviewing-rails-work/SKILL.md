@@ -110,6 +110,21 @@ suggestions:
   `intent:` clause. Untraceable behaviour is a finding: either a missing clause
   or scope creep. A plan whose header lacks the **Capability:** line when the
   tree exists is a finding.
+- **Intent impact declared** — plan phase. The plan header carries the **Intent
+  impact** table: every touched clause, its change (`new` / `amended` /
+  `superseded by I<n>` / `unchanged — regression contract`), and the layer its
+  proof will land at (`writing-rails-plans` § Plan document header). A missing
+  table, a clause the tasks touch that the table omits, or a table row no task
+  delivers is a finding — that table is what makes the plan's promises reviewable
+  before any code exists. A Shape-only plan states `no intent delta` and lists its
+  regression contract; a plan claiming `no intent delta` while a clause's wording
+  changes is a mislabelled amendment.
+- **Clause admissibility** — every new or amended clause passes all four tests:
+  observable, falsifiable, one behaviour, **durable**
+  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). Architecture,
+  technology choices, refactors, and task lists written as clauses are the common
+  failure and belong in `## Shape` or the task list; run the durable test first,
+  since it disposes of all four at once.
 - **Clause granularity** — **plan phase, and the cheapest finding you can make.**
   One behaviour per clause: an umbrella verb (*manage*, *handle*, *support*) or an
   `and` joining two different actions is several promises in one sentence

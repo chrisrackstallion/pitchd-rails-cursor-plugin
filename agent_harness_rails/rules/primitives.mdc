@@ -121,38 +121,67 @@ Skeletons: `agent_harness_rails/skills/maintaining-primitives/references/templat
 
 - **`id:`** — stable (`I1`, `I2`, …), assigned once, **never renumbered or
   reused**; provenance entries and old plans reference them.
-- **`clause:`** — one sentence, outcome terms, and **falsifiable**: a spec must
-  be able to go red when it stops being true. "Replies appear nested under their
-  parent" can fail; "threading feels natural" cannot, and a clause that cannot
-  fail is a `## Shape` bullet or an aspiration wearing a clause's clothes. Write
-  the quantifier you mean — *any*, *every*, *never*, *only* — because it is what
-  the evaluations have to cover
-  (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
-- **One behaviour per clause.** Name **one action and one outcome**. Two smells
-  that a sentence is really several clauses: an **umbrella verb** standing in for
-  a set of actions — *manage*, *handle*, *support*, *administer* — and an **`and`
-  joining two different actions**. "A member can manage their comments" is four
-  promises sharing a sentence: each breaks on its own, and no example proves the
-  whole of it.
+- **`clause:`** — **one sentence, in outcome terms.** Write the quantifier you
+  mean — *any*, *every*, *never*, *only* — because it is what the evaluations have
+  to cover (`agent_harness_rails/rules/testing.mdc` § What counts as proving a
+  clause).
 
-  | Instead of | Write |
-  |------------|-------|
-  | A member can manage their comments | A member can post a comment / can edit their own comment / can delete their own comment |
-  | Billing handles plan changes correctly | An owner can change plan mid-cycle / A proration line appears on the next invoice |
+#### What is and is not a clause
 
-  This is what keeps **evaluations** narrow, and it is the cheapest lever on the
-  whole suite: a focused clause is proven by a focused example at the layer that
-  owns it, while a broad one has no home but a wide system spec — which fights
-  the budget and the Five Gates (`agent_harness_rails/rules/testing.mdc`) and
-  lands on the ~3-evaluation tripwire below. A clause you cannot prove without a
-  journey spec is usually a clause that has not been split yet.
-- **The other bound — a clause is not a spec.** Scope words *sharpen* a clause,
-  they do not split it: "Only the author can edit an article" is one promise even
-  though proving it takes a permit case and a deny case at two layers. If a split
-  yields clauses no user would state separately, or that differ only by which
-  layer proves them, it has gone too far — that is transcribing the suite into
-  the tree, and the ~10-clauses-per-capability ceiling is what says so. Split by
-  what the product promises, never by what one example can assert.
+A clause is acceptable only when **all four** hold:
+
+1. **Observable** — it names an outcome a user or a caller can see, not an
+   internal arrangement.
+2. **Falsifiable** — a spec can go red when it stops being true. "Replies appear
+   nested under their parent" can fail; "threading feels natural" cannot.
+3. **One behaviour** — one action, one outcome. No umbrella verb (*manage*,
+   *handle*, *support*, *administer*), no `and` joining two different actions.
+4. **Durable** — still worth stating after the implementation has been rewritten
+   in a different shape.
+
+The fourth settles most arguments, because it is the tree's whole premise: intent
+is the primitive that **outlives generated code**, so anything a rewrite would
+invalidate was never intent. Run it first — it is one question and it disposes of
+architecture, technology choices, and task lists in a single move.
+
+None of the following is a clause. Each has a home, and none of those homes is
+`intent:`:
+
+| Not a clause | Why | Where it belongs |
+|---|---|---|
+| "Comments use a `parent_id` self-join" | How the code is arranged; a rewrite invalidates it | `## Shape` |
+| "Use Turbo Streams for replies" | A constraint on implementation, not a promise | `## Shape`, or `compilation.md` if app-wide |
+| "Notifications move into a concern" | Nothing observable changes, so nothing could go red | `## Shape` if it leaves a constraint worth respecting; otherwise **nothing** — a refactor is git's business |
+| "Threading feels natural", "the page is fast" | Not falsifiable — no spec can fail | Drop it, or restate as a measurable outcome |
+| "Add a comments controller" | A work item, ephemeral by design | The plan's task list |
+| "A member can manage their comments" | Several promises in one sentence; no example proves the whole | Split per action (below) |
+| "Blank titles are rejected" | Rails' promise, not the app's | Nothing |
+| "Renders the reply form" | The suite transcribed into the tree; a clause is a promise, not an example | The spec |
+
+**Splitting an umbrella:**
+
+| Instead of | Write |
+|------------|-------|
+| A member can manage their comments | A member can post a comment / can edit their own comment / can delete their own comment |
+| Billing handles plan changes correctly | An owner can change plan mid-cycle / A proration line appears on the next invoice |
+
+Granularity is the cheapest lever on the whole suite: a focused clause is proven
+by a focused example at the layer that owns it, while a broad one has no home but
+a wide system spec — which fights the budget and the Five Gates
+(`agent_harness_rails/rules/testing.mdc`) and lands on the ~3-evaluation tripwire
+below. **A clause you cannot prove without a journey spec is usually a clause
+that has not been split yet.**
+
+**The other bound — a clause is not a spec.** Scope words *sharpen* a clause,
+they do not split it: "Only the author can edit an article" is one promise even
+though proving it takes a permit case and a deny case at two layers. If a split
+yields clauses no user would state separately, or that differ only by which layer
+proves them, it has gone too far — that is transcribing the suite into the tree,
+and the ~10-clauses-per-capability ceiling is what says so. Split by what the
+product promises, never by what one example can assert.
+
+#### Lifecycle
+
 - **Superseding:** add `superseded_by: [ I5 ]` and `superseded_on: YYYY-MM-DD`
   to the old clause, and add the new clause with a **new** id. Never delete the
   old entry — tombstones are how a future agent learns a cap existed, why, and
@@ -268,8 +297,8 @@ style — is judgment, and stays with the `lint` operation in `maintaining-primi
 
 ### Provenance
 
-One line per **event** (shaped, planned, built, amended, revised, backfilled,
-confirmed, deprecated) — not per edit. Each line: date, what happened, link to the plan or PR, and rejected
+One line per **event** (shaped, planned, built, amended, revised, refactored,
+backfilled, confirmed, deprecated) — not per edit. Each line: date, what happened, link to the plan or PR, and rejected
 alternatives or knowingly accepted debt when there were any. Multi-line entries
 are a lint finding — the section must stay cheap to load and cheap to append.
 

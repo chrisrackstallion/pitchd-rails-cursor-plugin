@@ -76,7 +76,7 @@ Create a task for each item and complete **in order**:
 3. **Ask clarifying questions** — one per message; purpose, constraints, success criteria.
 4. **Propose 2–3 approaches** — trade-offs in **Rails terms** (resources vs RPC, HTML vs JSON, sync vs job, model vs controller vs policy), consistent with what you already loaded. For each approach, **state explicitly where the domain logic will live** (model method, callback, scope, concern) — not implicit.
 5. **Present design in sections** — scaled to complexity; approval after each section.
-6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override). End it with **`## Delivery sequence`** (see **Delivery sequence (in the spec)**) — the ordered deployable slices, one plan each. **When the app has a `docs/primitives/` tree**, also create or update the capability doc (`docs/primitives/capabilities/<name>.md`): the spec's agreed outcomes become one-sentence Intent clauses (`I1`, `I2`, …), **one behaviour each** — split an umbrella outcome ("users can manage X") per action rather than seeding a clause no example could prove — and the chosen direction a rough `## Shape` — per `agent_harness_rails/rules/primitives.mdc`. `status: shaping` applies only to docs this brainstorm **creates**; when updating an existing doc (shaping an amendment to a `planned` or `built` capability), leave its status untouched — a brainstorm never downgrades status. What's explicitly out of scope is worth a provenance line. The planner's primitives gate confirms and extends this doc instead of re-deriving intent.
+6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override). End it with **`## Delivery sequence`** (see **Delivery sequence (in the spec)**) — the ordered deployable slices, one plan each. **When the app has a `docs/primitives/` tree**, also create or update the capability doc (`docs/primitives/capabilities/<name>.md`): the spec's agreed outcomes become one-sentence Intent clauses (`I1`, `I2`, …), **one behaviour each** — split an umbrella outcome ("users can manage X") per action rather than seeding a clause no example could prove, and keep architecture and technology choices out of `intent:` entirely (they are `## Shape`) — and the chosen direction a rough `## Shape`. The spec carries a **`## Intent`** block naming new and impacted clauses and the layer that will prove each (see **Intent (in the spec)**) — per `agent_harness_rails/rules/primitives.mdc`. `status: shaping` applies only to docs this brainstorm **creates**; when updating an existing doc (shaping an amendment to a `planned` or `built` capability), leave its status untouched — a brainstorm never downgrades status. What's explicitly out of scope is worth a provenance line. The planner's primitives gate confirms and extends this doc instead of re-deriving intent.
 7. **Spec self-review** — placeholders, contradictions, ambiguity, scope; fix inline.
 8. **User reviews written spec** — wait for approval or revision requests.
 9. **Transition to planning** — invoke **`writing-rails-plans`** only.
@@ -133,6 +133,37 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 | **Testing intent** | Behaviour-first, right layer — delegate detail to **`writing-tests`** / `agent_harness_rails/rules/testing.mdc` in the plan phase. |
 
 **Design for clear Rails boundaries:** Vertical slices (resource/feature cohesion), one obvious home for domain rules (models, concerns — not generic service registries). If the brainstorm drifts toward "generic executor," "repository on thin models," or duplicated rules in JS, stop and realign with **`rails-omakase-compass`**.
+
+### Intent (in the spec)
+
+When the app has a `docs/primitives/` tree, the spec states the intent it settles
+**before** the sequence that ships it, and it separates what is being promised for
+the first time from what is merely being relied on:
+
+```markdown
+## Intent
+
+**New** — seeded into `docs/primitives/capabilities/team_invitations.md`
+
+- I1 An admin can invite a person by email address. — proven at: request spec
+- I2 An invitation expires 14 days after it is sent. — proven at: model spec
+
+**Impacted** — existing clauses this work touches
+
+- `accounts#I3` A member sees only their own account. — unchanged; must not break
+
+**Out of scope** — bulk invites, invite links. [One line each. These become
+provenance, not clauses.]
+```
+
+Name the **layer** that will prove each new clause, coarsely — one word, no file
+paths and no task numbers, which are the planner's job. It costs a moment and it
+catches the most expensive mistake at the only point where it is still cheap:
+**if the only honest answer is "a journey spec", the clause is too broad and wants
+splitting** before a plan is written around it. What is and is not a clause:
+`agent_harness_rails/rules/primitives.mdc` § Intent clauses — run the **durable**
+test on every line before it goes in, since a brainstorm is where architecture and
+technology choices are most likely to be mistaken for intent.
 
 ### Delivery sequence (in the spec)
 
