@@ -174,7 +174,7 @@ AgentHarnessRails/NegativeOnlySpec:
     - "**/spec/**/*.rb"
 
 AgentHarnessRails/IntentTag:
-  Description: "Intent metadata reads `<capability>#I<n>`."
+  Description: "Intent metadata reads `<capability>#I<n>` and sits on the example, not the group."
   Enabled: true
   VersionAdded: '0.2'
   Reference: agent_harness_rails/rules/primitives.mdc

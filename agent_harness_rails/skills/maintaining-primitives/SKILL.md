@@ -92,9 +92,13 @@ human confirmation between, ordered by where change is coming.
    that does not carry the tag is a finding, not a capture.
 3. **Code second** — models, routes, policies for the Shape bullets (deltas
    only — nothing derivable from harness rules or stated in `compilation.md`).
-4. **Gaps are findings** — observable behaviour with no spec home goes into
-   the doc as a clause with no `evaluations:` and `unproven: true` (this doubles
-   as a test-gap report; suggest `writing-tests` follow-up).
+4. **Gaps are findings, and they stay red** — observable behaviour with no
+   spec home still gets its clause, with no `evaluations:`. There is no marker
+   that excuses it: `agent_harness_rails evals` will fail on that clause until
+   a spec proves it. Say so when you report — list the uncovered clauses as
+   blocking `writing-tests` follow-up, and do not soften the clause or drop it
+   to keep the run green. A capture that ends green by omitting behaviour has
+   recorded less than one that ends red by naming it.
 5. **Provenance opens with one line:**
    `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
    Do not mine git log for decision archaeology — noisy, low-yield.
@@ -105,8 +109,8 @@ human confirmation between, ordered by where change is coming.
    entry — `YYYY-MM-DD — backfill intent confirmed by human.` Provenance is
    append-only: never amend the original line.
 7. Add the `index.md` line, `status: built` — the feature exists in
-   production; `unproven` rows record the test gap honestly rather than
-   blocking the status (`agent_harness_rails/rules/primitives.mdc`).
+   production, and a clause with no spec is a red run rather than a reason to
+   understate the status (`agent_harness_rails/rules/primitives.mdc`).
 
 ### lint — run the tool, then judge
 
@@ -124,9 +128,11 @@ Report its findings as-is — they have file:line and a code, so do not restate
 them in prose. Fix the unambiguous ones (a stale path, a missing tag). Leave
 anything that changes what a clause *means* to the human.
 
-Two of its warnings are not failures and must not be "fixed" into silence:
-`clause/unproven-accepted` (an honestly recorded test gap) and
-`clause/in-flight` (a doc mid-amendment).
+One of its findings is not a failure and must not be "fixed" into silence:
+`clause/in-flight`, a doc whose amendment plan has landed ahead of its code.
+Everything else is an error and means what it says — in particular
+`clause/unproven`, which is closed by writing the spec, never by editing the
+clause out of the doc.
 
 **Step 2 — the judgment checks the tool cannot make:**
 

@@ -439,12 +439,16 @@ intent clause carries the clause id as RSpec metadata:
 it "shows replies nested under their parent", intent: "comment_threads#I2" do
 ```
 
-Rules, format, and the group/list forms: **`agent_harness_rails/rules/testing.mdc`**
-§ Tagging the Intent a Spec Proves. Two things to get right here:
+Rules, format, and the list form: **`agent_harness_rails/rules/testing.mdc`**
+§ Tagging the Intent a Spec Proves. Three things to get right here:
 
-1. **Tag only evaluation examples.** Most specs prove behaviour without proving a
+1. **Tag the example, not the group.** Never a `describe` or `context` — a group
+   tag survives the deletion of the example it stood for, so the clause keeps
+   claiming a proof that is gone. Four examples proving one clause carry four
+   tags.
+2. **Tag only evaluation examples.** Most specs prove behaviour without proving a
    *clause*. A suite where everything is tagged has no map left.
-2. **The capability doc must list the file too** — `evaluations:` on that clause.
+3. **The capability doc must list the file too** — `evaluations:` on that clause.
    Both sides, or the link is half-made.
 
 Then check it:

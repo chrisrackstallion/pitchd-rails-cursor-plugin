@@ -44,8 +44,10 @@ module AgentHarnessRails
 
       Evals reads intent clauses from each capability doc's YAML frontmatter and
       the `intent: "<capability>#I<n>"` metadata on spec examples; the same tag
-      runs the proof: rspec --tag 'intent:comment_threads#I2'. Warnings — an
-      `unproven:` clause, a doc mid-amendment — are reported without failing.
+      runs the proof: rspec --tag 'intent:comment_threads#I2'. Tags belong on the
+      example, not the group around it. Every active clause on a built doc must
+      name a spec; the one warning that does not fail is a doc mid-amendment,
+      whose plan has landed ahead of its code.
     TEXT
 
     def initialize(argv, out: $stdout, err: $stderr)

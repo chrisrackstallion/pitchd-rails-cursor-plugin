@@ -108,10 +108,11 @@ reports the evaluation as untagged — a path alone is a claim, the tag is proof
 it "shows replies nested under their parent", intent: "comment_threads#I2" do
 ```
 
-On a group, inherited by every example inside it, and as a list:
+On the example, never on the group around it (`tag/misplaced`). One example may
+carry several clauses as a list:
 
 ```ruby
-describe "threading", intent: %w[comment_threads#I2 comment_threads#I3] do
+it "nests three deep", intent: %w[comment_threads#I2 comment_threads#I3] do
 ```
 
 The same tag runs the proof: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
@@ -133,12 +134,13 @@ intent:
       - spec/requests/comments_spec.rb
   - id: I3
     clause: A reader sees who replied and when.
-    unproven: true
 ---
 ```
 
-`unproven: true` records a real test gap in already-shipped behaviour — reported
-as a warning, not a failure. It is honesty, not a way to silence the check.
+I3 has no `evaluations:` — shipped behaviour nothing proves yet. On a `built`
+doc that is a **failing** run (`clause/unproven`), and deliberately so: there
+is no key that annotates the gap into passing. Record the clause anyway, report
+the red as blocking `writing-tests` work, and close it by writing the spec.
 
 ## Worked lifecycle lines (for reference)
 

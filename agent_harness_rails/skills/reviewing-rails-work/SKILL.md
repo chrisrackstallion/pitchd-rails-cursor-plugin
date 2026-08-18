@@ -125,13 +125,16 @@ suggestions:
   plan's tasks. Rows for **new** work are written at close-out — a plan
   pre-filling them from intention is a finding; rows transcribed from
   **already-existing specs** (lazy backfill, prior capture, earlier
-  close-outs) and `unproven` rows (`agent_harness_rails/rules/primitives.mdc`) are legitimately
-  present at plan time. Implementation phase, **per-task reviews**: rows are
+  close-outs) are legitimately present at plan time
+  (`agent_harness_rails/rules/primitives.mdc`). Implementation phase, **per-task reviews**: rows are
   not yet written — close-out fills them after all tasks approve — so check
   that the task delivered the spec homes its cited clauses need, not the
   rows. **Post-close-out reviews only:** every touched clause has a row
   pointing at real reported specs; `status: built` with a missing row is a
-  finding.
+  finding, and no annotation excuses one. Check the tags landed on the
+  **examples** that prove each clause — a tag on a `describe` or `context` is a
+  finding, because it keeps resolving after the example it stood for is
+  deleted.
 - **Provenance conflicts** — the work does not re-litigate a recorded
   rejection or undo a recorded deliberate decision without saying so.
 

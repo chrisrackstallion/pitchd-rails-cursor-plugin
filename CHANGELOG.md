@@ -12,10 +12,23 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
 
 - **`agent_harness_rails evals`** — a subcommand that checks every intent clause
   in `docs/primitives/` is proven by a spec, and that every `intent:` tag in the
-  suite names a clause that still exists. Static parse: no database, no Rails
-  environment, runs in any CI job. Scope is deliberately clause ↔ evaluation
-  and nothing else, so a green run has one meaning; tree health stays with the
-  `maintaining-primitives` skill, where it needs judgment.
+  suite names a clause that still exists and sits on the example that proves it.
+  Static parse: no database, no Rails environment, runs in any CI job. Scope is
+  deliberately clause ↔ evaluation and nothing else, so a green run has one
+  meaning; tree health stays with the `maintaining-primitives` skill, where it
+  needs judgment.
+
+  Coverage is total. An active clause on a `built` doc names a spec or the run
+  fails — there is no key that annotates the gap into passing, because the one
+  that existed got reached for exactly when it should not have been. The single
+  non-failing state is `clause/in-flight`: a doc whose amendment plan landed
+  ahead of its code, which close-out clears.
+
+  Tags go on the example, never on the `describe` or `context` around it
+  (`tag/misplaced`). A group tag reads as the tidier option and is the one form
+  that can go on lying: delete the example it stood for and the siblings keep
+  the group green, so `rspec --tag` still passes while the clause claims a proof
+  that no longer exists.
 - **`rubocop-harness.yml`** — an opt-in RuboCop layer enabling the existing
   `Rails/*`, `Naming/*`, `Lint/*` and `Security/*` cops that encode rules already
   written down here, with `Layout/ClassStructure` and `Rails/ActionOrder`

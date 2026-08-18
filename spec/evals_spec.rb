@@ -179,7 +179,7 @@ RSpec.describe AgentHarnessRails::Evals do
     expect(codes).to eq([ "tag/malformed" ])
   end
 
-  it "reads tags declared on a group and as a %w list" do
+  it "reads a %w list of tags on one example" do
     capability "billing", <<~DOC
       ---
       status: built
@@ -202,9 +202,68 @@ RSpec.describe AgentHarnessRails::Evals do
 
     spec_file "spec/system/billing_spec.rb", <<~SPEC
       RSpec.describe "Billing" do
-        describe "plan changes", intent: %w[billing#I1 billing#I2] do
+        it "changes the plan and prorates", intent: %w[billing#I1 billing#I2] do
+        end
+      end
+    SPEC
+
+    expect(evals).to be_ok
+  end
+
+  # The tag still resolves — it names a live clause and the doc lists the file —
+  # so the only thing wrong with it is where it sits, and that is the one thing
+  # reported. Reporting it again as an untagged evaluation would describe one
+  # mistake twice.
+  it "fails a tag sitting on the group rather than the example" do
+    capability "billing", <<~DOC
+      ---
+      status: built
+      intent:
+        - id: I1
+          clause: An owner can change plan mid-cycle.
+          evaluations:
+            - spec/system/billing_spec.rb
+      ---
+      # Billing
+
+      ## Provenance
+
+      - 2026-08-07 — built: a plan.
+    DOC
+
+    spec_file "spec/system/billing_spec.rb", <<~SPEC
+      RSpec.describe "Billing" do
+        describe "plan changes", intent: "billing#I1" do
           it "changes the plan" do
           end
+        end
+      end
+    SPEC
+
+    expect(codes).to eq([ "tag/misplaced" ])
+  end
+
+  it "accepts a tag whose metadata wraps onto its own line" do
+    capability "billing", <<~DOC
+      ---
+      status: built
+      intent:
+        - id: I1
+          clause: An owner can change plan mid-cycle.
+          evaluations:
+            - spec/system/billing_spec.rb
+      ---
+      # Billing
+
+      ## Provenance
+
+      - 2026-08-07 — built: a plan.
+    DOC
+
+    spec_file "spec/system/billing_spec.rb", <<~SPEC
+      RSpec.describe "Billing" do
+        it "changes the plan mid-cycle and prorates the difference",
+           intent: "billing#I1" do
         end
       end
     SPEC
@@ -253,7 +312,11 @@ RSpec.describe AgentHarnessRails::Evals do
       expect(result.findings.map(&:code)).to eq([ "clause/in-flight" ])
     end
 
-    it "warns rather than fails on a clause marked unproven" do
+    # `unproven: true` used to buy a clause a warning instead of a failure. It
+    # was the one way a built capability could stay green with nothing proving
+    # it, which made it the one thing a backfill reached for. The key is gone:
+    # a built clause names a spec or the run is red.
+    it "fails a built clause with no evaluation, however it is annotated" do
       capability "comment_threads", <<~DOC
         ---
         status: built
@@ -269,10 +332,7 @@ RSpec.describe AgentHarnessRails::Evals do
         - 2026-10-02 — backfilled from existing behaviour; prior history in git.
       DOC
 
-      result = evals
-
-      expect(result).to be_ok
-      expect(result.findings.map(&:code)).to eq([ "clause/unproven-accepted" ])
+      expect(codes).to eq([ "clause/unproven" ])
     end
   end
 
@@ -405,16 +465,20 @@ RSpec.describe AgentHarnessRails::CLI, "evals" do
     expect(out).to include("comment_threads.md:4:1: E:").and include("[evaluation/missing-file]")
   end
 
-  it "reports warnings in the summary without failing" do
+  it "reports the mid-amendment warning in the summary without failing" do
     capability "comment_threads", <<~DOC
       ---
       status: built
       intent:
         - id: I1
           clause: A reader can reply at any depth.
-          unproven: true
       ---
       # Comment threads
+
+      ## Provenance
+
+      - 2026-08-07 — built: the first plan.
+      - 2026-09-18 — planned: the amendment plan.
     DOC
 
     code, out, = run

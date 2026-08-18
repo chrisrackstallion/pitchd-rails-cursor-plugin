@@ -130,10 +130,52 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::IntentTag, :config do
     RUBY
   end
 
-  it "accepts a list of tags on a group" do
+  it "accepts a list of tags on one example" do
     expect_no_offenses(<<~RUBY)
-      describe "threading", intent: %w[comment_threads#I2 comment_threads#I3] do
+      it "nests three deep", intent: %w[comment_threads#I2 comment_threads#I3] do
       end
+    RUBY
+  end
+
+  it "flags a tag on a describe" do
+    expect_offense(<<~RUBY)
+      describe "threading", intent: "comment_threads#I2" do
+      ^^^^^^^^ Tag the example that proves the clause, not `describe` — a group tag keeps resolving after the example it stood for is deleted.
+      end
+    RUBY
+  end
+
+  it "flags a tag on a context" do
+    expect_offense(<<~RUBY)
+      context "when nested", intent: %w[comment_threads#I2 comment_threads#I3] do
+      ^^^^^^^ Tag the example that proves the clause, not `context` — a group tag keeps resolving after the example it stood for is deleted.
+      end
+    RUBY
+  end
+
+  it "flags a tag on RSpec.describe" do
+    expect_offense(<<~RUBY)
+      RSpec.describe "Comment threads", intent: "comment_threads#I2" do
+            ^^^^^^^^ Tag the example that proves the clause, not `describe` — a group tag keeps resolving after the example it stood for is deleted.
+      end
+    RUBY
+  end
+
+  it "accepts a tag on any example alias" do
+    expect_no_offenses(<<~RUBY)
+      specify "replies", intent: "comment_threads#I2" do
+      end
+
+      scenario "replies", intent: "comment_threads#I2" do
+      end
+    RUBY
+  end
+
+  it "leaves an intent key in a hash literal alone" do
+    # Not metadata: a hash in the body is a value the example builds, and the
+    # placement rule has nothing to say about it.
+    expect_no_offenses(<<~RUBY)
+      let(:metadata) { { intent: "comment_threads#I2" } }
     RUBY
   end
 

@@ -54,14 +54,14 @@ module AgentHarnessRails
         end
       end
 
+      # Every active clause on a built doc names a spec. The one non-failing case
+      # is a doc mid-amendment: the plan has landed and the code has not, so the
+      # gap is the branch's, not the capability's, and close-out closes it.
       def coverage(capability, clause)
         return [] unless capability.built?
         return [] unless clause.evaluations.empty?
 
-        if clause.unproven?
-          [ finding(:warning, capability, clause,
-                    "#{clause.id} is marked unproven — a recorded test gap, not proof", "clause/unproven-accepted") ]
-        elsif capability.in_flight?
+        if capability.in_flight?
           [ finding(:warning, capability, clause,
                     "#{clause.id} has no evaluation yet; this doc is mid-amendment", "clause/in-flight") ]
         else

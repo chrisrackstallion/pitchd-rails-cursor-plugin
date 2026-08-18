@@ -47,10 +47,9 @@ module AgentHarnessRails
 
       # One intent clause. `line` is where its `id:` sits in the source file, so
       # an offence points at the clause rather than at the top of the document.
-      Clause = Struct.new(:id, :text, :evaluations, :superseded_by, :retired_on, :unproven, :line,
+      Clause = Struct.new(:id, :text, :evaluations, :superseded_by, :retired_on, :line,
                           keyword_init: true) do
         def active? = superseded_by.empty? && retired_on.nil?
-        def unproven? = unproven == true
       end
 
       attr_reader :path, :relative_path, :name, :status, :clauses, :findings
@@ -160,7 +159,7 @@ module AgentHarnessRails
           id: id, text: entry["clause"], line: line,
           evaluations: Array(entry["evaluations"]).map(&:to_s),
           superseded_by: Array(entry["superseded_by"]).map(&:to_s),
-          retired_on: entry["retired_on"], unproven: entry["unproven"]
+          retired_on: entry["retired_on"]
         )
       end
 

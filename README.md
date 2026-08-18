@@ -127,15 +127,18 @@ That is a standing, human-owned decision, and the harness distinguishes it from 
 it "shows replies nested under their parent", intent: "comment_threads#I2" do
 ```
 
+The tag goes on the example, never on the `describe` or `context` around it. A group tag looks tidier and is the one form that can go on lying: delete the example it was standing for, and the siblings keep the group green while the clause still claims a proof that no longer exists.
+
 ```console
 $ bundle exec agent_harness_rails evals
 docs/primitives/capabilities/comment_threads.md:12:1: E: I3 has no evaluation — a built clause must name the spec that proves it [clause/unproven]
+spec/system/billing_spec.rb:8:25: E: intent tag "billing#I1" is on `describe` — tag the example that proves the clause, or the tag outlives the example it stood for [tag/misplaced]
 spec/system/billing_spec.rb:12:5: E: intent tag "billing#I9" names no such clause [tag/unresolved]
 
-3 capabilities inspected, 14 clauses, 2 offences detected
+3 capabilities inspected, 14 clauses, 3 offences detected
 ```
 
-It checks both directions — a clause with no proof, and a proof pointing at a clause that no longer exists — so the map cannot quietly stop matching the suite. It parses statically: no database, no Rails environment, runs in any CI job. The same tag runs the proof on demand: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
+It checks both directions — a clause with no proof, and a proof pointing at a clause that no longer exists — so the map cannot quietly stop matching the suite. Coverage is total: every active clause on a `built` doc names a spec, and there is no annotation that excuses one. It parses statically: no database, no Rails environment, runs in any CI job. The same tag runs the proof on demand: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
 
 Scope is deliberately narrow, so a green run means one thing. Tree health — index sync, size limits, provenance style — stays with the `maintaining-primitives` skill, where it needs judgment rather than a parser.
 

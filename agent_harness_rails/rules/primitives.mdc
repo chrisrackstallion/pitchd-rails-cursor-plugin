@@ -143,16 +143,21 @@ System specs are the browser evaluations. The named spec file must carry a
 matching **`intent:` metadata tag** (below); a path alone is a claim, the tag is
 the proof.
 
-Coverage is a **`built`-status obligation**: a `built` doc with an active clause
-and no `evaluations:` is the gap reviews and `agent_harness_rails evals` flag. `shaping` and
-`planned` docs for new work have none by design. Two honest exceptions, both
-reported as warnings rather than failures:
+Coverage is a **`built`-status obligation, and it is total**: every active
+clause on a `built` doc names a spec, or `agent_harness_rails evals` fails.
+`shaping` and `planned` docs for new work have none by design.
 
-- **`unproven: true`** on a clause — records a real test gap in an
-  already-shipped feature rather than pretending the feature isn't built.
-- **Mid-amendment or mid-revision** — a `built` doc whose latest provenance
-  event is `planned`, or with a revision loop in progress, legitimately has
-  uncovered new clauses until close-out.
+There is **no way to annotate a clause into being excused**. A built capability
+whose behaviour nothing proves is a gap in the capability, not a nuance of the
+record — and a marker that turns the gap into a passing run gets reached for
+exactly when it should not be. Either write the spec, or the clause is not yet
+`built`: split it out, leave the doc `planned`, or say plainly in provenance
+that the behaviour shipped untested and expect a red run until it isn't.
+
+One state does not fail, and it is about the branch rather than the capability:
+a **`built` doc mid-amendment** — its latest provenance event is `planned`, so
+an approved plan has landed ahead of its code. Its new clauses are legitimately
+uncovered until close-out, and close-out is what clears the warning.
 
 ### Tagging the proof
 
@@ -162,9 +167,30 @@ The spec example carries the clause id as RSpec metadata:
 it "shows replies nested under their parent", intent: "comment_threads#I2" do
 ```
 
-Valid on a `describe`/`context` (inherited by the group) and as a list —
-`intent: %w[comment_threads#I2 comment_threads#I3]`. The capability is the doc's
-filename without `.md`.
+The capability is the doc's filename without `.md`. One example may carry
+several clauses as a list — `intent: %w[comment_threads#I2 comment_threads#I3]`
+— and a clause proven by four examples is tagged on all four.
+
+**On the example, never on the group.** A tag on a `describe`, `context`, or
+`shared_examples` is an offence — from `agent_harness_rails evals` as
+`tag/misplaced`, and from the `AgentHarnessRails/IntentTag` cop at lint time:
+
+```ruby
+# bad — one line standing in for whatever the group happens to contain
+describe "threading", intent: "comment_threads#I2" do
+  it "nests replies" do
+  ...
+
+# good — the tag names the example that actually proves the clause
+it "nests replies under their parent", intent: "comment_threads#I2" do
+```
+
+The group form looks tidier and is the one form that can go on lying: delete
+the example the tag was really standing for and its siblings keep the group
+green, so `rspec --tag` still passes and the clause still claims a proof that
+no longer exists. Per-example tags cost a repeated line and buy the loud break
+— when the last tagged example goes, the clause fails as unproven, which is the
+whole point of the mechanism.
 
 Metadata rather than a comment, so the same tag runs the proof:
 
@@ -182,8 +208,8 @@ agent_harness_rails evals                    # from the app root; exits 1 on fin
 
 It checks clause ↔ evaluation and nothing else: unproven built clauses, evaluations
 naming a file that does not exist or does not carry the tag, tags naming a clause
-that is absent or superseded, duplicate ids, dangling supersessions, and docs
-still in the retired prose format. Everything below — sizes, index sync, provenance
+that is absent or superseded, tags sitting on a group rather than an example,
+duplicate ids, dangling supersessions, and docs still in the retired prose format. Everything below — sizes, index sync, provenance
 style — is judgment, and stays with the `lint` operation in `maintaining-primitives`.
 
 ### Provenance

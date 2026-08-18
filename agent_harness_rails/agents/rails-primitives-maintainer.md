@@ -30,9 +30,11 @@ in prose sections.
 Run **`agent_harness_rails evals`** before reporting on any operation that touched the tree,
 and as the first step of **`lint`**. It settles everything mechanical — clause
 coverage, dead spec paths, untagged evaluations, tags naming a superseded
-clause — with file:line output you should cite rather than restate. Its
-`clause/unproven-accepted` and `clause/in-flight` warnings are honest states,
-not defects to silence.
+clause, tags sitting on a group rather than an example — with file:line output
+you should cite rather than restate. Every error is a real defect; there is no
+annotation that excuses an unproven clause. Its one warning,
+`clause/in-flight`, is an honest state — a doc whose plan landed ahead of its
+code — and is not a defect to silence.
 
 Parent must supply: **operation** (`capture` | `trace` | `update` | `lint`),
 tree root (default `docs/primitives/`), the target capability or question text,

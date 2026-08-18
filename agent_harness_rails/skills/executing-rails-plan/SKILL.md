@@ -300,9 +300,11 @@ updates the capability doc directly (see the Hard rules carve-out):
    agent_harness_rails evals
    ```
 
-   Green is a precondition for step 3. Its two warnings —
-   `clause/unproven-accepted` and `clause/in-flight` — do not block, and must
-   not be silenced into passing.
+   Green is a precondition for step 3. Every error is a real gap — no
+   annotation excuses an unproven clause, so close it by writing the spec and
+   tagging the example, never by editing the doc. The one warning that does not
+   block is `clause/in-flight`, the doc's own mid-amendment state, which this
+   close-out is what clears.
 3. **Status** — flip to **`status: built`** only when `agent_harness_rails evals` reports no
    errors for this capability; otherwise report the gap instead of flipping.
 4. **Provenance** — append **one** line for the whole run:

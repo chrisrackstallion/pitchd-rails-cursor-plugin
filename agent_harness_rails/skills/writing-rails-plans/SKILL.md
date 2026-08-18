@@ -164,8 +164,10 @@ target capability doc, and **`compilation.md`**.
    - **Missing, existing feature (lazy backfill):** create it from what the
      code demonstrably does plus the requirements-gate answers; `evaluations:`
      from specs that exist and carry the `intent:` tag — shipped behaviour with
-     **no** spec home gets `unproven: true`, same as a `capture` backfill (an
-     honest test-gap record, not a blocker); provenance opens with
+     **no** spec home still gets its clause, bare, and `agent_harness_rails
+     evals` fails on it until a spec proves it (same as a `capture` backfill:
+     record the gap, report it as blocking `writing-tests` work, and never
+     annotate it into passing); provenance opens with
      `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
      Set **`status: built`** — the feature is already shipped, and the plan
      being drafted is an amendment to it (final approval leaves `built` docs
