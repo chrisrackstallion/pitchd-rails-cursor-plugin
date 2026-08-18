@@ -9,10 +9,9 @@ alwaysApply: false
 ## Jobs Are the Async Service Layer
 
 Background work belongs in jobs, not in service objects. A job calls a model
-method asynchronously — it is not a place to write domain logic. Jobs fill the
-slot where service objects would be tempting for async orchestration; the model
-still owns the domain logic. (See **`agent_harness_rails/rules/services.mdc`** — "There Is No
-Service Layer" — for where orchestration code does not belong.)
+method asynchronously — it is not a place to write domain logic. (See
+**`agent_harness_rails/rules/services.mdc`** — "There Is No Service Layer" —
+for where orchestration code does not belong.)
 
 ```ruby
 # Good — job delegates to the model

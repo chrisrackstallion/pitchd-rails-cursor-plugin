@@ -49,7 +49,7 @@ If the user has **not** stated the following, **ask once** and wait for answers:
 
 **Subset:** If the user asks for specific tasks only, build an **ordered list** from the plan and execute **only** those tasks end-to-end (each with its own implement → review loop).
 
-**Dependency extraction for subset runs:** Before delegating the first subset task, read all tasks the selected tasks depend on (earlier tasks referenced by "builds on Task N", "uses the schema from Task N", etc.) and summarise their outcomes in the **Context** block of the implementor prompt. The implementor has no parent context — it must not need to infer prior state from an unread plan. If a prior task produced a file or schema change the selected task needs, describe it explicitly (file path, column name, class name). Do not assume the implementor can infer from the plan file alone when the earlier task's *output* (not just description) matters.
+**Dependency extraction for subset runs:** Before delegating the first subset task, read all tasks the selected tasks depend on (earlier tasks referenced by "builds on Task N", "uses the schema from Task N", etc.) and summarise their outcomes in the **Context** block of the implementor prompt. The implementor has no parent context: if a prior task produced a file or schema change the selected task needs, describe it explicitly (file path, column name, class name) — the plan file alone does not show the earlier task's *output*.
 
 Also confirm **plan path**, **spec path** (if any), and **work directory** (repo root or app path) so subagent prompts stay complete.
 
@@ -126,9 +126,9 @@ to do — treat any "that's not right" response as **Revision mode** below.
 
 Per task, green is the implementor's existing gate: the **specs covering the slice**
 plus **`bin/rubocop` zero offences** (`agent_harness_rails/skills/implementing-rails-task/SKILL.md`).
-**Do not** require a full-suite run at every task stop — these commits land on a
-branch, not in production, and branch CI covers cross-task regressions at the PR
-gate. The full suite runs **once per plan run**, on the last task (see step 6).
+**Do not** require a full-suite run at every task stop — branch CI covers
+cross-task regressions at the PR gate. The full suite runs **once per plan
+run**, on the last task (see step 6).
 
 ### 5. Escalation from implementor
 
@@ -150,8 +150,6 @@ to — these:
 description of a **small, self-contained revision task** and proceed
 immediately, without asking which plan task it relates to. When the message is
 **vague** on any of those, **ask for clarification first — do not assume.**
-A guessed revision delegated to the implementor wastes a full
-implement → review loop on the wrong change.
 
 ### Revision task loop
 
@@ -245,10 +243,9 @@ from **R1**.
 
 ### 6. Whole-run coherence review (required for multi-task runs)
 
-Per-task reviews only ever see one task's diff — defects that span tasks are
-structurally invisible to them. Before the final verification and primitives
-close-out, invoke **`rails-reviewer`** once more over the **entire
-run's combined scope**:
+Per-task reviews only see one task's diff, so cross-task defects are invisible
+to them. Before the final verification and primitives close-out, invoke
+**`rails-reviewer`** once more over the **entire run's combined scope**:
 
 - **Phase:** `implementation`
 - **Scope:** every file changed across the run (gather read-only via
@@ -269,9 +266,8 @@ already saw the whole diff.
 
 ### 7. Final full-suite verification
 
-Per-task stops deliberately skip the full suite (step 4). Run it **once**, at the
-end — after the coherence review's fix passes have settled — so the branch is
-not handed over on unverified cross-task state.
+Per-task stops deliberately skip the full suite (step 4). Run it **once**, at
+the end, after the coherence review's fix passes have settled.
 
 Delegate it — the orchestrator does not run app test suites (Hard rule 1). Either
 add it to the **last task's** implementor prompt as a closing step, or dispatch a
@@ -292,25 +288,22 @@ updates the capability doc directly (see the Hard rules carve-out):
    plan touched, from the **specs the implementor actually reported** — never
    from what the plan promised. The named spec must also carry the
    **`intent:` tag** (`agent_harness_rails/rules/testing.mdc`); add it if the
-   implementor did not, since the path alone is a claim and the tag is the
-   proof. Delete-listed specs must actually be gone.
+   implementor did not. Delete-listed specs must actually be gone.
 
-   **Reconcile against the plan's Intent impact table.** It declared every
-   touched clause, its change, and the layer its proof would land at; close-out
-   is where declaration meets fact. A declared row no spec delivered is a gap, not
-   a rounding error. A clause listed `unchanged — regression contract` whose
-   evaluation had its **assertions** edited is the one to stop on: a refactor may
-   move an evaluation's file, never change what it asserts, so an edited assertion
-   means behaviour moved and the plan was a mislabelled amendment — say so rather
-   than filing the row.
+   **Reconcile against the plan's Intent impact table.** A declared row no
+   spec delivered is a gap. A clause listed `unchanged — regression contract`
+   whose evaluation had its **assertions** edited is the one to stop on: a
+   refactor may move an evaluation's file, never change what it asserts — an
+   edited assertion means behaviour moved and the plan was a mislabelled
+   amendment; say so rather than filing the row.
 
    **Read the reported examples against the clause before filling the row.**
    Breaking the clause has to turn one of them red
    (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
    A clause claiming *only*, *never*, or *any* that came back with a single
-   happy-path example is **not** covered — that is a gap in the work, so send it
-   back through the implement → review loop for the missing spec rather than
-   filling a row that proves less than the clause says.
+   happy-path example is **not** covered — send it back through the
+   implement → review loop for the missing spec rather than filling a row that
+   proves less than the clause says.
 2. **Run `agent_harness_rails evals`** — it is the check, not a formality:
 
    ```bash
@@ -318,10 +311,10 @@ updates the capability doc directly (see the Hard rules carve-out):
    ```
 
    Green is a precondition for step 3. Every error is a real gap — no
-   annotation excuses an unproven clause, so close it by writing the spec and
-   tagging the example, never by editing the doc. The one warning that does not
-   block is `clause/in-flight`, the doc's own mid-amendment state, which this
-   close-out is what clears.
+   annotation excuses an unproven clause; close it by writing the spec and
+   tagging the example, never by editing the doc. The one non-blocking warning
+   is `clause/in-flight`, the doc's own mid-amendment state, which this
+   close-out clears.
 3. **Status** — flip to **`status: built`** only when `agent_harness_rails evals` reports no
    errors for this capability; otherwise report the gap instead of flipping.
 4. **Provenance** — append **one** line for the whole run:
@@ -331,11 +324,9 @@ updates the capability doc directly (see the Hard rules carve-out):
      rejected alternatives, or notable reviewer-approved exceptions, one line.]
    ```
 
-   **No run mechanics** — task counts, review iteration counts, fix passes,
-   which subagents ran, commands executed. Those belong in this run's handoff
-   report (step 9) and git, not in a doc someone reads in a year to decide
-   whether they can change the code (`agent_harness_rails/rules/primitives.mdc`
-   § Provenance).
+   **No run mechanics** — task counts, review iterations, fix passes, which
+   subagents ran, commands executed. Those belong in this run's handoff report
+   (step 9) and git (`agent_harness_rails/rules/primitives.mdc` § Provenance).
 
    Fold in any **`primitives:` provenance candidates** from the reviewer
    reports (decisions, constraints, accepted debt) — one line each, only those

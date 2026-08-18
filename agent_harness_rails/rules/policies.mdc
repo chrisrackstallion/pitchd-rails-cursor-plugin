@@ -12,7 +12,7 @@ Vanilla Rails would keep authorization in model methods and controller `before_a
 
 Policies answer **authorization** (“who may do this?”), not business rules (“what happens when they do?”). Domain logic stays on the model; policies compose model predicates.
 
-> **Dependency note:** Pundit is a thin library (~300 lines) that provides a convention, not a framework. It adds `authorize` and `policy_scope` to controllers and maps them to plain Ruby objects. There is no DSL, no configuration, no runtime magic. It stays out of your way.
+> **Dependency note:** Pundit is a thin library (~300 lines) providing a convention, not a framework — `authorize` and `policy_scope` in controllers mapped to plain Ruby objects; no DSL, no configuration, no runtime magic.
 
 ## One Policy Per Model
 

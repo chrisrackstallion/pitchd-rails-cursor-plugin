@@ -23,25 +23,21 @@ description: >-
 Produce **implementation plans** a skilled developer can follow without guessing
 your codebase: exact paths, real Ruby snippets, **RSpec** commands with expected
 outcomes, and **Rails-shaped** decomposition. Assume the reader knows Ruby and
-Rails but not your app — not that they need hand-holding on "what a test is."
+Rails but not your app.
 
 Plans follow **opinionated best-practice Rails**: **fat models**, **thin controllers**,
 **REST-first routing**, **Pundit** at the boundary, **Hotwire** for HTML UX,
 **no fake service layer** — and the **testing philosophy** in
 `agent_harness_rails/skills/writing-tests/SKILL.md` / `agent_harness_rails/rules/testing.mdc` (RSpec + FactoryBot).
 
-**Voice:** Write plans with conviction. Make decisions; do not present
-options and defer to the reader. "Use a model concern here" — not "you might
-consider a concern". If the harness rules say how to do something, the plan
-follows them — even if the current application does it differently. The plan
-shapes the code; the existing code does not shape the plan. That decisiveness
-applies to the **finished plan document** — the gates below (**Requirements
-gate**, **Approach gate**) are where doubt belongs. Interrogate first; write
-confidently after.
+**Voice:** Write plans with conviction. Make decisions; do not present options
+and defer to the reader — "Use a model concern here", not "you might consider a
+concern". Doubt belongs in the gates below (**Requirements gate**, **Approach
+gate**): interrogate first, write confidently after.
 
 **Harness rules beat application patterns:** If the current codebase uses service
 objects, custom routes, or test patterns that contradict harness rules, the plan
-does **not** inherit those patterns. Name the correct approach and cite the rule.
+does **not** inherit those patterns — name the correct approach and cite the rule.
 If an existing anti-pattern must be worked around for this task, say so explicitly
 and mark it as technical debt — do not normalize it.
 </objective>
@@ -50,13 +46,11 @@ and mark it as technical debt — do not normalize it.
 
 ## Requirements gate (before drafting anything)
 
-Do not start writing the plan from a thin prompt. **Grill the requirements
-first** — a wrong assumption made here multiplies into every task, snippet,
-and spec below it.
+Do not start writing from a thin prompt — a wrong assumption here multiplies
+into every task, snippet, and spec below it.
 
 1. **Separate the problem from the mechanism.** Restate the underlying
-   problem in one sentence, in outcome terms — what the user or system needs,
-   not how the prompt says to build it. If the request only describes a
+   problem in one sentence, in outcome terms. If the request only describes a
    mechanism ("add a flag to X", "build a service that…"), ask what outcome
    it serves before drafting anything. A requirement that is really a
    pre-selected solution goes through the **Approach gate** below on the same
@@ -66,15 +60,13 @@ and spec below it.
    relationships, authorization expectations (who may do what), UX surface
    (full page vs frame vs stream), data/migration implications, edge cases,
    and acceptance criteria.
-3. **Ask before drafting.** For every gap or ambiguity, ask the user — use the
-   harness's structured question tool when one is available (e.g.
-   `AskUserQuestion` in Claude Code), which lets you present focused options
-   for several decisions in one round; otherwise ask in chat, one question at
-   a time. Do not pad the plan with guesses phrased as decisions.
+3. **Ask before drafting.** For every gap or ambiguity, ask the user — via the
+   harness's structured question tool when available (e.g. `AskUserQuestion`
+   in Claude Code), otherwise in chat, one question at a time. Do not pad the
+   plan with guesses phrased as decisions.
 4. **Proceed without answers only on explicit instruction.** If the user says
    "proceed with assumptions", record every assumption in the plan header
-   under **Assumptions:** so the reviewer (Pass 1) can challenge them — an
-   unstated assumption is invisible to review; a listed one is checkable.
+   under **Assumptions:** so the reviewer (Pass 1) can challenge them.
 
 A spec that already answers these questions (e.g. one produced by
 `brainstorming-rails-omakase` and signed off) passes this gate without
@@ -84,22 +76,19 @@ shape, so the gate's job shrinks to confirming the plan actually uses it.
 
 ## Approach gate (before drafting anything)
 
-The requirements gate settles **what**; this gate decides **how** — and
-whether the "how" that arrived in the prompt survives scrutiny. A plan can be
-fully convention-compliant and still be the wrong solution; this gate is where
-that gets caught, because the reviewer only ever sees the finished plan.
+The requirements gate settles **what**; this gate decides **how** — including
+whether a "how" that arrived in the prompt survives scrutiny. A plan can be
+fully convention-compliant and still be the wrong solution.
 
 1. **Read `agent_harness_rails/skills/rails-omakase-compass/SKILL.md` first** — before the file
-   map, before any tasks. This read is mandatory for every plan, not just a
-   row in the conventions table below.
+   map, before any tasks. Mandatory for every plan, not just a row in the
+   conventions table below.
 2. **A prompter-suggested approach is an input, not a decision.** Evaluate it
    against the compass exactly as you would a candidate you generated
-   yourself. "The user asked for it this way" is not a justification a
-   reviewer can check.
+   yourself.
 3. **State one credible alternative shape** and a one-line reason the chosen
-   approach wins. If no credible alternative exists, say so explicitly — that
-   claim is itself checkable. Record the outcome in the plan header under
-   **Alternatives considered:**.
+   approach wins. If no credible alternative exists, say so explicitly.
+   Record the outcome in the plan header under **Alternatives considered:**.
 4. **Never fight the framework.** If the chosen approach needs scaffolding to
    work around Rails, Turbo, or harness defaults — custom plumbing where a
    convention exists, client-owned state for a server-owned flow, RPC where
@@ -107,8 +96,7 @@ that gets caught, because the reviewer only ever sees the finished plan.
    Rails-native shape.
 5. **If the user's stated approach conflicts with the compass, stop and say
    so before drafting.** Present the Rails-shaped alternative and let the
-   user decide — a plan built on a disputed frame wastes every task below it.
-   If the right shape is genuinely unclear, recommend a
+   user decide. If the right shape is genuinely unclear, recommend a
    `brainstorming-rails-omakase` pass instead of planning around the
    uncertainty.
 
@@ -124,23 +112,20 @@ target capability doc, and **`compilation.md`**.
 
 1. **Read `docs/primitives/index.md`.** Does an existing capability own this
    outcome? If yes, this plan is an **amendment** to that capability — never
-   create a second doc whose intent overlaps an existing one (that is itself
-   a plan defect the reviewer will flag). **One capability per plan — always.**
+   create a second doc whose intent overlaps an existing one (a plan defect
+   the reviewer will flag). **One capability per plan — always.**
    Work spanning two capabilities is two plans (see **When to plan** —
    independent subsystems split): clause IDs are only unambiguous within one
-   doc, and every downstream mechanism (header line, dispatch excerpts,
-   review scope, close-out) targets exactly one doc. The reading-contract
-   allowance for opening a second capability doc is for **context**, never a
-   second target.
+   doc, and every downstream mechanism targets exactly one doc. The
+   reading-contract allowance for opening a second capability doc is for
+   **context**, never a second target.
 
-   **This does not mean one plan per capability.** The rule forbids a plan
-   spanning two capabilities; the reverse is expected. A capability large
-   enough to ship in stages gets **several sequenced plans**, each an
-   amendment to the same doc serving its own clauses — which is what the
-   spec's `## Delivery sequence` enumerates
-   (`brainstorming-rails-omakase`). Later plans leave a `built` doc at
-   `built` and append their own provenance line, exactly like any other
-   amendment.
+   **This does not mean one plan per capability.** A capability large enough
+   to ship in stages gets **several sequenced plans**, each an amendment to
+   the same doc serving its own clauses — what the spec's
+   `## Delivery sequence` enumerates (`brainstorming-rails-omakase`). Later
+   plans leave a `built` doc at `built` and append their own provenance line,
+   exactly like any other amendment.
 2. **Read `docs/primitives/compilation.md`.** These are human-owned, app-wide
    constraints; the plan must not contradict them. If the right approach
    genuinely requires breaking one, **stop and say so** — the constraint
@@ -167,15 +152,12 @@ target capability doc, and **`compilation.md`**.
      branch — it is an amendment, and it takes the supersession mechanics above.
    - **Missing, new feature:** create it now. The requirements-gate answers
      **are** the `intent:` clauses — transcribe them into frontmatter as
-     one-sentence `clause:` entries (`I1`, `I2`, …) instead of discarding them
-     into chat history. **Split as you transcribe.** Gate answers arrive in
-     umbrella form — *"users need to manage their comments"* — and one behaviour
-     per clause is the rule (`agent_harness_rails/rules/primitives.mdc`
-     § Intent clauses). Transcribing an umbrella verbatim is the single largest
-     source of clauses no example can prove, and it is far cheaper to split a
-     sentence here than to discover at close-out that the only thing which could
-     prove it is a sprawling system spec. Draft `## Shape` (deltas only) from the approach-gate
-     outcome. Skeleton:
+     one-sentence `clause:` entries (`I1`, `I2`, …). **Split as you
+     transcribe.** Gate answers arrive in umbrella form — *"users need to
+     manage their comments"* — and one behaviour per clause is the rule
+     (`agent_harness_rails/rules/primitives.mdc` § Intent clauses); a verbatim
+     umbrella is the largest source of clauses no example can prove. Draft
+     `## Shape` (deltas only) from the approach-gate outcome. Skeleton:
      `agent_harness_rails/skills/maintaining-primitives/references/templates.md`.
    - **Missing, existing feature (lazy backfill):** create it from what the
      code demonstrably does plus the requirements-gate answers; `evaluations:`
@@ -190,9 +172,8 @@ target capability doc, and **`compilation.md`**.
      at `built`, same as a `capture` backfill). Gate-answer clauses are
      self-confirming — the user stated them live. Clauses reconstructed
      **purely from code** (behaviour this plan doesn't touch) are not:
-     present them to the user for a quick confirmation as part of the gate
-     questions, so nothing reconstructed ships as fact unconfirmed
-     (`capture` parity).
+     present them to the user for confirmation as part of the gate questions,
+     so nothing reconstructed ships as fact unconfirmed (`capture` parity).
 4. **Write the `intent:` clauses and Shape before drafting tasks.** Tasks then cite clause
    ids (`serves I1, I4` / `supersedes I4 → I5`) instead of restating
    requirements — the plan is ephemeral; the capability doc is the durable
@@ -203,10 +184,9 @@ target capability doc, and **`compilation.md`**.
    carrying a quantifier (*only*, *never*, *any*, *every*, *at most*) is not
    covered by one happy path: its task list names the denial or boundary case at
    the layer that owns it (`agent_harness_rails/rules/testing.mdc`
-   § Ownership by Layer), which is usually a policy or request spec rather than
-   another system spec. This is the cheapest place in the whole loop to get
-   coverage right: a clause whose proof was never planned becomes a green row
-   that proves nothing at close-out
+   § Ownership by Layer), usually a policy or request spec rather than
+   another system spec. A clause whose proof was never planned becomes a green
+   row that proves nothing at close-out
    (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause). When this gate **creates** a doc (new feature or lazy backfill),
    add its `docs/primitives/index.md` line at creation, same as `capture` —
    final approval then updates it.
@@ -253,17 +233,15 @@ not intention, and are correct to write at plan time.
   clause IDs as this plan's scope; everything outside them is a later plan, not
   deferred work to mention in this one. If the spec covers a large capability
   and has **no** delivery sequence, say so and propose the split before
-  drafting — a single plan for a multi-slice feature is the large-plan problem
-  the sequence exists to prevent.
+  drafting.
 
 ## PR and deployment scope
 
 The unit of delivery is the **pull request**. The spec's **`## Delivery
 sequence`** (`brainstorming-rails-omakase`) decomposes a capability into
 deployable slices — one plan each; this section sizes what **one plan**
-produces. The best practice is fixed here so every plan applies the same
-one — decide the delivery shape **before** writing tasks and declare it in
-the header's **Delivery:** line:
+produces. Decide the delivery shape **before** writing tasks and declare it
+in the header's **Delivery:** line:
 
 1. **One plan, one PR, one deployable slice — by default.** The whole task
    list lands as a single PR a reviewer can hold in their head in one
@@ -298,12 +276,11 @@ Default: **`docs/plans/YYYY-MM-DD-<feature-name>.md`** in the app repo (create
 ## Harness conventions to apply
 
 **This table is a gate, not a suggestion.** Before writing tasks for an area,
-read the matching row (rule + skill). Do not write migration tasks before
-`agent_harness_rails/rules/migrations.mdc`, controller tasks before `agent_harness_rails/rules/controllers.mdc`, spec
+read the matching row (rule + skill): no migration tasks before
+`agent_harness_rails/rules/migrations.mdc`, no controller tasks before `agent_harness_rails/rules/controllers.mdc`, no spec
 tasks before `agent_harness_rails/skills/writing-tests/SKILL.md` — and so on for every row the
 plan touches. A plan that specifies code for an area whose conventions were
-never loaded is **not ready for review**, regardless of how plausible the
-snippets look:
+never loaded is **not ready for review**:
 
 | Area | Read |
 |------|------|
@@ -364,9 +341,8 @@ Order tasks by **dependency**, not arbitrary numbering:
 10. **Jobs** — only if the spec requires background processing (`agent_harness_rails/rules/jobs.mdc`).
 11. **Tests** — spec type per `agent_harness_rails/skills/writing-tests/SKILL.md`: system spec for
     user-visible flows, model/request/policy specs for their respective layers.
-    Each task should include the test step inline (write failing test → red →
-    implement → green); this step is the reminder to include tests in **every**
-    task, not only at the end.
+    Each task includes the test step inline (write failing test → red →
+    implement → green) — tests in **every** task, not only at the end.
 
 Each **task** should be a **coherent slice** that can reach a green checkpoint
 (tests passing), not a ritual sequence of micro-edits with no runnable state
@@ -533,8 +509,8 @@ the codebase, do not extend it. Name it, cite the rule, and route around it.
 - **One vertical slice split** across many tasks that **never** pass CI in between.
 - **The same method or behaviour defined on more than one entity** across tasks —
   shared behaviour gets **one home**: a concern or the owning model
-  (`agent_harness_rails/rules/models.mdc`). Per-entity copies drift the moment one changes; tasks
-  drafted entity-by-entity hide this, so it must be caught at the plan level.
+  (`agent_harness_rails/rules/models.mdc`). Entity-by-entity drafting hides this
+  drift, so catch it at the plan level.
 
 ## Self-review
 
@@ -546,8 +522,8 @@ After drafting the plan:
    across tasks (no `publish` vs `publish!` drift unless intentional).
 4. **Duplication scan:** Read the plan as a whole — not task by task — and
    search for the same method name or behaviour defined on more than one
-   model or entity across tasks. Each hit is a defect: rewrite the tasks so
-   the behaviour has one home — a concern or the owning model
+   model or entity across tasks. Each hit is a defect: rewrite so the
+   behaviour has one home — a concern or the owning model
    (`agent_harness_rails/rules/models.mdc`) — and the other tasks reference it.
 5. **Anti-pattern scan:** Check that no task normalizes a current application
    anti-pattern — even if the existing code does it. Flag and route around it.
@@ -559,8 +535,8 @@ After drafting the plan:
 7. **Frame check:** Re-read the **Problem:** line. Confirm every task serves
    it, no task exists only to prop up the chosen mechanism, and nothing in the
    plan works around a framework default. If a task fails this check, the
-   issue is usually the approach, not the task — go back through the
-   **Approach gate** before patching.
+   issue is usually the approach — go back through the **Approach gate**
+   before patching.
 8. **Delivery check:** Estimate the changed application-code lines the plan
    produces and hold it against **PR and deployment scope**: one PR under the
    ~400-line target, or declared seam-based boundaries in the **Delivery:**
@@ -644,10 +620,9 @@ Then delegate to **`rails-reviewer`** again.
 | **User revisions** | Bullet list of exactly what was fixed — the reviewer reads only these sections |
 
 Treat the outcome as **final plan approval** before implementation. If Pass 2
-raises issues, fix the plan and re-run **scoped to the fixes only** — set
-`User revisions` to a bullet list of what changed and `Scope` to those
-sections; do not send the full plan again. One scoped fix cycle is usually
-enough — if a second loop is needed, repeat the same scoped pattern.
+raises issues, fix the plan and re-run **scoped to the fixes only** per the
+loop call above — do not send the full plan again; repeat the same scoped
+pattern if another loop is needed.
 
 ### At final approval — primitives sync (when the tree exists)
 
@@ -665,8 +640,7 @@ Once the plan is finally approved (Pass 1 with no edits, or Pass 2 Approved):
    ```
 
    Nothing about how the plan got written — reviewer passes, questions asked,
-   sections rewritten. The line is for a reader a year out deciding whether
-   they can change this code (`agent_harness_rails/rules/primitives.mdc`
+   sections rewritten (`agent_harness_rails/rules/primitives.mdc`
    § Provenance).
 
 3. Add or update the capability's line in `docs/primitives/index.md`.
@@ -688,7 +662,7 @@ act on — what to change, where, and what "fixed" looks like — treat it as th
 complete description of a **self-contained plan revision** and proceed
 immediately, without asking which pass or section it relates to. When the
 message is **vague** on any of those, **ask for clarification first — do not
-assume.** A guessed revision that lands wrong costs more than one question.
+assume.**
 
 ### Revision task loop
 

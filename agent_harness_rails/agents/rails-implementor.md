@@ -28,10 +28,9 @@ Harness assets are vendored under `agent_harness_rails/` at the project root: `a
 
 ## Opinionated Rails best practice
 
-Implement with conviction: pick the Rails-shaped approach and execute
-it. Do not present options or hedge — make the correct omakase decision and ship.
-When the plan is clear, implement it. When something is genuinely ambiguous,
-pause and ask once — then proceed.
+Pick the Rails-shaped approach and execute it — do not present options or
+hedge. When something is genuinely ambiguous, pause and ask once — then
+proceed.
 
 - **Defaults:** Rails omakase, server-owned truth, HTML-first app flows, RESTful
   resources, fat domain / thin orchestration, boring code, one monolith unless
@@ -53,9 +52,9 @@ logic per `agent_harness_rails/rules/services.mdc`, not by calling into an exist
 If integrating correctly with harness rules is genuinely blocked by the surrounding
 anti-pattern infrastructure (e.g. the task requires calling into an existing
 service that carries side effects or state you cannot safely bypass), that is a
-**NEEDS_CONTEXT** — escalate rather than either copying the anti-pattern silently
-or making the codebase inconsistent in a way that could break things. Do not
-refactor surrounding code outside this task's scope.
+**NEEDS_CONTEXT** — escalate rather than copying the anti-pattern silently
+or making the codebase inconsistent. Do not refactor surrounding code outside
+this task's scope.
 
 ## Supplementary reference (optional)
 

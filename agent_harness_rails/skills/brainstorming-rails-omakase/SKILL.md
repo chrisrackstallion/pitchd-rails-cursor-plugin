@@ -25,7 +25,7 @@ Use the **same order** as **`agent_harness_rails/agents/rails-query.md`** so thi
 
 2. **Scoped tactical layer** — Read **`agent_harness_rails/skills/writing-*/SKILL.md`** files that match the brainstorm topic (see **Topic → assets** below). Pair with **`agent_harness_rails/rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are designing.
 
-3. **Supplementary reference — required when compass and writing-* leave a gap** — Consult these when a pattern isn't clearly covered above; treat as a required consult for those gaps, not optional enrichment:
+3. **Supplementary reference — required when compass and writing-* leave a gap** — a required consult for those gaps, not optional enrichment:
    - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — supplemental patterns and philosophy from the third-party community guide.
    - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — authoritative Rails API and feature docs.
 
@@ -76,7 +76,7 @@ Create a task for each item and complete **in order**:
 3. **Ask clarifying questions** — one per message; purpose, constraints, success criteria.
 4. **Propose 2–3 approaches** — trade-offs in **Rails terms** (resources vs RPC, HTML vs JSON, sync vs job, model vs controller vs policy), consistent with what you already loaded. For each approach, **state explicitly where the domain logic will live** (model method, callback, scope, concern) — not implicit.
 5. **Present design in sections** — scaled to complexity; approval after each section.
-6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override). End it with **`## Delivery sequence`** (see **Delivery sequence (in the spec)**) — the ordered deployable slices, one plan each. **When the app has a `docs/primitives/` tree**, also create or update the capability doc (`docs/primitives/capabilities/<name>.md`): the spec's agreed outcomes become one-sentence Intent clauses (`I1`, `I2`, …), **one behaviour each** — split an umbrella outcome ("users can manage X") per action rather than seeding a clause no example could prove, and keep architecture and technology choices out of `intent:` entirely (they are `## Shape`) — and the chosen direction a rough `## Shape`. The spec carries a **`## Intent`** block naming new and impacted clauses and the layer that will prove each (see **Intent (in the spec)**) — per `agent_harness_rails/rules/primitives.mdc`. `status: shaping` applies only to docs this brainstorm **creates**; when updating an existing doc (shaping an amendment to a `planned` or `built` capability), leave its status untouched — a brainstorm never downgrades status. What's explicitly out of scope is worth a provenance line. The planner's primitives gate confirms and extends this doc instead of re-deriving intent.
+6. **Write spec** — default path **`docs/brainstorms/YYYY-MM-DD-<topic>.md`** in the app repo (create `docs/brainstorms` if needed; user or team conventions override). End it with **`## Delivery sequence`** (see **Delivery sequence (in the spec)**) — the ordered deployable slices, one plan each. **When the app has a `docs/primitives/` tree**, also create or update the capability doc (`docs/primitives/capabilities/<name>.md`): the spec's agreed outcomes become one-sentence Intent clauses (`I1`, `I2`, …), **one behaviour each** — split umbrella outcomes ("users can manage X") per action, and keep architecture and technology choices out of `intent:` (they are `## Shape`) — and the chosen direction a rough `## Shape`. The spec carries a **`## Intent`** block naming new and impacted clauses and the layer that will prove each (see **Intent (in the spec)**) — per `agent_harness_rails/rules/primitives.mdc`. `status: shaping` applies only to docs this brainstorm **creates**; when updating an existing doc (a `planned` or `built` capability), leave its status untouched — a brainstorm never downgrades status. What's explicitly out of scope is worth a provenance line. The planner's primitives gate confirms and extends this doc instead of re-deriving intent.
 7. **Spec self-review** — placeholders, contradictions, ambiguity, scope; fix inline.
 8. **User reviews written spec** — wait for approval or revision requests.
 9. **Transition to planning** — invoke **`writing-rails-plans`** only.
@@ -137,8 +137,8 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 ### Intent (in the spec)
 
 When the app has a `docs/primitives/` tree, the spec states the intent it settles
-**before** the sequence that ships it, and it separates what is being promised for
-the first time from what is merely being relied on:
+**before** the sequence that ships it, separating new promises from clauses
+merely relied on:
 
 ```markdown
 ## Intent
@@ -157,13 +157,12 @@ provenance, not clauses.]
 ```
 
 Name the **layer** that will prove each new clause, coarsely — one word, no file
-paths and no task numbers, which are the planner's job. It costs a moment and it
-catches the most expensive mistake at the only point where it is still cheap:
-**if the only honest answer is "a journey spec", the clause is too broad and wants
-splitting** before a plan is written around it. What is and is not a clause:
+paths or task numbers (the planner's job). **If the only honest answer is
+"a journey spec", the clause is too broad and wants splitting** before a plan is
+written around it. What is and is not a clause:
 `agent_harness_rails/rules/primitives.mdc` § Intent clauses — run the **durable**
-test on every line before it goes in, since a brainstorm is where architecture and
-technology choices are most likely to be mistaken for intent.
+test on every line, since a brainstorm is where architecture and technology
+choices are most likely to be mistaken for intent.
 
 ### Delivery sequence (in the spec)
 
@@ -185,10 +184,9 @@ plan — reuse them rather than restating requirements.
 Rules for the sequence:
 
 - **A slice must be worth shipping on its own**, not merely severable. If an
-  early slice delivers nothing a user or the system benefits from and only
-  exists to make the list longer, fold it into the next one. **One slice is a
-  valid answer** — most features are one deployable change, and inventing
-  boundaries to satisfy this section is worse than not having it.
+  early slice delivers nothing a user or the system benefits from, fold it into
+  the next one. **One slice is a valid answer** — most features are one
+  deployable change; do not invent boundaries to satisfy this section.
 - **Never split a vertical slice horizontally.** "Migration slice, then model
   slice, then controller slice" is the anti-pattern
   (`writing-rails-plans`), not a delivery sequence. Each slice runs
@@ -199,12 +197,11 @@ Rules for the sequence:
 - **Every active clause lands in exactly one slice.** A clause in no slice is
   unshipped scope; a clause in two is an unclear boundary.
 
-**One plan per slice, written just-in-time.** The sequence is the spec's; the
-plans are written **one at a time, as each slice comes up** — not all up front.
-Drafting later plans before earlier slices are executed spends full review passes
-on documents that execution will invalidate.
+**One plan per slice, written just-in-time.** Plans are written **one at a
+time, as each slice comes up** — not all up front; execution of earlier slices
+invalidates plans drafted ahead.
 
-**Working in existing codebases:** Follow patterns that match **harness rules**. Where the app contradicts those rules, the spec should describe the **correct** Rails-shaped direction for new work (same rule as **`implementing-rails-task`** and **`writing-rails-plans`**) and note integration friction — not silently entrench anti-patterns.
+**Working in existing codebases:** Follow patterns that match **harness rules**. Where the app contradicts them, the spec describes the **correct** Rails-shaped direction for new work and notes integration friction (same rule as **`implementing-rails-task`** and **`writing-rails-plans`**) — never silently entrench anti-patterns.
 
 ## The process (mirrors superpowers brainstorming)
 
@@ -212,7 +209,7 @@ on documents that execution will invalidate.
 
 - After **Grounding order (always)**, use what you read in the app (step 4) to describe current state — verify claims; do not assume tables or routes exist without checking when that matters.
 - If the request bundles multiple **independent subsystems**, decompose first; brainstorm one slice per cycle (spec → plan → implementation). Each subsystem is its own capability, its own spec, its own plan.
-- If the request is **one** capability that is simply **too large to ship in one go**, do **not** split the brainstorm — split the **delivery**. A big feature is usually one cohesive subsystem with a lot of surface, so the "independent subsystems" test above never fires on it and the result is a single enormous plan. One spec and one capability doc still cover the whole outcome; the spec's **`## Delivery sequence`** (see **Delivery sequence (in the spec)** above) breaks it into deployable slices that become **separate, sequenced plans**.
+- If the request is **one** capability that is simply **too large to ship in one go**, do **not** split the brainstorm — split the **delivery**. A big feature is usually one cohesive subsystem, so the "independent subsystems" test above never fires on it. One spec and one capability doc still cover the whole outcome; the spec's **`## Delivery sequence`** breaks it into deployable slices that become **separate, sequenced plans**.
 - One question per message; prefer multiple choice when it speeds alignment.
 - Clarify purpose, constraints, success criteria.
 

@@ -168,7 +168,7 @@ For every `it` block, assign one of:
 Execute in an order that keeps the suite green and the diff reviewable:
 
 1. **Add before deleting.** When MOVE-ing an assertion, write the destination spec first and run it green. Only then delete the source. This guarantees no behavioural gap.
-2. **One resource at a time.** Do not interleave changes across articles + comments + users in a single batch. The diff becomes unreviewable and regressions hide.
+2. **One resource at a time.** Do not interleave changes across articles + comments + users in a single batch — the diff becomes unreviewable and regressions hide.
 3. **Group by destination within a resource.** When you have several MOVEs into `spec/models/article_spec.rb`, do them together so the file's diff is coherent.
 4. **Run the focused slice after each step.**
    ```bash
@@ -308,7 +308,7 @@ End with one line: **"Refactor complete. Suite is green and budget-compliant."**
 
 ## Boundaries
 
-- **One resource per session.** This skill is iterative. Refactor articles, verify, commit, then start a new session for comments. Do not attempt the whole suite in one pass — the audit plan becomes unwieldy and regressions hide.
+- **One resource per session.** Refactor articles, verify, commit, then start a new session for comments. Do not attempt the whole suite in one pass — the audit plan becomes unwieldy and regressions hide.
 - **Never reduce coverage to meet the budget.** If a system spec is the only place a behaviour is currently tested, write the lower-layer spec **first**, then refactor. Coverage preservation is non-negotiable.
 - **Do not introduce coverage for untested code.** If you spot an untested code path during discovery, flag it for a follow-up but do not write the tests here. That's `writing-tests` work.
 - **Do not change production code.** If a test reveals a bug or an awkward model API, name it in the report and stop. Production refactors run in a separate session per `agent_harness_rails/skills/implementing-rails-task/SKILL.md`.
@@ -357,9 +357,9 @@ Before declaring done:
 
 ## Subagent (optional)
 
-This skill can be delegated to the **`rails-implementor`** subagent at `agent_harness_rails/agents/rails-implementor.md` when the work is scoped to a single resource and the parent wants to keep the main context clean. The implementor agent has the writing-tests skill and tooling to execute the verdicts and verify; the parent passes the input spec list, baseline expectations, and a pointer to this skill in the task prompt.
+This skill can be delegated to the **`rails-implementor`** subagent at `agent_harness_rails/agents/rails-implementor.md` when the work is scoped to a single resource and the parent wants to keep the main context clean; the parent passes the input spec list, baseline expectations, and a pointer to this skill in the task prompt.
 
-For larger refactors spanning multiple resources, prefer running this skill one resource at a time in the main session — the audit plans are easier to review when the diffs are small.
+For larger refactors spanning multiple resources, prefer running this skill one resource at a time in the main session — smaller diffs, easier audit-plan review.
 
 ## Related
 

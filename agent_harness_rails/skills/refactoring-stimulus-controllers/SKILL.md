@@ -21,9 +21,9 @@ Take the existing Stimulus controllers in a Rails app and produce a clean,
 harness-compliant fleet: single-purpose controllers, DOM-derived state, proper
 lifecycle cleanup, no global state, and exactly one canonical system spec per
 behaviour. The work is bounded and auditable: **discovery → audit → plan →
-execute → cover → verify**. Coverage is preserved; behaviour is preserved; the
-suite is green; controllers are smaller, fewer overall (after merges and
-splits net out), and each one earns its place.
+execute → cover → verify**. Coverage and behaviour are preserved; the suite is
+green; controllers are smaller and fewer overall (after merges and splits net
+out).
 
 This skill is **destructive** — it deletes controllers, rewrites attachments
 in ERB, and touches specs. Run the suite before starting (capture the
@@ -39,8 +39,7 @@ without confirming every `data-controller="…"` reference has been migrated.
   inconsistent.
 - A controller has grown past ~100 lines or has more than one clear
   responsibility.
-- The same behaviour is implemented twice under different names
-  (`reveal_controller` and `disclosure_controller` both toggling a panel).
+- The same behaviour is implemented twice under different names.
 - Controllers leak listeners, hold state in closures, or break under Turbo
   morphing.
 - The user wants Stimulus behaviours covered by system specs and currently has
@@ -62,12 +61,12 @@ without confirming every `data-controller="…"` reference has been migrated.
 Before touching any controller:
 
 - **Read `agent_harness_rails/skills/writing-javascript/SKILL.md` and
-  `agent_harness_rails/skills/writing-javascript/references/patterns.md`** for the controller anatomy
+  `agent_harness_rails/skills/writing-javascript/references/patterns.md`** — controller anatomy
   and quality rules.
-- **Read `agent_harness_rails/skills/writing-hotwire/references/patterns.md`** § Stimulus for the
+- **Read `agent_harness_rails/skills/writing-hotwire/references/patterns.md`** § Stimulus —
   ERB-side wiring conventions.
-- **Read `agent_harness_rails/skills/writing-tests/references/system-specs.md`** for the Five Gates
-  and Budget rules — they govern which controllers get a system spec.
+- **Read `agent_harness_rails/skills/writing-tests/references/system-specs.md`** — the Five Gates
+  and Budget rules govern which controllers get a system spec.
 - **Skim `agent_harness_rails/rules/javascript.mdc` and `agent_harness_rails/rules/hotwire.mdc`** for the
   anti-pattern tables.
 - **Capture a baseline.** Run the suite (or the relevant slice) and record:
@@ -77,12 +76,12 @@ Before touching any controller:
   ```
   Note: total spec count, system-spec count, Selenium spec count, runtime,
   pass rate.
-- **Confirm the suite is green.** Refactoring on top of red hides
-  regressions. If red, stop and report.
+- **Confirm the suite is green** — refactoring on red hides regressions. If
+  red, stop and report.
 - **Confirm scope.** Refactor in **batches by behaviour**, not "everything".
   If the user said "refactor Stimulus", ask which behaviour or page to start
-  with — this skill works one cluster at a time (e.g. all disclosure /
-  reveal-style controllers, then all dropdown-style, then all auto-submit).
+  with — one cluster at a time (e.g. all disclosure / reveal-style
+  controllers, then all dropdown-style, then all auto-submit).
 
 ### 2. Discovery
 
@@ -111,9 +110,8 @@ grep -rEn 'driven_by\(:selenium' spec/system
 grep -rEn 'visit .*<page-that-uses-controller>' spec/system
 ```
 
-**Output of discovery:** the controller map plus a list of related system
-specs. Read every controller file and every related spec before changing
-anything.
+**Output of discovery:** the controller map plus related system specs. Read
+every controller file and every related spec before changing anything.
 
 ### 3. Audit — Score Every Controller
 
@@ -122,13 +120,13 @@ For each controller, answer the questions and assign verdicts.
 #### Responsibility audit — what does it do?
 
 Write a **one-sentence purpose** for each controller. If you can't, that's a
-finding. Examples of good purposes:
+finding. Good purposes:
 
 - "Toggle a panel open/closed with `aria-expanded` syncing."
 - "Copy a value to the clipboard and flash a confirmation class."
 - "Debounce a form submit and request a Turbo Stream response."
 
-Examples of bad purposes (each is a split candidate):
+Bad purposes (each is a split candidate):
 
 - "Handles the article form." (vague — what does it actually do?)
 - "Toggles the panel **and** debounces search **and** posts a fetch." (three
@@ -188,16 +186,16 @@ Assign one verdict per controller:
   duplicated by a KEEP'd controller.
 
 **Write the audit plan to a temp file** (e.g.
-`tmp/refactor-stimulus-<cluster>-plan.md`) listing every controller, its
-purpose sentence, its quality findings, and its verdict with rationale.
-This is the artifact the user (or reviewer) checks the final result against.
+`tmp/refactor-stimulus-<cluster>-plan.md`): every controller, its purpose
+sentence, quality findings, and verdict with rationale. This is the artifact
+the user (or reviewer) checks the final result against.
 
 ### 4. Sequence the Changes
 
 Execute in an order that keeps the page working and the diff reviewable:
 
-1. **One behaviour cluster per batch.** Refactor disclosure / reveal in one
-   pass; debounce + submit in another. Do not interleave.
+1. **One behaviour cluster per batch.** Disclosure / reveal in one pass;
+   debounce + submit in another. Do not interleave.
 2. **Add before deleting.** When MERGE-ing into a target controller, write
    or extend the target first, migrate every ERB attachment, then delete the
    source.
@@ -210,10 +208,10 @@ Execute in an order that keeps the page working and the diff reviewable:
    ```bash
    bin/rspec spec/system/articles_spec.rb  # the specs for this behaviour only
    ```
-   The specs exercising the controllers in this batch — not all of
-   `spec/system/`, which is the slowest directory in the suite
+   Only the specs exercising this batch's controllers — not all of
+   `spec/system/`, the slowest directory in the suite
    (`agent_harness_rails/rules/testing.mdc` § Running Specs). Green before the
-   next step. If red, fix immediately.
+   next step; if red, fix immediately.
 5. **Run RuboCop on touched Ruby files** (`bin/rubocop`) — controllers are
    JS but ERB partials and spec files often co-change.
 
@@ -280,8 +278,7 @@ Update ERB to match:
 
 #### MERGE
 
-Two controllers with the same behaviour collapse into one canonical name.
-Steps:
+Two controllers with the same behaviour collapse into one canonical name:
 
 1. Pick the canonical name (the one matching harness conventions; if neither,
    rename).
@@ -299,7 +296,7 @@ If two controllers reasonably stand alone but always appear together, you
 
 #### SPLIT
 
-A controller doing two things splits into two named controllers. Steps:
+A controller doing two things splits into two named controllers:
 
 1. Name each new behaviour with a verb (`debounce_controller`,
    `autosubmit_controller`).
@@ -361,7 +358,7 @@ Apply the Five Gates from `agent_harness_rails/skills/writing-tests/references/s
    `fill_in`, `select`, etc.).
 2. **Uniqueness gate** — no other system spec already proves this behaviour.
 3. **JavaScript-necessity gate** — the behaviour cannot be proven by a
-   request spec asserting Turbo Stream content or by trusting lower layers.
+   request spec asserting Turbo Stream content or by trusting lower layers;
    Selenium is justified.
 4. **Single-home gate** — the assertion is not owned by a model, request,
    or policy spec.
@@ -387,18 +384,14 @@ end
 ```
 
 Pick the **simplest page** the controller appears on, not the most
-feature-rich. Other pages that use `data-controller="reveal"` assume it
-works.
+feature-rich.
 
 #### Deleting redundant Stimulus system specs
 
-If the same controller is exercised in three system specs (article page,
-comment page, settings page), keep one and delete the other two. The deleted
-ones go because:
-
-- the controller is canonically covered elsewhere (single-home), and
-- the rest of each page's behaviour belongs in lower-layer specs (request,
-  model, policy).
+If the same controller is exercised in three system specs, keep one and
+delete the other two: the controller is canonically covered elsewhere
+(single-home), and the rest of each page's behaviour belongs in lower-layer
+specs (request, model, policy).
 
 Apply the existing **`../refactoring-rails-specs`** verdicts (KEEP / MOVE /
 MERGE / DELETE / REWRITE) per spec — this skill defers to that one for
@@ -409,8 +402,7 @@ non-Stimulus spec work surfaced during the audit.
 After all verdicts in the batch are executed:
 
 - **`bin/rspec`** — fully green.
-- **`bin/rubocop`** — zero offences (controllers may be JS but ERB and spec
-  files often co-changed).
+- **`bin/rubocop`** — zero offences.
 - **Lint JS** if a linter is configured (`bin/eslint`, `npx eslint`); fix all
   offences.
 - **Compare against the baseline:**
@@ -431,7 +423,7 @@ After all verdicts in the batch are executed:
 
 ### 8. Report
 
-Single-screen summary the user can scan:
+Single-screen summary:
 
 ```markdown
 ## Refactored Stimulus: <cluster name>
@@ -481,20 +473,20 @@ fleet is harness-compliant."**
 
 ## Boundaries
 
-- **One behaviour cluster per session.** Disclosure today; debounce-submit
-  next session. Audit plans for the whole fleet become unreviewable.
+- **One behaviour cluster per session.** Fleet-wide audit plans become
+  unreviewable.
 - **Never reduce behavioural coverage.** If a controller's behaviour is
   currently uncovered by any spec, write the canonical system spec **before**
   refactoring; refactor against a green spec.
 - **Never delete a controller without scanning every attachment.** ERB,
   view helpers that emit `data-controller`, mailers (rare), JSON responses
   embedding HTML — all candidates.
-- **Do not change server-side behaviour.** If the audit surfaces a controller
-  shape (a bad route, a missing Turbo Stream, a JSON endpoint that should be
+- **Do not change server-side behaviour.** If the audit surfaces a server
+  problem (a bad route, a missing Turbo Stream, a JSON endpoint that should be
   HTML), flag it in the report and stop. Server refactors run in a separate
   session per **`agent_harness_rails/skills/implementing-rails-task/SKILL.md`**.
-- **Do not skip the audit plan.** The plan is the reviewer's checklist.
-  Writing it to a temp file or printing it before executing is mandatory.
+- **Do not skip the audit plan.** Writing it to a temp file or printing it
+  before executing is mandatory — it is the reviewer's checklist.
 - **Selenium budget is a ceiling, not a target.** If a behaviour can be
   proved by a request spec asserting `Content-Type: text/vnd.turbo-stream.html`
   and the rendered fragment, do that — only Selenium when JS is truly
@@ -547,13 +539,11 @@ Before declaring done:
 
 ## Subagent (optional)
 
-This skill can be delegated to the **`rails-implementor`** subagent at
-`agent_harness_rails/agents/rails-implementor.md` when the work is scoped to a
-single behaviour cluster and the parent wants to keep the main context clean.
-The implementor has the writing-javascript and writing-tests skills and the
-tooling to execute verdicts and verify; the parent passes the cluster, the
-controller map, baseline expectations, and a pointer to this skill in the task
-prompt.
+Delegate to the **`rails-implementor`** subagent
+(`agent_harness_rails/agents/rails-implementor.md`) when the work is scoped to
+a single behaviour cluster and the parent wants to keep the main context
+clean; the parent passes the cluster, the controller map, baseline
+expectations, and a pointer to this skill in the task prompt.
 
 For larger fleets, prefer running this skill one cluster at a time in the main
 session — audit plans stay reviewable when diffs are small.

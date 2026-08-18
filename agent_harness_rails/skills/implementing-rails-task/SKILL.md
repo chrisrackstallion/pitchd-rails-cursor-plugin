@@ -17,10 +17,9 @@ Ship **correct, boring, omakase-shaped Rails** that matches **this harness**:
 and `agent_harness_rails/rules/*.mdc`. Implement what the task asks — no extra framework, no
 drive-by refactors outside scope.
 
-**Voice:** Implement with conviction. Pick the Rails-shaped approach
-and execute it. Do not hedge about which pattern to use — make the correct omakase
-decision and ship. When the plan is clear, implement it. When something is
-genuinely ambiguous, pause and ask once — then proceed.
+**Voice:** Implement with conviction — pick the Rails-shaped approach and
+execute it without hedging. When something is genuinely ambiguous, pause and
+ask once — then proceed.
 
 **Harness rules beat application patterns:** For the **code you write in this
 task**, apply harness rules — do not inherit anti-patterns from the surrounding
@@ -29,9 +28,8 @@ adds a new action, write the action using model logic per `agent_harness_rails/r
 not by calling into an existing service object. If integrating correctly is
 genuinely blocked by surrounding anti-pattern infrastructure (e.g. you must
 call into an existing service that carries side effects or state), escalate as
-**NEEDS_CONTEXT** — do not silently copy the anti-pattern or make the codebase
-inconsistent in ways that could break things. Do not refactor surrounding code
-outside this task's scope.
+**NEEDS_CONTEXT** — do not silently copy the anti-pattern. Do not refactor
+surrounding code outside this task's scope.
 </objective>
 
 **Announce:** "I'm using the implementing-rails-task skill."
@@ -105,8 +103,8 @@ to add JS or service layers by reflex — apply the **defaults under Load the co
 layer's `writing-*` SKILL and `rules/<area>.mdc` in this session. Touching a
 migration means `writing-migrations` + `agent_harness_rails/rules/migrations.mdc` are open first;
 touching a spec means `writing-tests` + `agent_harness_rails/rules/testing.mdc`; and so on. "I
-know Rails" is not a substitute — the harness's conventions are more specific
-than Rails defaults, and several deliberately differ from common practice.
+know Rails" is not a substitute — harness conventions deliberately differ from
+common practice.
 
 ### 4. Implement
 
@@ -119,7 +117,7 @@ than Rails defaults, and several deliberately differ from common practice.
    (`agent_harness_rails/rules/models.mdc`) in your report. Restructuring beyond
    task scope is the orchestrator's call — escalate it, never silently duplicate.
 3. **Tests:** Follow `writing-tests` and `agent_harness_rails/rules/testing.mdc`. If the task says **TDD**, follow that order (red → green → refactor).
-4. **Verify:** Run the **narrowest spec slice that covers what you changed** — the spec files for the objects you touched, not `bin/rspec` bare. A full-suite run is earned (cross-cutting change, spec-refactor session, final pre-handoff verification), not the default; wall clock spent on it is paid by everyone waiting (`agent_harness_rails/rules/testing.mdc` § Running Specs). Report the commands you actually ran — never call the suite green off a slice. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`agent_harness_rails/rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. Fix offences in code — **no** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
+4. **Verify:** Run the **narrowest spec slice that covers what you changed** — the spec files for the objects you touched, not `bin/rspec` bare. A full-suite run is earned (cross-cutting change, spec-refactor session, final pre-handoff verification), not the default (`agent_harness_rails/rules/testing.mdc` § Running Specs). Report the commands you actually ran — never call the suite green off a slice. If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`agent_harness_rails/rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. **No** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
 5. **Self-review** (below) before reporting.
 
 **Do not create git commits** (no `git commit`). The parent or human owns version control; leave changes for them to commit unless the delegating prompt says otherwise.

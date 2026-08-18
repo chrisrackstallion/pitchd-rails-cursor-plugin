@@ -87,10 +87,9 @@ clause proven by four examples is tagged on all four.
 
 - **On the example, never on the group.** A tag on a `describe`, `context`, or
   `shared_examples` is an offence — `AgentHarnessRails/IntentTag` at lint time,
-  `tag/misplaced` from `agent_harness_rails evals`. Group tags read as the tidy
-  option and are the one form that can go on lying: delete the example the tag
-  stood for and its siblings keep the group green, so the clause still claims a
-  proof that no longer exists.
+  `tag/misplaced` from `agent_harness_rails evals`. A group tag can lie: delete
+  the example it stood for and its siblings keep the group green, so the clause
+  still claims a proof that no longer exists.
 - **Only evaluation examples are tagged.** Most specs prove behaviour without
   proving a *clause*; those stay untagged. Tagging everything makes the map
   useless.
@@ -105,27 +104,24 @@ the link, and deleting it breaks the link loudly.
 
 ### What counts as proving a clause
 
-A tag makes a claim, and `agent_harness_rails evals` can only check that the
-claim is well-formed — that a clause exists, that an example carries the tag.
-Whether that example **proves** the clause is judgment, and it is the part that
-matters. The test:
+`agent_harness_rails evals` only checks a tag is well-formed — clause exists,
+example carries the tag. Whether the example **proves** the clause is judgment.
+The test:
 
 > **An evaluation proves a clause when breaking the clause turns it red.**
 
-If you can picture the behaviour regressing while the tagged example still
-passes, the tag is decoration and the clause is unproven with a green run to
-hide it — worse than the bare clause, which at least fails honestly.
+If the behaviour could regress while the tagged example still passes, the tag
+is decoration and the clause is unproven behind a green run.
 
 Three ways a tag fails that test:
 
 1. **It asserts the affordance, not the outcome.** The form renders, the button
-   is on the page, the request came back `200`. Strip the behaviour out and
-   leave the UI standing, and the example still passes. Assert the outcome the
-   clause names.
+   is on the page, the request came back `200` — strip the behaviour out and the
+   example still passes. Assert the outcome the clause names.
 2. **It proves one case, not the quantifier.** Clause sentences carry scope —
    *any*, *every*, *never*, *only*, *at most*. A happy path proves the
-   existential case; the clause claims more than that. "Never nests deeper than
-   three" is unproven until something tries for four.
+   existential case only. "Never nests deeper than three" is unproven until
+   something tries for four.
 3. **It proves the clause at a layer that cannot hold it.** Denials, role
    matrices, and boundaries have owners in § Ownership by Layer. Bolting "and
    the other user cannot" onto a canonical journey breaks the One-story gate
@@ -154,12 +150,9 @@ all sit in one happy-path example, when its wording claims a universal or a
 denial, is a finding at review — not a passing row.
 
 **Sufficient as a set, necessary individually.** The red test asks whether the
-evaluations are *enough*. It says nothing about whether each one is pulling its
-weight, and a tag costs nothing to add — so the second question is the inverse:
-**could you delete this evaluation and still have the clause fully proven?** If
-yes, it is padding, and the tag comes off. Four tangential examples make a row
-look strong while leaving nobody accountable for the clause; two examples that
-each carry a side of it make the gap obvious the moment one goes.
+evaluations are *enough*; the inverse question is **could you delete this
+evaluation and still have the clause fully proven?** If yes, it is padding, and
+the tag comes off.
 
 Past about three evaluations, suspect the clause rather than the coverage — a
 sentence needing four separate proofs is usually two promises wearing one id
@@ -197,8 +190,7 @@ end
 ## Each Behaviour Has One Home
 
 Every behaviour is tested in exactly one place. Duplication across spec types
-is waste — it slows the suite, obscures what each layer actually proves, and
-creates maintenance drag when behaviour changes.
+slows the suite, obscures what each layer proves, and creates maintenance drag.
 
 ### Ownership by Layer
 
@@ -288,7 +280,7 @@ to assert more things about the same outcome.
 
 ### Do not write specs to prove code was removed
 
-A spec whose only assertion is `not_to have_*` does not test behaviour — it tests absence. Such tests pass trivially (including when the feature never existed), document nothing about what users *can* do, and break silently if the element is renamed.
+A spec whose only assertion is `not_to have_*` tests absence, not behaviour — it passes trivially (including when the feature never existed) and breaks silently if the element is renamed.
 
 ```ruby
 # Bad — proves nothing except an element is absent; passes even if the page is empty
@@ -320,11 +312,11 @@ end
 
 The rule: every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
-**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is a legitimate way to confirm your own deletion actually landed. It is scaffolding, not coverage: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed — the next reader inherits a spec that documents no behaviour and passes forever.
+**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
 
 ## Running Specs
 
-Run the **narrowest slice that covers what you changed**. A full-suite run costs minutes of wall clock; a targeted run costs seconds. Typing `bin/rspec` with no arguments because it is the easiest command to reach for is a real cost, paid by everyone waiting on the work.
+Run the **narrowest slice that covers what you changed** — a full-suite run costs minutes; a targeted run costs seconds.
 
 | Situation | Run |
 |-----------|-----|

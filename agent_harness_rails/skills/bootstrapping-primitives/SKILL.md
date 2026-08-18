@@ -50,16 +50,14 @@ docs/primitives/
 Capability docs carry their intent clauses and evaluations in **YAML
 frontmatter**, not prose sections — that is what lets **`agent_harness_rails evals`** check
 that every clause is proven (`agent_harness_rails/rules/primitives.mdc`). The
-first docs arrive later, from planning or a `capture` backfill; the scaffold
-just makes room for them.
+first docs arrive later, from planning or a `capture` backfill.
 
 Mention `agent_harness_rails evals` to the user once, here: it ships with this gem and belongs
-in CI beside RuboCop, so the tree cannot quietly rot. Say plainly what it does
-and does not settle — it proves every clause **names** a spec that carries its
-tag, and no parser can tell whether that spec would actually go red if the clause
-stopped being true. That judgment is a review responsibility from day one
-(`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause);
-a team that hears it now does not mistake a green run for a proven system later.
+in CI beside RuboCop, so the tree cannot quietly rot. Say what it does and does
+not settle — it proves every clause **names** a spec that carries its tag; no
+parser can tell whether that spec would actually go red if the clause stopped
+being true. That judgment is a review responsibility from day one
+(`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
 
 ### 2. Survey (read-only)
 
@@ -114,8 +112,7 @@ Wait for the human's pass before treating bootstrap as done. Then offer —
 
 - **No bulk backfill.** Capability docs accrue lazily (the planner creates one
   the first time planned work touches an undocumented area) or on demand via
-  `capture`. A sixty-doc documentation project is exactly the initiative that
-  produces half-accurate docs and dies.
+  `capture`; a bulk documentation project produces half-accurate docs and dies.
 - **No app code, no plans.**
 - **No re-runs.** Once the tree exists, `compilation.md` changes only through
   human edits prompted by review findings; the tree changes through the
@@ -126,8 +123,8 @@ Wait for the human's pass before treating bootstrap as done. Then offer —
 - **Describing instead of constraining** — `compilation.md` lines that restate
   the Gemfile. Apply the filter; when in doubt, cut.
 - **Skipping the interview** — a survey-only draft encodes the agent's guesses
-  about which choices are load-bearing. The interview is the step that makes
-  the document human-specified.
+  about which choices are load-bearing; the interview makes the document
+  human-specified.
 - **Backfilling everything while you're at it** — resist; see above.
 
 ## Related

@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## One Stack Per App
 
-Rails 7+ defaults to **importmap** for JavaScript and **Propshaft** for static assets — no Node required for Hello World. If you adopt **jsbundling-rails**, **cssbundling-rails**, or **Vite**, commit to **one** delivery story. Do not run importmap pins and a separate bundled "app shell" that both load Turbo — pick a path and document it.
+Rails 7+ defaults to **importmap** for JavaScript and **Propshaft** for static assets. If you adopt **jsbundling-rails**, **cssbundling-rails**, or **Vite**, commit to **one** delivery story. Do not run importmap pins and a separate bundled "app shell" that both load Turbo — pick a path and document it.
 
 Canonical detail and worked examples: **`agent_harness_rails/skills/writing-javascript/references/patterns.md`**. Turbo, frames, streams, Stimulus *behaviour in templates*: **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**, **`agent_harness_rails/rules/hotwire.mdc`**. Tailwind and global CSS: **`agent_harness_rails/rules/css-tailwind.mdc`**, **`agent_harness_rails/skills/writing-css-tailwind/references/patterns.md`** — not the JS boundary. Refactoring an existing fleet of Stimulus controllers: **`agent_harness_rails/skills/refactoring-stimulus-controllers/SKILL.md`**.
 
@@ -66,7 +66,7 @@ export default class extends Controller {
 }
 ```
 
-- **One responsibility per controller.** A controller that toggles a panel **and** debounces a search **and** posts a fetch is three controllers wearing a trench coat.
+- **One responsibility per controller.** A controller that toggles a panel **and** debounces a search **and** posts a fetch is three controllers.
 - **`connect()` / `disconnect()`** for setup and teardown of *external* state only (event listeners on `window`/`document`, timers, observers). Same-element listeners are wired via `data-action` — don't `addEventListener` what HTML can express.
 - **Always clean up in `disconnect()`** — Turbo navigations re-run lifecycle hooks, and leaked listeners pile up.
 - **Outlets** for cross-controller wiring; **CustomEvents** (`this.dispatch("opened")`) when one controller signals another without a hard dependency. No global event buses.

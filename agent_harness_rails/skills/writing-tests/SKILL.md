@@ -13,25 +13,23 @@ description: >-
 
 <objective>
 Write tests that give you confidence to ship. System specs are the **backbone**
-of the suite — a small number of integration tests that prove the seams hold.
-They are not the place to chase coverage. Model specs cover domain logic.
-Request specs cover the HTTP layer — including rendering smoke for index/show,
-CRUD round-tripping, and every auth gate. Request specs are the rendering
-layer: **never write view specs** (`spec/views/`, `type: :view`) — templates
-are tested through the full stack via `response.body`, not in isolation with
-stubbed assigns. Policy specs cover authorization
-logic. Everything uses real objects, real database records, and real
-rendering.
+of the suite — a small number of integration tests that prove the seams hold,
+not the place to chase coverage. Model specs cover domain logic. Request specs
+cover the HTTP layer — rendering smoke for index/show, CRUD round-tripping,
+and every auth gate. Request specs are the rendering layer: **never write view
+specs** (`spec/views/`, `type: :view`) — templates are tested through the full
+stack via `response.body`, not in isolation with stubbed assigns. Policy specs
+cover authorization logic. Everything uses real objects, real database records,
+and real rendering.
 
 The default answer to "should this be a system spec?" is **no — push it down
-a layer.** System specs are slow, brittle to copy changes, and expensive to
-maintain; each one must earn its place against the budget and gates in
-`references/system-specs.md`.
+a layer.** System specs are slow and expensive to maintain; each one must earn
+its place against the budget and gates in `references/system-specs.md`.
 
 The testing *philosophy* — system tests as backbone, behaviour over
-implementation, integration over isolation — is the vanilla-Rails position.
-The tooling (RSpec, FactoryBot) is an adaptation; Rails ships Minitest with
-fixtures. The principles are the same.
+implementation, integration over isolation — is the vanilla-Rails position;
+the tooling (RSpec, FactoryBot) is an adaptation of it (Rails ships Minitest
+with fixtures).
 </objective>
 
 ## Process
@@ -195,9 +193,8 @@ appropriate lower layer.
 ### 5. No Duplication — Across Layers or Within Files
 
 Every behaviour is tested in exactly one place. Duplication across spec types
-slows the suite, obscures what each layer proves, and creates maintenance drag
-when behaviour changes. Duplication within a file inflates test counts without
-adding confidence.
+slows the suite and creates maintenance drag; duplication within a file
+inflates test counts without adding confidence.
 
 #### Across Spec Types
 
@@ -369,7 +366,7 @@ end
 
 #### Do not write specs to prove code was removed
 
-A test whose only assertion is `not_to have_*` does not test behaviour — it tests absence. It passes trivially (including if the page is blank), documents nothing about what users *can* do, and breaks silently when an element is renamed rather than removed.
+A test whose only assertion is `not_to have_*` tests absence, not behaviour — it passes trivially (including if the page is blank) and breaks silently when an element is renamed rather than removed.
 
 ```ruby
 # Bad — only asserts an element is absent; no positive behaviour proven
@@ -401,13 +398,12 @@ end
 
 Every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
-**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is a legitimate way to confirm your own deletion landed. It is scaffolding, not coverage: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
+**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
 
 ### 7. Running Specs
 
 Run the **narrowest slice that covers what you changed** — one spec file, or one
-example while chasing a failure. A full-suite run costs minutes; a targeted run
-costs seconds, and that time is paid by everyone waiting on the work.
+example while chasing a failure.
 
 `bin/rspec` with no arguments is **earned**, not routine: a cross-cutting change
 (factory, `spec/support/`, `rails_helper.rb`, shared concern, schema), a
@@ -447,8 +443,8 @@ Rules, format, and the list form: **`agent_harness_rails/rules/testing.mdc`**
    *only*, *never*, *any*, *every* each claim more than a happy path, and the
    denial half usually belongs in a policy or request spec rather than bolted
    onto the journey. One clause proven across two or three files at two or three
-   layers is normal — but each one must be **necessary**: if you could delete an
-   evaluation and the clause were still fully proven, it is padding, not coverage.
+   layers is normal — but each evaluation must be **necessary**: if you could
+   delete it and the clause were still fully proven, it is padding.
    Full test and its failure modes:
    **`agent_harness_rails/rules/testing.mdc`** § What counts as proving a clause.
 2. **Tag the example, not the group.** Never a `describe` or `context` — a group
@@ -456,7 +452,7 @@ Rules, format, and the list form: **`agent_harness_rails/rules/testing.mdc`**
    claiming a proof that is gone. Four examples proving one clause carry four
    tags.
 3. **Tag only evaluation examples.** Most specs prove behaviour without proving a
-   *clause*. A suite where everything is tagged has no map left.
+   *clause*; tagging everything makes the map useless.
 4. **The capability doc must list the file too** — `evaluations:` on that clause.
    Both sides, or the link is half-made.
 

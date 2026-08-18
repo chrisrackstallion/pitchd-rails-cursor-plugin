@@ -28,20 +28,19 @@ Intent clauses and their evaluations live in each doc's **YAML frontmatter**, no
 in prose sections.
 
 Run **`agent_harness_rails evals`** before reporting on any operation that touched the tree,
-and as the first step of **`lint`**. It settles everything mechanical — clause
-coverage, dead spec paths, untagged evaluations, tags naming a superseded
-clause, tags sitting on a group rather than an example — with file:line output
-you should cite rather than restate. Every error is a real defect; there is no
-annotation that excuses an unproven clause. Its one warning,
-`clause/in-flight`, is an honest state — a doc whose plan landed ahead of its
-code — and is not a defect to silence.
+and as the first step of **`lint`**. It settles everything mechanical
+(`agent_harness_rails/rules/primitives.mdc` § Checked mechanically) with
+file:line output you should cite rather than restate. Every error is a real
+defect; there is no annotation that excuses an unproven clause. Its one
+warning, `clause/in-flight` (a doc whose plan landed ahead of its code), is an
+honest state, not a defect to silence.
 
-What it **cannot** settle is whether a tagged example actually proves its clause,
-and that is the check worth your judgment: breaking the clause has to turn one of
-its evaluations red (`agent_harness_rails/rules/testing.mdc` § What counts as
-proving a clause). A green row over a clause claiming *only* or *never* with one
-happy path behind it is the failure mode this tree is most prone to, because
-nothing mechanical will ever flag it.
+What it **cannot** settle is whether a tagged example actually proves its
+clause: breaking the clause has to turn one of its evaluations red
+(`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+A green row over a clause claiming *only* or *never* with one happy path behind
+it is the failure mode this tree is most prone to — nothing mechanical will
+flag it.
 
 Parent must supply: **operation** (`capture` | `trace` | `update` | `lint`),
 tree root (default `docs/primitives/`), the target capability or question text,
@@ -60,11 +59,9 @@ inference in your report, and ask once only when genuinely ambiguous.
   your report, never edit it. **`## Provenance`** is append-only. **`## Intent`**
   changes only via capture (with human confirmation) — the planning workflows
   and the execution revision loop own it otherwise (`agent_harness_rails/rules/primitives.mdc`).
-- **Every line earns its place:** these docs exist to be read years later by
-  someone deciding whether they can change the code. Decisions, rejected
-  alternatives, and accepted debt belong; session process — review counts,
-  agent names, commands run, progress narration — does not. Write nothing you
-  would not want to load in a year, and flag existing noise as a lint finding
+- **Every line earns its place:** decisions, rejected alternatives, and
+  accepted debt belong; session process — review counts, agent names, commands
+  run, progress narration — does not. Flag existing noise as a lint finding
   rather than rewriting append-only history.
 - **Scope:** You **do not** change Rails application code or tests unless the
   parent explicitly included that scope — this agent is for **primitives

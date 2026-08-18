@@ -13,8 +13,9 @@ description: >-
 <objective>
 Rails has no service layer. Business logic belongs on models. When an operation
 outgrows a single model method, extract to a PORO namespaced under the primary
-model, a form object, or a job — never to `app/services/`. Follow opinionated Rails best practice: rich domain models, minimal indirection, objects that represent
-real concepts, and clarity over architecture astronautics.
+model, a form object, or a job — never to `app/services/`. Opinionated Rails
+best practice: rich domain models, minimal indirection, objects that represent
+real concepts.
 </objective>
 
 ## Process
@@ -99,7 +100,7 @@ Key principles:
 Before writing code, ask these questions:
 
 **"Do I actually need a new object?"**
-- One model, one action → model method. Full stop.
+- One model, one action → model method
 - Two models, controller can coordinate → inline orchestration is fine
 - Extract when you can name the concept precisely and the name is richer than the model
   name alone. If you're struggling to name it, the logic belongs on the model.
@@ -107,7 +108,6 @@ Before writing code, ask these questions:
 **"What should this object be called?"**
 - Named after a domain noun, not a verb: `Onboarding`, not `OnboardService`
 - Namespaced under the primary model: `Account::Onboarding`, not `OnboardAccount`
-- If you can't find a good noun, the logic might belong on the model
 
 **"Where does this file live?"**
 - Form objects → `app/models/` (e.g. `app/models/registration.rb`)

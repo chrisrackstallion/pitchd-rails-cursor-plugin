@@ -46,9 +46,8 @@ from the API in a sandboxed session is the common case):
 
 This is the index that powers guides.rubyonrails.org. Each entry's `url:`
 field names a guide as `<name>.html` — map `.html` → `.md` to get the exact
-source filename (`routing.html` → `routing.md`). It is a verifiable fetch,
-so the no-invention rule still holds: filenames come from a fetched index,
-never from memory.
+source filename (`routing.html` → `routing.md`). Filenames still come from a
+fetched index, never from memory.
 
 **Step 2 — Raw guide content (replace `<file-name>` with the exact `.md` name
 from the index, e.g. `routing.md`, `active_record_querying.md`):**

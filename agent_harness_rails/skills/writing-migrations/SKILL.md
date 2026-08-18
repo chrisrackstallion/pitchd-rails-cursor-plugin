@@ -90,9 +90,9 @@ end
 
 **"Is this operation safe on a large table?"**
 
-Some operations lock the table and block reads/writes while they run.
-On a small or new table this is fine. On a large production table,
-evaluate before running:
+Some operations lock the table and block reads/writes while they run —
+fine on a small or new table. On a large production table, evaluate
+before running:
 
 | Operation | Safety | Notes |
 |-----------|--------|-------|

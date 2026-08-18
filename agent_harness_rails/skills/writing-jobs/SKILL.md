@@ -11,12 +11,10 @@ description: >-
 # Writing Rails Jobs
 
 <objective>
-Jobs are the async service layer Rails provides. They are thin orchestrators —
-the same principle that governs controllers applies here: delegate domain logic
-to models, keep the job itself short, and treat the queue as a delivery
-mechanism, not a place to build features. A job that reaches directly into
-business logic belongs on the model; a job that coordinates a model verb
-asynchronously is exactly right.
+Jobs are the async service layer Rails provides: thin orchestrators that
+delegate domain logic to models. The queue is a delivery mechanism, not a
+place to build features — a job coordinates a model verb asynchronously;
+business logic in the job itself belongs on the model.
 </objective>
 
 ## Process
@@ -90,8 +88,8 @@ use `deliver_later` from an `after_commit` callback or after the transaction.
 ### 4. Idempotency
 
 Jobs can be retried — by the queue backend on failure, by a developer manually,
-or after a deploy with pending jobs. A job that is safe to run twice is
-idempotent. Design for it from the start.
+or after a deploy with pending jobs — so every job must be safe to run twice.
+Design for it from the start.
 
 ```ruby
 # Good — idempotent: find_or_create_by is safe to run again

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Naming Conventions
 
-Names are decisions. Good names make the codebase read like prose, `rails routes` read like a table of contents, and `schema.rb` read like a domain model. Use Rails idioms first, domain language second, and invent nothing. Boring, obvious names are correct. Clever names are a smell.
+Use Rails idioms first, domain language second, and invent nothing. Boring, obvious names are correct; clever names are a smell.
 
 ## Domain Layer (Models, Concerns, POROs)
 

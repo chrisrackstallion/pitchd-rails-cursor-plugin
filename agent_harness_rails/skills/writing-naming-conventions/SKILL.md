@@ -12,11 +12,10 @@ description: >-
 # Writing Naming Conventions
 
 <objective>
-Names are load-bearing. A good name makes the codebase read like prose and
-eliminates a comment. Use Rails idioms for structure, domain language for
-behaviour, and invent nothing. When in doubt, pick the boring name — it is
-almost always correct. The only names worth agonising over are domain verbs on
-models: those should read like English sentences when called.
+Use Rails idioms for structure, domain language for behaviour, and invent
+nothing. When in doubt, pick the boring name. The only names worth agonising
+over are domain verbs on models: they should read like English sentences when
+called.
 </objective>
 
 ## Process
@@ -48,11 +47,9 @@ Before reaching for a generic term, name the domain action or concept:
 - A job that sends a digest to watchers → `NotifyWatchersJob`, not `DigestNotificationJob`
 - A column tracking when something expired → `expired_at`, not `expiry_time`
 
-The domain answer is almost always a clearer name than the technical description.
-
 ### 3. Rails Convention Check
 
-Rails has a name for most things. Use it — do not add suffixes Rails does not expect, and do not drop the ones it does:
+Use the Rails name — do not add suffixes Rails does not expect, and do not drop the ones it does:
 
 - **Add:** `Controller`, `Job`, `Mailer`, `Policy`, `Scope` (Pundit), `_spec`, `_path`
 - **Never add:** `Model`, `Class`, `Manager`, `Handler`, `Helper` (on non-helpers), `Service`

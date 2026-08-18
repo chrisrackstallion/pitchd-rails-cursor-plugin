@@ -16,10 +16,9 @@ the work is the **right kind of Rails solution**, then **tactics**
 (`writing-*`, `agent_harness_rails/rules/*.mdc`) for **correct usage**. Do not duplicate the
 compass inside this file — read it first when reviewing.
 
-Be direct. State violations as violations, not suggestions. "This violates
-`agent_harness_rails/rules/services.mdc`" — not "you might want to consider". The harness rules exist
-because these decisions have already been made; the job here is to
-apply them, not re-debate them.
+Be direct. State violations as violations, not suggestions: "This violates
+`agent_harness_rails/rules/services.mdc`" — not "you might want to consider". Harness rules are
+settled decisions; apply them, do not re-debate them.
 </objective>
 
 **Announce:** "I'm using the reviewing-rails-work skill."
@@ -77,10 +76,9 @@ Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
 sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
 
 **Coverage rule:** map every changed file (or plan area) to its skill/rule
-pair before concluding. An area reviewed without its skill and rule loaded is
-an area you did not review — do not report `Status: Approved` while any
-touched area's conventions are unread. If a diff touches a layer with no
-matching row (rare), say so in the report rather than silently skipping it.
+pair before concluding — do not report `Status: Approved` while any touched
+area's conventions are unread. If a diff touches a layer with no matching row
+(rare), say so in the report rather than silently skipping it.
 
 Prefix these findings **`tactical:`**.
 
@@ -98,9 +96,9 @@ Runs when the app has a **`docs/primitives/`** tree (see `agent_harness_rails/ru
 Read the **one** capability doc named by the plan header's **Capability:** line
 (or located via `docs/primitives/index.md`) plus `compilation.md` — never the
 whole tree. No tree → note "No primitives tree" in the report and skip.
-**Run `agent_harness_rails evals` first.** Clause coverage, dead spec paths, untagged
-evaluations, tags naming a superseded clause — it settles all of those with
-file:line. Cite its output rather than re-deriving it by hand, and spend the
+**Run `agent_harness_rails evals` first.** It settles clause coverage, dead spec
+paths, untagged evaluations, and tags naming a superseded clause, with
+file:line — cite its output rather than re-deriving it by hand, and spend the
 review on what it cannot judge: whether a clause is the *right* clause.
 
 Prefix these findings **`primitives:`**. They are checkable properties, not
@@ -115,8 +113,7 @@ suggestions:
   `superseded by I<n>` / `unchanged — regression contract`), and the layer its
   proof will land at (`writing-rails-plans` § Plan document header). A missing
   table, a clause the tasks touch that the table omits, or a table row no task
-  delivers is a finding — that table is what makes the plan's promises reviewable
-  before any code exists. A Shape-only plan states `no intent delta` and lists its
+  delivers is a finding. A Shape-only plan states `no intent delta` and lists its
   regression contract; a plan claiming `no intent delta` while a clause's wording
   changes is a mislabelled amendment.
 - **Clause admissibility** — every new or amended clause passes all four tests:
@@ -125,21 +122,20 @@ suggestions:
   technology choices, refactors, and task lists written as clauses are the common
   failure and belong in `## Shape` or the task list; run the durable test first,
   since it disposes of all four at once.
-- **Clause granularity** — **plan phase, and the cheapest finding you can make.**
-  One behaviour per clause: an umbrella verb (*manage*, *handle*, *support*) or an
-  `and` joining two different actions is several promises in one sentence
-  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). Caught here it
-  costs a rewritten sentence; missed, it becomes a clause whose only possible
-  proof is a sprawling system spec, against the budget and the Five Gates. Report
-  the split with the per-action sentences written out. The opposite is also a
-  finding: clauses split so fine they differ only by which layer proves them are
-  the suite transcribed into the tree.
+- **Clause granularity** — **plan phase.** One behaviour per clause: an umbrella
+  verb (*manage*, *handle*, *support*) or an `and` joining two different actions
+  is several promises in one sentence
+  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses); missed here, its
+  only possible proof is a sprawling system spec, against the budget and the Five
+  Gates. Report the split with the per-action sentences written out. The opposite
+  is also a finding: clauses split so fine they differ only by which layer proves
+  them are the suite transcribed into the tree.
 - **No overlap** — a new capability doc whose intent overlaps an existing one
   is a plan defect (should be an amendment). Read `index.md` end to end before
-  accepting a new doc; that list is the only place the overlap is visible without
-  opening the whole tree. If two lines are too vague to tell apart, report **that**
-  as the finding — an indiscriminate index line is the mechanism by which duplicate
-  capabilities get created (`agent_harness_rails/rules/primitives.mdc`
+  accepting a new doc — the only place overlap is visible without opening the
+  whole tree. If two lines are too vague to tell apart, report **that** as the
+  finding: an indiscriminate index line is how duplicate capabilities get
+  created (`agent_harness_rails/rules/primitives.mdc`
   § Finding the right capability).
 - **Compilation and Shape** — nothing contradicts `compilation.md` or the
   doc's recorded Shape; a change that needs a constraint amended says so
@@ -164,10 +160,9 @@ suggestions:
   **examples** that prove each clause — a tag on a `describe` or `context` is a
   finding, because it keeps resolving after the example it stood for is
   deleted.
-- **Eval adequacy** — the check `agent_harness_rails evals` cannot make, and the
-  one that decides whether the tree is worth keeping: **would breaking the
-  clause turn a tagged example red?** Read each touched clause's wording against
-  its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one
+- **Eval adequacy** — the check `agent_harness_rails evals` cannot make: **would
+  breaking the clause turn a tagged example red?** Read each touched clause's
+  wording against its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one
   happy path is a finding; so is an example asserting the affordance (form
   renders, `200` returned) where the clause names an outcome; so is a denial
   bolted onto a canonical journey instead of living in the policy or request
@@ -177,9 +172,8 @@ suggestions:
   at.
 
   Then run it the other way: **is every listed evaluation necessary?** An
-  evaluation you could delete with the clause still fully proven is padding, and
-  a long row reads as thorough while leaving nobody accountable. More than ~3 on
-  one clause is a tripwire, not a virtue — usually two promises sharing an id
+  evaluation you could delete with the clause still fully proven is padding.
+  More than ~3 on one clause is a tripwire — usually two promises sharing an id
   (`agent_harness_rails/rules/primitives.mdc` § Size discipline).
 - **Provenance conflicts** — the work does not re-litigate a recorded
   rejection or undo a recorded deliberate decision without saying so.
@@ -218,9 +212,9 @@ a `philosophy:` finding even when every tactic is clean.
 **Implementation:** Map changed files to skills; compass on overall drift; one
 home per behaviour for tests (`writing-tests`). **One home per behaviour for
 code too:** scan the scope as a whole, not file by file — grep the changed
-files for method definitions that repeat across entities. The same method
-defined on multiple models is a `tactical:` finding: shared behaviour belongs
-in a concern or on the owning model (`agent_harness_rails/rules/models.mdc`).
+files for method definitions that repeat across entities; the same method on
+multiple models is a `tactical:` finding (shared behaviour belongs in a
+concern or on the owning model, `agent_harness_rails/rules/models.mdc`).
 
 ### 7. Surroundings pass (pre-existing code in touched files)
 
@@ -236,13 +230,9 @@ code — already covered above. Lines that were there before and remain
 substantially unchanged are surrounding code — covered here. Greenfield files
 that are entirely new: skip and note "No surrounding code."
 
-For each surrounding finding:
-
-1. Open the cited file and confirm the surrounding lines exist as stated.
-2. Verify the issue is not handled elsewhere in the same scope.
-3. Confirm the rule or skill you're citing actually prohibits the pattern.
-
-Drop any finding you cannot verify. Prefix philosophy findings
+Verify each surrounding finding per §1 (read the lines, confirm the issue is
+not handled elsewhere, read the cited rule); drop any you cannot verify.
+Prefix philosophy findings
 **`surrounding/philosophy:`** and tactical findings **`surrounding/tactical:`**.
 Use the same confidence scale (§8 Calibration). Do not repeat findings already
 in the main review.
@@ -269,15 +259,14 @@ a thin wrapper around Active Record is not a service object."
 Suppress only findings you cannot verify at all. Do not suppress because the issue
 seems small — small harness violations are still violations.
 
-**Necessity gate for everything that is not a rule violation.** Recommendations
-and judgment-based feedback go through a filter before they reach the report:
-is this change actually necessary, or does it add complexity to the
-implementation, the tests, or both? A recommendation that adds indirection,
-another object, another layer of specs, or configuration for a hypothetical
-future need is over-engineering wearing a review's clothes — drop it. The
-omakase posture applies to the reviewer too: the boring, direct version that
-satisfies the rules is the goal, not the most defensively engineered one.
-Concretely, before writing a recommendation ask:
+**Necessity gate for everything that is not a rule violation.** Before a
+recommendation or judgment-based item reaches the report: is it actually
+necessary, or does it add complexity to the implementation, the tests, or
+both? A recommendation that adds indirection, another object, another layer of
+specs, or configuration for a hypothetical future need is over-engineering —
+drop it. The omakase posture applies to the reviewer too: the boring, direct
+version that satisfies the rules is the goal. Before writing a recommendation
+ask:
 
 - Does acting on it make the code **simpler or more correct** — or merely
   more elaborate?

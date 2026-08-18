@@ -22,7 +22,7 @@ general Rails advice, or remembered text **as if** it came from this repo.
 > **Upstream rename:** the repo is now **`marckohlbrugge/37signals-skills`**
 > (formerly `unofficial-37signals-coding-style-guide` — the old name still
 > redirects). Guide topics live under **`guide/`**; it also ships agent skills
-> under **`agent_harness_rails/skills/*/SKILL.md`**. This harness's own rules and skills remain the
+> under **`skills/*/SKILL.md`**. This harness's own rules and skills remain the
 > project contract either way.
 </objective>
 

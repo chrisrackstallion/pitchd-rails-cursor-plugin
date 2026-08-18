@@ -20,8 +20,7 @@ what generated code cannot carry: **intent** (what must be true and why),
 **compilation** (app-specific constraints), **evaluations** (where each intent
 clause is proven in RSpec), and **provenance** (decisions, rejected
 alternatives, accepted debt). Plain **git + markdown**, one file per
-capability, a reading contract of at most three files — the same
-**boring-defaults** instinct as omakase Rails, applied to knowledge.
+capability, a reading contract of at most three files.
 </objective>
 
 **Announce:** "I'm using the maintaining-primitives skill."
@@ -55,10 +54,9 @@ docs/primitives/
 ```
 
 **Reading contract:** `index.md` + the one target capability doc +
-`compilation.md`. Never more — with **one exception: `lint`**, which is a
-health pass and sweeps every doc in the tree by design. Cross-links are for
-humans — no operation requires traversing them. This is not a wiki; there are
-no topic pages to garden and no graph to walk.
+`compilation.md`. Never more — with **one exception: `lint`**, which sweeps
+every doc by design. Cross-links are for humans — no operation requires
+traversing them.
 
 ## Operations
 
@@ -91,24 +89,22 @@ human confirmation between, ordered by where change is coming.
    Add the `intent:` tag to the examples as you go — a clause naming a spec
    that does not carry the tag is a finding, not a capture.
 
-   **Do not aggregate to fit the clause ceiling.** A capability with forty specs
-   and a ~10-clause ceiling invites compressing several behaviours into one
-   umbrella sentence — *"a member can manage their comments"* — which produces
-   exactly the clause no example proves
+   **Do not aggregate to fit the clause ceiling.** Compressing several
+   behaviours into one umbrella sentence — *"a member can manage their
+   comments"* — produces exactly the clause no example proves
    (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). If the honest
-   clause list runs past ten, the finding is that the **capability** should split,
-   not that the sentences should widen.
+   clause list runs past ten, the finding is that the **capability** should
+   split, not that the sentences should widen.
 
    **Do not promote an adjacent spec into a proof.** The example you tag has to
    go red if the clause stops being true
    (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
-   A backfill is where this slips most easily: the clause gets written from what
-   the code does, so its wording arrives *wider* than any single existing
-   example — and tagging the nearest happy path makes the gap invisible. Where
-   the clause claims *only*, *never*, or *any* and only one case is covered,
-   either narrow the clause to what the suite actually proves, or keep the wide
-   clause and report the uncovered half as a gap under step 4. Both are honest;
-   tagging past it is not.
+   Backfilled clauses are written from what the code does, so their wording
+   arrives *wider* than any single existing example — tagging the nearest happy
+   path hides the gap. Where the clause claims *only*, *never*, or *any* and
+   only one case is covered, either narrow the clause to what the suite
+   actually proves, or keep the wide clause and report the uncovered half as a
+   gap under step 4. Both are honest; tagging past it is not.
 3. **Code second** — models, routes, policies for the Shape bullets (deltas
    only — nothing derivable from harness rules or stated in `compilation.md`).
 4. **Gaps are findings, and they stay red** — observable behaviour with no
@@ -116,8 +112,7 @@ human confirmation between, ordered by where change is coming.
    that excuses it: `agent_harness_rails evals` will fail on that clause until
    a spec proves it. Say so when you report — list the uncovered clauses as
    blocking `writing-tests` follow-up, and do not soften the clause or drop it
-   to keep the run green. A capture that ends green by omitting behaviour has
-   recorded less than one that ends red by naming it.
+   to keep the run green.
 5. **Provenance opens with one line:**
    `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
    Do not mine git log for decision archaeology — noisy, low-yield.
@@ -133,10 +128,8 @@ human confirmation between, ordered by where change is coming.
 
 ### lint — run the tool, then judge
 
-**Step 1 — `agent_harness_rails evals`.** It settles everything mechanical: clause coverage on
-`built` docs, evaluations naming a file that does not exist or does not carry
-the tag, tags naming an absent or superseded clause, duplicate ids, dangling
-supersessions, and docs still in the retired prose format.
+**Step 1 — `agent_harness_rails evals`.** It settles everything mechanical
+(`agent_harness_rails/rules/primitives.mdc` § Checked mechanically).
 
 ```bash
 agent_harness_rails evals                    # exits 1 on findings
@@ -156,34 +149,29 @@ clause out of the doc.
 **Step 2 — the judgment checks the tool cannot make:**
 
 - **Umbrella clauses** — a clause built on *manage*, *handle*, *support*, or an
-  `and` joining two different actions is several promises in one sentence, and it
-  is the upstream cause of most unprovable rows
-  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). The mechanical
-  hint is the row: a clause needing four evaluations is usually a clause needing
+  `and` joining two different actions is several promises in one sentence
+  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). Mechanical
+  hint: a clause needing four evaluations is usually a clause needing
   splitting. Report it as a proposed split with the per-action sentences written
   out — the ids are a human call, since splitting a clause changes what the
   system is recorded as promising.
-- **Rows that do not prove their clause** — the most valuable check here, and the
-  only one that decides whether the tree means anything. For each `built` clause,
-  read its wording against its tagged examples and ask whether breaking the
-  clause would turn one of them red
+- **Rows that do not prove their clause** — for each `built` clause, read its
+  wording against its tagged examples and ask whether breaking the clause would
+  turn one of them red
   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
   Quantifiers are where the rot collects: a clause saying *only* or *never*
   whose evaluations are one happy path is a finding, however green the run.
   Report it as an unproven clause with the missing case named; narrowing the
   clause instead is a human call, since it changes what the system promises.
   Check the reverse too — an evaluation that could be deleted with the clause
-  still fully proven is a padded row, and padding is what a long row is usually
-  made of.
+  still fully proven is a padded row.
 - Every capability doc listed in `index.md`, and vice versa; statuses agree.
 - **`index.md` lines that do not discriminate** — the tool checks a line exists,
   not that it earns its place, and this file is the tree's whole discovery surface
   (`agent_harness_rails/rules/primitives.mdc` § Finding the right capability).
   Read the list as a stranger deciding which doc to open: two lines that could
   describe each other's capability are a finding, as is a missing `Owns:` on a
-  capability whose filename is not a resource name. This check earns its keep as
-  the list grows — a vague line at fifteen capabilities is recoverable, and at
-  sixty it is how a duplicate capability gets created.
+  capability whose filename is not a resource name.
 - **Names that fight the flat namespace** — a capability that split, or one that
   never owned a resource, should read `<domain>_<behaviour>` so the prefix groups
   it (§ Style). Propose renames sparingly and say the cost out loud: the filename
@@ -199,8 +187,7 @@ clause out of the doc.
   `compilation.md` >~50 lines.
 - No content that belongs elsewhere: app code, plan tasks, restated harness rules.
 - **Process noise** — provenance lines carrying review or task counts, agent or
-  skill names, commands run, or progress narration. Every line must earn its
-  place with a reader deciding whether to change the code
+  skill names, commands run, or progress narration
   (`agent_harness_rails/rules/primitives.mdc` § Provenance). Report as a
   finding; provenance is append-only, so the fix is a human call, not a rewrite.
 - Stray files outside the four allowed types.
@@ -223,9 +210,8 @@ clause out of the doc.
 - **Per-edit provenance** — five plan revisions are one `planned` event, not
   five lines.
 - **Process noise as provenance** — "approved after 3 review iterations",
-  "implemented by rails-implementor", "suite green". None of it changes a future
-  decision; all of it makes the section more expensive to read and append. The
-  event, its reasoning, and what was rejected are the payload.
+  "implemented by rails-implementor", "suite green". The event, its reasoning,
+  and what was rejected are the payload.
 - **Capture without confirmation** — reconstructed intent shipped as fact.
   Unconfirmed clauses mislead every future planner; always close the loop.
 - **`evaluations:` written from intention** — entries come from specs that

@@ -14,16 +14,13 @@ description: >-
 Write policies that answer one question: "can this user perform this action
 on this record?" Policies are plain Ruby objects — no DSL, no magic. One
 policy per model, one method per controller action, deny by default. Pundit
-is a thin convention layer (~300 lines) that earns its dependency by keeping
-authorization in one predictable place rather than scattered across models
-and controllers.
+is a thin convention layer (~300 lines) that keeps authorization in one
+predictable place.
 </objective>
 
 > **Philosophy note:** vanilla Rails would keep authorization in model methods
-> and controller guards. Pundit is an extra file per model, but the trade-off is
-> worth it: every action is authorized, every index is scoped, and
-> `verify_authorized` catches anything you miss.
-> You always know where to look.
+> and controller guards; Pundit trades an extra file per model for every action
+> authorized, every index scoped, and `verify_authorized` catching misses.
 
 > Policies are **authorization** (who may act), not a second domain layer.
 > Business rules and state transitions stay on the model; policies call model

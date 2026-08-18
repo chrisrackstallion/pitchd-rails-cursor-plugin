@@ -11,11 +11,10 @@ description: >-
 # Writing Rails Models
 
 <objective>
-Write models that are rich domain objects — the heart of the application, not
-anaemic data bags. Models own business logic, express domain language, and
-keep controllers thin. Follow opinionated Rails best practice: concerns for
-horizontal behaviour, state tracked as records, database-backed everything,
-and clarity over cleverness.
+Write models as rich domain objects that own business logic, express domain
+language, and keep controllers thin. Opinionated Rails best practice: concerns
+for horizontal behaviour, state tracked as records, database-backed everything,
+clarity over cleverness.
 </objective>
 
 ## Process
@@ -86,12 +85,10 @@ The `Publishable` concern (from `references/patterns.md`) provides `publish`,
 (`visibility`) that doesn't need audit trails. Never mix both patterns for the
 same concept.
 
-`prefix: true` on the enum is required here because bare `public` / `private`
-values would generate `Article.public` / `Article.private` class methods that
-shadow Ruby's `Module#public` / `Module#private` visibility modifiers. With the
-prefix you get `article.visibility_public?` and `Article.visibility_public`
-instead. Values that don't collide with existing methods (`draft`, `archived`)
-don't need a prefix.
+`prefix: true` on the enum is required here: bare `public` / `private` values
+would generate `Article.public` / `Article.private` class methods that shadow
+Ruby's `Module#public` / `Module#private` visibility modifiers. Values that
+don't collide with existing methods (`draft`, `archived`) don't need a prefix.
 
 ### 3. Decision Framework
 
