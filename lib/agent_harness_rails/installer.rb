@@ -59,9 +59,8 @@ module AgentHarnessRails
       plan.each { |relative, verdict| result.collisions << relative if verdict == :collision }
       return result unless result.clean?
 
-      # Only real moves are reported. Duplicates — app copies byte-identical to
-      # the vendored file — are dropped quietly, as the README promises; counting
-      # them as "moved" made every copy-mode update claim a full migration.
+      # Only real moves are reported; duplicates — app copies byte-identical to
+      # the vendored file — are dropped quietly, as the README promises.
       if migration_plan&.any?
         migration.apply(migration_plan)
         result.migrated.concat(migration_plan.moves)

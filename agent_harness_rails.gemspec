@@ -21,23 +21,15 @@ Gem::Specification.new do |spec|
 
   spec.homepage = "https://github.com/chrisrackstallion/agent_harness_rails"
   spec.license = "MIT"
-  # The oldest Ruby the oldest Rails this harness supports will run on. Rails 7.2
-  # requires Ruby 3.1, and Rails 7 apps are supported on purpose rather than by
-  # accident: Rails/StrongParametersExpect in rubocop-harness.yml gates itself on
+  # The oldest Ruby still receiving upstream support. The floor tracks Ruby's
+  # EOL schedule, not Rails: every Rails version this harness accommodates
+  # (7.2 up) runs on Ruby 3.3, so raising it strands no Rails app — and
+  # Rails/StrongParametersExpect in rubocop-harness.yml still gates itself on
   # the railties version, so a Rails 7 app sees no params.expect offences.
-  #
-  # Nothing technical pins this. The gem has no runtime dependencies and its own
-  # code is 3.0-compatible syntax, so the floor is a support policy, not a
-  # constraint — raise it when the harness stops accommodating Rails 7, not when
-  # a newer Ruby looks tempting.
-  #
-  # Known trade-off: Ruby 3.1 is past end-of-life. We keep it because dropping it
-  # would strand Rails 7.2 apps the cop gating is written to serve, and the cost
-  # here is close to zero. Revisit when Rails 7.2 itself goes out of support.
   #
   # .rubocop.yml pins TargetRubyVersion to match, and spec/gem_spec.rb asserts the
   # two agree — so a cop can never suggest syntax a consuming app cannot run.
-  spec.required_ruby_version = ">= 3.1"
+  spec.required_ruby_version = ">= 3.3"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
@@ -67,16 +59,15 @@ Gem::Specification.new do |spec|
     payload +
       Dir.glob("lib/**/*.rb") +
       Dir.glob("config/*.yml") +
-      [ "exe/agent_harness_rails", "exe/rails-evals", "LICENSE", "README.md", "CHANGELOG.md",
+      [ "exe/agent_harness_rails", "LICENSE", "README.md", "CHANGELOG.md",
         "rubocop.yml", "rubocop-harness.yml", "rubocop-harness-rspec.yml" ]
         .select { |f| File.exist?(f) }
   end
 
   spec.bindir = "exe"
-  # agent_harness_rails installs and updates the harness; rails-evals checks that
-  # every intent clause in docs/primitives/ is proven by a spec. Separate commands
-  # because they answer separate questions — one is setup, one runs in CI beside
-  # RuboCop.
-  spec.executables = [ "agent_harness_rails", "rails-evals" ]
+  # One executable, named for the gem. `install`, `update`, and `check` manage
+  # the vendored harness; `evals` checks that every intent clause in
+  # docs/primitives/ is proven by a spec, in CI beside RuboCop.
+  spec.executables = [ "agent_harness_rails" ]
   spec.require_paths = [ "lib" ]
 end

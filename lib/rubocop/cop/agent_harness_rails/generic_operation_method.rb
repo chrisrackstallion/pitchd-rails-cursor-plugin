@@ -34,6 +34,9 @@ module RuboCop
 
           add_offense(node.loc.name, message: format(MSG, name: name))
         end
+        # `def self.call` is the classic service-object entry point, so the
+        # class-method form matters as much as the instance form.
+        alias on_defs on_def
 
         private
 

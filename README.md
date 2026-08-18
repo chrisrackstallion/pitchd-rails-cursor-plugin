@@ -51,8 +51,7 @@ If git was tracking those files at their old paths, **commit the install with `g
 | `agent_harness_rails install` | migrate any existing editor content, vendor the harness, create the links (idempotent) |
 | `agent_harness_rails update` | re-vendor after `bundle update`, reporting what changed |
 | `agent_harness_rails check` | verify the vendored harness matches the gem — use in CI |
-| `agent_harness_rails root` | print the payload path inside the gem |
-| `rails-evals` | check every intent clause in `docs/primitives/` is proven by a spec — use in CI ([below](#checking-that-intent-is-proven)) |
+| `agent_harness_rails evals` | check every intent clause in `docs/primitives/` is proven by a spec — use in CI ([below](#checking-that-intent-is-proven)) |
 
 ### Windows
 
@@ -122,14 +121,14 @@ That is a standing, human-owned decision, and the harness distinguishes it from 
 
 ### Checking that intent is proven
 
-`rails-evals` is the other half: a linter for the [primitives tree](#keep-durable-primitives-intent-compilation-evaluations-provenance). Each capability doc declares its intent clauses and the specs that prove them in YAML frontmatter; each proving example carries the clause id as RSpec metadata:
+`agent_harness_rails evals` is the other half: a linter for the [primitives tree](#keep-durable-primitives-intent-compilation-evaluations-provenance). Each capability doc declares its intent clauses and the specs that prove them in YAML frontmatter; each proving example carries the clause id as RSpec metadata:
 
 ```ruby
 it "shows replies nested under their parent", intent: "comment_threads#I2" do
 ```
 
 ```console
-$ rails-evals
+$ bundle exec agent_harness_rails evals
 docs/primitives/capabilities/comment_threads.md:12:1: E: I3 has no evaluation — a built clause must name the spec that proves it [clause/unproven]
 spec/system/billing_spec.rb:12:5: E: intent tag "billing#I9" names no such clause [tag/unresolved]
 
@@ -213,7 +212,7 @@ Use the **`refactoring-stimulus-controllers`** skill. It maps every controller a
 ### Keep durable primitives (intent, compilation, evaluations, provenance)
 > *"Set up primitives"* / *"Document the billing feature"* / *"Why don't we cap thread depth?"*
 
-The harness maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. Intent and evaluations live in each doc's YAML frontmatter so **[`rails-evals`](#checking-that-intent-is-proven)** can check them; a record nothing verifies is a record that quietly stops being true. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`rails-primitives-maintainer`**. Structure rules: **`agent_harness_rails/rules/primitives.mdc`**.
+The harness maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. Intent and evaluations live in each doc's YAML frontmatter so **[`agent_harness_rails evals`](#checking-that-intent-is-proven)** can check them; a record nothing verifies is a record that quietly stops being true. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`rails-primitives-maintainer`**. Structure rules: **`agent_harness_rails/rules/primitives.mdc`**.
 
 ---
 

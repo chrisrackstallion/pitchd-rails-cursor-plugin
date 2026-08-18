@@ -100,7 +100,7 @@ capture, or a planner lazy backfill — never from what a plan promises. A
 
 ## Tagging the proof
 
-Each named spec file must carry the clause id as RSpec metadata, or `rails-evals`
+Each named spec file must carry the clause id as RSpec metadata, or `agent_harness_rails evals`
 reports the evaluation as untagged — a path alone is a claim, the tag is proof:
 
 ```ruby
@@ -178,4 +178,4 @@ boolean `true`, so an `on:` key silently loses its date. A clause withdrawn with
 no replacement uses `retired_on: YYYY-MM-DD` instead.
 
 Retagging is part of the amendment: examples tagged `#I4` must move to `#I5`, or
-`rails-evals` reports them as pointing at a superseded clause.
+`agent_harness_rails evals` reports them as pointing at a superseded clause.

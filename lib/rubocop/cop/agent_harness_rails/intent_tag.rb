@@ -10,8 +10,9 @@ module RuboCop
       #   it "shows replies nested under their parent", intent: "comment_threads#I2"
       #
       # This cop only checks the form. Whether the clause exists, is still
-      # active, and lists this spec file is `rails-evals`' job — it is the one
-      # that can read the primitives tree. The split matters: a malformed tag is
+      # active, and lists this spec file is `agent_harness_rails evals`' job —
+      # it is the one that can read the primitives tree. The split matters: a
+      # malformed tag is
       # a typo you fix while editing, and lint is where you are; an unresolvable
       # tag is a question about the doc, and belongs with the tool that reads it.
       #

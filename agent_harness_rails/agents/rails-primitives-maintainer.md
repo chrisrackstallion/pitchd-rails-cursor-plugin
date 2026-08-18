@@ -27,7 +27,7 @@ Apply **`agent_harness_rails/rules/primitives.mdc`** for any edits under `docs/p
 Intent clauses and their evaluations live in each doc's **YAML frontmatter**, not
 in prose sections.
 
-Run **`rails-evals`** before reporting on any operation that touched the tree,
+Run **`agent_harness_rails evals`** before reporting on any operation that touched the tree,
 and as the first step of **`lint`**. It settles everything mechanical — clause
 coverage, dead spec paths, untagged evaluations, tags naming a superseded
 clause — with file:line output you should cite rather than restate. Its

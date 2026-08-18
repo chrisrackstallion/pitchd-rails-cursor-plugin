@@ -294,16 +294,16 @@ updates the capability doc directly (see the Hard rules carve-out):
    **`intent:` tag** (`agent_harness_rails/rules/testing.mdc`); add it if the
    implementor did not, since the path alone is a claim and the tag is the
    proof. Delete-listed specs must actually be gone.
-2. **Run `rails-evals`** — it is the check, not a formality:
+2. **Run `agent_harness_rails evals`** — it is the check, not a formality:
 
    ```bash
-   rails-evals
+   agent_harness_rails evals
    ```
 
    Green is a precondition for step 3. Its two warnings —
    `clause/unproven-accepted` and `clause/in-flight` — do not block, and must
    not be silenced into passing.
-3. **Status** — flip to **`status: built`** only when `rails-evals` reports no
+3. **Status** — flip to **`status: built`** only when `agent_harness_rails evals` reports no
    errors for this capability; otherwise report the gap instead of flipping.
 4. **Provenance** — append **one** line for the whole run:
 
@@ -337,7 +337,7 @@ Deliver a short **completion package**:
 - **Whole-run coherence review** outcome (Step 6): Approved after N iterations, or skipped (single-task run).
 - **Full-suite result** (Step 7): the command run and its outcome, or that it was skipped.
 - **harness reviewer** final notes (if any non-blocking recommendations were in those reports).
-- **Primitives close-out** summary (Step 8): status, `evaluations:` updated, `rails-evals` result, the provenance line appended — or why status could not flip.
+- **Primitives close-out** summary (Step 8): status, `evaluations:` updated, `agent_harness_rails evals` result, the provenance line appended — or why status could not flip.
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it). In **step-by-step** mode the user has been committing per task, so name only what remains after the last stop.
 - The plan header's **Delivery:** boundaries restated (which tasks compose which PR), so the user cuts PRs as planned — the orchestrator never commits or opens PRs itself.
 

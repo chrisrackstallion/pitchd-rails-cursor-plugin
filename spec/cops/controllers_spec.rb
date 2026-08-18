@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-
-return unless RUBOCOP_AVAILABLE
-
 require "cops/cop_helper"
 
 RSpec.describe RuboCop::Cop::AgentHarnessRails::NonRestfulAction, :config do

@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
 require "optparse"
+require "json"
 require_relative "../agent_harness_rails"
 require_relative "installer"
+require_relative "evals"
 
 module AgentHarnessRails
   # Command line entry point. Returns exit codes rather than calling exit, so the
   # whole thing is testable without forking.
   class CLI
+    EVALS_FORMATS = %w[text json].freeze
+
     USAGE = <<~TEXT
       usage: agent_harness_rails <command> [options]
 
@@ -15,14 +19,15 @@ module AgentHarnessRails
         install    vendor the harness into this project and link the editor directories
         check      verify the vendored harness against this gem (use in CI)
         update     re-vendor and report what changed
-        root       print the payload directory inside this gem
+        evals      check every intent clause in docs/primitives/ is proven by a spec (use in CI)
         version    print the gem version
 
       options:
-        --path PATH    project root (default: current directory)
-        --mode MODE    link (default) or copy, for filesystems without symlinks
-        --no-migrate   leave existing .claude/.cursor content alone and fail instead
-        -h, --help     print this help
+        --path PATH      project root (default: current directory)
+        --mode MODE      install/update: link (default) or copy, for filesystems without symlinks
+        --no-migrate     install/update: leave existing .claude/.cursor content alone and fail instead
+        --format FORMAT  evals: text (default) or json
+        -h, --help       print this help
 
       examples:
         agent_harness_rails install                  # from the project root
@@ -30,18 +35,24 @@ module AgentHarnessRails
         agent_harness_rails install --mode copy      # e.g. a mounted volume without symlinks
         agent_harness_rails check                    # in CI: exits 1 on drift
         agent_harness_rails update                   # after bumping the gem
+        agent_harness_rails evals                    # in CI: exits 1 on unproven intent
 
       On install, skills, rules, and agents already in .claude/ or .cursor/ are
       moved into #{PAYLOAD_DIR}/ first, so the symlinks cannot shadow or delete
       them. Local edits to vendored files are kept; `check` reports them as
       overridden without failing.
+
+      Evals reads intent clauses from each capability doc's YAML frontmatter and
+      the `intent: "<capability>#I<n>"` metadata on spec examples; the same tag
+      runs the proof: rspec --tag 'intent:comment_threads#I2'. Warnings — an
+      `unproven:` clause, a doc mid-amendment — are reported without failing.
     TEXT
 
     def initialize(argv, out: $stdout, err: $stderr)
       @argv = argv.dup
       @out = out
       @err = err
-      @options = { path: Dir.pwd, mode: :link, migrate: true }
+      @options = { path: Dir.pwd, mode: :link, migrate: true, format: "text" }
     end
 
     def run
@@ -52,7 +63,7 @@ module AgentHarnessRails
       when "install" then install
       when "update" then update
       when "check" then check
-      when "root" then say(AgentHarnessRails.payload)
+      when "evals" then evals
       when "version" then say(VERSION)
       when "help" then usage(0)
       else
@@ -79,10 +90,16 @@ module AgentHarnessRails
         o.on("--path PATH") { |v| @options[:path] = v }
         o.on("--mode MODE") { |v| @options[:mode] = v.to_sym }
         o.on("--[no-]migrate") { |v| @options[:migrate] = v }
+        o.on("--format FORMAT") { |v| @options[:format] = v }
         o.on("-h", "--help") { help = true }
       end
       rest = parser.parse(@argv)
-      help ? "help" : rest.first
+      return "help" if help
+
+      # A stray argument is a typo, not a request for the default behaviour.
+      raise Error, "unexpected argument: #{rest[1]}" if rest.size > 1
+
+      rest.first
     end
 
     def installer
@@ -119,6 +136,42 @@ module AgentHarnessRails
 
     def update
       install(label: "updated")
+    end
+
+    def evals
+      unless EVALS_FORMATS.include?(@options[:format])
+        raise Error, "format must be text or json, not #{@options[:format].inspect}"
+      end
+
+      result = Evals.run(root: File.expand_path(@options[:path]))
+      @options[:format] == "json" ? evals_json(result) : evals_text(result)
+      result.ok? ? 0 : 1
+    end
+
+    def evals_text(result)
+      result.findings.each { |finding| @out.puts finding }
+      @out.puts if result.findings.any?
+      @out.puts evals_summary(result)
+    end
+
+    def evals_summary(result)
+      warnings = result.findings.size - result.errors.size
+      counted = [ "#{pluralize(result.capabilities, 'capability', 'capabilities')} inspected",
+                  pluralize(result.clauses, "clause") ]
+      counted << (result.findings.empty? ? "no offences" : "#{pluralize(result.errors.size, 'offence')} detected")
+      counted << pluralize(warnings, "warning") if warnings.positive?
+      counted.join(", ")
+    end
+
+    def evals_json(result)
+      @out.puts JSON.pretty_generate(
+        capabilities: result.capabilities, clauses: result.clauses,
+        errors: result.errors.size, findings: result.findings.map(&:to_h)
+      )
+    end
+
+    def pluralize(count, singular, plural = "#{singular}s")
+      "#{count} #{count == 1 ? singular : plural}"
     end
 
     def check

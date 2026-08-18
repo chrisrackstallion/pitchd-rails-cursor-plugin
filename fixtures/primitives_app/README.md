@@ -2,7 +2,7 @@
 
 A minimal, correct primitives tree and matching spec, used two ways:
 
-- `spec/executables_spec.rb` runs `exe/rails-evals` against it as a subprocess,
+- `spec/executables_spec.rb` runs `exe/agent_harness_rails evals` against it as a subprocess,
   which is what covers the executable shim rather than the library behind it.
 - CI runs the **packaged** executable against it, so a file missing from
   `spec.files` fails the build instead of someone else's first install.

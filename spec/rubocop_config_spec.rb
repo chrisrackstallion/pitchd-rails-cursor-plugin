@@ -10,14 +10,9 @@ require "spec_helper"
 #
 # So: assert every name resolves. A rename upstream fails here, on a branch,
 # instead of in someone else's CI.
-#
-# Skipped when RuboCop is absent — the Ruby-floor CI job runs bare rspec with no
-# bundler, and this file names RuboCop constants at describe time.
-return unless RUBOCOP_AVAILABLE
 
-# Every plugin the shipped configs name, required explicitly. Bundler happens to
-# make some of these reachable without asking, so relying on that passes here and
-# fails on the floor job, which installs gems plainly.
+# Every plugin the shipped configs name, required explicitly rather than relying
+# on Bundler happening to have made them reachable through another require.
 require "rubocop-rails"
 require "rubocop-rspec"
 require "rubocop-rspec_rails"
@@ -26,12 +21,12 @@ require "rubocop-factory_bot"
 require "rubocop/agent_harness_rails"
 
 RSpec.describe "shipped RuboCop configs" do
-  ROOT = File.expand_path("..", __dir__)
-  HARNESS = "rubocop-harness.yml"
-  HARNESS_RSPEC = "rubocop-harness-rspec.yml"
+  def root
+    File.expand_path("..", __dir__)
+  end
 
   def load_config(file)
-    YAML.safe_load_file(File.join(ROOT, file), aliases: true)
+    YAML.safe_load_file(File.join(root, file), aliases: true)
   end
 
   def cop_names(file)
@@ -42,7 +37,7 @@ RSpec.describe "shipped RuboCop configs" do
     @registry ||= RuboCop::Cop::Registry.global.cops.map(&:cop_name)
   end
 
-  [ HARNESS, HARNESS_RSPEC ].each do |file|
+  [ "rubocop-harness.yml", "rubocop-harness-rspec.yml" ].each do |file|
     describe file do
       it "names only cops that exist in the installed RuboCop and plugins" do
         expect(cop_names(file) - registry).to be_empty,
@@ -56,7 +51,7 @@ RSpec.describe "shipped RuboCop configs" do
       end
 
       it "names each cop once" do
-        declared = File.read(File.join(ROOT, file), encoding: "UTF-8").scan(/^([A-Z]\w*\/[\w\/]+):$/).flatten
+        declared = File.read(File.join(root, file), encoding: "UTF-8").scan(/^([A-Z]\w*\/[\w\/]+):$/).flatten
 
         expect(declared).to eq(declared.uniq)
       end
@@ -85,7 +80,7 @@ RSpec.describe "shipped RuboCop configs" do
         reference = settings["Reference"]
 
         expect(reference).to be_a(String), "#{name} has no Reference"
-        expect(File).to exist(File.join(ROOT, reference)), "#{name} references #{reference}, which does not exist"
+        expect(File).to exist(File.join(root, reference)), "#{name} references #{reference}, which does not exist"
       end
     end
 
@@ -104,7 +99,7 @@ RSpec.describe "shipped RuboCop configs" do
     # inherit_gem rather than inherit_from with a path: that is the mechanism the
     # README documents, and it resolves the gem by name through RubyGems, so a
     # file this repo has but the gem does not ship fails here.
-    def app_config(extra = "", files: [ HARNESS ])
+    def app_config(extra = "", files: [ "rubocop-harness.yml" ])
       path = File.join(project, ".rubocop.yml")
       File.write(path, <<~YAML)
         inherit_gem:
@@ -125,14 +120,14 @@ RSpec.describe "shipped RuboCop configs" do
       # Deliberately no assertion on the gem's file manifest — that is
       # spec/gem_spec.rb's job, against the gemspec. Reading `.files` off a
       # resolved spec gives different answers for a path source and an installed
-      # gem, so an assertion here would pass under Bundler and fail on the floor
-      # job for reasons that have nothing to do with the config.
+      # gem, so an assertion here would break for reasons that have nothing to
+      # do with the config.
       expect { app_config }.not_to raise_error
       expect(app_config.for_cop("AgentHarnessRails/ServiceObject")["Enabled"]).to be(true)
     end
 
     it "resolves the rspec layer through inherit_gem too" do
-      config = app_config("", files: [ HARNESS, HARNESS_RSPEC ])
+      config = app_config("", files: [ "rubocop-harness.yml", "rubocop-harness-rspec.yml" ])
 
       expect(config.for_cop("RSpec/AnyInstance")["Enabled"]).to be(true)
       expect(config.for_cop("AgentHarnessRails/SpecSleep")["Enabled"]).to be(true)
@@ -172,7 +167,7 @@ RSpec.describe "shipped RuboCop configs" do
     it "orders controller actions the way the controllers rule documents" do
       # RuboCop's own default differs (new/edit/create/update), so this is an
       # override that must not drift from the example it follows.
-      rule = File.read(File.join(ROOT, "agent_harness_rails/rules/controllers.mdc"), encoding: "UTF-8")
+      rule = File.read(File.join(root, "agent_harness_rails/rules/controllers.mdc"), encoding: "UTF-8")
       documented = app_config.for_cop("Rails/ActionOrder")["ExpectedOrder"]
 
       expect(documented).to eq(%w[index show new create edit update destroy])

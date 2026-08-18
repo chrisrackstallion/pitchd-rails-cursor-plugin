@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-
-return unless RUBOCOP_AVAILABLE
-
 require "cops/cop_helper"
 
 RSpec.describe RuboCop::Cop::AgentHarnessRails::EnqueueOutsideCommit, :config do
@@ -81,6 +78,17 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::MailerDeliverNow, :config do
 
     expect_correction(<<~RUBY)
       UserMailer.with(user: user).welcome.deliver_later
+    RUBY
+  end
+
+  it "flags the bang form and corrects it to deliver_later!" do
+    expect_offense(<<~RUBY)
+      UserMailer.with(user: user).welcome.deliver_now!
+                                          ^^^^^^^^^^^^ Use `deliver_later!` so sending does not block the request.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      UserMailer.with(user: user).welcome.deliver_later!
     RUBY
   end
 

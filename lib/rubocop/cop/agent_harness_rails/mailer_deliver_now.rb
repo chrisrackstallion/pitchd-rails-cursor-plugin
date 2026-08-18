@@ -11,6 +11,10 @@ module RuboCop
       # Specs, previews, and rake tasks are excluded in config — those are
       # exactly the places `deliver_now` is correct.
       #
+      # The swap changes behaviour — sending becomes asynchronous and needs a
+      # queue adapter — so config marks the autocorrect unsafe: `rubocop -A`
+      # applies it, `-a` does not.
+      #
       # @example
       #   # bad
       #   UserMailer.with(user: @user).welcome.deliver_now
@@ -20,12 +24,14 @@ module RuboCop
       class MailerDeliverNow < Base
         extend AutoCorrector
 
-        MSG = "Use `deliver_later` so sending does not block the request."
-        RESTRICT_ON_SEND = %i[deliver_now].freeze
+        MSG = "Use `%<replacement>s` so sending does not block the request."
+        RESTRICT_ON_SEND = %i[deliver_now deliver_now!].freeze
 
         def on_send(node)
-          add_offense(node.loc.selector) do |corrector|
-            corrector.replace(node.loc.selector, "deliver_later")
+          replacement = node.method_name.to_s.sub("now", "later")
+
+          add_offense(node.loc.selector, message: format(MSG, replacement: replacement)) do |corrector|
+            corrector.replace(node.loc.selector, replacement)
           end
         end
       end

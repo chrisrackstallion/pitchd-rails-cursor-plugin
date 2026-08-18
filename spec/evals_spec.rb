@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "agent_harness_rails/evals/cli"
+require "stringio"
+require "agent_harness_rails/evals"
 
 # Builds primitives trees in the per-example tmpdir spec_helper provides.
 module EvalsHelpers
@@ -377,11 +378,11 @@ RSpec.describe AgentHarnessRails::Evals do
   end
 end
 
-RSpec.describe AgentHarnessRails::Evals::CLI do
+RSpec.describe AgentHarnessRails::CLI, "evals" do
   def run(*argv)
     out = StringIO.new
     err = StringIO.new
-    code = described_class.new([ "--path", project, *argv ], out: out, err: err).run
+    code = described_class.new([ "evals", "--path", project, *argv ], out: out, err: err).run
     [ code, out.string, err.string ]
   end
 
@@ -441,8 +442,10 @@ RSpec.describe AgentHarnessRails::Evals::CLI do
     expect(err).to start_with("error: no capability docs")
   end
 
-  it "prints usage for --help and the version for --version" do
-    expect(run("--help")).to match([ 0, /usage: rails-evals/, "" ])
-    expect(run("--version")).to match([ 0, "#{AgentHarnessRails::VERSION}\n", "" ])
+  it "rejects an unknown format instead of silently falling back to text" do
+    code, _, err = run("--format", "jsonn")
+
+    expect(code).to eq(1)
+    expect(err).to include("format must be text or json")
   end
 end

@@ -8,12 +8,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The declared floor (see required_ruby_version in the gemspec) and
+        # current Ruby. The dev bundle resolves on both, so the floor needs no
+        # special handling — if a dependency drops it, bundle install on the
+        # floor entry is where that surfaces.
+        ruby: ["3.3", "4.0"]
     steps:
       - uses: actions/checkout@v4
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "4.0"
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
       # Every internal reference must resolve and be written in the canonical
@@ -33,51 +40,6 @@ jobs:
 
       # Installing into a scratch project proves the payload, the links, and the
       # manifest all survive packaging — and that check passes on a fresh install.
-      - name: Install into a fixture app and verify
-        run: |
-          mkdir -p /tmp/fixture-app
-          ruby -Ilib exe/agent_harness_rails install --path /tmp/fixture-app
-          ruby -Ilib exe/agent_harness_rails check --path /tmp/fixture-app
-
-  # The gem itself has zero runtime dependencies, but the dev bundle does not —
-  # `parallel` alone needs Ruby 3.3, well above the declared floor. So this job
-  # skips Bundler entirely and installs only what the suite needs, at versions
-  # that still support the floor.
-  #
-  # RuboCop is among them deliberately. Without it, spec_helper's
-  # RUBOCOP_AVAILABLE guard skips every cop spec and this job verifies 88 of 159
-  # examples while being named as though it covers the gem. The cops are the
-  # larger half of what the gem ships; a floor job that never loads them is
-  # reassurance rather than evidence.
-  floor:
-    name: Ruby floor (3.1)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.1"
-
-      # No version pins beyond rspec's: resolving whatever these gems currently
-      # offer for Ruby 3.1 is the point — if a dependency drops the floor, this
-      # job should be where that surfaces.
-      #
-      # The harness installs itself because spec/rubocop_config_spec.rb exercises
-      # `inherit_gem`, the mechanism the README documents, which resolves the gem
-      # through RubyGems by name. Under Bundler the gemspec path source supplies
-      # that; here nothing would, and the specs would fail on a missing gem
-      # rather than on anything real. It also means this job checks the built
-      # artifact rather than the checkout.
-      - name: Specs
-        run: |
-          gem install rspec -v "~> 3.13" --no-document
-          gem install rubocop rubocop-rails rubocop-rspec rubocop-rspec_rails \
-                      rubocop-capybara rubocop-factory_bot --no-document
-          gem build agent_harness_rails.gemspec
-          gem install ./agent_harness_rails-*.gem --no-document
-          rspec
-
       - name: Install into a fixture app and verify
         run: |
           mkdir -p /tmp/fixture-app

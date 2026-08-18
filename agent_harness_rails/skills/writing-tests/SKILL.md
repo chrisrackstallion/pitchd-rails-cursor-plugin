@@ -450,7 +450,7 @@ Rules, format, and the group/list forms: **`agent_harness_rails/rules/testing.md
 Then check it:
 
 ```bash
-rails-evals
+agent_harness_rails evals
 ```
 
 It fails on a clause with no proof, a tag naming a clause that does not exist or
@@ -486,7 +486,7 @@ Before finishing, verify:
 - [ ] No standalone `not_to` assertions — every test has at least one positive assertion; `not_to` is only used alongside a positive one
 - [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
 - [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without one of the earned reasons (§7)
-- [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag, the clause lists the file in `evaluations:`, and **`rails-evals`** is green
+- [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag, the clause lists the file in `evaluations:`, and **`agent_harness_rails evals`** is green
 
 ## References
 

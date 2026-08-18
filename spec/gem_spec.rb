@@ -22,12 +22,12 @@ RSpec.describe "gem packaging" do
     expect(spec.files).to include("agent_harness_rails/agents/rails-reviewer.md")
   end
 
-  it "ships the library and both executables" do
-    expect(spec.files).to include("lib/agent_harness_rails.rb", "exe/agent_harness_rails", "exe/rails-evals")
-    expect(spec.executables).to contain_exactly("agent_harness_rails", "rails-evals")
+  it "ships the library and the executable" do
+    expect(spec.files).to include("lib/agent_harness_rails.rb", "exe/agent_harness_rails")
+    expect(spec.executables).to contain_exactly("agent_harness_rails")
   end
 
-  it "ships every file rails-evals needs to run in a consuming app" do
+  it "ships every file the evals command needs to run in a consuming app" do
     # A missing lib/ file here breaks the executable only once installed
     # elsewhere, which is an expensive place to notice it.
     expect(spec.files).to include(*Dir.glob("lib/agent_harness_rails/evals/*.rb", base: File.expand_path("..", __dir__))
@@ -87,9 +87,9 @@ RSpec.describe "gem packaging" do
   end
 
   describe "ruby floor" do
-    # CI runs a newer Ruby than the floor, so the linter is what holds the line:
-    # with TargetRubyVersion at the floor, RuboCop rejects syntax the floor
-    # cannot parse. That only works while the two versions agree.
+    # Development usually runs a newer Ruby than the floor, so the linter is what
+    # holds the line: with TargetRubyVersion at the floor, RuboCop rejects syntax
+    # the floor cannot parse. That only works while the two versions agree.
     it "lints against the same Ruby version the gemspec declares" do
       floor = spec.required_ruby_version.requirements.first.last
       target = YAML.safe_load_file(File.expand_path("../.rubocop.yml", __dir__))

@@ -38,7 +38,7 @@
 plugins:
   - rubocop-rails
 
-# The AgentHarnessRails department: fourteen cops for rules no existing cop
+# The AgentHarnessRails department: custom cops for rules no existing cop
 # covers — no service objects, non-REST controller actions, enqueueing inside a
 # transaction, view specs, assertion-free removal receipts. Their defaults and
 # path scoping live in this gem's config/default.yml, and each names the rule

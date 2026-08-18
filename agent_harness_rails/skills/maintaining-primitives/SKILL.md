@@ -67,7 +67,7 @@ no topic pages to garden and no graph to walk.
 | **capture** | Backfill a capability doc from existing code and specs (below). |
 | **trace** | Read `index.md` → the capability doc → answer with citations to clause IDs, provenance lines, and spec paths. If the answer predates the doc, say so — provenance before the backfill line lives in git. |
 | **update** | Sync one doc: status (including human-directed deprecation — `status: deprecated`, a provenance line saying why, and the index line moved to the Deprecated stub section), `evaluations:` against real spec homes and their `intent:` tags, one provenance line per event. Update `index.md` in the same change. |
-| **lint** | Run **`rails-evals`** first, then the judgment checks below across the tree (the one whole-tree operation — exempt from the three-file contract); report findings, fix mechanical ones, leave judgment calls to the human. |
+| **lint** | Run **`agent_harness_rails evals`** first, then the judgment checks below across the tree (the one whole-tree operation — exempt from the three-file contract); report findings, fix mechanical ones, leave judgment calls to the human. |
 
 **Structural reshaping** — splitting an oversized capability, merging, or
 renaming — is a human-approved **`update`**: redistribute the Intent clauses
@@ -110,14 +110,14 @@ human confirmation between, ordered by where change is coming.
 
 ### lint — run the tool, then judge
 
-**Step 1 — `rails-evals`.** It settles everything mechanical: clause coverage on
+**Step 1 — `agent_harness_rails evals`.** It settles everything mechanical: clause coverage on
 `built` docs, evaluations naming a file that does not exist or does not carry
 the tag, tags naming an absent or superseded clause, duplicate ids, dangling
 supersessions, and docs still in the retired prose format.
 
 ```bash
-rails-evals                    # exits 1 on findings
-rails-evals --format json      # when you want to summarise a large tree
+agent_harness_rails evals                    # exits 1 on findings
+agent_harness_rails evals --format json      # when you want to summarise a large tree
 ```
 
 Report its findings as-is — they have file:line and a code, so do not restate
@@ -131,7 +131,7 @@ Two of its warnings are not failures and must not be "fixed" into silence:
 **Step 2 — the judgment checks the tool cannot make:**
 
 - Every capability doc listed in `index.md`, and vice versa; statuses agree.
-- An in-flight doc that is actually **abandoned** — `rails-evals` reports the
+- An in-flight doc that is actually **abandoned** — `agent_harness_rails evals` reports the
   rowless clauses, but only a reader can tell a live amendment from a draft
   nobody returned to. Check whether any plan under `docs/plans/` still
   references the capability, and how old the edits are. Unwinding one is a

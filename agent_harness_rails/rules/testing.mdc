@@ -89,7 +89,7 @@ capability is the doc's filename without `.md`
   proving a *clause*; those stay untagged. Tagging everything makes the map
   useless.
 - The capability doc's `evaluations:` must list the spec file, and the file must
-  carry the tag. **`rails-evals`** checks both directions and fails when either
+  carry the tag. **`agent_harness_rails evals`** checks both directions and fails when either
   side drifts.
 - The tag is also a selector — `bundle exec rspec --tag 'intent:comment_threads#I2'`
   runs exactly the proof.

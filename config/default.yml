@@ -40,7 +40,7 @@ AgentHarnessRails/GenericOperationMethod:
     - call
     - execute
     - run
-  # `perform` is the ActiveJob contract; `each` and `to_s` are Ruby's.
+  # `perform` is the ActiveJob contract.
   AllowedMethods:
     - perform
 
@@ -84,6 +84,10 @@ AgentHarnessRails/MailerDeliverNow:
   Description: Prefer deliver_later so sending does not block the request.
   Enabled: true
   VersionAdded: '0.2'
+  # The swap changes behaviour — sending becomes asynchronous, needs a queue
+  # adapter, and returns a MessageDelivery rather than the Mail::Message — so
+  # only `rubocop -A` applies it.
+  SafeAutoCorrect: false
   Reference: agent_harness_rails/rules/mailers.mdc
   Include:
     - "**/app/**/*.rb"

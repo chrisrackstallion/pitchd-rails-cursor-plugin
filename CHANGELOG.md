@@ -10,8 +10,8 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
 
 ### Added
 
-- **`rails-evals`** — a second executable that checks every intent clause in
-  `docs/primitives/` is proven by a spec, and that every `intent:` tag in the
+- **`agent_harness_rails evals`** — a subcommand that checks every intent clause
+  in `docs/primitives/` is proven by a spec, and that every `intent:` tag in the
   suite names a clause that still exists. Static parse: no database, no Rails
   environment, runs in any CI job. Scope is deliberately clause ↔ evaluation
   and nothing else, so a green run has one meaning; tree health stays with the
@@ -35,7 +35,7 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
 - **Breaking — capability doc format.** Intent clauses and evaluations move from
   the `## Intent` and `## Evaluations` prose sections into YAML frontmatter, so
   they can be checked rather than read. `specs:` frontmatter is retired —
-  `rails-evals` derives it. Supersession becomes data (`superseded_by:`,
+  `agent_harness_rails evals` derives it. Supersession becomes data (`superseded_by:`,
   `superseded_on:`) instead of strike-through prose. A doc still in the old
   shape is reported as `doc/legacy-format` rather than parsing as zero clauses
   and silently passing.

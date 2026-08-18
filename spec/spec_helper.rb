@@ -4,18 +4,8 @@ require "fileutils"
 require "tmpdir"
 require "json"
 require "yaml"
-
-# The Ruby-floor CI job runs bare rspec with no bundler, so RuboCop is simply
-# absent there. Specs that name RuboCop constants guard on this at file scope —
-# `return unless RUBOCOP_AVAILABLE` — because a filter would still evaluate the
-# constants while collecting examples.
-RUBOCOP_AVAILABLE = begin
-  require "rubocop"
-  require "rubocop/rspec/support"
-  true
-rescue LoadError
-  false
-end
+require "rubocop"
+require "rubocop/rspec/support"
 
 # The root file loads the whole library; the CLI is separate, as in exe/.
 require_relative "../lib/agent_harness_rails"

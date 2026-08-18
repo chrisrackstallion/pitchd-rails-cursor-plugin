@@ -2,10 +2,6 @@
 
 require "spec_helper"
 
-# Skipped where RuboCop is absent — the Ruby-floor CI job runs bare rspec with no
-# bundler, and this file names RuboCop constants at describe time.
-return unless RUBOCOP_AVAILABLE
-
 require "cops/cop_helper"
 
 RSpec.describe RuboCop::Cop::AgentHarnessRails::ServiceObject, :config do
@@ -66,6 +62,16 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::GenericOperationMethod, :config 
       class Account::Onboarding
         def call(params)
             ^^^^ `call` says nothing about the domain. Name the verb: `complete`, `import`, `publish`.
+        end
+      end
+    RUBY
+  end
+
+  it "flags the class-method form, the classic service-object entry point" do
+    expect_offense(<<~RUBY)
+      class Account::Onboarding
+        def self.call(params)
+                 ^^^^ `call` says nothing about the domain. Name the verb: `complete`, `import`, `publish`.
         end
       end
     RUBY

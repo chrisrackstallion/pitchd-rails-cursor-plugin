@@ -4,9 +4,9 @@
 # Ruby, not Node: this repo is a gem. Its own tooling is bundler, rspec, and
 # rubocop; the payload under agent_harness_rails/ is markdown.
 #
-# Latest Ruby here and in CI, deliberately ahead of the gemspec's
-# required_ruby_version — that floor stays low so consuming Rails apps on older
-# Rubies can still install the harness. Development runs current; support is wide.
+# Latest Ruby here, deliberately ahead of the gemspec's required_ruby_version —
+# the floor is the oldest supported Ruby so consuming apps trail at their own
+# pace, and CI's matrix covers it. Development runs current; support is wide.
 FROM ruby:4.0-bookworm
 
 RUN apt-get update \

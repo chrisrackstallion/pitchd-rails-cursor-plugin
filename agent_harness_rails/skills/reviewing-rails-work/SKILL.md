@@ -98,7 +98,7 @@ Runs when the app has a **`docs/primitives/`** tree (see `agent_harness_rails/ru
 Read the **one** capability doc named by the plan header's **Capability:** line
 (or located via `docs/primitives/index.md`) plus `compilation.md` — never the
 whole tree. No tree → note "No primitives tree" in the report and skip.
-**Run `rails-evals` first.** Clause coverage, dead spec paths, untagged
+**Run `agent_harness_rails evals` first.** Clause coverage, dead spec paths, untagged
 evaluations, tags naming a superseded clause — it settles all of those with
 file:line. Cite its output rather than re-deriving it by hand, and spend the
 review on what it cannot judge: whether a clause is the *right* clause.
@@ -298,7 +298,7 @@ _Implementation and both phases only. Omit this section for plan-only reviews._
 _Only when the app has a `docs/primitives/` tree; otherwise state "No primitives tree" and omit the findings._
 
 - [confidence: X.X] `[file or area]`: [Direct statement — untraceable behaviour, compilation/Shape contradiction, missing evaluation, supersession hygiene, provenance conflict.] — `agent_harness_rails/rules/primitives.mdc`
-  **Verified:** [Capability doc + code you read to confirm, and the `rails-evals` result.]
+  **Verified:** [Capability doc + code you read to confirm, and the `agent_harness_rails evals` result.]
 
 **Provenance candidates (non-blocking):** decisions, constraints, or accepted debt worth a one-line provenance entry at close-out. Only durable value — not every implementation detail.
 - ...

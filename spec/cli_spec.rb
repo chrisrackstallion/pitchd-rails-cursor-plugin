@@ -13,7 +13,7 @@ RSpec.describe AgentHarnessRails::CLI do
 
   describe "help" do
     # -h and --help are how scripts and CI ask for usage, so they must succeed
-    # and print to stdout — an earlier version exited 1 to stderr.
+    # and print to stdout.
     [ "-h", "--help", "help" ].each do |invocation|
       it "prints usage to stdout and exits 0 for #{invocation}" do
         status, out, err = run(invocation)
@@ -54,6 +54,14 @@ RSpec.describe AgentHarnessRails::CLI do
 
       expect(status).to eq(1)
       expect(err).to include("error: invalid option: --frobnicate")
+    end
+
+    it "rejects a stray argument instead of ignoring it" do
+      status, _, err = run("install", "extra", "--path", project)
+
+      expect(status).to eq(1)
+      expect(err).to include("unexpected argument: extra")
+      expect(Dir.children(project)).to be_empty
     end
   end
 

@@ -24,7 +24,7 @@ The tree holds the four primitives that outlive generated code:
 | **Provenance** — lineage of decisions and rejected alternatives | `## Provenance` section, append-only |
 
 Intent and evaluations live in **frontmatter, not prose**, because they are the
-two primitives a machine must read: **`rails-evals`** checks that every active
+two primitives a machine must read: **`agent_harness_rails evals`** checks that every active
 clause on a `built` doc is proven and that every proof still points at a live
 clause. Shape and provenance stay prose — they are for humans, and no parser
 improves them.
@@ -110,7 +110,7 @@ intent:
 There is **no `## Intent` or `## Evaluations` section** — the clause and the
 specs that prove it are one record in frontmatter, so a clause list and an
 evaluation table cannot fall out of step. There is **no `specs:` key** either;
-`rails-evals` derives the reverse index from every clause's `evaluations`.
+`agent_harness_rails evals` derives the reverse index from every clause's `evaluations`.
 
 The key is **`superseded_on:`**, not `on:` — YAML resolves a bare `on` to the
 boolean `true`, so an `on:` key silently loses its date.
@@ -144,7 +144,7 @@ matching **`intent:` metadata tag** (below); a path alone is a claim, the tag is
 the proof.
 
 Coverage is a **`built`-status obligation**: a `built` doc with an active clause
-and no `evaluations:` is the gap reviews and `rails-evals` flag. `shaping` and
+and no `evaluations:` is the gap reviews and `agent_harness_rails evals` flag. `shaping` and
 `planned` docs for new work have none by design. Two honest exceptions, both
 reported as warnings rather than failures:
 
@@ -177,7 +177,7 @@ Renaming an example cannot break the link; deleting it breaks it loudly.
 ### Checked mechanically
 
 ```bash
-rails-evals                    # from the app root; exits 1 on findings
+agent_harness_rails evals                    # from the app root; exits 1 on findings
 ```
 
 It checks clause ↔ evaluation and nothing else: unproven built clauses, evaluations
@@ -235,4 +235,4 @@ or the harness has no home here.
 Edits here are **documentation** — they do not replace `agent_harness_rails/rules/testing.mdc`,
 `implementing-rails-task`, or app implementation tasks. The specs the
 `evaluations:` point at remain the executable truth; the frontmatter is the map,
-and `rails-evals` is what keeps the map honest.
+and `agent_harness_rails evals` is what keeps the map honest.
