@@ -176,6 +176,18 @@ clause out of the doc.
   still fully proven is a padded row, and padding is what a long row is usually
   made of.
 - Every capability doc listed in `index.md`, and vice versa; statuses agree.
+- **`index.md` lines that do not discriminate** — the tool checks a line exists,
+  not that it earns its place, and this file is the tree's whole discovery surface
+  (`agent_harness_rails/rules/primitives.mdc` § Finding the right capability).
+  Read the list as a stranger deciding which doc to open: two lines that could
+  describe each other's capability are a finding, as is a missing `Owns:` on a
+  capability whose filename is not a resource name. This check earns its keep as
+  the list grows — a vague line at fifteen capabilities is recoverable, and at
+  sixty it is how a duplicate capability gets created.
+- **Names that fight the flat namespace** — a capability that split, or one that
+  never owned a resource, should read `<domain>_<behaviour>` so the prefix groups
+  it (§ Style). Propose renames sparingly and say the cost out loud: the filename
+  is what `intent:` tags name, so a rename retags every proving example.
 - An in-flight doc that is actually **abandoned** — `agent_harness_rails evals` reports the
   rowless clauses, but only a reader can tell a live amendment from a draft
   nobody returned to. Check whether any plan under `docs/plans/` still

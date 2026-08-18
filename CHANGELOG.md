@@ -114,6 +114,27 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
   `unchanged` clause whose evaluation had its **assertions** edited as a
   mislabelled amendment — a refactor may move an evaluation's file, never change
   what it asserts.
+- **Capability naming and discovery, for trees that grow.** `capabilities/` is
+  explicitly flat and **the name prefix is the namespace**: capabilities that split
+  off a resource (`comment_threads`, `comment_moderation`) or never owned one
+  (authentication, search, notifications) read `<domain>_<behaviour>`, so
+  `ls capabilities/ | grep billing` is a working namespace query and the tag format
+  never has to change. `primitives.mdc` gains a § Finding the right capability
+  naming the three routes — from a spec's own tag, from code by grep, from
+  `index.md` — and `index.md`'s line contract is now
+  `name — status — outcome. Owns: models.`, with the outcome required to
+  *discriminate*: that file is the tree's entire discovery surface and the only
+  place an overlap is visible, so a vague line is the mechanism by which a
+  duplicate capability gets created. `lint` and plan review both check for it.
+
+### Fixed
+
+- **Capability docs in a subdirectory were silently ignored.** `Capability.load_all`
+  globs one level deep, and an `intent:` tag names a bare filename with no path in
+  it, so a nested doc's clauses did not exist as far as the tool was concerned —
+  with a green run over the gap. Now reported as `doc/nested`, pointing at the name
+  prefix that does work. A flat tree is a defensible constraint; failing quietly
+  when someone assumes otherwise was not.
 
   The workflows that write or check evaluations were updated to carry the test
   rather than repeat it — `writing-rails-plans` plans the spec homes a quantifier

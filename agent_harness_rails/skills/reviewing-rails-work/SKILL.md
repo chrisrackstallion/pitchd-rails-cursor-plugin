@@ -135,7 +135,12 @@ suggestions:
   finding: clauses split so fine they differ only by which layer proves them are
   the suite transcribed into the tree.
 - **No overlap** — a new capability doc whose intent overlaps an existing one
-  is a plan defect (should be an amendment).
+  is a plan defect (should be an amendment). Read `index.md` end to end before
+  accepting a new doc; that list is the only place the overlap is visible without
+  opening the whole tree. If two lines are too vague to tell apart, report **that**
+  as the finding — an indiscriminate index line is the mechanism by which duplicate
+  capabilities get created (`agent_harness_rails/rules/primitives.mdc`
+  § Finding the right capability).
 - **Compilation and Shape** — nothing contradicts `compilation.md` or the
   doc's recorded Shape; a change that needs a constraint amended says so
   explicitly rather than working around it. These are `philosophy:`-grade.

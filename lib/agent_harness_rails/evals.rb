@@ -31,6 +31,7 @@ module AgentHarnessRails
         capabilities = Capability.load_all(capabilities_dir, root: root)
         tags, findings = Tags.scan(File.join(root, specs_dir), root: root)
 
+        findings += nested_docs(capabilities_dir, root: root)
         findings += capabilities.flat_map(&:findings)
         findings += check_evaluations(capabilities, tags, root: root)
         findings += check_tags(capabilities, tags)
@@ -40,6 +41,22 @@ module AgentHarnessRails
       end
 
       private
+
+      # A capability doc in a subdirectory is invisible to `Capability.load_all`,
+      # which globs one level deep — and an `intent:` tag names a bare filename
+      # with no path in it, so nesting could not be addressed even if it were
+      # loaded. Reported rather than swept up: the failure it replaces is a doc
+      # whose clauses simply do not exist as far as this tool is concerned, with
+      # a green run over the top.
+      def nested_docs(dir, root:)
+        Dir.glob(File.join(dir, "**", "*.md")).sort
+           .reject { |path| File.dirname(path) == dir }
+           .map do |path|
+             Finding.new(severity: :error, path: path.delete_prefix("#{root}/"), line: 1, column: 1,
+                         message: "capability docs live directly in #{CAPABILITIES_SUBDIR}/ — group with a "                                   "name prefix instead (billing/plans.md becomes billing_plans.md), "                                   "because an `intent:` tag names a filename with no path in it",
+                         code: "doc/nested")
+           end
+      end
 
       # Doc → suite: does each clause name a spec, and does that spec carry the
       # tag it claims?

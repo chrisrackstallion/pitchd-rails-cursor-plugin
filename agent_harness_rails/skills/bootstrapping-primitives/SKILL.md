@@ -41,7 +41,7 @@ Create from the starters in `references/templates.md` of `maintaining-primitives
 ```
 docs/primitives/
   SCHEMA.md          # contract starter
-  index.md           # empty catalog
+  index.md           # empty catalog — one line per capability, see templates.md
   capabilities/      # empty (add .keep if the repo tracks empty dirs)
 ```
 

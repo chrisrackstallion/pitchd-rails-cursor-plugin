@@ -419,6 +419,24 @@ RSpec.describe AgentHarnessRails::Evals do
       expect(codes).to eq([ "doc/malformed" ])
     end
 
+    # The failure this replaces was silent: `Capability.load_all` globs one level
+    # deep, so a nested doc's clauses did not exist as far as the tool was
+    # concerned and the run stayed green over the gap.
+    it "fails a capability doc nested in a subdirectory" do
+      proven_tree
+      capability "billing/plans", <<~DOC
+        ---
+        status: built
+        intent:
+          - id: I1
+            clause: An owner can change plan mid-cycle.
+        ---
+        # Plans
+      DOC
+
+      expect(codes).to eq([ "doc/nested" ])
+    end
+
     it "fails a doc with no frontmatter at all" do
       capability "bare", "# Bare\n\nJust prose.\n"
 

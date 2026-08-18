@@ -31,14 +31,22 @@ deviations agreed between agent and human).
 ```markdown
 # Capabilities
 
-One line per capability. Status: shaping → planned → built → deprecated.
+One line per capability, as `name — status — outcome. Owns: models.`
+Status: shaping → planned → built → deprecated.
 
-(None yet.)
+- `comment_threads` — built — readers reply to comments and see them nested. Owns: Comment.
+- `billing_plan_changes` — planned — owners switch plan mid-cycle with proration. Owns: Subscription, Invoice.
 
 ## Deprecated
 
 (None yet.)
 ```
+
+The outcome has to **discriminate** — a reader choosing between two capabilities
+should be able to tell them apart without opening either — and `Owns:` is how a
+capability whose name is not a resource name is still findable from code. This
+file is the tree's entire discovery surface
+(`agent_harness_rails/rules/primitives.mdc` § Finding the right capability).
 
 ## `compilation.md` skeleton
 

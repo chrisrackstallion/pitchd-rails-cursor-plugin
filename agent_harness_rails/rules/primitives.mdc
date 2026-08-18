@@ -54,6 +54,27 @@ unless the work explicitly spans a second named capability. Sole exception:
 the maintainer's **`lint`** operation is a health pass and reads the whole
 tree by design.
 
+### Finding the right capability
+
+Three routes, in the order they are cheapest:
+
+1. **From a spec** — the tagged example names its capability outright:
+   `intent: "comment_threads#I2"`. If you are already in the suite, this is a
+   read, not a search.
+2. **From code, by grep** — `ls capabilities/ | grep comment`. Filenames carry
+   the app's resource names and domain prefixes (§ Style), so a file under
+   `app/models/` usually finds its doc in one command.
+3. **From `index.md`** — the entry point, and the only route that works when the
+   capability owns no single resource. One line per doc, so it stays a cheap read
+   at any plausible number of capabilities.
+
+Route 3 is also how you answer *"does this work span a second capability?"* —
+which the contract above requires you to judge before opening another doc. That
+makes the quality of each `index.md` line load-bearing rather than decorative:
+a line that does not distinguish its capability from its neighbours is what
+produces a duplicate doc, and duplication is far more expensive to unwind than
+the line was to write.
+
 ## Ownership and write points
 
 - **`compilation.md`** — **Human-owned.** Every agent that reads the tree
@@ -81,7 +102,18 @@ tree by design.
 - **`## Provenance`** — **Append-only.** Never edit or delete an entry; a wrong
   entry gets a correcting entry.
 - **`index.md`** — Stays in sync: every capability doc listed with a one-line
-  outcome and status; update in the same change that adds or renames a doc.
+  outcome and status; update in the same change that adds or renames a doc. The
+  line reads **`<name> — <status> — <outcome>. Owns: <models or resources>.`**
+  The outcome must **discriminate** — enough that a reader deciding between two
+  capabilities can tell them apart without opening either — and `Owns:` is the
+  grep bridge for capabilities whose filename is not a resource name (§ Style).
+  This is the tree's whole discovery surface; a vague line is how a duplicate
+  capability gets created.
+
+  ```markdown
+  - `comment_threads` — built — readers reply to comments and see them nested. Owns: Comment.
+  - `billing_plan_changes` — built — owners switch plan mid-cycle with proration. Owns: Subscription, Invoice.
+  ```
 
 ## Capability doc format
 
@@ -292,7 +324,8 @@ agent_harness_rails evals                    # from the app root; exits 1 on fin
 It checks clause ↔ evaluation and nothing else: unproven built clauses, evaluations
 naming a file that does not exist or does not carry the tag, tags naming a clause
 that is absent or superseded, tags sitting on a group rather than an example,
-duplicate ids, dangling supersessions, and docs still in the retired prose format. Everything below — sizes, index sync, provenance
+duplicate ids, dangling supersessions, capability docs nested in a subdirectory,
+and docs still in the retired prose format. Everything below — sizes, index sync, provenance
 style — is judgment, and stays with the `lint` operation in `maintaining-primitives`.
 
 ### Provenance
@@ -336,7 +369,21 @@ or the harness has no home here.
 - Prefer **relative links** inside the tree.
 - Capability filenames follow the app's resource names (`agent_harness_rails/rules/naming.mdc`)
   so code → doc lookup works by grep — and because the filename is what an
-  `intent:` tag names, a rename means retagging its examples.
+  `intent:` tag names, a rename means retagging its examples. Choose the name as
+  if it were permanent; at scale it effectively is.
+- **`capabilities/` is flat, and the prefix is the namespace.** Not every
+  capability is a resource: the ~10-clause tripwire splits `comments` into
+  something like `comment_threads` and `comment_moderation`, and cross-cutting
+  capabilities (authentication, search, notifications, audit logging) never owned
+  a resource to begin with. Name those **`<domain>_<behaviour>`** —
+  `billing_plan_changes`, `billing_invoices`, `billing_dunning`. A shared prefix
+  sorts them together in a directory listing, makes `ls capabilities/ | grep
+  billing` a working namespace query, and costs nothing structurally.
+
+  Subdirectories are **not** the way to do this. `intent:` tags name a bare
+  filename with no path in it, so a nested doc cannot be addressed by a tag —
+  `agent_harness_rails evals` reports one as `doc/nested` rather than skipping it,
+  which is what it used to do silently.
 - Keep **Rails app code** out of this tree; it holds decisions and pointers,
   not application source.
 
