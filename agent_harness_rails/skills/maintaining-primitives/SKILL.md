@@ -91,6 +91,14 @@ human confirmation between, ordered by where change is coming.
    Add the `intent:` tag to the examples as you go — a clause naming a spec
    that does not carry the tag is a finding, not a capture.
 
+   **Do not aggregate to fit the clause ceiling.** A capability with forty specs
+   and a ~10-clause ceiling invites compressing several behaviours into one
+   umbrella sentence — *"a member can manage their comments"* — which produces
+   exactly the clause no example proves
+   (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). If the honest
+   clause list runs past ten, the finding is that the **capability** should split,
+   not that the sentences should widen.
+
    **Do not promote an adjacent spec into a proof.** The example you tag has to
    go red if the clause stops being true
    (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
@@ -147,6 +155,14 @@ clause out of the doc.
 
 **Step 2 — the judgment checks the tool cannot make:**
 
+- **Umbrella clauses** — a clause built on *manage*, *handle*, *support*, or an
+  `and` joining two different actions is several promises in one sentence, and it
+  is the upstream cause of most unprovable rows
+  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). The mechanical
+  hint is the row: a clause needing four evaluations is usually a clause needing
+  splitting. Report it as a proposed split with the per-action sentences written
+  out — the ids are a human call, since splitting a clause changes what the
+  system is recorded as promising.
 - **Rows that do not prove their clause** — the most valuable check here, and the
   only one that decides whether the tree means anything. For each `built` clause,
   read its wording against its tagged examples and ask whether breaking the

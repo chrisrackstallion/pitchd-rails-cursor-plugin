@@ -110,6 +110,15 @@ suggestions:
   `intent:` clause. Untraceable behaviour is a finding: either a missing clause
   or scope creep. A plan whose header lacks the **Capability:** line when the
   tree exists is a finding.
+- **Clause granularity** — **plan phase, and the cheapest finding you can make.**
+  One behaviour per clause: an umbrella verb (*manage*, *handle*, *support*) or an
+  `and` joining two different actions is several promises in one sentence
+  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). Caught here it
+  costs a rewritten sentence; missed, it becomes a clause whose only possible
+  proof is a sprawling system spec, against the budget and the Five Gates. Report
+  the split with the per-action sentences written out. The opposite is also a
+  finding: clauses split so fine they differ only by which layer proves them are
+  the suite transcribed into the tree.
 - **No overlap** — a new capability doc whose intent overlaps an existing one
   is a plan defect (should be an amendment).
 - **Compilation and Shape** — nothing contradicts `compilation.md` or the

@@ -158,7 +158,13 @@ target capability doc, and **`compilation.md`**.
    - **Missing, new feature:** create it now. The requirements-gate answers
      **are** the `intent:` clauses — transcribe them into frontmatter as
      one-sentence `clause:` entries (`I1`, `I2`, …) instead of discarding them
-     into chat history. Draft `## Shape` (deltas only) from the approach-gate
+     into chat history. **Split as you transcribe.** Gate answers arrive in
+     umbrella form — *"users need to manage their comments"* — and one behaviour
+     per clause is the rule (`agent_harness_rails/rules/primitives.mdc`
+     § Intent clauses). Transcribing an umbrella verbatim is the single largest
+     source of clauses no example can prove, and it is far cheaper to split a
+     sentence here than to discover at close-out that the only thing which could
+     prove it is a sprawling system spec. Draft `## Shape` (deltas only) from the approach-gate
      outcome. Skeleton:
      `agent_harness_rails/skills/maintaining-primitives/references/templates.md`.
    - **Missing, existing feature (lazy backfill):** create it from what the

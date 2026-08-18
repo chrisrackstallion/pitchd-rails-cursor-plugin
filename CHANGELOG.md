@@ -70,6 +70,20 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
   doc-side rules — clauses must be written falsifiable, a row must be earned
   rather than filled — and a new size tripwire at **~3 evaluations per clause**,
   past which the clause is usually two promises wearing one id.
+- **`primitives.mdc` gains a clause-granularity rule: one behaviour per clause.**
+  An umbrella verb (*manage*, *handle*, *support*) or an `and` joining two
+  different actions is several promises in one sentence, and it is the upstream
+  cause of unprovable rows: a broad clause has no spec home but a wide system
+  spec, against the budget and the Five Gates. Bounded on both sides — scope words
+  (*only*, *never*) sharpen a clause rather than splitting it, and clauses split
+  so fine they differ only by which layer proves them are the suite transcribed
+  into the tree. Enforced where clauses are written rather than where they are
+  read: `brainstorming-rails-omakase` seeds one behaviour each,
+  `writing-rails-plans` splits umbrella gate answers as it transcribes them,
+  `capture` may not aggregate behaviours to fit the ~10-clause ceiling (the
+  finding is that the capability should split), and `reviewing-rails-work` plus
+  `maintaining-primitives`' `lint` report umbrella clauses with the per-action
+  sentences written out.
 
   The workflows that write or check evaluations were updated to carry the test
   rather than repeat it — `writing-rails-plans` plans the spec homes a quantifier

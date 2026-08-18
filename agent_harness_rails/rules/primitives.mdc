@@ -128,6 +128,31 @@ Skeletons: `agent_harness_rails/skills/maintaining-primitives/references/templat
   the quantifier you mean — *any*, *every*, *never*, *only* — because it is what
   the evaluations have to cover
   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+- **One behaviour per clause.** Name **one action and one outcome**. Two smells
+  that a sentence is really several clauses: an **umbrella verb** standing in for
+  a set of actions — *manage*, *handle*, *support*, *administer* — and an **`and`
+  joining two different actions**. "A member can manage their comments" is four
+  promises sharing a sentence: each breaks on its own, and no example proves the
+  whole of it.
+
+  | Instead of | Write |
+  |------------|-------|
+  | A member can manage their comments | A member can post a comment / can edit their own comment / can delete their own comment |
+  | Billing handles plan changes correctly | An owner can change plan mid-cycle / A proration line appears on the next invoice |
+
+  This is what keeps **evaluations** narrow, and it is the cheapest lever on the
+  whole suite: a focused clause is proven by a focused example at the layer that
+  owns it, while a broad one has no home but a wide system spec — which fights
+  the budget and the Five Gates (`agent_harness_rails/rules/testing.mdc`) and
+  lands on the ~3-evaluation tripwire below. A clause you cannot prove without a
+  journey spec is usually a clause that has not been split yet.
+- **The other bound — a clause is not a spec.** Scope words *sharpen* a clause,
+  they do not split it: "Only the author can edit an article" is one promise even
+  though proving it takes a permit case and a deny case at two layers. If a split
+  yields clauses no user would state separately, or that differ only by which
+  layer proves them, it has gone too far — that is transcribing the suite into
+  the tree, and the ~10-clauses-per-capability ceiling is what says so. Split by
+  what the product promises, never by what one example can assert.
 - **Superseding:** add `superseded_by: [ I5 ]` and `superseded_on: YYYY-MM-DD`
   to the old clause, and add the new clause with a **new** id. Never delete the
   old entry — tombstones are how a future agent learns a cap existed, why, and
