@@ -36,6 +36,13 @@ annotation that excuses an unproven clause. Its one warning,
 `clause/in-flight`, is an honest state — a doc whose plan landed ahead of its
 code — and is not a defect to silence.
 
+What it **cannot** settle is whether a tagged example actually proves its clause,
+and that is the check worth your judgment: breaking the clause has to turn one of
+its evaluations red (`agent_harness_rails/rules/testing.mdc` § What counts as
+proving a clause). A green row over a clause claiming *only* or *never* with one
+happy path behind it is the failure mode this tree is most prone to, because
+nothing mechanical will ever flag it.
+
 Parent must supply: **operation** (`capture` | `trace` | `update` | `lint`),
 tree root (default `docs/primitives/`), the target capability or question text,
 and any edit constraints. Structural reshaping (e.g. a lint-flagged capability

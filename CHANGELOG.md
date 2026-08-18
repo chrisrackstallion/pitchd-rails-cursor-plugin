@@ -55,6 +55,30 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
 - Specs that prove an intent clause now carry `intent: "<capability>#I<n>"` RSpec
   metadata, which doubles as a selector:
   `rspec --tag 'intent:comment_threads#I2'`.
+- **`testing.mdc` § What counts as proving a clause** — the judgment half of the
+  tag, since the tool can only check that the link is well-formed. An evaluation
+  proves a clause when *breaking the clause turns it red*; the three ways a tag
+  fails that test are asserting the affordance instead of the outcome, proving one
+  case where the clause claims a quantifier (*only*, *never*, *any*, *every*), and
+  proving it at a layer that cannot hold the denial. One clause proven across
+  several files at several layers is normal, not duplication — the ownership table
+  already makes it mandatory for anything with an authorization side, since policy
+  logic and its HTTP gate have separate homes by rule. The brake is **necessity**:
+  the red test asks whether the evaluations are *enough*, so the inverse asks
+  whether each is pulling its weight, and an evaluation you could delete with the
+  clause still fully proven is padding. `primitives.mdc` gains the matching
+  doc-side rules — clauses must be written falsifiable, a row must be earned
+  rather than filled — and a new size tripwire at **~3 evaluations per clause**,
+  past which the clause is usually two promises wearing one id.
+
+  The workflows that write or check evaluations were updated to carry the test
+  rather than repeat it — `writing-rails-plans` plans the spec homes a quantifier
+  needs, `rails-implementor` reports instead of tagging past a gap,
+  `executing-rails-plan` reads the reported examples before filling a row,
+  `reviewing-rails-work` and `maintaining-primitives`' `lint` treat an unearned
+  row as a finding, `capture` may narrow a clause or report the gap but not tag
+  the nearest happy path, and `refactoring-rails-specs` gains an intent audit so
+  a move, merge, or delete cannot silently unprove a capability.
 - `rules/rubocop.mdc` gains one carve-out to never-suppress: a **human-owned**,
   reasoned `Enabled: false` on a harness cop is a standing decision agents must
   leave alone — distinct from suppressing an offence to get a branch green,

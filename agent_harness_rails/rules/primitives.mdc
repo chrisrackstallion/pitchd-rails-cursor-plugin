@@ -121,7 +121,13 @@ Skeletons: `agent_harness_rails/skills/maintaining-primitives/references/templat
 
 - **`id:`** — stable (`I1`, `I2`, …), assigned once, **never renumbered or
   reused**; provenance entries and old plans reference them.
-- **`clause:`** — one sentence, outcome terms.
+- **`clause:`** — one sentence, outcome terms, and **falsifiable**: a spec must
+  be able to go red when it stops being true. "Replies appear nested under their
+  parent" can fail; "threading feels natural" cannot, and a clause that cannot
+  fail is a `## Shape` bullet or an aspiration wearing a clause's clothes. Write
+  the quantifier you mean — *any*, *every*, *never*, *only* — because it is what
+  the evaluations have to cover
+  (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
 - **Superseding:** add `superseded_by: [ I5 ]` and `superseded_on: YYYY-MM-DD`
   to the old clause, and add the new clause with a **new** id. Never delete the
   old entry — tombstones are how a future agent learns a cap existed, why, and
@@ -142,6 +148,29 @@ Each **active** clause carries `evaluations:` — the RSpec files that prove it.
 System specs are the browser evaluations. The named spec file must carry a
 matching **`intent:` metadata tag** (below); a path alone is a claim, the tag is
 the proof.
+
+**The row has to be earned, not just filled.** `agent_harness_rails evals`
+checks that the link is well-formed — clause exists, file exists, tag present —
+and that is the whole of what a parser can settle. Whether the tagged examples
+would actually go red if the clause stopped being true is judgment, and it is
+the part the record lives or dies by: a clause with a green row that proves
+nothing is worse than a bare clause, which at least fails honestly. The test and
+its three common failures — asserting the affordance instead of the outcome,
+proving one case where the clause claims a quantifier, proving it at a layer
+that cannot hold it — are in
+**`agent_harness_rails/rules/testing.mdc`** § What counts as proving a clause.
+
+A clause therefore often lists **several files across several layers** — the
+permission in a policy spec, the denial in a request spec, the journey in a
+system spec. That is coverage of one clause, not duplication of one test; the
+ownership table in `agent_harness_rails/rules/testing.mdc` makes it mandatory for
+anything with an authorization side, since policy logic and its HTTP gate have
+different homes by rule.
+
+The brake on that is **necessity**: an evaluation you could delete while leaving
+the clause fully proven is padding, and comes off the row. Rows are cheap to
+lengthen and a long one reads as thorough, which is exactly why the check has to
+be explicit — every listed file earns its place or goes.
 
 Coverage is a **`built`-status obligation, and it is total**: every active
 clause on a `built` doc names a spec, or `agent_harness_rails evals` fails.
@@ -243,6 +272,7 @@ or the harness has no home here.
 | Limit | Finding when exceeded |
 |-------|----------------------|
 | ~10 active intent clauses per capability | Split the capability — same instinct as a fat controller |
+| ~3 evaluations on one clause | Two promises wearing one id (split the clause), or a padded row (drop the evaluations that prove nothing the others don't) |
 | One sentence per clause, one line per provenance entry | Rewrite tighter |
 | ~150 lines per capability doc | Fat provenance, a capability that should split, or Shape restating the harness |
 | ~50 lines for `compilation.md` | It is describing the app, not constraining it |

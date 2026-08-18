@@ -180,7 +180,18 @@ target capability doc, and **`compilation.md`**.
 4. **Write the `intent:` clauses and Shape before drafting tasks.** Tasks then cite clause
    ids (`serves I1, I4` / `supersedes I4 → I5`) instead of restating
    requirements — the plan is ephemeral; the capability doc is the durable
-   record. When this gate **creates** a doc (new feature or lazy backfill),
+   record.
+
+   Write each clause **falsifiable** — a spec must be able to go red when it
+   stops being true — and then **plan the spec homes that would**. A clause
+   carrying a quantifier (*only*, *never*, *any*, *every*, *at most*) is not
+   covered by one happy path: its task list names the denial or boundary case at
+   the layer that owns it (`agent_harness_rails/rules/testing.mdc`
+   § Ownership by Layer), which is usually a policy or request spec rather than
+   another system spec. This is the cheapest place in the whole loop to get
+   coverage right: a clause whose proof was never planned becomes a green row
+   that proves nothing at close-out
+   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause). When this gate **creates** a doc (new feature or lazy backfill),
    add its `docs/primitives/index.md` line at creation, same as `capture` —
    final approval then updates it.
 

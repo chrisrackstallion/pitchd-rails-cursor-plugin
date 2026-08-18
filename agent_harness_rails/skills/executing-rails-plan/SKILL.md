@@ -294,6 +294,14 @@ updates the capability doc directly (see the Hard rules carve-out):
    **`intent:` tag** (`agent_harness_rails/rules/testing.mdc`); add it if the
    implementor did not, since the path alone is a claim and the tag is the
    proof. Delete-listed specs must actually be gone.
+
+   **Read the reported examples against the clause before filling the row.**
+   Breaking the clause has to turn one of them red
+   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+   A clause claiming *only*, *never*, or *any* that came back with a single
+   happy-path example is **not** covered — that is a gap in the work, so send it
+   back through the implement → review loop for the missing spec rather than
+   filling a row that proves less than the clause says.
 2. **Run `agent_harness_rails evals`** — it is the check, not a formality:
 
    ```bash

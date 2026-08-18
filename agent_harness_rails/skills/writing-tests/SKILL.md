@@ -440,15 +440,24 @@ it "shows replies nested under their parent", intent: "comment_threads#I2" do
 ```
 
 Rules, format, and the list form: **`agent_harness_rails/rules/testing.mdc`**
-§ Tagging the Intent a Spec Proves. Three things to get right here:
+§ Tagging the Intent a Spec Proves. Four things to get right here:
 
-1. **Tag the example, not the group.** Never a `describe` or `context` — a group
+1. **The example must actually prove the clause** — *breaking the clause turns it
+   red*, or the tag is decoration. Read the clause's quantifier before you tag:
+   *only*, *never*, *any*, *every* each claim more than a happy path, and the
+   denial half usually belongs in a policy or request spec rather than bolted
+   onto the journey. One clause proven across two or three files at two or three
+   layers is normal — but each one must be **necessary**: if you could delete an
+   evaluation and the clause were still fully proven, it is padding, not coverage.
+   Full test and its failure modes:
+   **`agent_harness_rails/rules/testing.mdc`** § What counts as proving a clause.
+2. **Tag the example, not the group.** Never a `describe` or `context` — a group
    tag survives the deletion of the example it stood for, so the clause keeps
    claiming a proof that is gone. Four examples proving one clause carry four
    tags.
-2. **Tag only evaluation examples.** Most specs prove behaviour without proving a
+3. **Tag only evaluation examples.** Most specs prove behaviour without proving a
    *clause*. A suite where everything is tagged has no map left.
-3. **The capability doc must list the file too** — `evaluations:` on that clause.
+4. **The capability doc must list the file too** — `evaluations:` on that clause.
    Both sides, or the link is half-made.
 
 Then check it:

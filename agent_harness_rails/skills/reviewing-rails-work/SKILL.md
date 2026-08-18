@@ -135,6 +135,23 @@ suggestions:
   **examples** that prove each clause — a tag on a `describe` or `context` is a
   finding, because it keeps resolving after the example it stood for is
   deleted.
+- **Eval adequacy** — the check `agent_harness_rails evals` cannot make, and the
+  one that decides whether the tree is worth keeping: **would breaking the
+  clause turn a tagged example red?** Read each touched clause's wording against
+  its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one
+  happy path is a finding; so is an example asserting the affordance (form
+  renders, `200` returned) where the clause names an outcome; so is a denial
+  bolted onto a canonical journey instead of living in the policy or request
+  spec that owns it (`agent_harness_rails/rules/testing.mdc`
+  § What counts as proving a clause). Report the missing case, not "add more
+  tests" — name the clause, the half that is unproven, and the layer it belongs
+  at.
+
+  Then run it the other way: **is every listed evaluation necessary?** An
+  evaluation you could delete with the clause still fully proven is padding, and
+  a long row reads as thorough while leaving nobody accountable. More than ~3 on
+  one clause is a tripwire, not a virtue — usually two promises sharing an id
+  (`agent_harness_rails/rules/primitives.mdc` § Size discipline).
 - **Provenance conflicts** — the work does not re-litigate a recorded
   rejection or undo a recorded deliberate decision without saying so.
 

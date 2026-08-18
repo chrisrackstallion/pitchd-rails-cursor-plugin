@@ -103,6 +103,72 @@ clause proven by four examples is tagged on all four.
 Metadata rather than a comment for that reason: renaming an example cannot break
 the link, and deleting it breaks the link loudly.
 
+### What counts as proving a clause
+
+A tag makes a claim, and `agent_harness_rails evals` can only check that the
+claim is well-formed — that a clause exists, that an example carries the tag.
+Whether that example **proves** the clause is judgment, and it is the part that
+matters. The test:
+
+> **An evaluation proves a clause when breaking the clause turns it red.**
+
+If you can picture the behaviour regressing while the tagged example still
+passes, the tag is decoration and the clause is unproven with a green run to
+hide it — worse than the bare clause, which at least fails honestly.
+
+Three ways a tag fails that test:
+
+1. **It asserts the affordance, not the outcome.** The form renders, the button
+   is on the page, the request came back `200`. Strip the behaviour out and
+   leave the UI standing, and the example still passes. Assert the outcome the
+   clause names.
+2. **It proves one case, not the quantifier.** Clause sentences carry scope —
+   *any*, *every*, *never*, *only*, *at most*. A happy path proves the
+   existential case; the clause claims more than that. "Never nests deeper than
+   three" is unproven until something tries for four.
+3. **It proves the clause at a layer that cannot hold it.** Denials, role
+   matrices, and boundaries have owners in § Ownership by Layer. Bolting "and
+   the other user cannot" onto a canonical journey breaks the One-story gate
+   *and* still leaves the matrix uncovered.
+
+So a clause often needs **more than one evaluation, across more than one
+layer** — that is normal, not duplication:
+
+```ruby
+# Clause: articles#I3 — Only the author can edit an article.
+
+# bad — tagged, green, and half the clause is untested. Nothing here would
+# go red if every reader could suddenly edit.
+# spec/system/articles_spec.rb
+it "lets the author edit their article", intent: "articles#I3" do
+
+# good — the permission and the denial, each at the layer that owns it
+# spec/policies/article_policy_spec.rb
+it "denies edit to a reader who is not the author", intent: "articles#I3" do
+# spec/requests/articles_spec.rb
+it "redirects a non-author away from edit", intent: "articles#I3" do
+```
+
+`evaluations:` on that clause then lists both files. A clause whose evaluations
+all sit in one happy-path example, when its wording claims a universal or a
+denial, is a finding at review — not a passing row.
+
+**Sufficient as a set, necessary individually.** The red test asks whether the
+evaluations are *enough*. It says nothing about whether each one is pulling its
+weight, and a tag costs nothing to add — so the second question is the inverse:
+**could you delete this evaluation and still have the clause fully proven?** If
+yes, it is padding, and the tag comes off. Four tangential examples make a row
+look strong while leaving nobody accountable for the clause; two examples that
+each carry a side of it make the gap obvious the moment one goes.
+
+Past about three evaluations, suspect the clause rather than the coverage — a
+sentence needing four separate proofs is usually two promises wearing one id
+(`agent_harness_rails/rules/primitives.mdc` § Size discipline).
+
+A clause that **no** spec could falsify is not a clause at all: it is a Shape
+bullet, or an aspiration. Send it back rather than tagging something adjacent to
+it (`agent_harness_rails/rules/primitives.mdc` § Intent clauses).
+
 ## FactoryBot
 
 Use `create` by default — hit the database. Use `build` only when persistence is irrelevant to the test. Use `build_stubbed` rarely — the speed gain is marginal and the behaviour drift from real records can mask bugs.

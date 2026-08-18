@@ -54,7 +54,12 @@ first docs arrive later, from planning or a `capture` backfill; the scaffold
 just makes room for them.
 
 Mention `agent_harness_rails evals` to the user once, here: it ships with this gem and belongs
-in CI beside RuboCop, so the tree cannot quietly rot.
+in CI beside RuboCop, so the tree cannot quietly rot. Say plainly what it does
+and does not settle — it proves every clause **names** a spec that carries its
+tag, and no parser can tell whether that spec would actually go red if the clause
+stopped being true. That judgment is a review responsibility from day one
+(`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause);
+a team that hears it now does not mistake a green run for a proven system later.
 
 ### 2. Survey (read-only)
 

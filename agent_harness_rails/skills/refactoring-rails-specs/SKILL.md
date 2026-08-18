@@ -97,6 +97,30 @@ Build a structured plan. For each `it` / `scenario` block across the discovered 
 | Job | Tests what `perform_now(id)` does, including idempotency | Re-tests the model method the job calls, asserts mail content (that's the mailer spec) |
 | Mailer | Tests recipient/subject/body of the generated mail object | Tests delivery (callers do that with `have_enqueued_mail`) |
 
+#### Intent audit — does this `it` block carry an `intent:` tag?
+
+**Only when the app has a `docs/primitives/` tree.** A tagged example is a
+capability doc's evaluation, so a verdict on it is a verdict on the record too:
+
+- **MOVE** — the tag travels with the example, and the clause's `evaluations:`
+  gains the new path and loses the old one.
+- **MERGE** — the surviving example carries the union of the tags. Check the
+  merge did not swallow the half that proved a quantifier: two examples proving
+  *"only the author can edit"* — one permitting, one denying — cannot become one
+  example without the clause losing a side
+  (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+- **DELETE** — a tagged example is only deletable if its clause is still proven
+  elsewhere afterwards. If it is the last proof, the deletion is out of scope for
+  a refactor: it removes coverage, not duplication. Flag it and leave it.
+- **REWRITE** — re-read the clause against the rewritten example. A rewrite that
+  drops to a lower layer for speed can quietly turn an outcome assertion into an
+  affordance assertion.
+
+Never resolve a tag by deleting it from the example — that silently unproves a
+clause while keeping the suite green, and `agent_harness_rails evals` will then
+fail on the doc rather than on the spec that caused it. Finish the session with
+`agent_harness_rails evals` green.
+
 #### Duplication audit — is this assertion already proven elsewhere?
 
 Walk every assertion and check the other layers for the same claim. Common duplications:
@@ -303,6 +327,7 @@ End with one line: **"Refactor complete. Suite is green and budget-compliant."**
 | Deleting tests that look redundant without checking the other layers | Discovery and audit are mandatory; no shortcuts |
 | Letting the system-spec count drop below the budget | Budget is a typical default, not a floor; multi-step journeys legitimately need more — justify in the report |
 | Adding new behavioural coverage during refactor | Out of scope; flag for a follow-up session |
+| Deleting an `intent:` tag, or the last example proving a clause | Unproves a capability while the suite stays green; flag it and leave the example |
 | Changing factories to make moved tests pass without verifying other specs still work | Factory changes are cross-cutting; run the full suite after any factory edit |
 
 ## Verification Checklist
@@ -323,6 +348,8 @@ Before declaring done:
 - [ ] No `not_to`-only removal receipts
 - [ ] No duplicate happy-path coverage across model + request + system
 - [ ] Each assertion from the original suite is reachable at exactly one layer in the new suite
+- [ ] Every `intent:` tag moved with its example, still sits on an `it` block, and its clause's `evaluations:` paths were updated; no tag was deleted to resolve a verdict
+- [ ] `agent_harness_rails evals` is green (only when the app has a `docs/primitives/` tree)
 - [ ] `bin/rspec` is green (no new skipped/pending)
 - [ ] `bin/rubocop` is green
 - [ ] System-spec count materially reduced; runtime materially reduced
@@ -337,7 +364,8 @@ For larger refactors spanning multiple resources, prefer running this skill one 
 ## Related
 
 - **Test-writing conventions:** `agent_harness_rails/skills/writing-tests/SKILL.md` (`references/system-specs.md`, `references/request-specs.md`, `references/model-specs.md`, `references/support-specs.md`, `references/factory-patterns.md`)
-- **Testing rule:** `agent_harness_rails/rules/testing.mdc` (ownership table, anti-patterns, budget, Five Gates)
+- **Testing rule:** `agent_harness_rails/rules/testing.mdc` (ownership table, anti-patterns, budget, Five Gates, intent tags)
+- **Primitives rule:** `agent_harness_rails/rules/primitives.mdc` — read only when the app has a `docs/primitives/` tree and the refactor touches tagged examples
 - **RuboCop:** `agent_harness_rails/skills/running-rubocop/SKILL.md` — run after every refactor batch
 - **Implementor subagent:** `agent_harness_rails/agents/rails-implementor.md` — optional delegation
 - **Reviewer skill / subagent:** `agent_harness_rails/skills/reviewing-rails-work/SKILL.md` — run after a large refactor to confirm harness fit

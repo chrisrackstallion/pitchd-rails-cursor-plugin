@@ -90,6 +90,17 @@ human confirmation between, ordered by where change is coming.
    *are* draft intent clauses, and each maps to its `evaluations:` for free.
    Add the `intent:` tag to the examples as you go — a clause naming a spec
    that does not carry the tag is a finding, not a capture.
+
+   **Do not promote an adjacent spec into a proof.** The example you tag has to
+   go red if the clause stops being true
+   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+   A backfill is where this slips most easily: the clause gets written from what
+   the code does, so its wording arrives *wider* than any single existing
+   example — and tagging the nearest happy path makes the gap invisible. Where
+   the clause claims *only*, *never*, or *any* and only one case is covered,
+   either narrow the clause to what the suite actually proves, or keep the wide
+   clause and report the uncovered half as a gap under step 4. Both are honest;
+   tagging past it is not.
 3. **Code second** — models, routes, policies for the Shape bullets (deltas
    only — nothing derivable from harness rules or stated in `compilation.md`).
 4. **Gaps are findings, and they stay red** — observable behaviour with no
@@ -136,6 +147,18 @@ clause out of the doc.
 
 **Step 2 — the judgment checks the tool cannot make:**
 
+- **Rows that do not prove their clause** — the most valuable check here, and the
+  only one that decides whether the tree means anything. For each `built` clause,
+  read its wording against its tagged examples and ask whether breaking the
+  clause would turn one of them red
+  (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+  Quantifiers are where the rot collects: a clause saying *only* or *never*
+  whose evaluations are one happy path is a finding, however green the run.
+  Report it as an unproven clause with the missing case named; narrowing the
+  clause instead is a human call, since it changes what the system promises.
+  Check the reverse too — an evaluation that could be deleted with the clause
+  still fully proven is a padded row, and padding is what a long row is usually
+  made of.
 - Every capability doc listed in `index.md`, and vice versa; statuses agree.
 - An in-flight doc that is actually **abandoned** — `agent_harness_rails evals` reports the
   rowless clauses, but only a reader can tell a live amendment from a draft
@@ -143,7 +166,8 @@ clause out of the doc.
   references the capability, and how old the edits are. Unwinding one is a
   human call.
 - Size tripwires from `agent_harness_rails/rules/primitives.mdc`: >~10 active clauses (split the
-  capability), multi-line provenance entries, doc >~150 lines,
+  capability), >~3 evaluations on one clause (two promises sharing an id, or a
+  padded row), multi-line provenance entries, doc >~150 lines,
   `compilation.md` >~50 lines.
 - No content that belongs elsewhere: app code, plan tasks, restated harness rules.
 - **Process noise** — provenance lines carrying review or task counts, agent or
