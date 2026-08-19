@@ -187,6 +187,14 @@ end
 - No inheritance hierarchies — keep factories flat with traits
 - Override in the test when the value matters to the assertion
 
+**Pagination specs create real records past the page boundary.** A page size of 25
+needs 26 rows before there is a second page to assert anything about, so
+`create_list(:article, 26)` is the spec doing its job, not a factory being
+wasteful. Do not stub the page size to keep the number down — that tests the stub.
+`FactoryBot/ExcessiveCreateList` is configured at **30** in
+`rubocop-harness-rspec.yml` to leave room for the common page sizes; a
+`create_list` beyond that is building a fixture set the assertions do not need.
+
 ## Each Behaviour Has One Home
 
 Every behaviour is tested in exactly one place. Duplication across spec types
@@ -269,6 +277,8 @@ to assert more things about the same outcome.
 | Separate tests for each assertion on one action | Multiple assertions in one test for one behaviour |
 | Testing the same happy path in model + request + system | One home per behaviour — pick the right layer |
 | Standalone `not_to` assertions that only prove absence | Assert the positive behaviour the user *does* see; `not_to` is a side-effect assertion, not a primary one |
+| Rewriting a `not_to` as a positive to satisfy that rule | Keep the `not_to`; add a positive assertion beside it |
+| Comparing a status (`be < 403`, `be_between(200, 299)`) | `have_http_status(:symbol)` — a status is an identity, not a magnitude |
 | System spec that only `visit`s and asserts content (no interaction) | Request spec with `response.body.include?` |
 | One system spec per CRUD action (show/edit/delete) on the same resource | One canonical happy-path system spec; other CRUD actions to request specs |
 | One system spec per field, attribute, or validation rule | Per-field belongs to model/request specs; one system spec exercises the form as a whole |
@@ -313,6 +323,46 @@ end
 The rule: every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
 **Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
+
+### Add the positive assertion — do not convert the negative
+
+Sometimes the behaviour under test genuinely **is** an absence, and no standalone
+positive assertion says the same thing: a reader who gets no edit link, a request
+that must not be authorised. The `not_to` stays — it is what the example means.
+What it needs is an anchor, so the example fails when the page is broken as well
+as when the absence is broken:
+
+```ruby
+# Good — the absence is the point, so it stays; the positive assertion anchors it
+it "does not offer editing to a reader" do
+  get article_path(article)
+
+  expect(response).to have_http_status(:ok)             # the page rendered at all
+  expect(response.body).not_to include("Edit article")  # the behaviour under test
+end
+```
+
+Two positives to reach for when nothing product-shaped presents itself: **the
+status the request does return**, and **the state the record is left in**.
+
+**Never restate the absence as a comparison.** A status code is an identity, not a
+magnitude, and an inequality asserts far less than the negative it replaced:
+
+```ruby
+# Bad — passes on 200, on 302, on 404: every status this example never meant to accept
+expect(response.status).to be < 403
+
+# Bad — a band of statuses is not a behaviour
+expect(response.status).to be_between(200, 299)
+
+# Good — the status the request returns, and the refusal that is not happening
+expect(response).to have_http_status(:ok)
+expect(response).not_to have_http_status(:forbidden)
+```
+
+`AgentHarnessRails/HttpStatusComparison` fails the build on the comparison form,
+because it is what an otherwise-correct negative assertion turns into when the
+positive-assertion rule gets satisfied by rewriting rather than by adding.
 
 ## Running Specs
 

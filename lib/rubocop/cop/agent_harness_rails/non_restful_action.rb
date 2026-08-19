@@ -9,7 +9,16 @@ module RuboCop
       #
       # A public controller method outside the seven REST actions is the signal
       # to extract a resource: `publish` on ArticlesController wants to be
-      # `create` on Articles::PublicationsController.
+      # `create` on Articles::PublicationsController, routed as
+      # `resource :publication` inside `resources :articles`.
+      #
+      # The fix is a new controller, not a new route to this one. Folding the
+      # action names into `params[:id]` and serving them all from `show` clears
+      # the cop while keeping the RPC shape it exists to find — one controller
+      # branching on a verb, now with the verb hidden in a path segment that
+      # claims to identify a record. If the actions are genuinely one resource,
+      # they are `create`/`destroy` on that resource; if they are not, they are
+      # separate controllers.
       #
       # Only public methods are flagged. Finders, strong-parameter methods, and
       # other helpers live under `private`, which is where the rule's own
@@ -29,9 +38,18 @@ module RuboCop
       #       @article.publish
       #     end
       #   end
+      #
+      #   # bad — the same RPC controller, with the verbs moved into the id
+      #   class ArticlesController < ApplicationController
+      #     def show
+      #       @article.public_send(params[:id])
+      #     end
+      #   end
       class NonRestfulAction < Base
-        MSG = "`%<name>s` is not a REST action. Extract a noun resource with CRUD actions, " \
-              "or move it below `private` if it is a helper."
+        MSG = "`%<name>s` is not a REST action. Extract the noun it implies into a controller " \
+              "of its own, routed as a singular `resource` under the parent (`publish` -> " \
+              "`Articles::PublicationsController#create`), or move it below `private` if it is a " \
+              "helper. Not a `show` that reads the action name out of `params[:id]`."
 
         def on_class(node)
           public_methods_in(node.body).each do |method|

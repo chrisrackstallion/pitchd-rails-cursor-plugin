@@ -50,6 +50,30 @@ resources :cards do
 end
 ```
 
+**One controller per resource — the fix is a new controller, not a new route to
+the old one.** Keeping the branching and hiding the verb in the URL clears the
+lint and preserves the RPC shape:
+
+```ruby
+# Bad — the same RPC controller with the verbs moved into params[:id]
+# GET /cards/1/closure, /cards/1/archival ... all served by one `show`
+resources :cards do
+  resources :actions, only: :show, module: :cards
+end
+
+class Cards::ActionsController < ApplicationController
+  def show
+    @card.public_send(params[:id])   # params[:id] is not identifying anything
+  end
+end
+```
+
+`params[:id]` identifies a record. A path segment naming an action is a verb
+wearing an id's clothes, and it costs the resource its CRUD verbs: there is no
+`destroy` for un-closing a card, because `show` swallowed the whole resource.
+Each noun gets its own controller — `Cards::ClosuresController#create` and
+`#destroy` — and a singular `resource` route when there is one per parent.
+
 ## Controller Structure
 
 Organise every controller in this order:
@@ -228,7 +252,8 @@ end
 | Anti-Pattern | Instead |
 |-------------|---------|
 | Business logic in actions | Model method or domain verb |
-| Custom verb actions (`close`, `archive`) | New noun resource with CRUD |
+| Custom verb actions (`close`, `archive`) | New noun resource with CRUD, in its own controller |
+| Action names routed as `params[:id]` on a single `show` | Separate controllers; `params[:id]` identifies a record, never an action |
 | `params.require(...).permit(...)` | `params.expect(...)` |
 | Reaching for Turbo Streams first | Redirect → frames → streams (`agent_harness_rails/skills/writing-hotwire/references/patterns.md`) |
 | Unscoped find for nested resources | Scope through parent association |

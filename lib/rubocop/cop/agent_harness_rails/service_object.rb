@@ -10,6 +10,11 @@ module RuboCop
       # Flags a class living under app/services/, or named with a suffix that
       # signals a wrapper around behaviour that belongs elsewhere.
       #
+      # Scoped to service *objects*, not to the words they use. A suffix only
+      # marks a wrapper when the name puts something in front of it — a bare
+      # `Service` or `Command` is domain vocabulary, and a class with a table
+      # behind it is named for what it stores rather than what it wraps.
+      #
       # @example
       #   # bad
       #   class PublishArticleService
@@ -25,17 +30,34 @@ module RuboCop
       #   class Account::Onboarding
       #     def complete(params) = ...
       #   end
+      #
+      #   # good — the domain really does have services in it
+      #   class Service < ApplicationRecord
+      #     belongs_to :account
+      #   end
       class ServiceObject < Base
         MSG_SUFFIX = "Avoid `%<name>s`. Put the behaviour on the model, in a PORO " \
                      "namespaced under it, or in a job."
         MSG_DIRECTORY = "Avoid app/services/. Put the behaviour on the model, in a PORO " \
                         "namespaced under it, or in a job."
 
+        RECORD_SUPERCLASSES = %w[ApplicationRecord ActiveRecord::Base].freeze
+
+        # Macros that only appear on something with a table (or an association)
+        # behind it. Deliberately not `validates` or `scope`: an ActiveModel form
+        # object has both, and a form object called `CheckoutOperation` is the
+        # wrapper this cop exists to find.
+        RECORD_MACROS = %i[
+          belongs_to has_many has_one has_and_belongs_to_many
+          enum normalizes encrypts table_name=
+        ].freeze
+
         def on_class(node)
           return add_offense(node.identifier, message: MSG_DIRECTORY) if in_services_directory?
 
           name = node.identifier.short_name.to_s
-          return unless forbidden_suffix?(name)
+          return unless wrapper_suffix?(name)
+          return if record?(node)
 
           add_offense(node.identifier, message: format(MSG_SUFFIX, name: name))
         end
@@ -49,8 +71,44 @@ module RuboCop
         # A namespaced PORO is the sanctioned home for multi-step work, so
         # `Article::Publisher` passes while `ArticlePublisherService` does not —
         # the suffix is what marks the wrapper, not the nesting.
-        def forbidden_suffix?(name)
-          cop_config.fetch("Suffixes", []).any? { |suffix| name.end_with?(suffix) }
+        #
+        # `name != suffix` is what keeps a domain noun out of it. A billing app's
+        # `Service`, a CQRS-free app's `Command`: the word is the whole name, so
+        # there is no wrapped verb for the suffix to be a suffix of.
+        def wrapper_suffix?(name)
+          suffixes.any? { |suffix| name != suffix && name.end_with?(suffix) }
+        end
+
+        def suffixes
+          cop_config.fetch("Suffixes", [])
+        end
+
+        # Something with a table behind it is out of scope however it is spelled.
+        # `class PaymentService < ApplicationRecord` is a row, and the rule has
+        # nothing to say about rows — moving behaviour onto the model is the
+        # advice, and this class already *is* the model.
+        def record?(node)
+          record_superclass?(node.parent_class) || record_macros?(node.body)
+        end
+
+        def record_superclass?(superclass)
+          return false unless superclass.respond_to?(:const_type?) && superclass.const_type?
+
+          name = superclass.source
+          return true if RECORD_SUPERCLASSES.include?(name)
+
+          # STI: `class PaymentService < Service` inherits a table from a parent
+          # whose own bare name this cop already accepts as domain vocabulary.
+          suffixes.include?(superclass.short_name.to_s)
+        end
+
+        def record_macros?(body)
+          return false if body.nil?
+
+          nodes = body.begin_type? ? body.children : [ body ]
+          nodes.any? do |child|
+            child.respond_to?(:send_type?) && child.send_type? && RECORD_MACROS.include?(child.method_name)
+          end
         end
       end
     end

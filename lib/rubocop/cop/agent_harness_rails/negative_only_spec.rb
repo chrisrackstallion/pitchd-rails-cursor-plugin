@@ -16,6 +16,16 @@ module RuboCop
       # example — confirming a thing disappeared alongside proof of what
       # replaced it.
       #
+      # The fix is to *add*, never to convert. When the behaviour under test
+      # genuinely is an absence — an unauthorised user sees no edit link, a
+      # request is refused — the negative assertion is the one that carries the
+      # meaning, and a standalone positive would not say anything. Keep it, and
+      # anchor it with a positive assertion about what the example does render,
+      # return, or leave unchanged. Rewriting the absence as a range or a
+      # comparison satisfies this cop while asserting something weaker than the
+      # negative did; AgentHarnessRails/HttpStatusComparison catches the common
+      # form of that.
+      #
       # @example
       #   # bad
       #   it "does not show the excluded agency" do
@@ -29,9 +39,18 @@ module RuboCop
       #     expect(page).to have_content("Article deleted.")
       #     expect(page).not_to have_content("To Delete")
       #   end
+      #
+      #   # good — the absence is the point, so it stays; the positive anchors it
+      #   it "does not offer editing to a reader" do
+      #     get article_path(article)
+      #
+      #     expect(response).to have_http_status(:ok)
+      #     expect(response.body).not_to include("Edit article")
+      #   end
       class NegativeOnlySpec < Base
         MSG = "Every example needs at least one positive assertion — this one only proves " \
-              "an absence, so it passes even if the page is empty."
+              "an absence, so it passes even if the page is empty. Keep the `not_to` and add " \
+              "a positive assertion beside it; do not restate the absence as a comparison."
         EXAMPLE_METHODS = %i[it specify example scenario its].freeze
         NEGATIVE_MATCHERS = %i[not_to to_not].freeze
 

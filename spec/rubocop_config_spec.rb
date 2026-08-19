@@ -170,8 +170,12 @@ RSpec.describe "shipped RuboCop configs" do
       rule = File.read(File.join(root, "agent_harness_rails/rules/controllers.mdc"), encoding: "UTF-8")
       documented = app_config.for_cop("Rails/ActionOrder")["ExpectedOrder"]
 
+      # Only § Controller Structure: that is the example the override follows, and
+      # the rule's other snippets deliberately show actions out of order.
+      structure = rule[/^## Controller Structure$.*?(?=^## )/m]
+
       expect(documented).to eq(%w[index show new create edit update destroy])
-      expect(rule.scan(/^  def (\w+)$/).flatten & documented).to eq(documented)
+      expect(structure.scan(/^  def (\w+)$/).flatten & documented).to eq(documented)
     end
   end
 

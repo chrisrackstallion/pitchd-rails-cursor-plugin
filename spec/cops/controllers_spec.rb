@@ -10,7 +10,7 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::NonRestfulAction, :config do
     expect_offense(<<~RUBY)
       class ArticlesController < ApplicationController
         def publish
-            ^^^^^^^ `publish` is not a REST action. Extract a noun resource with CRUD actions, or move it below `private` if it is a helper.
+            ^^^^^^^ `publish` is not a REST action. Extract the noun it implies into a controller of its own, routed as a singular `resource` under the parent (`publish` -> `Articles::PublicationsController#create`), or move it below `private` if it is a helper. Not a `show` that reads the action name out of `params[:id]`.
         end
       end
     RUBY

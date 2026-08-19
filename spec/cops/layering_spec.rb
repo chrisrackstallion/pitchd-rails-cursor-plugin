@@ -44,6 +44,58 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::ServiceObject, :config do
     RUBY
   end
 
+  it "accepts a table-backed model whose name is the domain noun itself" do
+    # A billing app has services in it. The word is the whole name, so there is
+    # no wrapped verb for the suffix to be a suffix of.
+    expect_no_offenses(<<~RUBY, "app/models/service.rb")
+      class Service < ApplicationRecord
+        belongs_to :account
+      end
+    RUBY
+  end
+
+  it "accepts a table-backed model that ends in a suffix" do
+    # `Put the behaviour on the model` is the advice, and this class is the model.
+    expect_no_offenses(<<~RUBY, "app/models/payment_service.rb")
+      class PaymentService < ApplicationRecord
+      end
+    RUBY
+  end
+
+  it "accepts an STI subclass of a domain noun" do
+    expect_no_offenses(<<~RUBY, "app/models/payment_service.rb")
+      class PaymentService < Service
+      end
+    RUBY
+  end
+
+  it "accepts a model recognised by its associations rather than its superclass" do
+    expect_no_offenses(<<~RUBY, "app/models/dispatch_operation.rb")
+      class DispatchOperation < LegacyRecord
+        has_many :dispatches
+      end
+    RUBY
+  end
+
+  it "flags a form object even though it validates, because a form is not a table" do
+    expect_offense(<<~RUBY, "app/models/checkout_operation.rb")
+      class CheckoutOperation
+            ^^^^^^^^^^^^^^^^^ Avoid `CheckoutOperation`. Put the behaviour on the model, in a PORO namespaced under it, or in a job.
+        include ActiveModel::Model
+
+        validates :card_token, presence: true
+      end
+    RUBY
+  end
+
+  it "flags a class under app/services whatever the domain calls that word" do
+    expect_offense(<<~RUBY, "app/services/service.rb")
+      class Service
+            ^^^^^^^ Avoid app/services/. Put the behaviour on the model, in a PORO namespaced under it, or in a job.
+      end
+    RUBY
+  end
+
   it "accepts a model whose name merely contains a suffix word" do
     # `Commander` ends in neither `Command` nor any other listed suffix at the
     # end of the word — a real domain noun must not trip this.

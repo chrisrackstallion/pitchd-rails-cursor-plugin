@@ -139,6 +139,7 @@ FactoryBot/CreateList:
   Enabled: true
 FactoryBot/ExcessiveCreateList:
   Enabled: true
+  MaxAmount: 30
 FactoryBot/FactoryClassName:
   Enabled: true
 FactoryBot/FactoryNameStyle:

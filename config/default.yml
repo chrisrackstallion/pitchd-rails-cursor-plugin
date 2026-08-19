@@ -173,6 +173,15 @@ AgentHarnessRails/NegativeOnlySpec:
   Include:
     - "**/spec/**/*.rb"
 
+AgentHarnessRails/HttpStatusComparison:
+  Description: Assert the response status itself, never a range around it.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+    - "**/test/**/*.rb"
+
 AgentHarnessRails/IntentTag:
   Description: "Intent metadata reads `<capability>#I<n>` and sits on the example, not the group."
   Enabled: true

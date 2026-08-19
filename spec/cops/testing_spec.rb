@@ -70,7 +70,7 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::NegativeOnlySpec, :config do
   it "flags an example that only proves an absence" do
     expect_offense(<<~RUBY)
       it "does not show the excluded agency" do
-      ^^ Every example needs at least one positive assertion — this one only proves an absence, so it passes even if the page is empty.
+      ^^ Every example needs at least one positive assertion — this one only proves an absence, so it passes even if the page is empty. Keep the `not_to` and add a positive assertion beside it; do not restate the absence as a comparison.
         expect(page).not_to have_link("New Excluded Agency")
       end
     RUBY
@@ -94,6 +94,68 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::NegativeOnlySpec, :config do
     expect_no_offenses(<<~RUBY)
       it "is pending" do
       end
+    RUBY
+  end
+
+  it "accepts an absence that is the point, anchored by a positive assertion" do
+    # The fix the message asks for: the negative stays, because it is what the
+    # example means; a positive assertion joins it rather than replacing it.
+    expect_no_offenses(<<~RUBY)
+      it "does not offer editing to a reader" do
+        get article_path(article)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Edit article")
+      end
+    RUBY
+  end
+end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::HttpStatusComparison, :config do
+  it "flags a comparison standing in for a negative status assertion" do
+    expect_offense(<<~RUBY)
+      expect(response.status).to be < 403
+                                 ^^^^^^^^ Assert the status, not a range around it: `have_http_status(:ok)`. A comparison also passes for every other status on its side of the number — if the behaviour is "not this status", write `not_to have_http_status(...)` with a positive assertion beside it.
+    RUBY
+  end
+
+  it "flags a band of statuses" do
+    expect_offense(<<~RUBY)
+      expect(response.status).to be_between(200, 299)
+                                 ^^^^^^^^^^^^^^^^^^^^ Assert the status, not a range around it: `have_http_status(:ok)`. A comparison also passes for every other status on its side of the number — if the behaviour is "not this status", write `not_to have_http_status(...)` with a positive assertion beside it.
+    RUBY
+  end
+
+  it "flags the comparison wherever it is written, not just as a matcher" do
+    expect_offense(<<~RUBY)
+      expect(response.code.to_i < 400).to be true
+             ^^^^^^^^^^^^^^^^^^^^^^^^ Assert the status, not a range around it: `have_http_status(:ok)`. A comparison also passes for every other status on its side of the number — if the behaviour is "not this status", write `not_to have_http_status(...)` with a positive assertion beside it.
+    RUBY
+  end
+
+  it "flags a Capybara status the same way" do
+    expect_offense(<<~RUBY)
+      expect(page.status_code).to be >= 400
+                                  ^^^^^^^^^ Assert the status, not a range around it: `have_http_status(:ok)`. A comparison also passes for every other status on its side of the number — if the behaviour is "not this status", write `not_to have_http_status(...)` with a positive assertion beside it.
+    RUBY
+  end
+
+  it "accepts the status named exactly" do
+    expect_no_offenses(<<~RUBY)
+      expect(response).to have_http_status(:forbidden)
+    RUBY
+  end
+
+  it "accepts a negative status assertion paired with a positive one" do
+    expect_no_offenses(<<~RUBY)
+      expect(response).to have_http_status(:ok)
+      expect(response).not_to have_http_status(:forbidden)
+    RUBY
+  end
+
+  it "leaves comparisons that have nothing to do with a status alone" do
+    expect_no_offenses(<<~RUBY)
+      expect(article.reload.version).to be > 1
     RUBY
   end
 end

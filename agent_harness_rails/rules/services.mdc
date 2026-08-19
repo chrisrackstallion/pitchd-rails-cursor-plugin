@@ -27,6 +27,13 @@ class PublishArticleService
 end
 ```
 
+This is about wrappers, not about the word. A **table-backed model** named
+`Service`, `Operation` or `Command` is domain vocabulary — a row in a table, named
+for what it stores — and it is the right place for behaviour, not a violation of
+this rule. `AgentHarnessRails/ServiceObject` is scoped accordingly: it flags
+`app/services/` and names that put a verb in front of a suffix
+(`PublishArticleService`, `ApplicationService`), and leaves records alone.
+
 ## Where Logic Actually Lives
 
 | Situation | Where It Goes |

@@ -33,15 +33,37 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
   `Rails/*`, `Naming/*`, `Lint/*` and `Security/*` cops that encode rules already
   written down here, with `Layout/ClassStructure` and `Rails/ActionOrder`
   configured to the model and controller ordering the rules document.
-- **Fifteen `AgentHarnessRails/*` cops** for rules no existing cop covers:
+- **Sixteen `AgentHarnessRails/*` cops** for rules no existing cop covers:
   `ServiceObject`, `GenericOperationMethod`, `NonRestfulAction`, `CsrfSkip`,
   `EnqueueOutsideCommit`, `MailerDeliverNow`, `PolicyVerbMethod`,
   `PolicyContext`, `DeepNestedResources`, `MigrationDataChange`, `SpecSleep`,
-  `StubbedSubject`, `ViewSpec`, `NegativeOnlySpec`, `IntentTag`. Each names the
-  `.mdc` rule it enforces.
+  `StubbedSubject`, `ViewSpec`, `NegativeOnlySpec`, `HttpStatusComparison`,
+  `IntentTag`. Each names the `.mdc` rule it enforces.
+
+  Two of them exist because of how the other cops get satisfied. Applying the
+  layer to a real application turned up agents clearing a message while leaving
+  the thing it named in place: `NonRestfulAction` answered by routing the verbs
+  through one `show` as `params[:id]` values, and `NegativeOnlySpec` answered by
+  rewriting `not_to have_http_status(:forbidden)` as
+  `expect(response.status).to be < 403` — an assertion that also passes on 200,
+  302 and 404. `HttpStatusComparison` fails the build on the comparison form;
+  `NegativeOnlySpec`'s message now says to *add* the positive assertion rather
+  than convert the negative; `NonRestfulAction`'s names the fix (a controller per
+  noun, singular `resource` routes) and rules out the id-as-action dodge;
+  `running-rubocop` § 4 states the general form — fix the finding, not the
+  message.
+
+  `ServiceObject` is narrowed to service objects rather than to the words they
+  use. A table-backed `Service`, `Operation` or `Command` is domain vocabulary and
+  no longer flags: the suffix only marks a wrapper when a name puts a verb in
+  front of it, so `PublishArticleService` and `ApplicationService` still do.
 - **`rubocop-harness-rspec.yml`** — the spec half, covering most of
   `testing.mdc` via `rubocop-rspec`, `-rspec_rails`, `-capybara` and
   `-factory_bot`. Separate because those are gems your app supplies.
+  `FactoryBot/ExcessiveCreateList` is set to **30** rather than the cop's default
+  of 10: a pagination spec has to cross the page boundary to assert anything, and
+  the ways around the cop — stubbing the page size, looping `create` — are worse
+  than the records.
 
 ### Changed
 

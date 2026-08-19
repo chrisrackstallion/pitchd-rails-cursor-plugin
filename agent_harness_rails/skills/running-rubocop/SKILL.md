@@ -74,6 +74,18 @@ If you think it is wrong, say so as a review observation and let the human decid
 - **Metrics** and similar: **refactor** (extract method, simplify) until the cop passes — do not disable the cop.
 - **No** inline RuboCop directive comments. **No** config-based suppression for new work.
 
+**Fix the finding, not the message.** A cop that goes quiet while the thing it
+named is still there is a worse outcome than the offence, because the offence was
+at least visible. Two the harness has actually seen:
+
+| Cop | The dodge | The fix |
+|-----|-----------|---------|
+| `AgentHarnessRails/NonRestfulAction` | Route the verbs through one `show` as `params[:id]` values | A controller per noun, singular `resource` routes (`agent_harness_rails/rules/controllers.mdc`) |
+| `AgentHarnessRails/NegativeOnlySpec` | Rewrite `not_to have_http_status(:forbidden)` as `expect(response.status).to be < 403` | Keep the negative, add a positive assertion beside it (`agent_harness_rails/rules/testing.mdc`) |
+
+If the correct fix is larger than the branch can carry, report **BLOCKED** (§5).
+Do not go looking for a spelling the parser cannot see.
+
 ## 5. Rare blocker
 
 - If a cop cannot be satisfied with a **correct** fix and needs product or policy input, report **BLOCKED** (see **`implementing-rails-task`**) with cop name, offence, attempts, and what you need from the user. **Do not** merge or finish with offences or suppressions.
