@@ -15,7 +15,7 @@ module RuboCop
       #
       # This exists because of where it comes from. The shape appears when an
       # example that correctly said `not_to have_http_status(:forbidden)` gets
-      # rewritten to satisfy AgentHarnessRails/NegativeOnlySpec — the negative is
+      # rewritten to satisfy AgentHarnessRails/UnanchoredAbsence — the negative is
       # converted into an inequality rather than joined by a positive assertion,
       # and the example ends up asserting less than it did before the fix. When
       # the behaviour is "not this status", say that, and add a positive

@@ -33,25 +33,25 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
   `Rails/*`, `Naming/*`, `Lint/*` and `Security/*` cops that encode rules already
   written down here, with `Layout/ClassStructure` and `Rails/ActionOrder`
   configured to the model and controller ordering the rules document.
-- **Sixteen `AgentHarnessRails/*` cops** for rules no existing cop covers:
+- **Seventeen `AgentHarnessRails/*` cops** for rules no existing cop covers:
   `ServiceObject`, `GenericOperationMethod`, `NonRestfulAction`, `CsrfSkip`,
   `EnqueueOutsideCommit`, `MailerDeliverNow`, `PolicyVerbMethod`,
   `PolicyContext`, `DeepNestedResources`, `MigrationDataChange`, `SpecSleep`,
-  `StubbedSubject`, `ViewSpec`, `NegativeOnlySpec`, `HttpStatusComparison`,
-  `IntentTag`. Each names the `.mdc` rule it enforces.
+  `StubbedSubject`, `ViewSpec`, `UnanchoredAbsence`, `TautologicalAssertion`,
+  `HttpStatusComparison`, `IntentTag`. Each names the `.mdc` rule it enforces.
 
-  Two of them exist because of how the other cops get satisfied. Applying the
+  Three of them exist because of how the other cops get satisfied. Applying the
   layer to a real application turned up agents clearing a message while leaving
   the thing it named in place: `NonRestfulAction` answered by routing the verbs
-  through one `show` as `params[:id]` values, and `NegativeOnlySpec` answered by
+  through one `show` as `params[:id]` values, and the absence rule answered by
   rewriting `not_to have_http_status(:forbidden)` as
   `expect(response.status).to be < 403` — an assertion that also passes on 200,
-  302 and 404. `HttpStatusComparison` fails the build on the comparison form;
-  `NegativeOnlySpec`'s message now says to *add* the positive assertion rather
-  than convert the negative; `NonRestfulAction`'s names the fix (a controller per
-  noun, singular `resource` routes) and rules out the id-as-action dodge;
-  `running-rubocop` § 4 states the general form — fix the finding, not the
-  message.
+  302 and 404 — or by adding `expect(policy).to be_a(described_class)`, which is
+  true the moment it is written. `HttpStatusComparison` fails the build on the
+  comparison form, `TautologicalAssertion` on the padding;
+  `NonRestfulAction`'s message names the fix (a controller per noun, singular
+  `resource` routes) and rules out the id-as-action dodge; `running-rubocop` § 4
+  states the general form — fix the finding, not the message.
 
   `ServiceObject` is narrowed to service objects rather than to the words they
   use. A table-backed `Service`, `Operation` or `Command` is domain vocabulary and
@@ -64,6 +64,40 @@ the primitives tree, and a RuboCop layer for the rules a parser can settle.
   of 10: a pagination spec has to cross the page boundary to assert anything, and
   the ways around the cop — stubbing the page size, looping `create` — are worse
   than the records.
+
+- **`testing.mdc` § Every Assertion Must Be Able to Fail** replaces "every test
+  needs at least one positive assertion", which was the wrong rule stated
+  confidently. The test is not whether an assertion is positive or negative but
+  whether **a failure the example is not about could satisfy it**, which splits
+  negations in two. A negation the unit answers directly —
+  `expect(policy).not_to permit(...)`, `expect(article).not_to be_published`,
+  `expect { card.reopen }.not_to raise_error` — is sound: a missing policy or a
+  renamed predicate raises rather than passing, so nothing can land on its passing
+  side and there is nothing to add. An absence read off a **by-product** — a
+  rendered page, a status, a record reloaded after a request, a count after a
+  `post` — is where a 500, a blank render or a wrong guard clause all pass, and
+  that is what needs one anchoring assertion beside it.
+
+  The old rule taxed the sound half, and the tax got paid in padding: an example
+  asserting a policy denial acquired `expect(policy).to be_a(described_class)` to
+  make the linter quiet. Two of the harness's own documented examples — the
+  `not_to raise_error` no-op and the job that correctly enqueues nothing — were
+  offences under it. `AgentHarnessRails/UnanchoredAbsence` replaces
+  `NegativeOnlySpec` accordingly: it fires only when the negation reads a document
+  or a response, or the example drove a request or a browser first, and it now sees
+  the `expect { }` block form that the old cop's node pattern missed entirely
+  (`expect { post ... }.not_to change(Article, :count)` went unreported).
+
+  Two further pieces of the same rule: a **denial usually lacks its counterpart,
+  not an anchor** — "the owner cannot destroy" is a real claim because "the admin
+  can destroy" passes in the same file — and a denial should be **spelled
+  positively** where the language allows, which policy specs already do with
+  `expect(policy.destroy?).to be false`. For apps testing policies through a
+  matcher, `references/support-specs.md` § Stating a denial gives the one-line
+  inverse, `RSpec::Matchers.define_negated_matcher :forbid, :permit`, so
+  `expect(policy).to forbid(owner, account)` reads as the assertion it is.
+  `refactoring-rails-specs` no longer defaults a `not_to`-only example to
+  **DELETE**: that verdict was live coverage loss on every policy spec it met.
 
 ### Changed
 

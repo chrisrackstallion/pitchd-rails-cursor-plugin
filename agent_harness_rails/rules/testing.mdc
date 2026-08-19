@@ -276,8 +276,9 @@ to assert more things about the same outcome.
 | Re-testing domain logic in integration specs | Model spec owns the logic; integration asserts the outcome |
 | Separate tests for each assertion on one action | Multiple assertions in one test for one behaviour |
 | Testing the same happy path in model + request + system | One home per behaviour — pick the right layer |
-| Standalone `not_to` assertions that only prove absence | Assert the positive behaviour the user *does* see; `not_to` is a side-effect assertion, not a primary one |
-| Rewriting a `not_to` as a positive to satisfy that rule | Keep the `not_to`; add a positive assertion beside it |
+| An absence read off a page or response, with nothing proving the page rendered | Keep the `not_to`; anchor it with the status or a landmark the page must show |
+| A negation the unit answers directly (`not_to permit`, `not_to be_published`) treated as needing a positive assertion | Leave it alone — nothing can fail into its passing side |
+| An assertion that cannot fail (`be_a(described_class)`) added to satisfy a rule | If no honest anchor exists, the negation needed none |
 | Comparing a status (`be < 403`, `be_between(200, 299)`) | `have_http_status(:symbol)` — a status is an identity, not a magnitude |
 | System spec that only `visit`s and asserts content (no interaction) | Request spec with `response.body.include?` |
 | One system spec per CRUD action (show/edit/delete) on the same resource | One canonical happy-path system spec; other CRUD actions to request specs |
@@ -288,65 +289,82 @@ to assert more things about the same outcome.
 | Drive-by assertions on nav/footer/sidebar inside a feature spec | One story per spec; assert only what belongs to the journey under test |
 | System spec for UI authorization with no product requirement | Policy spec (logic) + request spec (HTTP gate) |
 
-### Do not write specs to prove code was removed
+### Every Assertion Must Be Able to Fail
 
-A spec whose only assertion is `not_to have_*` tests absence, not behaviour — it passes trivially (including when the feature never existed) and breaks silently if the element is renamed.
+Whether an assertion is positive or negative is not the test. The test is whether
+**a failure the example is not about could satisfy it**, and you ask it of every
+negation you write:
+
+> If the request 500s, the route disappears, or the page renders blank — does this
+> assertion still pass?
+
+If yes, the assertion absorbs failures it was never meant to accept. If no, the
+negation is doing exactly the work a positive assertion would, and it needs
+nothing added to it.
+
+#### Sound: the verdict comes straight back from the unit
+
+Nothing sits between the example and the answer, so a broken unit **raises**
+rather than passing quietly. Keep these as they are:
 
 ```ruby
-# Bad — proves nothing except an element is absent; passes even if the page is empty
-it "does not show an excluded agencies section" do
-  expect(page).not_to have_link("New Excluded Agency")
-end
-
-# Good — tests what the user actually sees and can do on this page
-it "shows the agencies list without the excluded agency option" do
-  visit agencies_path
-  expect(page).to have_content("Agencies")
-  expect(page).to have_link("New Agency")
-end
+expect(policy).not_to permit(reader, article)   # the policy answered
+expect(article).not_to be_published             # the record answered
+expect(duplicate).not_to be_valid               # validation ran
+expect { card.reopen }.not_to raise_error       # the method ran
 ```
 
-`not_to` is valid as a **secondary assertion** when it confirms a visible state change alongside a positive assertion:
+A missing policy, a renamed predicate, a deleted method — each is an error, not a
+green test. There is no unrelated failure to absorb, so there is nothing to
+anchor, and bolting a positive assertion onto one of these is how you end up with
+`expect(policy).to be_a(described_class)` (§ An anchor that cannot fail).
+
+**Prefer the positive spelling of a denial where the language has one.** It ends
+the argument outright, and it is the shape the policy examples in this harness
+already use:
 
 ```ruby
-# Fine — not_to confirms the item is gone after deletion, paired with a positive outcome
-it "user deletes an article" do
-  article = create(:article, title: "To Delete")
+expect(policy.destroy?).to be false      # not: expect(policy).not_to permit(...)
+```
+
+If your app tests policies through a `permit`-style matcher, give it an inverse —
+`forbid` — instead of negating it: `agent_harness_rails/skills/writing-tests/references/support-specs.md`
+§ Policy Specs.
+
+#### Unanchored: the absence is a by-product of machinery
+
+A rendered page, a response status, a record reloaded after a request, a count
+after a `post`. The absence sits downstream of machinery, and **the machinery's
+failure lands on the passing side**:
+
+```ruby
+# Bad — passes when the button is correctly hidden, and when the page 500s, and
+# when the route is gone, and when the render comes back blank
+it "does not offer deleting to a reader" do
   visit article_path(article)
-  click_button "Delete"
 
-  expect(page).to have_content("Article deleted.")  # primary
-  expect(page).not_to have_content("To Delete")     # confirms removal
+  expect(page).not_to have_button("Delete")
+end
+
+# Good — the landmark proves the page rendered; the absence is still the point
+it "does not offer deleting to a reader" do
+  visit article_path(article)
+
+  expect(page).to have_content(article.title)   # anchor — red if the page breaks
+  expect(page).not_to have_button("Delete")     # the behaviour under test
 end
 ```
 
-The rule: every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
+The `not_to` **stays**. What it gains is one assertion that goes red when the
+machinery breaks. Reach for, in this order: the status the request returns, a
+landmark the page must show, the state the record is left in.
 
-**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
-
-### Add the positive assertion — do not convert the negative
-
-Sometimes the behaviour under test genuinely **is** an absence, and no standalone
-positive assertion says the same thing: a reader who gets no edit link, a request
-that must not be authorised. The `not_to` stays — it is what the example means.
-What it needs is an anchor, so the example fails when the page is broken as well
-as when the absence is broken:
-
-```ruby
-# Good — the absence is the point, so it stays; the positive assertion anchors it
-it "does not offer editing to a reader" do
-  get article_path(article)
-
-  expect(response).to have_http_status(:ok)             # the page rendered at all
-  expect(response.body).not_to include("Edit article")  # the behaviour under test
-end
-```
-
-Two positives to reach for when nothing product-shaped presents itself: **the
-status the request does return**, and **the state the record is left in**.
+`AgentHarnessRails/UnanchoredAbsence` fires on this shape — every assertion in the
+example negative, over a document or after a request — and stays quiet on the
+sound negations above.
 
 **Never restate the absence as a comparison.** A status code is an identity, not a
-magnitude, and an inequality asserts far less than the negative it replaced:
+magnitude, and an inequality asserts far less than the negation it replaced:
 
 ```ruby
 # Bad — passes on 200, on 302, on 404: every status this example never meant to accept
@@ -360,9 +378,55 @@ expect(response).to have_http_status(:ok)
 expect(response).not_to have_http_status(:forbidden)
 ```
 
-`AgentHarnessRails/HttpStatusComparison` fails the build on the comparison form,
-because it is what an otherwise-correct negative assertion turns into when the
-positive-assertion rule gets satisfied by rewriting rather than by adding.
+`AgentHarnessRails/HttpStatusComparison` fails the build on the comparison form.
+
+#### An anchor that cannot fail is not an anchor
+
+```ruby
+# Bad — true the moment it is written; the absence beside it is as unanchored as
+# it was before the line was added
+it "denies access" do
+  expect(policy).to be_a(described_class)
+  expect(policy).not_to permit(owner_context, account)
+end
+```
+
+This is what "add a positive assertion" produces when the negation did not need
+one: a longer example, one more green line for a reviewer to read, and not a
+scrap of extra coverage. `AgentHarnessRails/TautologicalAssertion` fails the build
+on it. **If no honest anchor presents itself, that is the signal the negation was
+sound and needed none** — not an invitation to invent one.
+
+#### What a denial usually lacks is its counterpart, not an anchor
+
+A denial gets its meaning from the permission tested beside it. "The owner cannot
+destroy" is a real claim because "the admin can destroy" sits in the same file and
+also passes — if the policy returned `false` for everyone, half that file would go
+red. So when a spec file asserts only denials, the gap is the **missing
+counterpart**, and no assertion added inside the individual examples closes it
+(§ Ownership by Layer; the role × action matrix in support-specs.md).
+
+#### Removal receipts still get deleted
+
+A spec with no behaviour behind it at all — written to record that a feature is
+gone — is not an assertion to repair. It is a spec that should not exist:
+
+```ruby
+# Bad — nothing here is a behaviour; it passes because the feature never existed
+it "does not show an excluded agencies section" do
+  expect(page).not_to have_link("New Excluded Agency")
+end
+
+# Good — tests what the user actually sees and can do on this page
+it "shows the agencies list without the excluded agency option" do
+  visit agencies_path
+
+  expect(page).to have_content("Agencies")
+  expect(page).to have_link("New Agency")
+end
+```
+
+**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
 
 ## Running Specs
 

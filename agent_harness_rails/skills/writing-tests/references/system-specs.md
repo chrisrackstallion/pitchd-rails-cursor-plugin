@@ -325,12 +325,30 @@ footer copy, sidebar widgets, or the global search bar. Each system
 spec tells one story. Drive-by assertions couple unrelated changes
 together — a footer copy change breaks the article-creation spec.
 
-### `not_to` as a primary assertion
+### `not_to` with nothing anchoring it
 
-Already in the skill, but worth restating: a test whose only assertion
-is `not_to have_*` proves only absence. It passes trivially on a blank
-page. Every test needs a positive assertion; `not_to` is a secondary
-check that pairs with one.
+Already in the skill, but worth restating for system specs, where it is
+the common case: `expect(page).not_to have_*` reads a **by-product**. It
+passes when the element is correctly hidden, and equally when the page
+500s, when the route is gone, and when the render comes back blank.
+
+Keep the `not_to` — it is what the example means — and add one assertion
+that goes red when the page breaks:
+
+```ruby
+expect(page).to have_content(article.title)   # anchor
+expect(page).not_to have_button("Delete")     # the behaviour under test
+```
+
+An anchor has to be able to fail. A line like
+`expect(page).to have_current_path(article_path(article))` earns its place;
+`expect(described_class).not_to be_nil` does not
+(`AgentHarnessRails/TautologicalAssertion`).
+
+This is about pages, not about negation. A negation the unit answers for
+itself — `expect(policy).not_to permit(...)`,
+`expect(article).not_to be_published` — needs nothing added
+(`agent_harness_rails/rules/testing.mdc` § Every Assertion Must Be Able to Fail).
 
 ---
 

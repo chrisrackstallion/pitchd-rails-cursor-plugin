@@ -24,7 +24,7 @@
 # most of what it asks for already exists as a cop in these packs. What is left —
 # the Five Gates, the system-spec budget, one home per behaviour — is judgment,
 # and stays with review. The harness's own spec cops (SpecSleep, ViewSpec,
-# NegativeOnlySpec, StubbedSubject, IntentTag) live in rubocop-harness.yml.
+# UnanchoredAbsence, StubbedSubject, IntentTag) live in rubocop-harness.yml.
 
 plugins:
   - rubocop-rspec

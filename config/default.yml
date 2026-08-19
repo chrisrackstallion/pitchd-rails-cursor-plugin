@@ -165,8 +165,63 @@ AgentHarnessRails/ViewSpec:
   Include:
     - "**/spec/**/*.rb"
 
-AgentHarnessRails/NegativeOnlySpec:
-  Description: Every example needs at least one positive assertion.
+AgentHarnessRails/UnanchoredAbsence:
+  Description: >-
+    An example that only asserts absences, over a document or after a request,
+    needs an anchor that goes red when the request breaks.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+  # Reading one of these is reading a by-product: whatever the matcher then asks,
+  # the answer is shaped by machinery that can fail into the passing side.
+  DocumentSubjects:
+    - page
+    - response
+    - last_response
+    - rendered
+  # And these read a document whatever they were handed.
+  DocumentMatchers:
+    - have_content
+    - have_text
+    - have_link
+    - have_button
+    - have_field
+    - have_selector
+    - have_css
+    - have_xpath
+    - have_title
+    - have_table
+    - have_select
+    - have_checked_field
+    - have_unchecked_field
+    - have_current_path
+    - have_http_status
+  # An example that drives a request or a browser has machinery in it, so an
+  # assertion about what is *not* there says nothing about whether it ran.
+  # Deliberately not `perform_now` or a model verb: those raise on the way past,
+  # so a hard failure surfaces as an error rather than as a green negation.
+  ActionMethods:
+    - visit
+    - get
+    - post
+    - patch
+    - put
+    - delete
+    - head
+    - click_on
+    - click_link
+    - click_button
+    - fill_in
+    - choose
+    - check
+    - uncheck
+    - select
+    - attach_file
+
+AgentHarnessRails/TautologicalAssertion:
+  Description: An assertion no change to the application could turn red anchors nothing.
   Enabled: true
   VersionAdded: '0.2'
   Reference: agent_harness_rails/rules/testing.mdc

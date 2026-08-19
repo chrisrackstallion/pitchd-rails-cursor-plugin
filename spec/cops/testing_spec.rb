@@ -66,25 +66,122 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::ViewSpec, :config do
   end
 end
 
-RSpec.describe RuboCop::Cop::AgentHarnessRails::NegativeOnlySpec, :config do
-  it "flags an example that only proves an absence" do
+RSpec.describe RuboCop::Cop::AgentHarnessRails::UnanchoredAbsence, :config do
+  let(:cop_config) do
+    {
+      "DocumentSubjects" => %w[page response last_response rendered],
+      "DocumentMatchers" => %w[have_content have_link have_button have_http_status],
+      "ActionMethods" => %w[visit get post patch click_on fill_in]
+    }
+  end
+
+  it "flags an absence read off a page" do
     expect_offense(<<~RUBY)
       it "does not show the excluded agency" do
-      ^^ Every example needs at least one positive assertion — this one only proves an absence, so it passes even if the page is empty. Keep the `not_to` and add a positive assertion beside it; do not restate the absence as a comparison.
+      ^^ This example asserts only absences, and what it looks at can be absent for reasons the example is not about — a redirect, a blank render, a 500 all pass. Anchor it with one assertion that goes red when the request breaks, and keep the `not_to`. An assertion that cannot fail is not an anchor.
+        visit agencies_path
+
         expect(page).not_to have_link("New Excluded Agency")
       end
     RUBY
   end
 
-  it "accepts not_to paired with a positive assertion" do
-    # The rule's own example: the positive assertion carries the test, the
-    # negative one confirms the removal.
-    expect_no_offenses(<<~RUBY)
-      it "deletes the article" do
-        click_button "Delete"
+  it "flags an absence read off a response body" do
+    expect_offense(<<~RUBY)
+      it "hides the edit link from a reader" do
+      ^^ This example asserts only absences, and what it looks at can be absent for reasons the example is not about — a redirect, a blank render, a 500 all pass. Anchor it with one assertion that goes red when the request breaks, and keep the `not_to`. An assertion that cannot fail is not an anchor.
+        get article_path(article)
 
-        expect(page).to have_content("Article deleted.")
-        expect(page).not_to have_content("To Delete")
+        expect(response.body).not_to include("Edit article")
+      end
+    RUBY
+  end
+
+  it "flags a status the request is not supposed to return" do
+    # Every status but 403 passes, including the 500 that means the app broke.
+    expect_offense(<<~RUBY)
+      it "does not forbid the author" do
+      ^^ This example asserts only absences, and what it looks at can be absent for reasons the example is not about — a redirect, a blank render, a 500 all pass. Anchor it with one assertion that goes red when the request breaks, and keep the `not_to`. An assertion that cannot fail is not an anchor.
+        get edit_article_path(article)
+
+        expect(response).not_to have_http_status(:forbidden)
+      end
+    RUBY
+  end
+
+  it "flags an unchanged count behind a request" do
+    # The block form: `post` is the machinery, and a 500 leaves the count alone
+    # exactly as a correctly-refused request does.
+    expect_offense(<<~RUBY)
+      it "does not create the article" do
+      ^^ This example asserts only absences, and what it looks at can be absent for reasons the example is not about — a redirect, a blank render, a 500 all pass. Anchor it with one assertion that goes red when the request breaks, and keep the `not_to`. An assertion that cannot fail is not an anchor.
+        expect { post articles_path, params: { article: { title: "" } } }.not_to change(Article, :count)
+      end
+    RUBY
+  end
+
+  it "flags a reloaded record asserted only by what it is not" do
+    expect_offense(<<~RUBY)
+      it "does not promote the user" do
+      ^^ This example asserts only absences, and what it looks at can be absent for reasons the example is not about — a redirect, a blank render, a 500 all pass. Anchor it with one assertion that goes red when the request breaks, and keep the `not_to`. An assertion that cannot fail is not an anchor.
+        patch user_path(user), params: { user: { admin: true } }
+
+        expect(user.reload).not_to be_admin
+      end
+    RUBY
+  end
+
+  it "accepts a policy denial, because the policy answered for itself" do
+    # Nothing sits between the example and the verdict: a missing policy or a
+    # missing method raises, so no unrelated failure can land on the passing side.
+    expect_no_offenses(<<~RUBY)
+      it "denies destroy to the account owner" do
+        expect(policy).not_to permit(owner_context, account)
+      end
+    RUBY
+  end
+
+  it "accepts a predicate denial on a real record" do
+    expect_no_offenses(<<~RUBY)
+      it "leaves the article unpublished" do
+        article = create(:article)
+
+        expect(article).not_to be_published
+      end
+    RUBY
+  end
+
+  it "accepts a no-op proved by the absence of an exception" do
+    expect_no_offenses(<<~RUBY)
+      it "is a no-op when already open" do
+        card = create(:card)
+
+        expect { card.reopen }.not_to raise_error
+      end
+    RUBY
+  end
+
+  it "accepts a job that correctly enqueues nothing" do
+    # `perform_now` runs the unit itself, and raises on the way past if it is
+    # broken — the harness's own job-spec example, which must stay clean.
+    expect_no_offenses(<<~RUBY)
+      it "does nothing when the article is unpublished" do
+        article = create(:article)
+
+        expect {
+          described_class.perform_now(article.id)
+        }.not_to have_enqueued_mail
+      end
+    RUBY
+  end
+
+  it "accepts an anchored absence" do
+    expect_no_offenses(<<~RUBY)
+      it "does not offer deleting to a reader" do
+        visit article_path(article)
+
+        expect(page).to have_content(article.title)
+        expect(page).not_to have_button("Delete")
       end
     RUBY
   end
@@ -96,17 +193,38 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::NegativeOnlySpec, :config do
       end
     RUBY
   end
+end
 
-  it "accepts an absence that is the point, anchored by a positive assertion" do
-    # The fix the message asks for: the negative stays, because it is what the
-    # example means; a positive assertion joins it rather than replacing it.
+RSpec.describe RuboCop::Cop::AgentHarnessRails::TautologicalAssertion, :config do
+  it "flags the padding that gets added to satisfy the absence rule" do
+    expect_offense(<<~RUBY)
+      expect(policy).to be_a(described_class)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `expect(policy).to be_a(described_class)` cannot be turned red by any change to the application — it proves nothing, and it anchors nothing. Assert something the code could get wrong.
+    RUBY
+  end
+
+  it "flags an assertion that the class under test exists" do
+    expect_offense(<<~RUBY)
+      expect(described_class).not_to be_nil
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `expect(described_class).not_to be_nil` cannot be turned red by any change to the application — it proves nothing, and it anchors nothing. Assert something the code could get wrong.
+    RUBY
+  end
+
+  it "accepts a type assertion about something other than the class under test" do
     expect_no_offenses(<<~RUBY)
-      it "does not offer editing to a reader" do
-        get article_path(article)
+      expect(response.parsed_body).to be_a(Hash)
+    RUBY
+  end
 
-        expect(response).to have_http_status(:ok)
-        expect(response.body).not_to include("Edit article")
-      end
+  it "accepts an inheritance assertion, which a change can falsify" do
+    expect_no_offenses(<<~RUBY)
+      expect(described_class).to be < ApplicationPolicy
+    RUBY
+  end
+
+  it "accepts the decision the policy made" do
+    expect_no_offenses(<<~RUBY)
+      expect(policy.destroy?).to be false
     RUBY
   end
 end

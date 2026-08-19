@@ -138,7 +138,8 @@ Mark any of these and assign verdicts:
 |--------------|----------------|
 | `visit` + assert with no interaction | **MOVE** to request spec with `response.body.include?` |
 | View spec (`spec/views/`, `type: :view`) | **MOVE** the rendering assertion to a request spec (`response.body.include?`), then delete the file — view specs are never kept |
-| `not_to` as the only assertion | **DELETE** (removal receipt) or **MERGE** as secondary assertion next to a positive one |
+| `not_to` as the only assertion, read off a page or response | **REWRITE** — add an anchor that goes red when the request breaks (the status, or a landmark); keep the `not_to`. **DELETE** only if no behaviour is behind it at all |
+| `not_to` as the only assertion, answered directly by the unit (`not_to permit`, `not_to be_published`, `not_to raise_error`) | **KEEP** — nothing can fail into its passing side. Optionally **REWRITE** to the positive spelling (`expect(policy.destroy?).to be false`) |
 | One system spec per field/attribute | **MERGE** into the canonical create flow |
 | CRUD parity: separate system specs for show / edit / delete with identical shape | **MOVE** show/edit/delete to request specs; keep the create as canonical |
 | Selenium driver where `rack_test` passes | **REWRITE** to use `rack_test` |
@@ -241,7 +242,7 @@ For each item in the plan:
 
 **DELETE** — remove the test. Required preconditions, **all** must be true:
 
-- The behaviour is already covered at the correct layer, **OR** the test asserts Rails framework behaviour, **OR** the test is a `not_to`-only removal receipt with no positive assertion possible.
+- The behaviour is already covered at the correct layer, **OR** the test asserts Rails framework behaviour, **OR** the test is a removal receipt — a `not_to` with no behaviour behind it, written to record that a feature is gone. A `not_to` the unit answers directly is **not** a removal receipt and is never deleted for lacking a positive assertion.
 - The test is not the only place the behaviour is asserted.
 
 If neither applies, **do NOT delete**. Write the missing lower-layer test first; then delete.
@@ -345,7 +346,7 @@ Before declaring done:
 - [ ] No per-field or per-attribute system specs
 - [ ] No CRUD parity proliferation (one canonical journey, not one per action)
 - [ ] No repeated Stimulus controller / Turbo pattern tests across system specs
-- [ ] No `not_to`-only removal receipts
+- [ ] No `not_to`-only removal receipts; every absence read off a page or response has an anchor, and sound negations were left alone
 - [ ] No duplicate happy-path coverage across model + request + system
 - [ ] Each assertion from the original suite is reachable at exactly one layer in the new suite
 - [ ] Every `intent:` tag moved with its example, still sits on an `it` block, and its clause's `evaluations:` paths were updated; no tag was deleted to resolve a verdict

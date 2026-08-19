@@ -70,6 +70,36 @@ RSpec.describe ArticlePolicy do
 end
 ```
 
+### Stating a denial
+
+The matrix above asserts its denials **positively** — `expect(policy.destroy?).to be false`.
+Keep that shape. It pins the decision to one value, a missing policy or a renamed
+predicate raises rather than passing quietly, and there is no negation for a
+reviewer or a linter to weigh up.
+
+If your app tests policies through a `permit`-style matcher instead, avoid
+`not_to permit`. What you mean is an assertion of a denial, not the negation of a
+permission — and a negated assertion attracts "add a positive assertion" fixes
+that have nothing honest to add, of which `expect(policy).to be_a(described_class)`
+is the usual result. Define the inverse once and RSpec builds it for you, failure
+message included:
+
+```ruby
+# spec/support/matchers.rb
+RSpec::Matchers.define_negated_matcher :forbid, :permit
+```
+
+```ruby
+# Denials now read as denials
+expect(policy).to forbid(owner_context, account)
+# fails with: expected #<ArticlePolicy ...> not to permit ...
+```
+
+The coverage is identical either way; what changes is that the spec says what it
+means. And note that **neither** form needs an anchoring assertion — a policy
+answers for itself, so no unrelated failure can land on the passing side
+(`agent_harness_rails/rules/testing.mdc` § Every Assertion Must Be Able to Fail).
+
 ### When `pundit_user` is `Current`
 
 Policy specs instantiate `Policy.new(first_arg, record)` with the **same

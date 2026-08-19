@@ -81,7 +81,8 @@ at least visible. Two the harness has actually seen:
 | Cop | The dodge | The fix |
 |-----|-----------|---------|
 | `AgentHarnessRails/NonRestfulAction` | Route the verbs through one `show` as `params[:id]` values | A controller per noun, singular `resource` routes (`agent_harness_rails/rules/controllers.mdc`) |
-| `AgentHarnessRails/NegativeOnlySpec` | Rewrite `not_to have_http_status(:forbidden)` as `expect(response.status).to be < 403` | Keep the negative, add a positive assertion beside it (`agent_harness_rails/rules/testing.mdc`) |
+| `AgentHarnessRails/UnanchoredAbsence` | Rewrite `not_to have_http_status(:forbidden)` as `expect(response.status).to be < 403` | Keep the negation; anchor it with the status the request does return (`agent_harness_rails/rules/testing.mdc`) |
+| `AgentHarnessRails/UnanchoredAbsence` | Add `expect(policy).to be_a(described_class)` so the example has a positive assertion | An anchor must be able to fail. This cop does not fire on a negation the unit answers directly — if it fired, the absence is over a page or a response, and that is what needs anchoring |
 
 If the correct fix is larger than the branch can carry, report **BLOCKED** (§5).
 Do not go looking for a spelling the parser cannot see.

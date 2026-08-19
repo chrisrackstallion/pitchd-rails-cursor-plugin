@@ -354,7 +354,9 @@ end
 | Separate `it` blocks for each assertion on one action | One `it` with multiple `expect`s when setup and action are identical |
 | Re-testing domain verb logic in a request spec | Request spec calls the endpoint; model spec owns the verb logic |
 | Job spec re-testing what the model spec covers | Job spec tests orchestration; model spec tests the domain method the job calls |
-| Standalone `not_to` assertions to prove code was removed | Assert the positive behaviour the user sees; `not_to` is a side-effect, not a primary assertion |
+| An absence read off a page or response, with nothing proving the page rendered | Keep the `not_to`; anchor it with the status or a landmark |
+| Treating a negation the unit answers directly (`not_to permit`, `not_to be_valid`) as needing a positive assertion | Leave it alone — nothing can fail into its passing side |
+| An assertion that cannot fail (`be_a(described_class)`) added to satisfy a rule | If no honest anchor exists, the negation needed none |
 | System spec that only `visit`s and asserts content (no interaction) | Move to a request spec asserting `response.body.include?` |
 | One system spec per CRUD action when the actions share a shape | One canonical happy-path system spec (usually create); edit/delete go to request specs |
 | One system spec per field, attribute, or validation rule | One system spec exercises the form as a whole; per-field belongs to model/request specs |
@@ -364,12 +366,62 @@ end
 | Drive-by assertions on nav/footer/sidebar inside a feature spec | One story per spec; assert only what belongs to the journey under test |
 | System spec for a UI authorization rule when no product requirement exists | Policy spec for the logic + request spec for the HTTP gate is usually enough |
 
-#### Do not write specs to prove code was removed
+#### Every assertion must be able to fail
 
-A test whose only assertion is `not_to have_*` tests absence, not behaviour — it passes trivially (including if the page is blank) and breaks silently when an element is renamed rather than removed.
+The question is never whether an assertion is positive or negative. It is whether
+**a failure the example is not about could satisfy it** — so ask, of every
+negation: *if the request 500s, the route disappears, or the page renders blank,
+does this still pass?*
+
+**Sound — the verdict comes straight back from the unit.** Nothing sits in
+between, so a broken unit raises instead of passing quietly. Keep these as they
+are; there is nothing to add:
 
 ```ruby
-# Bad — only asserts an element is absent; no positive behaviour proven
+expect(policy).not_to permit(reader, article)   # the policy answered
+expect(article).not_to be_published             # the record answered
+expect(duplicate).not_to be_valid               # validation ran
+expect { card.reopen }.not_to raise_error       # the method ran
+```
+
+Prefer the **positive spelling** of a denial where one exists — `expect(policy.destroy?).to be false`
+is the policy-spec style throughout this harness, and it settles the question by
+construction (`references/support-specs.md` § Policy Specs).
+
+**Unanchored — the absence is a by-product of machinery.** A page, a status, a
+record reloaded after a request, a count after a `post`: the machinery's failure
+lands on the passing side.
+
+```ruby
+# Bad — passes when the button is correctly hidden, and when the page 500s
+it "does not offer deleting to a reader" do
+  visit article_path(article)
+
+  expect(page).not_to have_button("Delete")
+end
+
+# Good — the landmark proves the page rendered; the absence is still the point
+it "does not offer deleting to a reader" do
+  visit article_path(article)
+
+  expect(page).to have_content(article.title)   # anchor — red if the page breaks
+  expect(page).not_to have_button("Delete")     # the behaviour under test
+end
+```
+
+The `not_to` stays; it gains an anchor. Reach for the status, then a landmark the
+page must show, then the state the record is left in.
+
+**An anchor that cannot fail is not an anchor.** `expect(policy).to be_a(described_class)`
+is true the moment it is written — it makes the example longer and proves nothing.
+If no honest anchor presents itself, that is the signal the negation was sound and
+needed none.
+
+**A removal receipt still gets deleted.** A spec with no behaviour behind it —
+written to record that a feature is gone — should not exist:
+
+```ruby
+# Bad — passes because the feature never existed
 it "does not show an excluded agencies section" do
   expect(page).not_to have_link("New Excluded Agency")
 end
@@ -377,26 +429,11 @@ end
 # Good — asserts what the user actually sees and can do
 it "shows the agencies list" do
   visit agencies_path
+
   expect(page).to have_content("Agencies")
   expect(page).to have_link("New Agency")
 end
 ```
-
-`not_to` is valid as a **secondary assertion** confirming a visible change alongside a positive one:
-
-```ruby
-# Fine — not_to confirms removal after deletion, paired with a positive assertion
-it "user deletes an article" do
-  article = create(:article, title: "To Delete")
-  visit article_path(article)
-  click_button "Delete"
-
-  expect(page).to have_content("Article deleted.")  # primary assertion
-  expect(page).not_to have_content("To Delete")     # confirms removal
-end
-```
-
-Every test must have at least one positive assertion. A test that consists only of `not_to` is not a test — it is a removal receipt.
 
 **Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
 
@@ -492,7 +529,8 @@ Before finishing, verify:
 - [ ] Model specs don't re-test in request/system specs — integration specs trust the unit
 - [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
 - [ ] Job/mailer callers assert enqueuing only — the job/mailer spec owns the work
-- [ ] No standalone `not_to` assertions — every test has at least one positive assertion; `not_to` is only used alongside a positive one
+- [ ] Every absence read off a page, response, or reloaded record has an anchor that goes red when the request breaks — and no assertion was added that cannot fail
+- [ ] Denials the unit answers directly (`not_to permit`, `not_to be_published`) are left as they are, or written positively (`to be false`)
 - [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
 - [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without one of the earned reasons (§7)
 - [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag, the clause lists the file in `evaluations:`, and **`agent_harness_rails evals`** is green
