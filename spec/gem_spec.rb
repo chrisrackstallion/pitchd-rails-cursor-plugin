@@ -27,11 +27,17 @@ RSpec.describe "gem packaging" do
     expect(spec.executables).to contain_exactly("agent_harness_rails")
   end
 
-  it "ships every file the evals command needs to run in a consuming app" do
+  it "ships every file the evals and guard commands need to run in a consuming app" do
     # A missing lib/ file here breaks the executable only once installed
     # elsewhere, which is an expensive place to notice it.
-    expect(spec.files).to include(*Dir.glob("lib/agent_harness_rails/evals/*.rb", base: File.expand_path("..", __dir__))
-                                        .map { |path| "lib/agent_harness_rails/evals/#{File.basename(path)}" })
+    root = File.expand_path("..", __dir__)
+
+    %w[evals guard].each do |command|
+      files = Dir.glob("lib/agent_harness_rails/#{command}/*.rb", base: root)
+
+      expect(files).not_to be_empty
+      expect(spec.files).to include("lib/agent_harness_rails/#{command}.rb", *files)
+    end
   end
 
   it "ships every custom cop and the config that describes them" do

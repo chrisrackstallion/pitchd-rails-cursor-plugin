@@ -101,6 +101,25 @@ paths, untagged evaluations, and tags naming a superseded clause, with
 file:line — cite its output rather than re-deriving it by hand, and spend the
 review on what it cannot judge: whether a clause is the *right* clause.
 
+**Then `agent_harness_rails guard --base <the diff's base>`.** `evals` reads the
+tree as it stands; `guard` reads what this change *did* to it — a clause reworded
+under the same id, one deleted rather than superseded, an evaluation dropped or
+moved to a layer that cannot hold it, a tagged example hollowed out, an edited
+provenance entry. Its output is notices, never offences, so cite them with a
+verdict rather than copying them in as findings. Two turn into findings:
+
+- An **intent** notice (`intent/rewritten`, `intent/vanished`, `doc/removed`,
+  `status/downgraded`, `provenance/rewritten`) with no matching row in the plan's
+  **Intent impact** table — the change amended a promise nothing scheduled, which
+  is scope creep into intent whatever the code does.
+- A **proof** notice (`proof/removed`, `proof/weakened`, `evaluation/dropped`,
+  `evaluation/relayered`) on a clause that is still active — **Eval adequacy**
+  below, with the before-state attached: the clause is now proven by less than it
+  was, and the report should name what stopped being covered.
+
+Never clear a notice by editing the tree — a reviewer that writes the provenance
+entry discharging an intent notice has laundered the finding it was reading.
+
 Prefix these findings **`primitives:`**. They are checkable properties, not
 suggestions:
 

@@ -35,6 +35,16 @@ defect; there is no annotation that excuses an unproven clause. Its one
 warning, `clause/in-flight` (a doc whose plan landed ahead of its code), is an
 honest state, not a defect to silence.
 
+Any operation that **wrote** to the tree also ends with
+**`agent_harness_rails guard --base <the commit the pass started from>`** —
+notice-only, never fails — and its notices go in your report. You hold the widest
+write access of any agent in this harness, so your own diff is the one most worth
+reading back. Restore proof you dropped from a live clause; hand
+`intent/rewritten`, `intent/vanished`, and `provenance/rewritten` to the human
+untouched, and never discharge one by writing the provenance entry that silences
+it (`agent_harness_rails/skills/maintaining-primitives/SKILL.md` § Close every
+writing pass by reading your own diff back).
+
 What it **cannot** settle is whether a tagged example actually proves its
 clause: breaking the clause has to turn one of its evaluations red
 (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
@@ -56,8 +66,8 @@ inference in your report, and ask once only when genuinely ambiguous.
   types, no wiki pages, no graph to walk. Index + grep; no search
   infrastructure.
 - **Boundaries:** **`compilation.md`** is human-owned — propose amendments in
-  your report, never edit it. **`## Provenance`** is append-only. **`## Intent`**
-  changes only via capture (with human confirmation) — the planning workflows
+  your report, never edit it. **`## Provenance`** is append-only. **`intent:`
+  clauses** change only via capture (with human confirmation) — the planning workflows
   and the execution revision loop own it otherwise (`agent_harness_rails/rules/primitives.mdc`).
 - **Every line earns its place:** decisions, rejected alternatives, and
   accepted debt belong; session process — review counts, agent names, commands
@@ -82,7 +92,10 @@ End with:
    that append as a one-line `update`. If the human **corrects** clauses
    rather than just confirming, the parent re-delegates one `update` carrying
    both the corrections and the confirmation entry.
-4. **Follow-ups** — proposed `compilation.md` amendments, spec gaps found,
+4. **Guard notices** — the `agent_harness_rails guard` output for this pass,
+   each marked *expected* (and why), *restored* (proof you put back), or
+   *handed to the human* (every intent and provenance notice).
+5. **Follow-ups** — proposed `compilation.md` amendments, spec gaps found,
    lint items left for the human.
 
 ## Out of scope

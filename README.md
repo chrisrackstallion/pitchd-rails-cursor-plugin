@@ -52,6 +52,7 @@ If git was tracking those files at their old paths, **commit the install with `g
 | `agent_harness_rails update` | re-vendor after `bundle update`, reporting what changed |
 | `agent_harness_rails check` | verify the vendored harness matches the gem — use in CI |
 | `agent_harness_rails evals` | check every intent clause in `docs/primitives/` is proven by a spec — use in CI ([below](#checking-that-intent-is-proven)) |
+| `agent_harness_rails guard` | report what a change did to intent and the specs that prove it ([below](#seeing-what-a-change-did-to-the-record)) |
 
 ### Windows
 
@@ -141,6 +142,26 @@ spec/system/billing_spec.rb:12:5: E: intent tag "billing#I9" names no such claus
 It checks both directions — a clause with no proof, and a proof pointing at a clause that no longer exists — so the map cannot quietly stop matching the suite. Coverage is total: every active clause on a `built` doc names a spec, and there is no annotation that excuses one. It parses statically: no database, no Rails environment, runs in any CI job. The same tag runs the proof on demand: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
 
 Scope is deliberately narrow, so a green run means one thing. Tree health — index sync, size limits, provenance style — stays with the `maintaining-primitives` skill, where it needs judgment rather than a parser.
+
+### Seeing what a change did to the record
+
+`evals` is stateless: it asks whether the tree is well-formed *now*. A whole class of drift passes it green — reword a clause under the same id, hollow out the example proving it, move a browser promise onto a model spec, and every link stays well-formed while the record quietly stops describing the app. Seeing that needs a *before*.
+
+`agent_harness_rails guard` parses the tree twice, at a base revision and in the working tree, and reports what got **smaller or different**:
+
+```console
+$ bundle exec agent_harness_rails guard --base main
+docs/primitives/capabilities/comment_threads.md:4:1: N: I1 now promises something else, under the same id and with no provenance entry. Was: "A reader can reply to any comment.". Now: "A signed-in reader can reply to any comment.". An amendment supersedes the old clause and records the decision — only the user's decision changes intent [intent/rewritten]
+spec/system/comment_threads_spec.rb:7:1: N: the example proving comment_threads#I2 lost 1 assertion(s) — it still carries the tag while proving less of the clause [proof/weakened]
+
+compared against 8f59dec5d2c8: 2 notices for review — none of this fails the run
+```
+
+Growth is silent by design — new clauses, new tagged examples, added evaluations and appended provenance produce nothing. Only shrinkage or substitution is worth your attention.
+
+**Everything it prints is a notice, and the exit code is 0 whenever the comparison ran.** Every check in it has an innocent cause as well as a suspicious one — a spec refactor legitimately produces most of the proof notices — and a check that stops honest work is a check that gets routed around. It is wired into the skills (`executing-rails-plan` close-out, `reviewing-rails-work`, `implementing-rails-task`, `refactoring-rails-specs`, `maintaining-primitives`) so an agent reads its own notices and restores proof it dropped by accident, before the work reaches you.
+
+What an agent is told *not* to do is resolve an **intent** notice. Those are discharged by a provenance entry naming the clause — and an agent writing that entry to quiet its own notice would launder exactly the change the check exists to surface. Intent notices come to you.
 
 ### Your editor will show the harness twice
 

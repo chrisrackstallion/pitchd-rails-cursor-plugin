@@ -121,6 +121,17 @@ clause while keeping the suite green, and `agent_harness_rails evals` will then
 fail on the doc rather than on the spec that caused it. Finish the session with
 `agent_harness_rails evals` green.
 
+Then run **`agent_harness_rails guard --base <the commit this session started
+from>`**. A spec refactor is the single largest legitimate source of its notices,
+which is exactly why it is worth reading here: `guard` lists every tagged example
+that lost assertions (`proof/weakened`), disappeared (`proof/removed`), or moved
+to another layer (`evaluation/relayered`) — the audit-plan verdicts, read back off
+what actually happened rather than off what the plan intended. Reconcile each
+notice against its MERGE / DELETE / REWRITE verdict. One with no verdict behind it
+is coverage this session dropped by accident; restore it. Notices about **intent**
+(`intent/rewritten`, `intent/vanished`) mean the session edited promises, which a
+spec refactor never does — stop and surface those.
+
 #### Duplication audit — is this assertion already proven elsewhere?
 
 Walk every assertion and check the other layers for the same claim. Common duplications:
@@ -351,6 +362,7 @@ Before declaring done:
 - [ ] Each assertion from the original suite is reachable at exactly one layer in the new suite
 - [ ] Every `intent:` tag moved with its example, still sits on an `it` block, and its clause's `evaluations:` paths were updated; no tag was deleted to resolve a verdict
 - [ ] `agent_harness_rails evals` is green (only when the app has a `docs/primitives/` tree)
+- [ ] Every `agent_harness_rails guard` notice reconciles to an audit-plan verdict; no intent notices
 - [ ] `bin/rspec` is green (no new skipped/pending)
 - [ ] `bin/rubocop` is green
 - [ ] System-spec count materially reduced; runtime materially reduced

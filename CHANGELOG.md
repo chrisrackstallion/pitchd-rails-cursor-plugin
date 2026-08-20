@@ -5,10 +5,39 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Two executable backstops for rules that were previously prose only: a linter for
-the primitives tree, and a RuboCop layer for the rules a parser can settle.
+Three executable backstops for rules that were previously prose only: a linter
+for the primitives tree, a change-review pass over it, and a RuboCop layer for
+the rules a parser can settle.
 
 ### Added
+
+- **`agent_harness_rails guard`** — reports what a change did to intent and to
+  the specs that prove it, by parsing the primitives tree twice: at `--base`
+  (default `HEAD`, or the merge base for `--base main`) and in the working tree.
+
+  It exists because `evals` is stateless. A whole class of drift passes it
+  green — a clause reworded under the same id, a tagged example hollowed out
+  while it keeps the tag, a browser promise moved onto a model spec, an edited
+  provenance entry — because every link stays well-formed. Seeing that needs a
+  before. Notices: `intent/rewritten`, `intent/vanished`, `intent/deactivated`,
+  `evaluation/dropped`, `evaluation/moved`, `evaluation/relayered`,
+  `proof/removed`, `proof/weakened`, `proof/changed`, `doc/removed`,
+  `status/downgraded`, `provenance/rewritten`, `doc/unreadable`.
+
+  **Everything it prints is a notice and the exit code is 0 whenever the
+  comparison ran.** Each check has an innocent cause as well as a suspicious one
+  — a spec refactor produces most of the proof notices legitimately — and a
+  check that stops honest work is a check that gets routed around. Growth is
+  silent: new clauses, new tagged examples, added evaluations and appended
+  provenance produce nothing.
+
+  Wired into `executing-rails-plan` close-out, `reviewing-rails-work`,
+  `implementing-rails-task`, `refactoring-rails-specs`, `maintaining-primitives`
+  and `rails-primitives-maintainer`, so an agent reads its own notices and
+  restores proof it dropped before the work reaches a human. The one thing an
+  agent must not do is resolve an **intent** notice: those are discharged by a
+  provenance entry naming the clause, and an agent writing that entry to quiet
+  its own notice would launder the change the check exists to surface.
 
 - **`agent_harness_rails evals`** — a subcommand that checks every intent clause
   in `docs/primitives/` is proven by a spec, and that every `intent:` tag in the

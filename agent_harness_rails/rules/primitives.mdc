@@ -79,7 +79,8 @@ a vague line is what produces a duplicate doc.
   human confirmation), or the execution revision loop when the **user's**
   revision changes intent (`executing-rails-plan` R1 classification).
   Never silently rewritten by an implementor — every amendment traces to an
-  explicit user decision.
+  explicit user decision, which **`agent_harness_rails guard`** reports as
+  `intent/rewritten` when one does not (§ What a change did to the record).
 - **`## Shape`** / **`evaluations:`** / `status:` — Agent-maintained at the
   defined write points: brainstorm (seeds the doc: `status: shaping`, rough
   Shape), planner (Shape; `status: planned` at final approval, except
@@ -90,7 +91,10 @@ a vague line is what produces a duplicate doc.
   (capture, update — including human-directed deprecation — lint, structural
   changes).
 - **`## Provenance`** — **Append-only.** Never edit or delete an entry; a wrong
-  entry gets a correcting entry.
+  entry gets a correcting entry. `agent_harness_rails guard` reports an edited
+  entry as `provenance/rewritten`: provenance is the trace every other notice is
+  discharged against, so it is the one part of the tree whose loss costs you the
+  ability to audit the next change.
 - **`index.md`** — Stays in sync: update in the same change that adds or
   renames a doc. Each line reads
   **`<name> — <status> — <outcome>. Owns: <models or resources>.`**
@@ -294,6 +298,44 @@ duplicate ids, dangling supersessions, capability docs nested in a subdirectory,
 and docs still in the retired prose format. Everything below — sizes, index sync, provenance
 style — is judgment, and stays with the `lint` operation in `maintaining-primitives`.
 
+### What a change did to the record
+
+```bash
+agent_harness_rails guard --base main        # notices only; exit 0 whenever it ran
+```
+
+`evals` is stateless — it asks whether the tree is well-formed **now**, and a
+whole class of drift passes it green. Reword a clause under the same id, hollow
+out the example proving it, move a browser promise onto a model spec: every link
+stays well-formed while the record stops describing the app. Seeing that needs a
+**before**, so `guard` parses the tree twice — at `--base` and in the working
+tree — and reports what got **smaller or different**. Growth is silent: new
+clauses, new tagged examples, added evaluations and appended provenance produce
+nothing.
+
+| Notice | What moved |
+|--------|------------|
+| `intent/rewritten` | a clause promises something else under the same id, with no provenance entry |
+| `intent/vanished` | a clause id is gone with no tombstone |
+| `intent/deactivated` | a clause was superseded or retired — the sanctioned path, still worth seeing |
+| `evaluation/dropped` · `evaluation/relayered` | an active clause is proven by less, or at a layer that may not hold it |
+| `evaluation/moved` | the same layer, a different file — confirm it proves what the old one did |
+| `proof/removed` · `proof/weakened` · `proof/changed` | a tagged example went, lost assertions, or changed |
+| `doc/removed` · `status/downgraded` · `provenance/rewritten` | the record itself got smaller |
+| `doc/unreadable` | the doc stopped parsing, so nothing about it can be compared |
+
+**Everything it prints is a notice and nothing fails.** Each of these has an
+innocent cause as well as a suspicious one — a spec refactor legitimately
+produces most of the proof notices — and a check that stops honest work is a
+check that gets routed around.
+
+The split in handling is what makes it useful. **Proof** notices belong to the
+agent that caused them: restore the assertion, the example, or the row, then
+re-run. **Intent** notices belong to the user. An intent notice is discharged by
+a provenance entry naming the clause — and an agent writing that entry to quiet
+its own notice has laundered exactly the change this exists to surface. Surface
+it instead; only a user decision amends intent (§ Ownership and write points).
+
 ### Provenance
 
 One line per **event** (shaped, planned, built, amended, revised, refactored,
@@ -352,4 +394,5 @@ or the harness has no home here.
 Edits here are **documentation** — they do not replace `agent_harness_rails/rules/testing.mdc`,
 `implementing-rails-task`, or app implementation tasks. The specs the
 `evaluations:` point at remain the executable truth; the frontmatter is the map,
-and `agent_harness_rails evals` is what keeps the map honest.
+`agent_harness_rails evals` is what keeps the map honest, and
+`agent_harness_rails guard` is what shows who moved it.

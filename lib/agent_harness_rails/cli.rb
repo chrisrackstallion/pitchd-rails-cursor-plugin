@@ -5,12 +5,13 @@ require "json"
 require_relative "../agent_harness_rails"
 require_relative "installer"
 require_relative "evals"
+require_relative "guard"
 
 module AgentHarnessRails
   # Command line entry point. Returns exit codes rather than calling exit, so the
   # whole thing is testable without forking.
   class CLI
-    EVALS_FORMATS = %w[text json].freeze
+    FORMATS = %w[text json].freeze
 
     USAGE = <<~TEXT
       usage: agent_harness_rails <command> [options]
@@ -20,13 +21,15 @@ module AgentHarnessRails
         check      verify the vendored harness against this gem (use in CI)
         update     re-vendor and report what changed
         evals      check every intent clause in docs/primitives/ is proven by a spec (use in CI)
+        guard      report what this change did to intent and the specs that prove it
         version    print the gem version
 
       options:
         --path PATH      project root (default: current directory)
         --mode MODE      install/update: link (default) or copy, for filesystems without symlinks
         --no-migrate     install/update: leave existing .claude/.cursor content alone and fail instead
-        --format FORMAT  evals: text (default) or json
+        --format FORMAT  evals/guard: text (default) or json
+        --base REF       guard: revision to compare against (default: HEAD)
         -h, --help       print this help
 
       examples:
@@ -36,11 +39,25 @@ module AgentHarnessRails
         agent_harness_rails check                    # in CI: exits 1 on drift
         agent_harness_rails update                   # after bumping the gem
         agent_harness_rails evals                    # in CI: exits 1 on unproven intent
+        agent_harness_rails guard                    # what this turn changed about intent
+        agent_harness_rails guard --base main        # what this branch changed
 
       On install, skills, rules, and agents already in .claude/ or .cursor/ are
       moved into #{PAYLOAD_DIR}/ first, so the symlinks cannot shadow or delete
       them. Local edits to vendored files are kept; `check` reports them as
       overridden without failing.
+
+      Guard answers the question evals cannot: not "is every clause hooked up to a
+      spec" but "did this change quietly reword a promise, delete one, or hollow
+      out the example proving it". It parses the tree twice — at --base and in the
+      working tree — and reports what got smaller or different. Growth is silent.
+
+      Every guard finding is a notice and the exit code is 0 whenever the
+      comparison ran: each check has a legitimate cause as well as a suspicious
+      one, and a check that stops honest work gets routed around. An agent
+      reading its own notices should restore proof it dropped by accident; it
+      should not write the provenance line that discharges an intent notice —
+      that decision is the user's.
 
       Evals reads intent clauses from each capability doc's YAML frontmatter and
       the `intent: "<capability>#I<n>"` metadata on spec examples; the same tag
@@ -54,7 +71,7 @@ module AgentHarnessRails
       @argv = argv.dup
       @out = out
       @err = err
-      @options = { path: Dir.pwd, mode: :link, migrate: true, format: "text" }
+      @options = { path: Dir.pwd, mode: :link, migrate: true, format: "text", base: Guard::DEFAULT_BASE }
     end
 
     def run
@@ -66,6 +83,7 @@ module AgentHarnessRails
       when "update" then update
       when "check" then check
       when "evals" then evals
+      when "guard" then guard
       when "version" then say(VERSION)
       when "help" then usage(0)
       else
@@ -93,6 +111,7 @@ module AgentHarnessRails
         o.on("--mode MODE") { |v| @options[:mode] = v.to_sym }
         o.on("--[no-]migrate") { |v| @options[:migrate] = v }
         o.on("--format FORMAT") { |v| @options[:format] = v }
+        o.on("--base REF") { |v| @options[:base] = v }
         o.on("-h", "--help") { help = true }
       end
       rest = parser.parse(@argv)
@@ -141,14 +160,47 @@ module AgentHarnessRails
     end
 
     def evals
-      unless EVALS_FORMATS.include?(@options[:format])
-        raise Error, "format must be text or json, not #{@options[:format].inspect}"
-      end
-
+      validate_format!
       result = Evals.run(root: File.expand_path(@options[:path]))
       @options[:format] == "json" ? evals_json(result) : evals_text(result)
       result.ok? ? 0 : 1
     end
+
+    def validate_format!
+      return if FORMATS.include?(@options[:format])
+
+      raise Error, "format must be text or json, not #{@options[:format].inspect}"
+    end
+
+    # Always 0 when the comparison ran. Guard reports; it does not judge, and a
+    # non-zero exit here would turn every notice into a gate.
+    def guard
+      validate_format!
+      result = Guard.run(root: File.expand_path(@options[:path]), base: @options[:base])
+      @options[:format] == "json" ? guard_json(result) : guard_text(result)
+      0
+    end
+
+    def guard_text(result)
+      result.findings.each { |finding| @out.puts finding }
+      @out.puts if result.findings.any?
+      @out.puts "compared against #{short(result.base)}: #{guard_summary(result)}"
+    end
+
+    def guard_summary(result)
+      return "no change to intent or the specs that prove it" if result.clean?
+
+      "#{pluralize(result.findings.size, 'notice')} for review — none of this fails the run"
+    end
+
+    def guard_json(result)
+      @out.puts JSON.pretty_generate(
+        base: result.base, capabilities: result.capabilities,
+        notices: result.findings.size, findings: result.findings.map(&:to_h)
+      )
+    end
+
+    def short(ref) = ref[0, 12]
 
     def evals_text(result)
       result.findings.each { |finding| @out.puts finding }

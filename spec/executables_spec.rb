@@ -39,6 +39,17 @@ RSpec.describe "executables" do
       expect(output).to include("1 capability inspected", "4 clauses", "no offences")
     end
 
+    # Also the one place a nested project directory is exercised: the fixture app
+    # is a subdirectory of this repo, so git resolves its paths relative to that
+    # directory rather than to the repo root. Getting that wrong would produce an
+    # empty baseline and a confident all-clear.
+    it "runs guard against the fixture app inside this repository" do
+      output, status = run("exe/agent_harness_rails", "guard", "--path", "fixtures/primitives_app")
+
+      expect(status).to be_success, output
+      expect(output).to include("compared against")
+    end
+
     it "reports a tree evals cannot find rather than crashing" do
       output, status = run("exe/agent_harness_rails", "evals", "--path", ".")
 

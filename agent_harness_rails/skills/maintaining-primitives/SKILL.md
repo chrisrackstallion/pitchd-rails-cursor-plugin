@@ -64,7 +64,7 @@ traversing them.
 |----|--------|
 | **capture** | Backfill a capability doc from existing code and specs (below). |
 | **trace** | Read `index.md` → the capability doc → answer with citations to clause IDs, provenance lines, and spec paths. If the answer predates the doc, say so — provenance before the backfill line lives in git. |
-| **update** | Sync one doc: status (including human-directed deprecation — `status: deprecated`, a provenance line saying why, and the index line moved to the Deprecated stub section), `evaluations:` against real spec homes and their `intent:` tags, one provenance line per event. Update `index.md` in the same change. |
+| **update** | Sync one doc: status (including human-directed deprecation — `status: deprecated`, a provenance line saying why, and the index line moved to the Deprecated stub section), `evaluations:` against real spec homes and their `intent:` tags, one provenance line per event. Update `index.md` in the same change. Close with **`agent_harness_rails guard`** and read your own diff back (below). |
 | **lint** | Run **`agent_harness_rails evals`** first, then the judgment checks below across the tree (the one whole-tree operation — exempt from the three-file contract); report findings, fix mechanical ones, leave judgment calls to the human. |
 
 **Structural reshaping** — splitting an oversized capability, merging, or
@@ -125,6 +125,34 @@ human confirmation between, ordered by where change is coming.
 7. Add the `index.md` line, `status: built` — the feature exists in
    production, and a clause with no spec is a red run rather than a reason to
    understate the status (`agent_harness_rails/rules/primitives.mdc`).
+
+### Close every writing pass by reading your own diff back
+
+Any operation that **wrote** to the tree — `update`, `capture`, a structural
+reshape — ends with:
+
+```bash
+agent_harness_rails guard --base <the commit the pass started from>
+```
+
+It is notice-only and never fails, and it is the one check aimed at the pass
+itself rather than at the tree: what did this change do to promises that already
+existed. A maintainer holds the widest write access of any agent here, so it is
+also the agent whose edits most need reading back.
+
+- **Expected, and worth reporting**: `intent/deactivated` for a human-directed
+  deprecation, `proof/changed` after a spec home moved, `evaluation/relayered`
+  where the human approved the new layer.
+- **Fix before reporting**: `evaluation/dropped` or `proof/removed` on a clause
+  that is still active — a sync pass that removes proof from a live promise has
+  gone past syncing.
+- **Stop and hand to the human**: `intent/rewritten`, `intent/vanished`,
+  `provenance/rewritten`. Clauses are human-co-owned and provenance is
+  append-only; a maintainer that rewrote either has edited the record rather
+  than maintained it. Report the notice verbatim, restore what you overwrote,
+  and let the human decide. Never discharge one of these by writing the
+  provenance entry that silences it — the entry states a decision, and the
+  decision is not yours.
 
 ### lint — run the tool, then judge
 

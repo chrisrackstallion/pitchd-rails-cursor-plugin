@@ -167,7 +167,7 @@ Extract from the user's message:
   do not ask for a formal AC).
 
 **Classify against Intent (when a capability doc exists):** read the doc's
-`## Intent` and decide which of two revisions this is — the distinction
+`intent:` frontmatter and decide which of two revisions this is — the distinction
 surfaces *before* delegating, not after:
 
 - **The code failed the intent** (bug): "fixed" matches an existing clause.
@@ -231,7 +231,10 @@ Deliver a brief summary:
 - Any non-blocking notes from the reviewer worth the user knowing.
 - Whether anything needs manual verification (tests run, RuboCop status).
 - Primitives sync, if any (clause amendments, `evaluations:`, the one provenance
-  line — per the R1 classification).
+  line — per the R1 classification), and the `agent_harness_rails guard --base <ref>`
+  notices for the revision. A bug-fix revision that produced an intent notice is
+  a misclassified R1: the fix changed a promise. Say so to the user rather than
+  writing the provenance line that quiets it.
 
 **Do not** re-present the full original completion package — this is a targeted
 revision report only. If the user's follow-up triggers another revision, repeat
@@ -295,7 +298,9 @@ updates the capability doc directly (see the Hard rules carve-out):
    whose evaluation had its **assertions** edited is the one to stop on: a
    refactor may move an evaluation's file, never change what it asserts — an
    edited assertion means behaviour moved and the plan was a mislabelled
-   amendment; say so rather than filing the row.
+   amendment; say so rather than filing the row. `agent_harness_rails guard`
+   (step 2) names that case mechanically as `proof/weakened`, so it does not
+   depend on spotting it by eye.
 
    **Read the reported examples against the clause before filling the row.**
    Breaking the clause has to turn one of them red
@@ -304,17 +309,44 @@ updates the capability doc directly (see the Hard rules carve-out):
    happy-path example is **not** covered — send it back through the
    implement → review loop for the missing spec rather than filling a row that
    proves less than the clause says.
-2. **Run `agent_harness_rails evals`** — it is the check, not a formality:
+2. **Run both mechanical checks** — they are the check, not a formality:
 
    ```bash
-   agent_harness_rails evals
+   agent_harness_rails evals                 # exits 1 on findings
+   agent_harness_rails guard --base <ref>    # notices only; never fails a run
    ```
 
-   Green is a precondition for step 3. Every error is a real gap — no
+   `evals` green is a precondition for step 3. Every error is a real gap — no
    annotation excuses an unproven clause; close it by writing the spec and
    tagging the example, never by editing the doc. The one non-blocking warning
    is `clause/in-flight`, the doc's own mid-amendment state, which this
    close-out clears.
+
+   `guard` answers what `evals` structurally cannot: not "is every clause
+   hooked up" but "what did this run do to promises that already existed".
+   Pass the commit the run started from — the branch point (`--base main`) for
+   a whole-branch close-out. Then act by kind, because the two kinds have
+   opposite handling:
+
+   - **Proof got smaller** (`proof/removed`, `proof/weakened`,
+     `evaluation/dropped`, `evaluation/relayered`) — a live clause is proven by
+     less than it was. Send it back through the implement → review loop to
+     restore the proof, then re-run. Do not file the `evaluations:` row over
+     the top of it.
+   - **Intent moved** (`intent/rewritten`, `intent/vanished`, `doc/removed`,
+     `status/downgraded`, `provenance/rewritten`) — **surface to the user and
+     stop; do not resolve.** An intent notice is discharged by a provenance
+     entry, and writing that entry to silence your own notice is the one move
+     this check exists to catch. Only a user decision amends intent
+     (`agent_harness_rails/rules/primitives.mdc` § Ownership and write points).
+   - **Expected movement** (`intent/deactivated`, `proof/changed`,
+     `evaluation/moved`) — normal when the plan called for it. Confirm each
+     against the plan's **Intent impact** table and report them in step 9; an
+     unplanned one belongs in the group above.
+   - **`doc/unreadable`** — the capability doc stopped parsing, so nothing about
+     it was compared and this run's `guard` output means nothing for that
+     capability. `evals` fails on it too. Fix the frontmatter and re-run both
+     before reading either result.
 3. **Status** — flip to **`status: built`** only when `agent_harness_rails evals` reports no
    errors for this capability; otherwise report the gap instead of flipping.
 4. **Provenance** — append **one** line for the whole run:
@@ -348,6 +380,7 @@ Deliver a short **completion package**:
 - **Full-suite result** (Step 7): the command run and its outcome, or that it was skipped.
 - **harness reviewer** final notes (if any non-blocking recommendations were in those reports).
 - **Primitives close-out** summary (Step 8): status, `evaluations:` updated, `agent_harness_rails evals` result, the provenance line appended — or why status could not flip.
+- **`agent_harness_rails guard` notices** (Step 8), each with what it was: planned, corrected during close-out, or **awaiting the user's decision** — intent notices are never resolved by the orchestrator, so any that remain are the first thing the user must rule on.
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it). In **step-by-step** mode the user has been committing per task, so name only what remains after the last stop.
 - The plan header's **Delivery:** boundaries restated (which tasks compose which PR), so the user cuts PRs as planned — the orchestrator never commits or opens PRs itself.
 

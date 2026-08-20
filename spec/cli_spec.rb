@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "stringio"
+require "open3"
 
 RSpec.describe AgentHarnessRails::CLI do
   def run(*argv)
@@ -94,6 +95,85 @@ RSpec.describe AgentHarnessRails::CLI do
 
     _, again, = run("install", "--path", project)
     expect(again).not_to include("git add -A")
+  end
+
+  # Guard is advisory by construction: a non-zero exit would make every notice a
+  # gate, and the checks in it each have an innocent cause as well as a
+  # suspicious one.
+  describe "guard" do
+    def primitives_repo
+      Open3.capture3("git", "-C", project, "init", "--quiet")
+      Open3.capture3("git", "-C", project, "config", "user.email", "spec@example.test")
+      Open3.capture3("git", "-C", project, "config", "user.name", "Spec")
+      FileUtils.mkdir_p(File.join(project, "docs/primitives/capabilities"))
+      File.write(File.join(project, "docs/primitives/capabilities/comment_threads.md"), <<~DOC)
+        ---
+        status: built
+        intent:
+          - id: I1
+            clause: A reader can reply to any comment.
+        ---
+        # Comment threads
+      DOC
+      Open3.capture3("git", "-C", project, "add", "-A")
+      Open3.capture3("git", "-C", project, "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "base")
+    end
+
+    it "exits 0 and prints the notices when the record changed" do
+      primitives_repo
+      File.write(File.join(project, "docs/primitives/capabilities/comment_threads.md"), <<~DOC)
+        ---
+        status: built
+        intent:
+          - id: I1
+            clause: A signed-in reader can reply to any comment.
+        ---
+        # Comment threads
+      DOC
+
+      status, out, err = run("guard", "--path", project)
+
+      expect(status).to eq(0)
+      expect(out).to include("[intent/rewritten]").and include("1 notice for review")
+      expect(err).to be_empty
+    end
+
+    it "exits 0 and says so when nothing moved" do
+      primitives_repo
+
+      status, out, = run("guard", "--path", project)
+
+      expect(status).to eq(0)
+      expect(out).to include("no change to intent or the specs that prove it")
+    end
+
+    it "reports as JSON for a hook to read" do
+      primitives_repo
+
+      status, out, = run("guard", "--path", project, "--format", "json")
+
+      expect(status).to eq(0)
+      expect(JSON.parse(out)).to include("notices" => 0, "capabilities" => 1)
+    end
+
+    # The one case that is a failure rather than a notice: the comparison could
+    # not be made at all.
+    it "exits 1 when there is no revision to compare against" do
+      FileUtils.mkdir_p(File.join(project, "docs/primitives/capabilities"))
+      File.write(File.join(project, "docs/primitives/capabilities/comment_threads.md"), "---\nstatus: built\nintent:\n  - id: I1\n    clause: A reader can reply.\n---\n")
+
+      status, _, err = run("guard", "--path", project)
+
+      expect(status).to eq(1)
+      expect(err).to include("not a git repository")
+    end
+
+    it "rejects a format it cannot print" do
+      status, _, err = run("guard", "--path", project, "--format", "xml")
+
+      expect(status).to eq(1)
+      expect(err).to include("format must be text or json")
+    end
   end
 
   it "installs and checks a project end to end" do

@@ -9,8 +9,11 @@ module AgentHarnessRails
     # `code` is a stable `category/detail` slug (e.g. `clause/unproven`) — the
     # thing a reader greps for and a CI log gets filtered on. Messages may be
     # reworded; codes are the contract.
+    #
+    # `:notice` is `guard`'s only severity and never an offence: it reports what
+    # a change did to intent and its proof, for a person to judge.
     Finding = Struct.new(:severity, :path, :line, :column, :message, :code, keyword_init: true) do
-      SEVERITY_LETTERS = { error: "E", warning: "W" }.freeze
+      SEVERITY_LETTERS = { error: "E", warning: "W", notice: "N" }.freeze
 
       def error? = severity == :error
 
