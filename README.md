@@ -53,6 +53,7 @@ If git was tracking those files at their old paths, **commit the install with `g
 | `agent_harness_rails check` | verify the vendored harness matches the gem — use in CI |
 | `agent_harness_rails evals` | check every intent clause in `docs/primitives/` is proven by a spec — use in CI ([below](#checking-that-intent-is-proven)) |
 | `agent_harness_rails guard` | report what a change did to intent and the specs that prove it ([below](#seeing-what-a-change-did-to-the-record)) |
+| `agent_harness_rails proofs` | list the examples proving each clause, and what they leave untagged ([below](#seeing-which-examples-prove-a-clause)) |
 
 ### Windows
 
@@ -162,6 +163,38 @@ Growth is silent by design — new clauses, new tagged examples, added evaluatio
 **Everything it prints is a notice, and the exit code is 0 whenever the comparison ran.** Every check in it has an innocent cause as well as a suspicious one — a spec refactor legitimately produces most of the proof notices — and a check that stops honest work is a check that gets routed around. It is wired into the skills (`executing-rails-plan` close-out, `reviewing-rails-work`, `implementing-rails-task`, `refactoring-rails-specs`, `maintaining-primitives`) so an agent reads its own notices and restores proof it dropped by accident, before the work reaches you.
 
 What an agent is told *not* to do is resolve an **intent** notice. Those are discharged by a provenance entry naming the clause — and an agent writing that entry to quiet its own notice would launder exactly the change the check exists to surface. Intent notices come to you.
+
+### Seeing which examples prove a clause
+
+`evals` counts **files**. A clause naming `spec/policies/long_list_policy_spec.rb` is satisfied the moment *one* example in that file carries the tag — so a clause the plan meant to prove with four denials passes with three tagged, and `guard` is silent too, because an untagged new example is growth. The rule neither of them can enforce is the one in `agent_harness_rails/rules/testing.mdc`: a clause proven by four examples is tagged on all four.
+
+`agent_harness_rails proofs` is that missing view — a **lookup**, not a check:
+
+```console
+$ bundle exec agent_harness_rails proofs 'project_stages#I3'
+project_stages (built)
+
+  I3  Only a published stage accepts entries.
+    spec/policies/long_list_policy_spec.rb  3 of 5 examples carry this tag
+      :3  allows entry to a published stage  (1 assertion)
+      :11  denies entry to an archived stage  (2 assertions)
+      :16  denies entry to a locked stage  (1 assertion)
+      carrying no intent tag — check each against the plan's proof set:
+      :7  denies entry to a draft stage
+      :22  returns only published stages
+
+1 clause, 3 tagged examples
+```
+
+The scope is quoted so no shell reads the `#` as a comment or a glob. Output density follows the scope. Bare, it is one line per clause — a health pass that stays scannable at two hundred of them. A capability adds each clause's proving examples. Naming a single clause adds the file's **untagged** examples, which is the line that shows the denial the plan asked for and the implementation never tagged. `--since main` reports every clause whose spec files the branch touched, untracked files included, which is the shape a task's verify step runs:
+
+```console
+$ bundle exec agent_harness_rails proofs --since main
+```
+
+A tag on a `describe` or `context` is named as proving nothing rather than shown among the proofs — it has no example under it, so it would otherwise print with no description and no assertions and read as a real, weak proof. The footer counts every tag `evals` will reject: naming no active clause, sitting on a group, or malformed.
+
+**Nothing here is an offence and the exit code is always 0.** Most examples in a spec file carry no tag by design — "only evaluation examples are tagged" — so `3 of 5` is a number to compare against the plan's proof set, never a verdict. Made a gate it would fire on nearly every file and get routed around. `--format json` feeds it to a reviewer or a close-out step.
 
 ### Your editor will show the harness twice
 

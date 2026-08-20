@@ -96,6 +96,16 @@ clause proven by four examples is tagged on all four.
 - The capability doc's `evaluations:` must list the spec file, and the file must
   carry the tag. **`agent_harness_rails evals`** checks both directions and fails when either
   side drifts.
+- **Tagging all four is a rule, not a check.** `evals` counts files: one tag makes
+  the whole file a carrier, so a clause meant to be proven by four denials goes
+  green with three tagged, and `guard` says nothing either — an untagged new
+  example is growth. **`agent_harness_rails proofs '<capability>#I<n>'`** is what
+  shows the fourth: it prints how many of each evaluation file's examples carry
+  the tag, then the examples carrying none. Read it against the plan's **Intent
+  impact** row, which names the cases. Nothing it prints is an offence — most
+  examples in a spec file are untagged by design.
+- **`agent_harness_rails proofs --since main`** does the same for every clause a
+  change touched, which is what a task's verify step runs before reporting.
 - The tag is also a selector — `bundle exec rspec --tag 'intent:comment_threads#I2'`
   runs exactly the proof.
 

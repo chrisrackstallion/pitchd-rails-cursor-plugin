@@ -487,7 +487,11 @@ Rules, format, and the list form: **`agent_harness_rails/rules/testing.mdc`**
 2. **Tag the example, not the group.** Never a `describe` or `context` — a group
    tag survives the deletion of the example it stood for, so the clause keeps
    claiming a proof that is gone. Four examples proving one clause carry four
-   tags.
+   tags — and **nothing fails when only three of them do**, because
+   `agent_harness_rails evals` counts files and one tag makes the whole file a
+   carrier. Check yourself with **`agent_harness_rails proofs '<capability>#I<n>'`**:
+   it prints how many of the file's examples carry the tag and lists the ones
+   carrying none.
 3. **Tag only evaluation examples.** Most specs prove behaviour without proving a
    *clause*; tagging everything makes the map useless.
 4. **The capability doc must list the file too** — `evaluations:` on that clause.

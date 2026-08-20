@@ -116,6 +116,13 @@ capability doc's evaluation, so a verdict on it is a verdict on the record too:
   drops to a lower layer for speed can quietly turn an outcome assertion into an
   affordance assertion.
 
+Take **`agent_harness_rails proofs '<capability>#I<n>'`** before and after each
+touched clause: it counts how many of a file's examples carry the tag and lists
+the ones carrying none, so a tag dropped in a merge or a split shows as a number
+that went down. `evals` cannot see it — one surviving tag makes the whole file a
+carrier — and `guard`'s `proof/removed` only fires when a tagged example is gone,
+not when a surviving one lost its tag.
+
 Never resolve a tag by deleting it from the example — that silently unproves a
 clause while keeping the suite green, and `agent_harness_rails evals` will then
 fail on the doc rather than on the spec that caused it. Finish the session with

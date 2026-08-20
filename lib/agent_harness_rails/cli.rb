@@ -6,6 +6,7 @@ require_relative "../agent_harness_rails"
 require_relative "installer"
 require_relative "evals"
 require_relative "guard"
+require_relative "proof_report"
 
 module AgentHarnessRails
   # Command line entry point. Returns exit codes rather than calling exit, so the
@@ -22,14 +23,16 @@ module AgentHarnessRails
         update     re-vendor and report what changed
         evals      check every intent clause in docs/primitives/ is proven by a spec (use in CI)
         guard      report what this change did to intent and the specs that prove it
+        proofs     list the examples proving each intent clause, and what they leave untagged
         version    print the gem version
 
       options:
         --path PATH      project root (default: current directory)
         --mode MODE      install/update: link (default) or copy, for filesystems without symlinks
         --no-migrate     install/update: leave existing .claude/.cursor content alone and fail instead
-        --format FORMAT  evals/guard: text (default) or json
+        --format FORMAT  evals/guard/proofs: text (default) or json
         --base REF       guard: revision to compare against (default: HEAD)
+        --since REF      proofs: only clauses whose spec files this change touched
         -h, --help       print this help
 
       examples:
@@ -41,6 +44,10 @@ module AgentHarnessRails
         agent_harness_rails evals                    # in CI: exits 1 on unproven intent
         agent_harness_rails guard                    # what this turn changed about intent
         agent_harness_rails guard --base main        # what this branch changed
+        agent_harness_rails proofs                   # one line per clause
+        agent_harness_rails proofs orders            # a capability, with its proving examples
+        agent_harness_rails proofs 'orders#I3'       # one clause, listing what it leaves untagged
+        agent_harness_rails proofs --since main      # the clauses this branch's specs touch
 
       On install, skills, rules, and agents already in .claude/ or .cursor/ are
       moved into #{PAYLOAD_DIR}/ first, so the symlinks cannot shadow or delete
@@ -58,6 +65,17 @@ module AgentHarnessRails
       reading its own notices should restore proof it dropped by accident; it
       should not write the provenance line that discharges an intent notice —
       that decision is the user's.
+
+      Proofs answers a third question, and is a lookup rather than a check: which
+      examples prove this clause, and how many of the examples in each evaluation
+      file carry the tag. Evals is satisfied by one tag per file, so a clause the
+      plan meant to prove with four denials passes with three tagged — `3 of 7
+      examples carry this tag` is the line that shows it. Nothing here is an
+      offence and the exit code is always 0: most examples in a spec file carry no
+      tag by design, so the ratio is a number to compare with the plan's proof
+      set, not a verdict. Naming a single clause also lists that file's untagged
+      examples. A tag on a `describe` is named as proving nothing rather than
+      shown among the proofs, and the footer counts every tag evals will reject.
 
       Evals reads intent clauses from each capability doc's YAML frontmatter and
       the `intent: "<capability>#I<n>"` metadata on spec examples; the same tag
@@ -84,6 +102,7 @@ module AgentHarnessRails
       when "check" then check
       when "evals" then evals
       when "guard" then guard
+      when "proofs" then proofs
       when "version" then say(VERSION)
       when "help" then usage(0)
       else
@@ -112,15 +131,20 @@ module AgentHarnessRails
         o.on("--[no-]migrate") { |v| @options[:migrate] = v }
         o.on("--format FORMAT") { |v| @options[:format] = v }
         o.on("--base REF") { |v| @options[:base] = v }
+        o.on("--since REF") { |v| @options[:since] = v }
         o.on("-h", "--help") { help = true }
       end
       rest = parser.parse(@argv)
       return "help" if help
 
-      # A stray argument is a typo, not a request for the default behaviour.
-      raise Error, "unexpected argument: #{rest[1]}" if rest.size > 1
+      # A stray argument is a typo, not a request for the default behaviour. The
+      # one command that takes a positional is `proofs`, whose argument is the
+      # capability or clause to report on.
+      command, *positional = rest
+      @options[:scope] = positional.shift if command == "proofs"
+      raise Error, "unexpected argument: #{positional.first}" if positional.any?
 
-      rest.first
+      command
     end
 
     def installer
@@ -201,6 +225,140 @@ module AgentHarnessRails
     end
 
     def short(ref) = ref[0, 12]
+
+    # Always 0. Proofs reports what proves what; the verdict on whether that is
+    # enough belongs to `evals` and to review.
+    def proofs
+      validate_format!
+      result = ProofReport.run(root: File.expand_path(@options[:path]), scope: @options[:scope],
+                               since: @options[:since])
+      @options[:format] == "json" ? proofs_json(result) : proofs_text(result)
+      0
+    end
+
+    def proofs_text(result)
+      return @out.puts(nothing_to_report(result)) if result.empty?
+
+      result.detail == :summary ? proofs_summary(result) : proofs_detail(result)
+      @out.puts
+      proofs_footer(result)
+    end
+
+    def nothing_to_report(result)
+      return "no spec file proving an intent clause changed since #{short(result.base)}" if result.base
+
+      "no intent clauses found — `agent_harness_rails evals` explains what a capability doc needs"
+    end
+
+    # One line per clause: the health-pass density, which stays scannable at two
+    # hundred clauses. Whether a count is the *right* count is a question for the
+    # plan, so drilling in is a second command rather than more output here.
+    def proofs_summary(result)
+      width = result.rows.map { |row| row.id.length }.max
+
+      result.rows.each { |row| @out.puts "#{row.id.ljust(width)}  #{clause_summary(row)}" }
+    end
+
+    def clause_summary(row)
+      return inactive_summary(row) if row.state
+      return "no evaluations" if row.files.empty?
+
+      "#{pluralize(row.tagged, 'example')}, #{pluralize(row.files.size, 'file')}"
+    end
+
+    # A tag on a superseded or retired clause is still a real example, and one
+    # `evals` calls an offence — so the count is shown rather than swallowed by
+    # the state, and the footer's total reconciles with the rows above it.
+    def inactive_summary(row)
+      return row.state if row.tagged.zero?
+
+      "#{row.state} — #{pluralize(row.tagged, 'example')} still tagged"
+    end
+
+    def proofs_detail(result)
+      result.rows.group_by(&:capability).each_with_index do |(capability, rows), index|
+        @out.puts if index.positive?
+        @out.puts "#{capability} (#{rows.first.status || 'no status'})"
+        rows.each { |row| proofs_clause(row, result.detail) }
+      end
+    end
+
+    def proofs_clause(row, detail)
+      state = row.state ? "  [#{row.state}]" : ""
+      @out.puts
+      @out.puts "  #{row.clause.id}  #{row.clause.text}#{state}"
+      return @out.puts "    no evaluations" if row.files.empty?
+
+      row.files.each { |file| proofs_file(file, detail) }
+    end
+
+    def proofs_file(file, detail)
+      return @out.puts "    #{file.path}  (file not found)" unless file.exists
+
+      undeclared = file.declared ? "" : "  (not in this clause's `evaluations:`)"
+      @out.puts "    #{file.path}  #{file.ratio}#{undeclared}"
+      proofs_misplaced(file)
+      file.tagged.each do |proof|
+        @out.puts "      :#{proof.opener}  #{description(proof.description)}  (#{pluralize(proof.assertions, 'assertion')})"
+      end
+      proofs_untagged(file) if detail == :full
+    end
+
+    # Printed first, and at every density: a tag on a `describe` has no example
+    # under it, so the group line would otherwise show up among the proofs with no
+    # description and no assertions — which reads as a real, weak proof rather
+    # than as the offence it is.
+    def proofs_misplaced(file)
+      file.misplaced.each do |proof|
+        @out.puts "      :#{proof.line}  tag sits on `#{proof.group}`, so it proves nothing here — " \
+                  "`agent_harness_rails evals` reports it"
+      end
+    end
+
+    # Listed only for a single named clause. Most of these are unrelated examples
+    # that correctly carry no tag — printed so a reader holding the plan can see
+    # the case it named and this file never tagged, which is the one thing no
+    # other command in here can show them.
+    def proofs_untagged(file)
+      return if file.untagged.empty?
+
+      @out.puts "      carrying no intent tag — check each against the plan's proof set:"
+      file.untagged.each { |example| @out.puts "      :#{example.line}  #{description(example.description)}" }
+    end
+
+    def description(text) = text.to_s.strip.empty? ? "(no description)" : text
+
+    def proofs_footer(result)
+      parts = [ pluralize(result.rows.size, "clause"), pluralize(result.tagged, "tagged example") ]
+      parts << "in files changed since #{short(result.base)}" if result.base
+      @out.puts parts.join(", ")
+      @out.puts unusable_summary(result.unusable) unless result.unusable.values.sum.zero?
+    end
+
+    # Every kind gets a line's worth of mention, so the report never looks like
+    # the whole picture when some of the suite's tags are not proof at all.
+    UNUSABLE = { unresolved: "naming no active clause", misplaced: "on a group rather than an example",
+                 malformed: "not in `<capability>#I<n>` form" }.freeze
+
+    def unusable_summary(unusable)
+      total = unusable.values.sum
+      named = UNUSABLE.filter_map { |kind, phrase| [ unusable[kind], phrase ] unless unusable[kind].zero? }
+      count = "#{pluralize(total, 'tag')} in the suite #{total == 1 ? 'is' : 'are'}"
+      tail = "`agent_harness_rails evals` reports #{total == 1 ? 'it' : 'each'}"
+      return "#{count} #{named.first.last} — #{tail}" if named.one?
+
+      "#{count} not usable proof — #{named.map { |n, phrase| "#{n} #{phrase}" }.join(', ')}; #{tail}"
+    end
+
+    def proofs_json(result)
+      @out.puts JSON.pretty_generate(
+        scope: result.scope, base: result.base, detail: result.detail,
+        capabilities: result.capabilities, clauses: result.rows.size,
+        tagged_examples: result.tagged, unresolved_tags: result.unusable[:unresolved],
+        misplaced_tags: result.unusable[:misplaced], malformed_tags: result.unusable[:malformed],
+        proofs: result.rows.map(&:to_h)
+      )
+    end
 
     def evals_text(result)
       result.findings.each { |finding| @out.puts finding }

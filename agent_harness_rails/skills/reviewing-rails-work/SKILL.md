@@ -180,8 +180,14 @@ suggestions:
   finding, because it keeps resolving after the example it stood for is
   deleted.
 - **Eval adequacy** — the check `agent_harness_rails evals` cannot make: **would
-  breaking the clause turn a tagged example red?** Read each touched clause's
-  wording against its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one
+  breaking the clause turn a tagged example red?** Start from
+  **`agent_harness_rails proofs '<capability>#I<n>'`** for each touched clause: it
+  lists what carries the tag and, per evaluation file, what carries none. Read
+  that against the plan's **Intent impact** row, which names the cases the clause
+  needs. A case the row named that sits in the untagged list is a finding —
+  `evals` is green on it, because one tag makes the whole file a carrier, so a
+  clause meant to be proven by four denials passes with three tagged. Then read
+  each touched clause's wording against its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one
   happy path is a finding; so is an example asserting the affordance (form
   renders, `200` returned) where the clause names an outcome; so is a denial
   bolted onto a canonical journey instead of living in the policy or request

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require "digest"
-require_relative "../evals/tags"
+require_relative "tags"
 
 module AgentHarnessRails
-  module Guard
+  module Evals
     # A tagged example, read as the proof of one clause: which file it lives in,
     # what it asserts, and a digest of its body.
     #
@@ -19,19 +19,38 @@ module AgentHarnessRails
     # and an example this cannot delimit falls back to its opening line, which
     # reads as "changed" more often than it should rather than silently as
     # unchanged.
-    Proof = Struct.new(:capability, :clause_id, :path, :line, :description, :assertions, :digest,
-                       keyword_init: true) do
+    #
+    # `opener` is the line the example starts on, which is not always the tag's
+    # own line — metadata wraps. `proofs` needs it to say which of a file's
+    # examples are the tagged ones.
+    #
+    # `group` is set when the tag sits on a `describe` or `context` instead of an
+    # example. There is no example around such a tag, so everything read here
+    # describes the group line: no description, no assertions. It is carried
+    # rather than dropped because a consumer that showed it as an ordinary proof
+    # would be showing a phantom.
+    Proof = Struct.new(:capability, :clause_id, :path, :line, :opener, :group, :description, :assertions,
+                       :digest, keyword_init: true) do
       def clause_key = [ capability, clause_id ]
 
       def file_key = [ capability, clause_id, path ]
+
+      def misplaced? = !group.nil?
     end
+
+    # One example opener, tagged or not. The untagged ones are what turn "this
+    # file is an evaluation" into "three of this file's seven examples carry the
+    # tag" — the difference the file-granular checks in `Evals` cannot see.
+    Example = Struct.new(:line, :description, keyword_init: true)
 
     module Proofs
       ASSERTION = /\b(?:expect|is_expected|assert|assert_not)\b/
       # The example's name: the first string literal on the opening line, which
-      # precedes the `intent:` tag's own quoted value.
-      DESCRIPTION = /["']([^"']*)["']/
-      EXAMPLE_OPENER = /^[ \t]*(?:RSpec\.)?[fx]?(?:#{Evals::Tags::EXAMPLE_METHODS.join('|')})[\s({]/
+      # precedes the `intent:` tag's own quoted value. The two quote styles are
+      # separate alternatives rather than one `["']` class, so an apostrophe in
+      # a double-quoted name — "rejects a typo'd clause" — does not end the
+      # match half way through the description a reader is about to read.
+      DESCRIPTION = /"([^"]*)"|'([^']*)'/
 
       # Reads each spec file once, whatever number of tags it carries.
       def self.read(tags, root:)
@@ -44,15 +63,29 @@ module AgentHarnessRails
         end
       end
 
+      # Every example in a file, in source order. Group openers are skipped:
+      # a `describe` is not a candidate proof, and counting it would inflate the
+      # denominator of a ratio a reader is about to compare with a plan.
+      def self.examples(lines)
+        lines.each_with_index.filter_map do |line, index|
+          next unless Tags.example_opener?(line)
+
+          Example.new(line: index + 1, description: description_of(line))
+        end
+      end
+
       def self.build(tag, lines)
         opener = opener_index(lines, tag.line - 1)
         body = body_of(lines, tag.line - 1, opener)
 
         Proof.new(capability: tag.capability, clause_id: tag.clause_id, path: tag.path, line: tag.line,
-                  description: opener && DESCRIPTION.match(lines[opener])&.captures&.first,
+                  opener: opener ? opener + 1 : tag.line, group: tag.group,
+                  description: opener && description_of(lines[opener]),
                   assertions: body.count { |line| ASSERTION.match?(line) },
                   digest: Digest::SHA256.hexdigest(body.join("\n")))
       end
+
+      def self.description_of(line) = DESCRIPTION.match(line.to_s)&.captures&.compact&.first
 
       # Dedented before digesting, so wrapping an example in one more `context`
       # is not reported as a change to what it proves.
@@ -69,8 +102,8 @@ module AgentHarnessRails
       # metadata wrapped onto its own line under a long example name is still on
       # that example.
       def self.opener_index(lines, index)
-        index.downto([ index - Evals::Tags::LOOKBACK, 0 ].max) do |candidate|
-          return candidate if EXAMPLE_OPENER.match?(lines[candidate].to_s)
+        index.downto([ index - Tags::LOOKBACK, 0 ].max) do |candidate|
+          return candidate if Tags.example_opener?(lines[candidate])
         end
 
         nil
@@ -90,7 +123,7 @@ module AgentHarnessRails
         ((opener + 1)...lines.size).each do |index|
           line = lines[index].to_s
           return index if terminator.match?(line)
-          return index - 1 if sibling.match?(line) && EXAMPLE_OPENER.match?(line)
+          return index - 1 if sibling.match?(line) && Tags.example_opener?(line)
         end
 
         opener
@@ -100,7 +133,7 @@ module AgentHarnessRails
       # line. A trailing `do` (or an opening `{` with the body below) does not.
       def self.one_liner?(line) = line.to_s.rstrip.end_with?("}")
 
-      private_class_method :build, :body_of, :opener_index, :closing_index, :one_liner?
+      private_class_method :build, :body_of, :opener_index, :closing_index, :one_liner?, :description_of
     end
   end
 end

@@ -46,9 +46,21 @@ module AgentHarnessRails
       # `[fx]` prefix catches `fit`, `xdescribe` and friends — a focused or
       # skipped example is still an example for placement purposes; whether it
       # should carry a tag at all is rubocop-rspec's argument to have.
+      #
+      # The one place an opener is recognised. `Proofs` reads examples with
+      # `example_opener?` rather than a regex of its own: two patterns one
+      # require apart would drift, and a shape only one of them accepted would
+      # count as a proof in one place and not exist in the other.
       EXAMPLE_METHODS = %w[specify scenario example its it].freeze
       GROUP_METHODS = %w[shared_examples_for shared_examples shared_context describe context feature].freeze
-      OPENER = /^[ \t]*(?:RSpec\.)?[fx]?(?<method>#{(EXAMPLE_METHODS + GROUP_METHODS).join('|')})[\s(]/
+      OPENER = /^[ \t]*(?:RSpec\.)?[fx]?(?<method>#{(EXAMPLE_METHODS + GROUP_METHODS).join('|')})[\s({]/
+
+      # True for `it`, `specify`, `scenario` and friends; false for the groups
+      # around them and for any other line.
+      def self.example_opener?(line)
+        match = OPENER.match(line.to_s)
+        !match.nil? && EXAMPLE_METHODS.include?(match[:method])
+      end
 
       # How far back to look for the call a tag is metadata for. Almost always
       # the tag's own line; a couple more covers metadata wrapped onto its own
@@ -56,8 +68,14 @@ module AgentHarnessRails
       # guess — an unclassified tag is reported as nothing, not as an offence.
       LOOKBACK = 3
 
-      Tag = Struct.new(:capability, :clause_id, :path, :line, :column, keyword_init: true) do
+      # `group` is the group method a misplaced tag sits on, or nil for a tag on
+      # an example. Carried on the tag rather than left in the findings, so a
+      # consumer holding the tag can tell proof from phantom without matching
+      # findings back by line and column.
+      Tag = Struct.new(:capability, :clause_id, :path, :line, :column, :group, keyword_init: true) do
         def to_s = "#{capability}##{clause_id}"
+
+        def misplaced? = !group.nil?
       end
 
       # Returns [ tags, findings ] — findings covering values that are not
@@ -86,9 +104,9 @@ module AgentHarnessRails
                 tag = parse(value, relative, index + 1, column)
                 next findings << malformed(value, relative, index + 1, column) if tag.nil?
 
+                tag.group = enclosing_group(lines, index)
                 tags << tag
-                group = enclosing_group(lines, index)
-                findings << misplaced(tag, group, column) if group
+                findings << misplaced(tag, column) if tag.misplaced?
               end
             end
           end
@@ -130,9 +148,9 @@ module AgentHarnessRails
                     code: "tag/malformed")
       end
 
-      def self.misplaced(tag, group, column)
+      def self.misplaced(tag, column)
         Finding.new(severity: :error, path: tag.path, line: tag.line, column: column,
-                    message: "intent tag #{tag.to_s.inspect} is on `#{group}` — tag the example that " \
+                    message: "intent tag #{tag.to_s.inspect} is on `#{tag.group}` — tag the example that " \
                              "proves the clause, or the tag outlives the example it stood for",
                     code: "tag/misplaced")
       end

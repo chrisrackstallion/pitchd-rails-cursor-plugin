@@ -3,7 +3,6 @@
 require_relative "../agent_harness_rails"
 require_relative "evals"
 require_relative "guard/baseline"
-require_relative "guard/proof"
 
 module AgentHarnessRails
   # Reports what a change did to the promises in docs/primitives/ and to the
@@ -85,7 +84,7 @@ module AgentHarnessRails
 
         Snapshot.new(capabilities: docs.to_h { |doc| [ doc.name, doc ] },
                      provenance: docs.to_h { |doc| [ doc.name, provenance_of(doc.path) ] },
-                     proofs: Proofs.read(tags, root: root))
+                     proofs: Evals::Proofs.read(tags, root: root))
       end
 
       # Entries under `## Provenance`, one per bullet, with runs of internal

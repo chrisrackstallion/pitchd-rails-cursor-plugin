@@ -5,11 +5,44 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Three executable backstops for rules that were previously prose only: a linter
-for the primitives tree, a change-review pass over it, and a RuboCop layer for
-the rules a parser can settle.
+Four executable backstops for rules that were previously prose only: a linter
+for the primitives tree, a change-review pass over it, a per-example proof
+listing, and a RuboCop layer for the rules a parser can settle.
 
 ### Added
+
+- **`agent_harness_rails proofs`** — lists the examples proving each intent
+  clause and, per evaluation file, how many of its examples carry the tag:
+  `3 of 5 examples carry this tag`.
+
+  It exists because `evals` counts **files**. A clause naming a spec file is
+  satisfied by *one* tag in it, so a clause the plan meant to prove with four
+  denials passes with three tagged — and `guard` is silent too, because an
+  untagged new example is growth. Neither can enforce
+  `agent_harness_rails/rules/testing.mdc` § Tagging the Intent a Spec Proves:
+  a clause proven by four examples is tagged on all four.
+
+  A tag on a `describe` is named as proving nothing rather than counted as a
+  proof, and the footer counts every tag `evals` will reject — naming no active
+  clause, sitting on a group, or malformed.
+
+  **Nothing it prints is an offence and the exit code is always 0.** Most
+  examples in a spec file carry no tag by design, so a ratio is a number to
+  compare against the plan's proof set, not a verdict; made a gate it would fire
+  on nearly every file and get routed around.
+
+  Scope sets the density: bare is one line per clause, a capability adds its
+  proving examples, and naming a clause (`proofs orders#I3`) adds that file's
+  **untagged** examples — the line that shows the case the plan asked for and the
+  implementation never tagged. `--since main` selects every clause whose spec
+  files the change touched, untracked files included, which is the shape a task's
+  verify step runs. `--format json` for a reviewer or close-out step.
+
+  Wired into `implementing-rails-task` (verify), `executing-rails-plan`
+  (close-out), `reviewing-rails-work` (eval adequacy) and
+  `refactoring-rails-specs` (intent audit), against the plan's
+  **Intent impact** table, which now names the *cases* a clause needs rather than
+  only the file they land in.
 
 - **`agent_harness_rails guard`** — reports what a change did to intent and to
   the specs that prove it, by parsing the primitives tree twice: at `--base`

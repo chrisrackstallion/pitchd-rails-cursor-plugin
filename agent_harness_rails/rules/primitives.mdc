@@ -267,7 +267,9 @@ it "shows replies nested under their parent", intent: "comment_threads#I2" do
 
 The capability is the doc's filename without `.md`. One example may carry
 several clauses as a list — `intent: %w[comment_threads#I2 comment_threads#I3]`
-— and a clause proven by four examples is tagged on all four.
+— and a clause proven by four examples is tagged on all four. Nothing fails when
+only three of them are (§ Which examples prove a clause), so this is the rule
+that has to be held rather than relied on.
 
 **On the example, never on the group.** A tag on a `describe`, `context`, or
 `shared_examples` is an offence — `tag/misplaced` from
@@ -335,6 +337,41 @@ re-run. **Intent** notices belong to the user. An intent notice is discharged by
 a provenance entry naming the clause — and an agent writing that entry to quiet
 its own notice has laundered exactly the change this exists to surface. Surface
 it instead; only a user decision amends intent (§ Ownership and write points).
+
+### Which examples prove a clause
+
+```bash
+agent_harness_rails proofs 'comment_threads#I2'   # a lookup; exit 0 always — quote the `#`
+```
+
+`evals` counts **files**. A clause naming `spec/policies/comment_policy_spec.rb`
+is satisfied by **one** tag in that file — so a clause meant to be proven by four
+denials is green with three tagged, and `guard` is silent too, because an untagged
+new example is growth. That is the gap `proofs` fills: per evaluation file, how
+many of its examples carry the tag, and — when the scope is a single clause —
+which examples carry none.
+
+```
+  I3  Only a published stage accepts entries.
+    spec/policies/long_list_policy_spec.rb  3 of 5 examples carry this tag
+      :3  allows entry to a published stage  (1 assertion)
+      :11  denies entry to an archived stage  (2 assertions)
+      :16  denies entry to a locked stage  (1 assertion)
+      carrying no intent tag — check each against the plan's proof set:
+      :7  denies entry to a draft stage
+```
+
+A tag on a `describe` is named as proving nothing rather than listed among the
+proofs — there is no example under it, so it would print with no description and
+no assertions and read as a weak proof instead of the `tag/misplaced` offence it
+is. The footer counts every tag `evals` will reject.
+
+**Nothing here is an offence and the exit code is always 0.** Most examples in a
+spec file carry no tag by design — only evaluation examples are tagged — so a
+ratio is a number to hold against the plan's **Intent impact** row, which names
+the cases the clause needs. Made a gate it would fire on nearly every file.
+`--since main` selects the clauses whose spec files a change touched, untracked
+files included, which is the shape a task's verify step runs.
 
 ### Provenance
 

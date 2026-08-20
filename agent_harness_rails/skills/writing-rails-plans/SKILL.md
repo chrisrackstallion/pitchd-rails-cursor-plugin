@@ -185,7 +185,8 @@ target capability doc, and **`compilation.md`**.
    covered by one happy path: its task list names the denial or boundary case at
    the layer that owns it (`agent_harness_rails/rules/testing.mdc`
    § Ownership by Layer), usually a policy or request spec rather than
-   another system spec. A clause whose proof was never planned becomes a green
+   another system spec — and its **Intent impact** row names those cases one by
+   one, because a proof set promised in prose is one nothing can count. A clause whose proof was never planned becomes a green
    row that proves nothing at close-out
    (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause). When this gate **creates** a doc (new feature or lazy backfill),
    add its `docs/primitives/index.md` line at creation, same as `capture` —
@@ -380,7 +381,7 @@ below only when the app has no `docs/primitives/` tree.]
 | Clause | Change | Proof lands at |
 |--------|--------|----------------|
 | I1 A reader can reply to any comment | unchanged — regression contract | `spec/system/comment_threads_spec.rb` (exists) |
-| I5 Only the author can delete a comment | new | `spec/policies/comment_policy_spec.rb` + `spec/requests/comments_spec.rb` (Task 3) |
+| I5 Only the author can delete a comment | new | `spec/policies/comment_policy_spec.rb` — deny: reader, other author, archived post; `spec/requests/comments_spec.rb` — redirect a non-author (Task 3) |
 | I4 Anyone can delete a comment | superseded by I5 | row retires at close-out; spec deleted in Task 3 |
 
 `Change` is one of **new**, **amended**, **superseded by I\<n>**, or **unchanged
@@ -388,6 +389,16 @@ below only when the app has no `docs/primitives/` tree.]
 promises this plan must not break, and it is what makes a **Shape-only plan**
 expressible — a refactor's table is all regression-contract rows, and it says
 `no intent delta` where new clauses would go.
+
+`Proof lands at` names the **cases**, not only the files, whenever a clause needs
+more than one example in the same file — `spec/policies/comment_policy_spec.rb —
+deny: reader, other author, archived post`. A file name alone is the granularity
+`agent_harness_rails evals` can check, and it is satisfied by **one** tag in that
+file: so a clause whose four denials were promised in prose passes every gate
+with three of them tagged. Named cases are countable —
+`agent_harness_rails proofs 'comment_threads#I5'` prints what carries the tag and
+what does not, and both execution close-out and review check that listing against
+this row.
 
 `Proof lands at` is a **plan**, and it lives in this file only. It is never copied
 into the doc's `evaluations:` — those are filled at close-out from the specs the

@@ -4,6 +4,7 @@ require_relative "../agent_harness_rails"
 require_relative "evals/finding"
 require_relative "evals/capability"
 require_relative "evals/tags"
+require_relative "evals/proofs"
 
 module AgentHarnessRails
   # Checks that every intent clause in docs/primitives/ is proven by a spec, and

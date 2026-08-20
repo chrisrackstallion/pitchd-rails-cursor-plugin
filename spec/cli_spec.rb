@@ -176,6 +176,140 @@ RSpec.describe AgentHarnessRails::CLI do
     end
   end
 
+  # Proofs is a lookup, not a check: the exit code is 0 whatever it finds, because
+  # most examples in a spec file carry no tag by design and a ratio is a number to
+  # compare with the plan, not a verdict.
+  describe "proofs" do
+    def stages
+      FileUtils.mkdir_p(File.join(project, "docs/primitives/capabilities"))
+      File.write(File.join(project, "docs/primitives/capabilities/project_stages.md"), <<~DOC)
+        ---
+        status: built
+        intent:
+          - id: I3
+            clause: Only a published stage accepts entries.
+            evaluations:
+              - spec/policies/long_list_policy_spec.rb
+        ---
+        # Project stages
+      DOC
+      FileUtils.mkdir_p(File.join(project, "spec/policies"))
+      File.write(File.join(project, "spec/policies/long_list_policy_spec.rb"), <<~SPEC)
+        RSpec.describe LongListPolicy do
+          it "denies entry to a draft stage" do
+            expect(policy).not_to permit_action(:accept_entry)
+          end
+
+          it "denies entry to an archived stage", intent: "project_stages#I3" do
+            expect(policy).not_to permit_action(:accept_entry)
+          end
+        end
+      SPEC
+    end
+
+    it "prints one line per clause and exits 0" do
+      stages
+
+      status, out, err = run("proofs", "--path", project)
+
+      expect(status).to eq(0)
+      expect(out).to include("project_stages#I3  1 example, 1 file")
+      expect(err).to be_empty
+    end
+
+    it "shows how many of an evaluation file's examples carry the tag" do
+      stages
+
+      _, out, = run("proofs", "project_stages", "--path", project)
+
+      expect(out).to include("1 of 2 examples carries this tag")
+    end
+
+    # The output that made a group tag look like a real, weak proof: the
+    # `describe` line printed among the examples with no description and no
+    # assertions, and nothing in the footer about it.
+    it "names a tag sitting on a group instead of printing it as a proof" do
+      stages
+      File.write(File.join(project, "spec/policies/long_list_policy_spec.rb"), <<~SPEC)
+        RSpec.describe LongListPolicy do
+          describe "denials", intent: "project_stages#I3" do
+            it "denies entry to a draft stage" do
+              expect(policy).not_to permit_action(:accept_entry)
+            end
+          end
+        end
+      SPEC
+
+      status, out, = run("proofs", "project_stages#I3", "--path", project)
+
+      expect(status).to eq(0)
+      expect(out).to include("0 of 1 example carries this tag")
+        .and include("tag sits on `describe`, so it proves nothing here")
+        .and include("1 tag in the suite is on a group rather than an example")
+      expect(out).not_to include("(no description)")
+    end
+
+    it "counts each kind of unusable tag in one footer line" do
+      stages
+      FileUtils.mkdir_p(File.join(project, "spec/requests"))
+      File.write(File.join(project, "spec/requests/stages_spec.rb"), <<~SPEC)
+        RSpec.describe "Stages", type: :request do
+          it "names no clause", intent: "project_stages#I9" do
+            expect(response).to be_forbidden
+          end
+
+          it "carries half a tag", intent: "project_stages" do
+            expect(response).to be_forbidden
+          end
+        end
+      SPEC
+
+      _, out, = run("proofs", "--path", project)
+
+      expect(out).to include("2 tags in the suite are not usable proof — 1 naming no active clause, " \
+                             "1 not in `<capability>#I<n>` form; `agent_harness_rails evals` reports each")
+    end
+
+    # The listing that would be noise across a whole tree, and is the answer when
+    # a reader is holding the plan and asking about one clause.
+    it "names the untagged examples only when the scope is a single clause" do
+      stages
+
+      _, capability_wide, = run("proofs", "project_stages", "--path", project)
+      _, one_clause, = run("proofs", "project_stages#I3", "--path", project)
+
+      expect(capability_wide).not_to include("denies entry to a draft stage")
+      expect(one_clause).to include("carrying no intent tag").and include("denies entry to a draft stage")
+    end
+
+    it "reports as JSON for a reviewer or close-out step to read" do
+      stages
+
+      status, out, = run("proofs", "project_stages#I3", "--format", "json", "--path", project)
+
+      expect(status).to eq(0)
+      expect(JSON.parse(out))
+        .to include("clauses" => 1, "tagged_examples" => 1, "detail" => "full",
+                    "unresolved_tags" => 0, "misplaced_tags" => 0, "malformed_tags" => 0)
+    end
+
+    it "names what a scope it cannot parse should look like" do
+      stages
+
+      status, _, err = run("proofs", "Project Stages", "--path", project)
+
+      expect(status).to eq(1)
+      expect(err).to include("reads `<capability>` or `<capability>#I<n>`")
+    end
+
+    it "still rejects a second positional argument" do
+      status, _, err = run("proofs", "project_stages", "extra", "--path", project)
+
+      expect(status).to eq(1)
+      expect(err).to include("unexpected argument: extra")
+    end
+  end
+
   it "installs and checks a project end to end" do
     status, out, = run("install", "--path", project)
     expect(status).to eq(0)
