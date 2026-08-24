@@ -450,6 +450,16 @@ branch CI. Full rule and the situation table: **`agent_harness_rails/rules/testi
 § Running Specs. Never call the suite green off a slice run — report the command
 you ran.
 
+**When a run comes back red, re-run the failures — not the run.** Fix, then run
+those examples or files (`bin/rspec spec/models/article_spec.rb:42`, or
+`--only-failures` where the app persists example status); the passes from the
+same run still stand for everything you did not touch. Widen back to the suite
+only if the fix itself was cross-cutting, and after a red full run at most once
+more, once the failures are green. A failure that will not reproduce is a
+**flake to report with its seed**, not a suite to re-run until it goes green —
+`agent_harness_rails/rules/testing.mdc` § When a Run Comes Back Red and §
+Flaky and Order-Dependent Failures.
+
 ### 8. Naming Conventions
 
 | Thing | Convention | Examples |

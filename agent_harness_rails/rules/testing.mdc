@@ -457,6 +457,38 @@ A **full-suite run is earned, not routine**. Run `bin/rspec` when:
 
 Otherwise leave cross-slice regressions to branch CI. And never describe the suite as green off a slice run — report the command you actually ran.
 
+### When a Run Comes Back Red
+
+The failures are the work list. **Re-run the failures, not the run.** A pass for
+specs you did not touch does not expire because something else went red.
+
+| After | Run |
+|-------|-----|
+| Fixing one failing example | That example — `bin/rspec spec/models/article_spec.rb:42` |
+| Fixing several failures in one file | That file |
+| Fixing failures across files | Those files on one command line — `bin/rspec spec/models/article_spec.rb spec/requests/articles_spec.rb` |
+| A fix that touched something cross-cutting (factory, `spec/support/`, `rails_helper.rb`, shared concern, schema) | The failures first, then the full suite — the widening is what earns it |
+
+Where the app sets `config.example_status_persistence_file_path`,
+`bin/rspec --only-failures` re-runs exactly the last red set and
+`--next-failure` walks them one at a time. Without it, list the paths yourself;
+do not add the config mid-task to get the flag.
+
+Repeating a whole suite to confirm a two-example fix buys the same information a
+targeted run gives in seconds, and the difference is wall clock someone is
+waiting on. After a red full run, the suite runs bare **once more at most** —
+when the failures are green — not once per fix attempt.
+
+### Flaky and Order-Dependent Failures
+
+A failure that does not reproduce is a **finding to report**, not a run to
+repeat. Re-running the suite until it comes back green launders the flake and
+hands it to the next person unchanged.
+
+- Re-run **that example alone** first, to see whether it passes in isolation.
+- If it does, re-run it under the failing run's **seed** — `bin/rspec spec/models/article_spec.rb:42 --seed 12345` — then the file or slice under that seed. That separates an order-dependent leak (shared state, `spec/support/` residue) from a timing flake.
+- Report it: which example, whether it reproduced, the seed. If it is unrelated to your change, say so and leave it — do not retry until it passes, and do not silence it with `pending` or `skip` to get a green line.
+
 ## Database Strategy
 
 Transactional fixtures cover everything — including system specs. Since

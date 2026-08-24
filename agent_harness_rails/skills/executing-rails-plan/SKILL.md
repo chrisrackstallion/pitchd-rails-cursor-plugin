@@ -289,9 +289,14 @@ add it to the **last task's** implementor prompt as a closing step, or dispatch 
 and `bin/rubocop`, change no code, report results.
 
 If it comes back red, that is a **regression across tasks** — feed the failures
-back as a fix pass for the task that caused them and loop as in step 3. If the
-user declines the run, say so in the handoff and do not describe the branch as
-green.
+back as a fix pass for the task that caused them and loop as in step 3. **Verify
+each fix pass against the failing examples only**, not another full run: pass the
+failing paths (or `--only-failures`) to the fix prompt and require those green,
+per `agent_harness_rails/rules/testing.mdc` § When a Run Comes Back Red. The
+suite runs bare **once more at most** — after the last fix pass lands — not once
+per attempt. A failure that will not reproduce is a **flake to report with its
+seed** in the handoff, not grounds for another suite run. If the user declines
+the run, say so in the handoff and do not describe the branch as green.
 
 ### 8. Primitives close-out pass (required when the plan has a Capability line)
 

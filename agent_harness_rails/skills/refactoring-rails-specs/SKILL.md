@@ -277,7 +277,12 @@ If neither applies, **do NOT delete**. Write the missing lower-layer test first;
 
 After all verdicts in the batch are executed:
 
-- **Run the full suite, not just the touched slice.** `bin/rspec` — fully green.
+- **Run the full suite, not just the touched slice.** `bin/rspec` — fully green. A
+  spec-refactor session is one of the cases where a full run is earned. **If it comes
+  back red, work the failures, not the run:** fix, re-run just those examples or files
+  (`--only-failures` where the app persists example status), and re-run the suite bare
+  **once** at the end when they are green — not after every fix
+  (`agent_harness_rails/rules/testing.mdc` § When a Run Comes Back Red).
 - **Compare against the baseline:**
   - Spec count: should be **lower** (moves/merges/deletes net down).
   - System-spec count: should be **significantly lower** — this is the primary goal.
@@ -348,6 +353,7 @@ End with one line: **"Refactor complete. Suite is green and budget-compliant."**
 | Adding new behavioural coverage during refactor | Out of scope; flag for a follow-up session |
 | Deleting an `intent:` tag, or the last example proving a clause | Unproves a capability while the suite stays green; flag it and leave the example |
 | Changing factories to make moved tests pass without verifying other specs still work | Factory changes are cross-cutting; run the full suite after any factory edit |
+| Re-running the whole suite after each fix for a handful of failures | The other results still stand — re-run the failing examples, then the suite once at the end (`agent_harness_rails/rules/testing.mdc` § When a Run Comes Back Red) |
 
 ## Verification Checklist
 
