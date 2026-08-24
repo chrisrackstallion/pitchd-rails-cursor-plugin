@@ -96,16 +96,38 @@ Runs when the app has a **`docs/primitives/`** tree (see `agent_harness_rails/ru
 Read the **one** capability doc named by the plan header's **Capability:** line
 (or located via `docs/primitives/index.md`) plus `compilation.md` — never the
 whole tree. No tree → note "No primitives tree" in the report and skip.
-**Run `agent_harness_rails evals` first.** It settles clause coverage, dead spec
-paths, untagged evaluations, and tags naming a superseded clause, with
-file:line — cite its output rather than re-deriving it by hand, and spend the
-review on what it cannot judge: whether a clause is the *right* clause.
 
-**Then `agent_harness_rails guard --base <the diff's base>`.** `evals` reads the
-tree as it stands; `guard` reads what this change *did* to it — a clause reworded
-under the same id, one deleted rather than superseded, an evaluation dropped or
-moved to a layer that cannot hold it, a tagged example hollowed out, an edited
-provenance entry. Its output is notices, never offences, so cite them with a
+**The mechanical output arrives with the prompt.** A delegating orchestrator
+runs the three commands and pastes their stdout under **Mechanical primitives
+output (authoritative — do not re-run)** — cite that block. Run them yourself
+only when you are the top-level agent with a working shell:
+
+```bash
+agent_harness_rails evals                            # clause coverage; exits 1 on findings
+agent_harness_rails guard --base <the diff's base>   # what this change did to the record
+agent_harness_rails proofs --since <the diff's base> # what carries each tag, per file
+```
+
+**No block and no working shell → `UNVERIFIED (CLI unavailable)`.** Ask the
+delegating agent once for the output; retry a call once if you have a shell.
+Then report those checks as unverified in the **primitives:** section and name
+what stayed unchecked. A hand read of the frontmatter and the `intent:` tags is
+**not** the same check — reporting it as coverage hides that nothing ran
+(`agent_harness_rails/rules/primitives.mdc` § None of these is quiet). None of
+these commands is silent, so an empty result is a missing result and never a
+green one: `Status: Approved` resting on the mechanical checks is not available
+on one.
+
+**`evals` settles** clause coverage, dead spec paths, untagged evaluations, and
+tags naming a superseded clause, with file:line — cite it rather than
+re-deriving it by hand, and spend the review on what it cannot judge: whether a
+clause is the *right* clause.
+
+**`guard` reads what `evals` cannot.** `evals` reads the tree as it stands;
+`guard` reads what this change *did* to it — a clause reworded under the same
+id, one deleted rather than superseded, an evaluation dropped or moved to a
+layer that cannot hold it, a tagged example hollowed out, an edited provenance
+entry. Its output is notices, never offences, so cite them with a
 verdict rather than copying them in as findings. Two turn into findings:
 
 - An **intent** notice (`intent/rewritten`, `intent/vanished`, `doc/removed`,
@@ -180,11 +202,13 @@ suggestions:
   finding, because it keeps resolving after the example it stood for is
   deleted.
 - **Eval adequacy** — the check `agent_harness_rails evals` cannot make: **would
-  breaking the clause turn a tagged example red?** Start from
-  **`agent_harness_rails proofs '<capability>#I<n>'`** for each touched clause: it
-  lists what carries the tag and, per evaluation file, what carries none. Read
-  that against the plan's **Intent impact** row, which names the cases the clause
-  needs. A case the row named that sits in the untagged list is a finding —
+  breaking the clause turn a tagged example red?** Start from the
+  **`proofs`** output for each touched clause: it lists what carries the tag and,
+  per evaluation file, what carries none. `proofs --since <base>` carries that
+  untagged listing for every clause the change touched — the same detail
+  `proofs '<capability>#I<n>'` gives for one — so the pasted block usually
+  answers this without a further call. Read that against the plan's **Intent
+  impact** row, which names the cases the clause needs. A case the row named that sits in the untagged list is a finding —
   `evals` is green on it, because one tag makes the whole file a carrier, so a
   clause meant to be proven by four denials passes with three tagged. Then read
   each touched clause's wording against its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one
@@ -360,8 +384,10 @@ _Implementation and both phases only. Omit this section for plan-only reviews._
 ### primitives: (traceability, compilation, evals, provenance)
 _Only when the app has a `docs/primitives/` tree; otherwise state "No primitives tree" and omit the findings._
 
+**Mechanical checks:** [`evals` / `guard` / `proofs` summary lines quoted from the pasted **Mechanical primitives output** block — or `UNVERIFIED (CLI unavailable)`, the checks that did not run, and the findings that would have rested on them.]
+
 - [confidence: X.X] `[file or area]`: [Direct statement — untraceable behaviour, compilation/Shape contradiction, missing evaluation, supersession hygiene, provenance conflict.] — `agent_harness_rails/rules/primitives.mdc`
-  **Verified:** [Capability doc + code you read to confirm, and the `agent_harness_rails evals` result.]
+  **Verified:** [Capability doc + code you read to confirm, and the `agent_harness_rails evals` result — or that it was unavailable.]
 
 **Provenance candidates (non-blocking):** decisions, constraints, or accepted debt worth a one-line provenance entry at close-out. Only durable value — not every implementation detail.
 - ...
@@ -375,7 +401,11 @@ The **`rails-reviewer`** custom subagent ([Cursor
 subagents](https://cursor.com/docs/subagents)) at **`agent_harness_rails/agents/rails-reviewer.md`**
 implements **this skill** in an **isolated context** (`readonly: true`,
 `model: inherit`). It does not see parent chat — the delegating agent must pass
-**Phase**, plan path, spec path, and **Scope** in the task prompt. Invoke with
+**Phase**, plan path, spec path, **Scope**, and, when the app has a primitives
+tree, the **Mechanical primitives output** block in the task prompt.
+`readonly: true` is deliberate — a reviewer that edits the tree launders the
+notice it was reading — and it is also why that block is pasted rather than
+shelled out for: a readonly worker may have no shell at all. Invoke with
 `/rails-reviewer` or the Task tool. The subagent’s instructions only add
 context-isolation rules; the workflow and report shape are defined **here**.
 

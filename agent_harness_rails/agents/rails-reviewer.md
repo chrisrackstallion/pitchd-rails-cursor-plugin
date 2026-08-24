@@ -56,10 +56,26 @@ Do not assert findings from memory, diff headers, or inference alone. Drop any f
 | **Spec path** | Requirements/spec, or `none` |
 | **Scope** | Paths to review, git diff summary, or `full app context` |
 | **User revisions** | (optional) Bullet summary of what the user changed in the plan — when present, limit review to the described changed sections and note in the report that scope was narrowed to user revisions |
+| **Mechanical primitives output** | The delegating agent's pasted stdout from `agent_harness_rails evals` / `guard` / `proofs`, or `no primitives tree` |
 
 3. **Read order inside the skill** — The skill already orders compass first (`agent_harness_rails/skills/rails-omakase-compass/SKILL.md` via `../rails-omakase-compass` from the reviewing skill's location), then scoped tactical skills. Do not skip the compass.
 
-4. **Supplementary reference (optional)** — When compass, scoped **`writing-*`**, and **`agent_harness_rails/rules/*.mdc`** are not enough to judge **Rails best practice** for a finding, two sources are available:
+4. **Never shell out for the primitives CLIs** — `readonly: true` may leave this
+   worker without a shell, and a Task worker's shell can hand back a result with
+   no stdout, no stderr and no exit code. Cite the **Mechanical primitives
+   output** block the delegating prompt carries; `evals`, `guard`, and `proofs`
+   all print on every run, so an empty result is a missing result, not a clean
+   one (`agent_harness_rails/rules/primitives.mdc` § None of these is quiet).
+
+   No block: ask once. Still nothing — report **`UNVERIFIED (CLI unavailable)`**
+   on the report's **Mechanical checks** line, naming the checks that did not
+   run and the findings that would have rested on them. Do **not** substitute a
+   hand read of the frontmatter and `intent:` tags and present it as those
+   checks: it is a different check, and a hand audit that happens to agree is
+   luck rather than verification. `Status: Approved` resting on the mechanical
+   checks is not available on an unverified block.
+
+5. **Supplementary reference (optional)** — When compass, scoped **`writing-*`**, and **`agent_harness_rails/rules/*.mdc`** are not enough to judge **Rails best practice** for a finding, two sources are available:
    - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns and philosophy from the third-party community guide.
    - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (fetches the GitHub API index first, then the specific guide).
 

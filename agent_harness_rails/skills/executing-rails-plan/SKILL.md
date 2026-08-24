@@ -34,7 +34,7 @@ sign-off.
 
 ## Hard rules
 
-1. **No application code** from the orchestrator — use the **Task** tool (or equivalent subagent dispatch) for **`rails-implementor`** and **`rails-reviewer`**. Shell may be used only for **orchestration** (e.g. `git diff`, `git status`) to describe scope to subagents — not to implement features. **Carve-out:** `docs/primitives/**` edits are orchestration bookkeeping, not app code — the orchestrator appends provenance lines, syncs `evaluations:`, flips `status:`, keeps the capability's `index.md` line in sync, and amends Intent clauses when revision mode's R1 classification calls for it (a user-directed intent change), directly per **`agent_harness_rails/rules/primitives.mdc`**. Structural primitives work (splitting a capability, backfills, lint passes) is delegated to **`rails-primitives-maintainer`**.
+1. **No application code** from the orchestrator — use the **Task** tool (or equivalent subagent dispatch) for **`rails-implementor`** and **`rails-reviewer`**. Shell may be used only for **orchestration** (e.g. `git diff`, `git status`, and the `agent_harness_rails` primitives CLIs whose output review prompts carry) to describe scope to subagents — not to implement features. **Carve-out:** `docs/primitives/**` edits are orchestration bookkeeping, not app code — the orchestrator appends provenance lines, syncs `evaluations:`, flips `status:`, keeps the capability's `index.md` line in sync, and amends Intent clauses when revision mode's R1 classification calls for it (a user-directed intent change), directly per **`agent_harness_rails/rules/primitives.mdc`**. Structural primitives work (splitting a capability, backfills, lint passes) is delegated to **`rails-primitives-maintainer`**.
 2. **Canonical skills:** Implementor follows **`agent_harness_rails/skills/implementing-rails-task/SKILL.md`**; reviewer follows **`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`**.
 3. **Sign-off from the harness reviewer** means the latest **`rails-reviewer`** report has **`Status: Approved`** (see that skill’s report format). If **Issues found**, feed them back to the implementor and **repeat** until Approved or the user accepts a documented exception (orchestrator records that choice).
 
@@ -89,8 +89,17 @@ Invoke **`rails-reviewer`** with:
 - **Phase:** `implementation` (or `both` if the task required plan-level re-validation).
 - **Plan path**, **Spec path**, **Scope:** paths changed, or a short `git diff` summary / file list the orchestrator gathered read-only.
 - **User revisions:** omit on the **first review** for a task. On **loop calls** (reviewing after a fix pass), set this to a bullet list of what the implementor changed — the reviewer will read only those areas.
+- **Mechanical primitives output** — when the app has a `docs/primitives/` tree. Run the three commands yourself first (orchestration, per Hard rule 1) and paste their **full stdout** into the prompt under the heading **Mechanical primitives output (authoritative — do not re-run)**:
 
-Instruction: follow **`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`** and return the standard **harness review** report.
+  ```bash
+  agent_harness_rails evals
+  agent_harness_rails guard --base <the ref this task started from>
+  agent_harness_rails proofs --since <the ref this task started from>
+  ```
+
+  The reviewer is `readonly: true` and may have no shell at all, and a subagent shell can hand back a result with no stdout, no stderr and no exit code — which reads to the reviewer as a silent CLI and gets substituted with a hand audit of the frontmatter (`agent_harness_rails/rules/primitives.mdc` § None of these is quiet). Running them here removes that failure from the loop. Paste verbatim **including the summary lines** — a truncated block reads as a clean run. If a command fails in your own shell, fix that before dispatching rather than sending the reviewer a gap. No tree → say `no primitives tree`.
+
+Instruction: follow **`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`** and return the standard **harness review** report. The pasted block is the mechanical result — the reviewer cites it and does not re-run it.
 
 ### 3. Branch on status
 
@@ -209,6 +218,7 @@ Invoke **`rails-reviewer`** with:
 - **Scope:** only the files changed by the revision (not the full plan scope).
 - **Plan path**, **Spec path** as above.
 - **User revisions:** omit on the first review call. On loop calls (reviewing after a fix pass), set to a bullet list of what the implementor changed — the reviewer reads only those areas.
+- **Mechanical primitives output:** as in step 2 — you run `evals`, `guard --base <ref>`, and `proofs --since <ref>`, and paste the stdout. The reviewer never shells out for them.
 
 #### R4. Branch on status
 
@@ -254,6 +264,7 @@ to them. Before the final verification and primitives close-out, invoke
 - **Scope:** every file changed across the run (gather read-only via
   `git diff` / `git status`). State that this is a **final sign-off** pass so
   the reviewer reads full scope; omit **User revisions**.
+- **Mechanical primitives output:** as in step 2, with `--base` / `--since` at the **branch point** so the block covers the whole run.
 - **Focus (name it in the prompt):** cross-task coherence the per-task loops
   could not see — the **same method or behaviour defined on more than one
   entity** (one home: a concern or the owning model, `agent_harness_rails/rules/models.mdc`),

@@ -163,6 +163,26 @@ listing, and a RuboCop layer for the rules a parser can settle.
 
 ### Changed
 
+- **The primitives CLIs are run by the orchestrator and pasted into review
+  prompts.** `rails-reviewer` is `readonly: true` and may have no shell at all;
+  a Task worker's shell can also return a result with no stdout, no stderr and
+  no exit code. Either way the reviewer sees silence and — as happened — falls
+  back to hand-reading frontmatter and `intent:` tags, then reports that as
+  coverage. `evals`, `guard`, and `proofs` all print a summary line on every
+  run, so silence was never the CLI: an empty result is a missing result.
+
+  `executing-rails-plan` (step 2, step 6, R3) and `writing-rails-plans`
+  (Pass 1, Pass 2, R3) now run the three commands in the orchestrator's own
+  shell and paste the full stdout into the review prompt under **Mechanical
+  primitives output (authoritative — do not re-run)**. `reviewing-rails-work`
+  cites that block instead of shelling out, and shells out only when it is the
+  top-level agent. When no block arrives and no shell works, the report's new
+  **Mechanical checks** line reads `UNVERIFIED (CLI unavailable)` with the
+  checks that did not run — a hand audit is a different check and does not
+  discharge them, and `Status: Approved` cannot rest on one.
+  `primitives.mdc` § None of these is quiet is the rule; `readonly: true` on the
+  reviewer stays deliberate (a reviewer that edits the tree launders the notice
+  it was reading).
 - **Breaking — capability doc format.** Intent clauses and evaluations move from
   the `## Intent` and `## Evaluations` prose sections into YAML frontmatter, so
   they can be checked rather than read. `specs:` frontmatter is retired —

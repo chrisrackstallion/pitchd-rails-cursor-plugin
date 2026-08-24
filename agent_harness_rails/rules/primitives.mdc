@@ -373,6 +373,32 @@ the cases the clause needs. Made a gate it would fire on nearly every file.
 `--since main` selects the clauses whose spec files a change touched, untracked
 files included, which is the shape a task's verify step runs.
 
+### None of these is quiet
+
+Every one of them prints. `evals` closes with `6 capabilities inspected,
+37 clauses, no offences`; `guard` with `compared against <ref>: no change to
+intent or the specs that prove it`; `proofs` with a line per clause, or `no
+intent clauses found`. A real failure prints a Bundler or Ruby stack on stderr.
+
+So **an empty result is not a clean run — it is a missing result.** A call that
+came back with no stdout, no stderr and no exit code observed nothing about the
+tree, and "the CLI returned no output" describes the tool bridge, not the CLI.
+The common shape is a subagent: a worker whose shell is withheld (a `readonly`
+agent type) or whose result never arrived.
+
+Retry once, then report **`UNVERIFIED (CLI unavailable)`** against the checks
+that did not run, and name what rested on them. Reading the frontmatter and the
+`intent:` tags by hand is a different check and does not discharge this one — a
+hand audit that happens to agree is luck, and recorded as a pass it hides that
+nothing ran.
+
+The arrangement that holds: whoever **can** run them does, once, and hands the
+output over. An orchestrator dispatching a review runs the three commands and
+pastes their stdout into the review prompt; the reviewer cites that block
+instead of shelling out
+(`agent_harness_rails/skills/executing-rails-plan/SKILL.md` § Delegate harness
+review).
+
 ### Provenance
 
 One line per **event** (shaped, planned, built, amended, revised, refactored,

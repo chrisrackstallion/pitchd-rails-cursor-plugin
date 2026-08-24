@@ -45,6 +45,13 @@ untouched, and never discharge one by writing the provenance entry that silences
 it (`agent_harness_rails/skills/maintaining-primitives/SKILL.md` § Close every
 writing pass by reading your own diff back).
 
+**A run with no output is not a green run.** Both commands print a summary line
+on every invocation, so an empty tool result — no stdout, no stderr, no exit
+code — means the call did not reach the CLI, which happens to subagents. Retry
+once, then report **`UNVERIFIED (CLI unavailable)`** for the checks that did not
+run rather than reading the frontmatter by hand and reporting that as the check
+(`agent_harness_rails/rules/primitives.mdc` § None of these is quiet).
+
 What it **cannot** settle is whether a tagged example actually proves its
 clause: breaking the clause has to turn one of its evaluations red
 (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).

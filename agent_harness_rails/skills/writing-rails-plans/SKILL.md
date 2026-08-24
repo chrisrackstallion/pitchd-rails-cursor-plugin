@@ -592,6 +592,7 @@ After drafting, delegate to **`rails-reviewer`**
 | **Spec path** | Path to the spec or requirements doc, or `none` |
 | **Scope** | The plan file path again, or `full plan` |
 | **User revisions** | (optional) Bullet summary of what the user changed — reviewer focuses only on these sections. Example: `- Task 3: replaced form object with model verb; - File map: removed app/forms/publish_form.rb` |
+| **Mechanical primitives output** | When the app has a `docs/primitives/` tree: the **full stdout** of `agent_harness_rails evals` and `agent_harness_rails guard --base <ref>`, run by you and pasted under the heading **Mechanical primitives output (authoritative — do not re-run)**. `no primitives tree` when the app has none. The reviewer is `readonly: true` and may have no shell — and a subagent shell that returns no stdout, no stderr and no exit code reads to it as a silent CLI (`agent_harness_rails/rules/primitives.mdc` § None of these is quiet). |
 
 Invoke with **`/rails-reviewer`** plus that context, or use the Task tool.
 
@@ -619,6 +620,7 @@ Then delegate to **`rails-reviewer`** again.
 | **Spec path** | Unchanged from Pass 1, or `none` |
 | **Scope** | `full plan` — state that this is **final sign-off before implementation** and whether prompted by **Pass 1 edits** or **user revisions** |
 | **User revisions** | (optional) Bullet summary — **context only**: the reviewer reads the full plan; User revisions tells them where to pay extra attention, not where to stop |
+| **Mechanical primitives output** | As Pass 1 — you run the commands, the reviewer cites the pasted block |
 
 **Loop call (after fixing Pass 2 issues):**
 
@@ -629,6 +631,7 @@ Then delegate to **`rails-reviewer`** again.
 | **Spec path** | Unchanged, or `none` |
 | **Scope** | The changed sections only (e.g. `Task 3 — replaced approach`, `File map — removed entry`) |
 | **User revisions** | Bullet list of exactly what was fixed — the reviewer reads only these sections |
+| **Mechanical primitives output** | As Pass 1 — you run the commands, the reviewer cites the pasted block |
 
 Treat the outcome as **final plan approval** before implementation. If Pass 2
 raises issues, fix the plan and re-run **scoped to the fixes only** per the
@@ -719,6 +722,9 @@ Invoke **`rails-reviewer`** with:
 - **Scope:** the changed sections only (not the full plan).
 - **User revisions:** the bullet summary from R2 — the reviewer focuses only on
   what changed.
+- **Mechanical primitives output:** as in Pass 1 — you run `evals` and
+  `guard --base <ref>` and paste the stdout; the reviewer never shells out for
+  them.
 
 **Exception:** if no full pass has yet reviewed the plan (the revision happened
 before Pass 1 ever ran), send a **full-scope** review — scoping to changed
