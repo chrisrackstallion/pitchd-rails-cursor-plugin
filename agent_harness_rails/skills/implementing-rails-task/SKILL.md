@@ -170,6 +170,15 @@ If a cop cannot be satisfied with a **correct** code fix and needs a human polic
 
 **Duplication:** No method you added already exists on another entity? You searched before defining (Implement step 2)?
 
+**Failure paths:** For every mutation you touched — did you follow the failure
+branch through to a **successful retry**, not just to the error? The form a failed
+save re-renders has to reach a route that exists with the verb it emits
+(`bin/rails routes -g <resource>`; `form_with model:` infers it from `persisted?`,
+so a finder that can return either a new or an existing record gives you two
+renderings). Which record states can reach each branch you wrote, and does an
+example cover each of them (`agent_harness_rails/rules/controllers.mdc` § Response
+Hierarchy, `agent_harness_rails/rules/testing.mdc`)?
+
 **Testing:** Behaviour verified (not only mocked internals)? TDD if required? Right spec layer per `writing-tests`? Every case the plan's Intent impact row named carries its `intent:` tag — a clause proven by four examples is tagged on all four? Every spec you are leaving behind asserts behaviour a user or caller gets — no spec whose only job is to prove a former feature is gone; any `not_to` scaffolding you wrote to confirm a deletion is deleted (`agent_harness_rails/rules/testing.mdc`).
 
 **RuboCop (when the app uses it):** **`bin/rubocop` zero offences** on the completion run? No inline or config suppressions added?

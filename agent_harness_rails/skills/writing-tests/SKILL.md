@@ -417,6 +417,38 @@ is true the moment it is written — it makes the example longer and proves noth
 If no honest anchor presents itself, that is the signal the negation was sound and
 needed none.
 
+**A status code is not a working page.** `have_http_status(:unprocessable_content)`
+passes for a re-rendered form the user could never successfully resubmit — one
+addressed to a verb the route does not serve, missing the record's id, or with its
+fields stripped. The behaviour a failure path owns is not the error, it is the
+**recovery**:
+
+```ruby
+# Bad — green whether the returned form works or not
+post card_closure_path(card), params: { closure: { reason: "" } }
+
+expect(response).to have_http_status(:unprocessable_content)
+
+# Good — the rejection is the setup; the corrected resubmit is the behaviour
+post card_closure_path(card), params: { closure: { reason: "" } }
+
+expect(response).to have_http_status(:unprocessable_content)
+
+post card_closure_path(card), params: { closure: { reason: "Duplicate card" } }
+
+expect(response).to redirect_to(card_path(card))
+expect(card.reload).to be_closed
+```
+
+**Cover every state the action's finder can produce.** A lookup that can return
+either a new record or an existing one — `find_or_initialize_by`, a singular
+resource, a create that revives a previously-decided row — gives the action two
+renderings, and an example built on one leaves the other branch's rendering,
+routing, and authorization untested. Set the record up in the state the branch
+needs (create the row, run the flip, *then* submit), one example per branch. A
+model spec covering the branch does not close it: the branch's HTTP shape belongs
+to the request spec (`agent_harness_rails/rules/testing.mdc` § Ownership by Layer).
+
 **A removal receipt still gets deleted.** A spec with no behaviour behind it —
 written to record that a feature is gone — should not exist:
 

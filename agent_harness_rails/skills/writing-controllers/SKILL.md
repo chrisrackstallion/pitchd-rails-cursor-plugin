@@ -151,6 +151,7 @@ Details match `agent_harness_rails/rules/controllers.mdc` § Response Hierarchy 
 | Reaching for Turbo Streams first | Redirect → frames → streams (`agent_harness_rails/skills/writing-hotwire/references/patterns.md`) |
 | Unscoped find for nested resources | Scope through parent association |
 | `redirect_to` after failed validation | `render :action, status: :unprocessable_content` |
+| A 422 re-render whose form emits a verb the route does not serve | Pin `url:` / `method:` in the template; check `bin/rails routes -g <resource>` |
 | Service object wrapping a single model call | Let the controller call the model directly |
 | `rescue => e` in actions | `rescue_from` at the controller class level |
 | Skipping CSRF / auth checks per-action | Dedicated controller with appropriate base class |
@@ -179,6 +180,7 @@ Before finishing, verify:
 - [ ] Every action maps to one of the seven RESTful actions (index, show, new, create, edit, update, destroy)
 - [ ] Strong parameters use `params.expect`, not `params.require.permit`
 - [ ] Failed validations render with `status: :unprocessable_content`, not redirect
+- [ ] The re-rendered form is resubmittable — it targets a route that exists with the verb it emits, on **every** record state the action's finder can produce (`references/patterns.md` § The re-render must be resubmittable)
 - [ ] Nested resource lookups are scoped through parent associations
 - [ ] Response uses the simplest Turbo mechanism (full-page redirect → frames → streams — see `agent_harness_rails/skills/writing-hotwire/references/patterns.md`)
 - [ ] Every action calls `authorize` (Pundit) — including index — `after_action :verify_authorized` catches misses

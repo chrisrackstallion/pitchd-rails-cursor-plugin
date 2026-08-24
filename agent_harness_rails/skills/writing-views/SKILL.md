@@ -189,6 +189,7 @@ Before finishing, verify:
 - [ ] Element IDs use `dom_id`, not hand-rolled strings
 - [ ] Collections rendered with `render @collection`, not manual loops
 - [ ] Forms use `form_with model:`, not `form_tag` or `form_for`
+- [ ] Any form whose record may be new **or** persisted pins `url:` and `method:` — inference only holds while the record's state is fixed (`bin/rails routes -g <resource>` confirms the verb exists)
 - [ ] Mutations use `button_to`, not `link_to` with `turbo_method`
 - [ ] Destructive actions have `data: { turbo_confirm: "..." }`
 - [ ] Templates are under ~50 lines — sub-sections extracted to partials

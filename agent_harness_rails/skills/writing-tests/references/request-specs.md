@@ -156,12 +156,17 @@ RSpec.describe "Articles", type: :request do
     # Note: The canonical create-and-see happy path lives in the system spec.
     # The request spec covers the HTTP shape and the failure case.
 
-    it "returns 422 with invalid params" do
+    it "rejects invalid params and accepts the correction" do
       sign_in create(:user)
 
       post articles_path, params: { article: { title: "" } }
 
       expect(response).to have_http_status(:unprocessable_content)
+
+      post articles_path, params: { article: { title: "Second attempt" } }
+
+      expect(response).to redirect_to(Article.last)
+      expect(Article.last.title).to eq("Second attempt")
     end
   end
 
@@ -192,6 +197,56 @@ RSpec.describe "Articles", type: :request do
   end
 end
 ```
+
+### Failure Paths — Assert the Recovery, Not the Error
+
+A bare `expect(response).to have_http_status(:unprocessable_content)` is green
+whether or not the page that came back is usable. The 422 is the **setup**; the
+behaviour is that the user can correct the input and land the mutation — so the
+example submits twice, as in `POST /articles` above.
+
+Where the action's finder can return a record in more than one state —
+`find_or_initialize_by`, a singular resource, a create that revives or re-decides
+an existing row — that is two renderings, not one, and each needs its own example.
+The branch that is usually missing is the one whose setup costs an extra line:
+
+```ruby
+describe "POST /cards/:card_id/closure" do
+  it "rejects a blank reason and accepts the correction" do
+    sign_in create(:user)
+    card = create(:card)
+
+    post card_closure_path(card), params: { closure: { reason: "" } }
+
+    expect(response).to have_http_status(:unprocessable_content)
+
+    post card_closure_path(card), params: { closure: { reason: "Duplicate" } }
+
+    expect(response).to redirect_to(card_path(card))
+    expect(card.reload).to be_closed
+  end
+
+  it "rejects a blank reason on a card that is already closed" do
+    sign_in create(:user)
+    card = create(:card, :closed)     # the finder returns a persisted record here
+
+    post card_closure_path(card), params: { closure: { reason: "" } }
+
+    expect(response).to have_http_status(:unprocessable_content)
+
+    post card_closure_path(card), params: { closure: { reason: "Superseded" } }
+
+    expect(response).to redirect_to(card_path(card))
+    expect(card.reload.closure.reason).to eq("Superseded")
+  end
+end
+```
+
+The second example is the one that catches a re-rendered form addressed to a verb
+the route does not serve — `form_with model:` infers `PATCH` from a persisted
+record, and a `POST`-only route answers that with a 404 at submit time
+(`agent_harness_rails/rules/views.mdc` § Form Conventions). Nothing short of
+submitting the corrected form sees it.
 
 ### Rendering Smoke (Replaces visit-only System Specs)
 

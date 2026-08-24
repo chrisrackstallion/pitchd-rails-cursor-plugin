@@ -189,6 +189,40 @@ if the partial expects symbols your action did not assign — or rely on
 **instance variables** already set (e.g. `@article` after `Article.new` fails
 validation), matching what `new` would have exposed.
 
+#### The re-render must be resubmittable
+
+Re-rendering is only half of it: the form that comes back has to reach a route
+that exists with the verb it will emit. `form_with model:` infers that verb from
+`persisted?`, so an action whose finder can hand back either a new or an existing
+record has **two** failure renderings:
+
+```ruby
+# POST /cards/:card_id/closure — a singular resource whose create doubles as
+# an update when the card was already closed.
+def create
+  @closure = @card.closure || @card.build_closure
+  @closure.assign_attributes(closure_params)
+
+  if @closure.save
+    redirect_to @card, notice: "Card closed."
+  else
+    render :new, status: :unprocessable_content   # @closure may be persisted here
+  end
+end
+```
+
+On the persisted branch the re-rendered form emits `PATCH`. If the resource is
+routed `POST`-only, the user's corrected resubmit 404s — no exception, no log
+line the app raises, the input simply gone. Fix it in the template by pinning
+`url:` and `method:` (`agent_harness_rails/rules/views.mdc` § Form Conventions),
+and confirm the verb with `bin/rails routes -g <resource>`.
+
+Applies to any action that can render a form with the record in more than one
+state: `find_or_initialize_by`, singular resources, upsert-shaped creates, a
+record loaded and mutated before validation failed. The cheapest check is the
+round-trip spec — submit invalid, correct, submit again — with one example per
+state the finder can produce (`agent_harness_rails/rules/testing.mdc`).
+
 ### Hotwire / Turbo
 
 Controller-side Hotwire — `respond_to`, **`format.turbo_stream`**, composing

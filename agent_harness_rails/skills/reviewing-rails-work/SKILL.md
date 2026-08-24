@@ -270,6 +270,22 @@ files for method definitions that repeat across entities; the same method on
 multiple models is a `tactical:` finding (shared behaviour belongs in a
 concern or on the owning model, `agent_harness_rails/rules/models.mdc`).
 
+**Failure and recovery paths:** the happy path is the one the plan describes, the
+specs cover, and every reader follows — so read the **other** branches on purpose.
+For each mutation in scope, follow the failure path as far as the user does: not
+to the error, to the successful retry. Re-read the template the failed action
+re-renders and confirm the form it emits reaches a route that exists with the verb
+it will send (`bin/rails routes -g <resource>` settles it) — `form_with model:`
+infers that verb from `persisted?`, so an action whose finder can return either a
+new or an existing record has two renderings and the specs typically exercise one.
+Then ask the same question of every branch in the changed code: which record
+states can reach this line, and does each one still produce something the user can
+act on? A dead-end re-render is a `tactical:` finding
+(`agent_harness_rails/rules/controllers.mdc` § Response Hierarchy); the branch no
+example reaches is a second one (`agent_harness_rails/rules/testing.mdc` § Every
+Assertion Must Be Able to Fail). Both are invisible to a green suite, because the
+suite only ran the branch it set up.
+
 ### 7. Surroundings pass (pre-existing code in touched files)
 
 **When:** `implementation` or `both` phases only. Skip for plan-only reviews.

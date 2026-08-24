@@ -416,6 +416,47 @@ red. So when a spec file asserts only denials, the gap is the **missing
 counterpart**, and no assertion added inside the individual examples closes it
 (§ Ownership by Layer; the role × action matrix in support-specs.md).
 
+#### A status code is not a working page
+
+`have_http_status(:unprocessable_content)` passes for a re-rendered form the user
+could never successfully resubmit — one addressed to a verb the route does not
+serve, missing the record's id, or with its fields stripped. Ask the same question
+of it as of any negation: **if the page that came back is unusable, does this
+assertion still pass?** It does. The behaviour a failure path owns is not the
+error, it is the **recovery** — the user corrects the input, submits again, and
+the mutation lands:
+
+```ruby
+# Bad — green whether the returned form works or not
+post card_closure_path(card), params: { closure: { reason: "" } }
+
+expect(response).to have_http_status(:unprocessable_content)
+
+# Good — the rejection is the setup; the corrected resubmit is the behaviour
+post card_closure_path(card), params: { closure: { reason: "" } }
+
+expect(response).to have_http_status(:unprocessable_content)
+
+post card_closure_path(card), params: { closure: { reason: "Duplicate card" } }
+
+expect(response).to redirect_to(card_path(card))
+expect(card.reload).to be_closed
+```
+
+#### Cover every state the action's finder can produce
+
+A lookup that can return either a new record or an existing one —
+`find_or_initialize_by`, a singular resource, a create that revives a
+soft-deleted or previously-decided row — gives the action **two** renderings.
+An example built on one of them leaves the other branch's rendering, routing,
+and authorization completely untested, and the untested branch is usually the
+one whose setup takes an extra line. Put the record into the state the branch
+needs (create the row, run the flip, *then* submit), one example per branch.
+
+A model spec covering the branch does not close this. The branch's HTTP shape —
+the status, the form that comes back, whether a resubmit reaches a route — is
+the request spec's to own (§ Ownership by Layer).
+
 #### Removal receipts still get deleted
 
 A spec with no behaviour behind it at all — written to record that a feature is

@@ -166,6 +166,18 @@ Use `form_with` bound to a model. It infers the URL, method, and Turbo behaviour
 
 Show validation errors inline, close to the field — not as a detached error summary.
 
+**Inference is safe only while the record's state is.** `form_with model:` picks `POST` or `PATCH` from `record.persisted?`. That is the right default when the action that rendered the template fixes the state — `new` always has a new record, `edit` always a persisted one. It stops being safe the moment the same template can render both: a shared `_form` reached from several actions, a singular resource, a controller whose finder is `find_or_initialize_by`, a 422 re-render on a create that may have loaded an existing row. State the target instead of guessing at it:
+
+```erb
+<%# Bad — the verb depends on which branch produced the record %>
+<%= form_with model: closure do |f| %>
+
+<%# Good — the form declares the route it submits to %>
+<%= form_with model: closure, url: card_closure_path(card), method: :post do |f| %>
+```
+
+Rule of thumb: run `bin/rails routes -g <resource>`; if the routes do not serve **both** `POST` and `PATCH`, the form must not be left to infer which one it sends. A form that emits a verb the route does not serve fails at submit time, not at render time, so nothing catches it but a spec that submits (**`agent_harness_rails/rules/testing.mdc`**).
+
 ## Anti-Patterns
 
 | Anti-Pattern | Instead |
@@ -175,6 +187,7 @@ Show validation errors inline, close to the field — not as a detached error su
 | `if/else` trees for rendering variants | Separate partials or polymorphic rendering |
 | Inline `<script>` or `<style>` in templates | Stimulus controllers, Tailwind utilities |
 | `link_to` for mutations (DELETE, POST) | `button_to` with `method:` |
+| `form_with model:` where the record's persistence varies by branch | Pin `url:` and `method:` to the route that exists |
 | `@apply` for every styled block | Extract a partial — partials are your components |
 | Arbitrary Tailwind values everywhere (`bg-[#1a2b3c]`) | Extend the Tailwind config with project tokens |
 | Hardcoded CSS class strings repeated across templates | Helper returning class string, or extract partial |

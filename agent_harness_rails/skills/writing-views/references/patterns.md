@@ -688,6 +688,46 @@ and Turbo submission behaviour:
 <% end %>
 ```
 
+### Pinning `url:` and `method:`
+
+`form_with model:` derives the verb from `record.persisted?` — `POST` for a new
+record, `PATCH` for a saved one. That inference is correct only while the
+record's state is fixed by the action that rendered the template. It stops being
+correct as soon as the same template can render both states: a shared `_form`
+reached from several actions, a singular resource, a controller whose finder is
+`find_or_initialize_by`, or a 422 re-render on a `create` that may have loaded an
+existing row.
+
+```erb
+<%# Bad — the verb depends on which branch produced the record. On the
+    persisted branch this emits PATCH; a POST-only route answers 404 %>
+<%= form_with model: closure do |f| %>
+  ...
+<% end %>
+
+<%# Good — the form declares where it submits and how %>
+<%= form_with model: closure, url: card_closure_path(card), method: :post do |f| %>
+  ...
+<% end %>
+```
+
+Rails hides the mismatch until submit time: the emitted `<form>` is always
+`method="post"` with the real verb tunnelled in a `_method` hidden field, so the
+page renders fine and only the submission fails. Nothing in a render-only spec
+catches it.
+
+Check the resource's verbs before you rely on inference:
+
+```bash
+bin/rails routes -g closure
+```
+
+If the routes do not serve **both** `POST` and `PATCH`, pin the verb the route
+accepts. Specs that exercise this — the corrected resubmit, and one example per
+record state the finder can return — are in
+`agent_harness_rails/skills/writing-tests/references/request-specs.md`
+§ Failure Paths.
+
 ### Shared Form Partials
 
 Extract the form partial when `new` and `edit` share the same fields:
