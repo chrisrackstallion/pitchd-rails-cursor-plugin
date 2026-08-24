@@ -87,7 +87,8 @@ client-only behavior unless that is an explicit bet.
 ### 9. Document exceptions
 
 When convention is violated, a **one-line why** in the plan or PR beats tribal
-knowledge.
+knowledge — and beats a code comment, which drifts. **Defer:**
+`agent_harness_rails/rules/comments.mdc`.
 
 ## Smells (frame as questions)
 
@@ -131,6 +132,7 @@ Read only what the task touches:
 | Database migrations | `writing-migrations` |
 | Tests / RSpec | `writing-tests` |
 | Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` |
+| Code comments (when one earns its line) | `agent_harness_rails/rules/comments.mdc` |
 | Lint gate | `running-rubocop` |
 
 ### Optional external references

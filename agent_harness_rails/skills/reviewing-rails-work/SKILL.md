@@ -75,6 +75,11 @@ From the diff or plan, pick **only** the skills that apply:
 Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
 sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
 
+**Every diff, whatever the layer:** `agent_harness_rails/rules/naming.mdc` and
+`agent_harness_rails/rules/comments.mdc`. A comment that restates the code,
+narrates a step, signposts a section, or documents shape the primitives tree
+owns is a `tactical:` finding — the default is no comment.
+
 **Coverage rule:** map every changed file (or plan area) to its skill/rule
 pair before concluding — do not report `Status: Approved` while any touched
 area's conventions are unread. If a diff touches a layer with no matching row

@@ -7,7 +7,8 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Four executable backstops for rules that were previously prose only: a linter
 for the primitives tree, a change-review pass over it, a per-example proof
-listing, and a RuboCop layer for the rules a parser can settle.
+listing, and a RuboCop layer for the rules a parser can settle. Plus one rule
+no parser can settle — when a code comment earns its line.
 
 ### Added
 
@@ -160,6 +161,28 @@ listing, and a RuboCop layer for the rules a parser can settle.
   `expect(policy).to forbid(owner, account)` reads as the assertion it is.
   `refactoring-rails-specs` no longer defaults a `not_to`-only example to
   **DELETE**: that verdict was live coverage loss on every policy spec it met.
+
+- **`agent_harness_rails/rules/comments.mdc`** — the default is no comment.
+  Agents annotate liberally, and the annotations are the one artefact in a diff
+  that nothing verifies: a comment restating the code drifts the moment the code
+  changes, and the next reader believes the comment over the lines under it.
+
+  Every kind of explanation an agent reaches for already has a durable home —
+  what the code does is the code's job (`naming.mdc`), how the feature is
+  arranged is `## Shape` in the capability doc, what must stay true is an intent
+  clause proven by a tagged example, why we rejected the alternative is
+  provenance or the PR, and what is left to do is a task. The rule is one
+  question — what would a reader get wrong without this comment? — plus the four
+  answers that pass (a constraint enforced elsewhere, a workaround naming its
+  upstream bug, a measured decision, a deliberate omission), and the annotations
+  that are interface rather than commentary (`frozen_string_literal`, strict
+  `locals:`, the required why on a custom route segment).
+
+  No cop settles it: RuboCop cannot tell narration from necessity. The gate is
+  the question when the comment is written, and `reviewing-rails-work` § 3, where
+  a comment restating the code, narrating a step, signposting a section, or
+  documenting shape the primitives tree owns is now a `tactical:` finding on
+  every diff regardless of layer.
 
 ### Changed
 

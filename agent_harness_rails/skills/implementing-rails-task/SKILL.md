@@ -134,6 +134,7 @@ common practice.
 - **One clear responsibility** per file, with **clear, conventional Rails boundaries**. For **file structure and size decisions** (where to put a class, whether to split a file), match what the **app already does** — not abstract "ports and adapters" for its own sake.
 - If a **new** file grows beyond the plan's intent, **stop** and report **DONE_WITH_CONCERNS** — do not split or reorganize without plan guidance.
 - If an **existing** file is already large or tangled, touch it **carefully** and note it under concerns.
+- **Write no comment you cannot justify.** The default is none: names and structure carry the explanation, shape belongs in `## Shape` of the capability doc, and a rejected alternative belongs in provenance or the PR. A comment ships only when a reader would get something **wrong** without it — see `agent_harness_rails/rules/comments.mdc` for the test and the exceptions.
 - For **coding patterns** (service objects, RPC routes, test layer choices), match established patterns **only when they do not contradict harness rules**. When a current pattern violates harness rules, implement the correct approach for the code you write in this task and note the deviation in your report — do not refactor surrounding code outside task scope.
 
 ## When you are in over your head
@@ -160,7 +161,7 @@ If a cop cannot be satisfied with a **correct** code fix and needs a human polic
 
 **Quality:** Best work? Names accurate? Code maintainable?
 
-**Discipline:** YAGNI? Only what was requested? Harness rules applied (not just existing app patterns)?
+**Discipline:** YAGNI? Only what was requested? Harness rules applied (not just existing app patterns)? Every comment you added carries context the code cannot — no narration, no banners, no notes to the next agent (`agent_harness_rails/rules/comments.mdc`)?
 
 **Duplication:** No method you added already exists on another entity? You searched before defining (Implement step 2)?
 
