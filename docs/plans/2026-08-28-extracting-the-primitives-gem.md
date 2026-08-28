@@ -1,7 +1,8 @@
 # Should the primitives tooling be its own gem?
 
-**Status:** proposal — nothing executed. Written to answer a question, not to
-authorise work.
+**Status:** direction agreed 2026-08-28 — **step 2 below is the shape to build**:
+primitives, tools and skills extracted to a gem, made a dependency of this one.
+Nothing executed; §8 holds what the decision still leaves open.
 **Date:** 2026-08-28
 **Question asked:** the gem contains a lot of components. Would the primitives
 skills and tools be better extrapolated into their own gem, with a setting for
@@ -182,9 +183,11 @@ check time, and `check-references` learns a second canonical prefix.
 primitives skills and CLI commands by path and by flag. The two gems will move
 together regardless of how they are packaged.
 
-## 6. Recommendation — three moves, each independently valuable
+## 6. Recommendation — three moves
 
-Ordered so any one of them can be the last one taken.
+Ordered by cost. Step 2 is the agreed direction; step 1 turns out to be its
+precondition rather than its alternative (§8.3), and step 3 stays independent and
+unscheduled.
 
 ### Step 1 — make the payload selectable at install
 
@@ -199,22 +202,42 @@ of layer skills. `Manifest` already tracks per-file ownership and `prune` alread
 removes files the gem stopped shipping, so this is a modest addition to
 `Installer#classify` and the manifest format rather than new machinery.
 
-**If this satisfies the itch, stop here.** It costs a fraction of the rest and it
-is the only step that changes anything for someone who already installed the gem.
+It costs a fraction of the rest and it is the only step that changes anything for
+someone who already installed the gem. With step 2 agreed it is no longer an
+alternative to the extraction — §8.3 argues it becomes a **precondition** of it,
+since it is what lets an app decline the primitives content once the gem is an
+unconditional dependency.
 
 ### Step 2 — extract the primitives gem (library + payload), keep one installer
+
+**This is the agreed direction.**
 
 Move `Capability`, `Tags`, `Proofs`, `Finding`, `Guard`, `Baseline`,
 `ProofReport`, the `evals` / `guard` / `proofs` commands, the `IntentTag` cop,
 `rules/primitives.mdc`, `bootstrapping-primitives`, `maintaining-primitives` and
-its templates, and `rails-primitives-maintainer` into a new gem. Introduce the
-test-framework adapter from §4 at the same time, since the seam is being touched
-anyway. `agent_harness_rails` takes a runtime dependency, vendors both payloads
-under `agent_harness_rails/`, keeps the six insertion points, and extends
-`check-references` to the second prefix.
+its templates, and `rails-primitives-maintainer` into a new gem.
+`agent_harness_rails` takes a runtime dependency, vendors both payloads under one
+directory, keeps the six insertion points, and keeps `check-references` whole.
 
 Do it now or not at all: at v0.2.0 with an open `[Unreleased]` section this is
 cheap, and every release makes it dearer.
+
+Two pieces of load-bearing machinery are **already shaped for a second owner**,
+which is most of why this is affordable:
+
+- **`.manifest.json` is namespaced by installer.** `Manifest::INSTALLER_KEY`
+  is a top-level JSON key and `load` fetches by it
+  (`lib/agent_harness_rails/manifest.rb:17,34`), so two gems record ownership
+  side by side in one file with **no format change**. Only `Installer` has to
+  learn to loop over payload sources instead of one.
+- **`prune` is ownership-scoped, not directory-scoped** — it removes only files
+  in the caller's own manifest (`installer.rb:154`), so neither gem can delete
+  the other's vendored files.
+
+The parts that genuinely need building: `Installer#source_files` merging two
+payload roots and refusing a name collision between them; `check` reporting
+drift per source; and the test-framework adapter of §4 — though see §8.6 on
+doing that as a second release rather than the same one.
 
 ### Step 3 — test-framework variants for the Rails testing content
 
@@ -244,17 +267,107 @@ until someone actually wants to run the harness on a Minitest suite.
 - **Carving a generic pipeline gem out of the workflow skills.** The Rails
   opinions are the content, not a coat of paint.
 
-## 8. Open questions
+## 8. What the decision leaves open
 
-1. **Whose problem is "a lot of components"** — a consumer's (too much vendored,
-   too much context, too much README) or a maintainer's (one repo, one release,
-   two unrelated test suites)? Step 1 answers the first; step 2 answers the
-   second. The answer changes the order.
-2. **Is there a non-Rails consumer for primitives**, actual or intended? That is
-   the strongest argument for step 2 and the only one that makes a separate
-   RubyGems listing worth its overhead.
-3. **Minitest: real demand or hypothetical?** Step 3 is the largest piece of work
-   in this document and should be pulled by a user, not pushed by symmetry.
-4. **Naming**, if step 2 proceeds. The gem is not Rails-specific, so
-   `agent_harness_primitives` would misdescribe it and `primitives` is far too
-   generic to claim.
+Six questions, roughly in the order they would have to be answered. The first is
+the only one that is genuinely hard.
+
+### 8.1 Does the shared payload directory keep the name `agent_harness_rails`?
+
+The sharpest question, and it only exists because the directory is named for a
+gem rather than for a role.
+
+Vendoring both payloads under `agent_harness_rails/` is what keeps everything
+else cheap: every internal reference stays in its canonical form, the editor
+symlinks are untouched, and consumers see no change. The price is that a gem
+advertised as framework-agnostic would write `agent_harness_rails/rules/primitives.mdc`
+throughout its own content — hard-coding the host's name into the dependency,
+which is backwards.
+
+The alternatives are worse, and both were already rejected once:
+
+| | Why not |
+| --- | --- |
+| Relative references (`../rules/primitives.mdc`) from primitives content | The relative form was abolished deliberately; the previous plan's deviation #2 records a latent bug it had been hiding |
+| Rewrite paths at install time to match the host's payload dir | This is the install-time rewriter that decision **D2** deleted, along with its URL-guard edge case and idempotency concern |
+
+So it is a straight choice between **accepting the name** (ship it, document the
+directory as "the harness payload dir", live with the wart) and **renaming the
+payload directory to something role-shaped** as part of the extraction. The
+rename touches every canonical reference in the tree and every consuming app's
+committed symlinks — which is exactly the kind of change that is affordable at
+v0.2.0 with an open `[Unreleased]` section and ruinous later. If it is ever going
+to happen, this is the moment.
+
+### 8.2 Where does the CLI live, and does `agent_harness_rails evals` survive?
+
+Recommendation: **the primitives gem owns the three commands *and their
+output*, and `agent_harness_rails` keeps them as delegating commands.**
+
+Roughly 200 of `cli.rb`'s 441 lines are `evals` / `guard` / `proofs` rendering —
+`proofs_detail`, `proofs_footer`, `unusable_summary`, `guard_summary`, the JSON
+shapes. If those stay behind, the primitives gem's own executable has to
+reimplement them and the two will drift. If they move and `agent_harness_rails`
+delegates, there are two entry points over one implementation, and — the part
+that matters for anyone already using this — **no consumer edits a CI config**,
+because `bundle exec agent_harness_rails evals` keeps working unchanged.
+
+### 8.3 A runtime dependency would be this gem's first, and it bumps a stated principle
+
+The gemspec declares no runtime dependencies today. The README argues against
+adding one, in terms that transfer:
+
+> **The gem does not depend on RuboCop, and shouldn't.** … a hard dependency
+> here would force RuboCop into the bundle of every app that installs the
+> harness, including ones that don't lint
+
+An app that installs the harness and never creates `docs/primitives/` is in the
+same position. Ruby has no optional runtime dependency, so the choice is real.
+
+Two defensible answers. **Weight makes it fine** — the primitives gem would be
+pure Ruby with no dependencies of its own, in a `require: false` development
+group, which is not what the RuboCop paragraph is protecting against. Or
+**pair it with step 1** — `install --without primitives` lets an app decline the
+*content* even though the gem sits in the bundle, which honours the principle
+where it actually bites. The second is stronger, and it makes step 1 a
+precondition rather than an alternative.
+
+### 8.4 What does the extracted gem claim to be on day one?
+
+Its content is Rails-shaped today: `primitives.mdc` says the tree sits *"beside a
+Rails app"*, both skills reference `writing-tests` and `docs/plans/`, and the
+evaluation model assumes RSpec files.
+
+De-Rails-ing it on the way out is real rewriting for a non-Rails consumer who
+does not exist yet. Shipping it honestly — *primitives for Ruby apps, with
+Rails-shaped defaults* — costs nothing, tells the truth, and leaves the
+generalisation to be pulled by the first consumer who needs it. Prefer the
+second; the *library* is already framework-agnostic, and that is the part a
+non-Rails user would reach for first anyway.
+
+### 8.5 Does `testing.mdc`'s tagging section move with it?
+
+Recommendation: **no.** It is a section inside a rule Cursor attaches by the
+`spec/**/*.rb` glob, and splitting a rule file across two gems to relocate a few
+paragraphs is worse than the duplication it avoids. Leave it where an agent
+editing a spec will actually be shown it, and let `primitives.mdc` remain the
+normative source it already cites.
+
+### 8.6 Sequencing, and the one thing not to bundle into it
+
+**Pure move first, adapter second.** The extraction should land as a
+behaviour-preserving change — same commands, same output, both suites green,
+`agent_harness_rails` delegating — and the RSpec/Minitest adapter should follow
+as its own release *in the new gem*. Combining them makes any regression
+ambiguous between "the move broke it" and "the adapter broke it", across a fresh
+gem boundary where that is exactly the diagnosis you do not want to be making.
+
+`bin/check-references` survives intact, incidentally: because the dependency is
+hard, the merged payload is present in CI, so the checker can run over the union
+and keep the guarantee that a mistyped path fails the build.
+
+### 8.7 Naming
+
+Still open. It should not say "rails" (the library is framework-agnostic) and
+should not be so generic as to be unclaimable. The tree's four primitives —
+intent, compilation, evaluations, provenance — are the obvious naming well.
