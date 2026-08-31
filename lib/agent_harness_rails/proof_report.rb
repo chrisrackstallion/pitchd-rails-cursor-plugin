@@ -21,41 +21,27 @@ module AgentHarnessRails
   #
   # This closes that gap as a **report**, not a gate. Exit code is always 0 and
   # nothing here is a finding: most examples in a spec file legitimately carry no
-  # tag ("only evaluation examples are tagged"), so `3 of 7` is a number for a
-  # reader to compare against the plan's proof set, never an offence. Made an
-  # offence it would fire on almost every file and get routed around.
+  # tag ("only evaluation examples are tagged"), so a tagged count is a number
+  # for a reader to compare against the plan's proof set, never an offence. Made
+  # an offence it would fire on almost every file and get routed around.
   #
   # Textual, like the tag scan: it must run with no database and no Rails
   # environment. `rspec --tag 'intent:x#I1'` can list the tagged examples but
-  # needs the whole app booted, and it structurally cannot report the *untagged*
-  # siblings — which is the entire signal.
+  # needs the whole app booted. The untagged siblings are collected too — a
+  # planned example that never got its tag is found among them — but only
+  # `--format json` carries them: printed, they drowned the report in any
+  # real spec file, and a reader holding the plan already knows which example
+  # is missing from the tagged list.
   module ProofReport
-    # Scope, and with it output density. Unscoped is a health pass over the whole
-    # tree, so it stays one line per clause; naming a clause is a question about
-    # that clause, so it earns the untagged listing that would be noise across
-    # two hundred of them.
+    # Scope, and with it output density. Unscoped and `--since` are health
+    # passes, so they stay one line per clause; naming a capability or a clause
+    # is a question about it, and earns the per-file example listings.
     SCOPE = /\A(?<capability>[a-z0-9_]+)(?:#(?<clause>I[1-9]\d*))?\z/
 
     # One file a clause is proven in: its examples, which of them carry the tag,
     # and which do not.
     Coverage = Struct.new(:path, :declared, :exists, :examples, :tagged, :untagged, :misplaced,
                           keyword_init: true) do
-      # "carry this tag" rather than "tagged": the difference between the total
-      # and the numerator is not all untagged — some of it is examples proving a
-      # different clause in the same file.
-      #
-      # The noun agrees with the denominator and the verb with the numerator —
-      # "1 of 2 examples carries this tag" — except that a zero numerator takes
-      # the singular when the noun is singular, so the one file holding one
-      # example does not read "0 of 1 example carry". This line is the report;
-      # it is worth the two conditions.
-      def ratio
-        singular = tagged.size == 1 || (tagged.size.zero? && examples == 1)
-
-        "#{tagged.size} of #{examples} example#{'s' unless examples == 1} " \
-          "#{singular ? 'carries' : 'carry'} this tag"
-      end
-
       def to_h
         { path: path, declared: declared, exists: exists, examples: examples,
           tagged: tagged.map { |proof| { line: proof.opener, description: proof.description, assertions: proof.assertions } },
@@ -119,15 +105,11 @@ module AgentHarnessRails
         [ match[:capability], match[:clause] ]
       end
 
-      # `--since` gets the untagged listing too: it asks the same question naming
-      # a clause asks — did this change tag everything it meant to — answered for
-      # every clause the change touched, and it is the shape a task's verify step
-      # runs. Bounded by the change, not by the size of the tree.
-      def detail_for(target, since)
-        return :full if target&.last || since
-        return :files if target
-
-        :summary
+      # `--since` stays at summary density on purpose: it is the shape a task's
+      # verify step runs, and that step reads counts against the plan's proof
+      # set — a count that comes up short is drilled into by naming the clause.
+      def detail_for(target, _since)
+        target ? :detail : :summary
       end
 
       def build_rows(capabilities, proofs, tagged_lines, root:)

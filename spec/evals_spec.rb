@@ -470,7 +470,7 @@ RSpec.describe AgentHarnessRails::CLI, "evals" do
     code, out, = run
 
     expect(code).to eq(0)
-    expect(out).to include("1 capability inspected, 1 clause, no offences")
+    expect(out).to include("1 capability, 1 clause — no offences")
   end
 
   it "exits 1 and prints one line per offence" do
@@ -480,7 +480,8 @@ RSpec.describe AgentHarnessRails::CLI, "evals" do
     code, out, = run
 
     expect(code).to eq(1)
-    expect(out).to include("comment_threads.md:4:1: E:").and include("[evaluation/missing-file]")
+    expect(out).to include("docs/primitives/capabilities/comment_threads.md")
+      .and include("4:1   E  ").and include("[evaluation/missing-file]")
   end
 
   it "reports the mid-amendment warning in the summary without failing" do

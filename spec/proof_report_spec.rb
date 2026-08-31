@@ -248,24 +248,7 @@ RSpec.describe AgentHarnessRails::ProofReport do
       grouped
 
       expect(file_of("I3").tagged).to be_empty
-      expect(file_of("I3").ratio).to eq("0 of 2 examples carry this tag")
-    end
-
-    # "0 of 1 example carry" is the one case where agreeing the verb with the
-    # numerator reads wrong, so it borrows the singular from the noun.
-    it "says one example carries no tag rather than carry" do
-      grouped
-      write "spec/policies/long_list_policy_spec.rb", <<~SPEC
-        RSpec.describe LongListPolicy do
-          describe "denials", intent: "project_stages#I3" do
-            it "denies entry to a draft stage" do
-              expect(policy).not_to permit_action(:accept_entry)
-            end
-          end
-        end
-      SPEC
-
-      expect(file_of("I3").ratio).to eq("0 of 1 example carries this tag")
+      expect(file_of("I3").examples).to eq(2)
     end
 
     it "reports it as misplaced, with the group it sits on" do
@@ -318,31 +301,6 @@ RSpec.describe AgentHarnessRails::ProofReport do
     end
   end
 
-  # The centrepiece line of the whole report: the noun agrees with the
-  # denominator, the verb with the numerator.
-  it "says one example carries the tag, not carry" do
-    capability <<~DOC
-      ---
-      status: built
-      intent:
-        - id: I3
-          clause: Only a published stage accepts entries.
-          evaluations:
-            - spec/policies/one_spec.rb
-      ---
-      # Project stages
-    DOC
-    write "spec/policies/one_spec.rb", <<~SPEC
-      RSpec.describe OnePolicy do
-        it "denies a draft stage", intent: "project_stages#I3" do
-          expect(policy).not_to permit_action(:accept_entry)
-        end
-      end
-    SPEC
-
-    expect(file_of("I3").ratio).to eq("1 of 1 example carries this tag")
-  end
-
   describe "scope" do
     it "narrows to one capability" do
       stages
@@ -351,11 +309,13 @@ RSpec.describe AgentHarnessRails::ProofReport do
       expect(report(scope: "project_stages").rows.map(&:capability).uniq).to eq([ "project_stages" ])
     end
 
-    it "narrows to one clause, and only then lists what carries no tag" do
+    # A named scope earns the per-file example listings; unscoped stays at the
+    # one-line-per-clause density a whole tree needs.
+    it "reports detail for a named scope and summary for the whole tree" do
       stages
 
-      expect(report(scope: "project_stages#I3").detail).to eq(:full)
-      expect(report(scope: "project_stages").detail).to eq(:files)
+      expect(report(scope: "project_stages#I3").detail).to eq(:detail)
+      expect(report(scope: "project_stages").detail).to eq(:detail)
       expect(report.detail).to eq(:summary)
     end
 

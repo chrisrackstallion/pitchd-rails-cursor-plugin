@@ -117,9 +117,8 @@ capability doc's evaluation, so a verdict on it is a verdict on the record too:
   affordance assertion.
 
 Take **`agent_harness_rails proofs '<capability>#I<n>'`** before and after each
-touched clause: it counts how many of a file's examples carry the tag and lists
-the ones carrying none, so a tag dropped in a merge or a split shows as a number
-that went down. `evals` cannot see it — one surviving tag makes the whole file a
+touched clause: it lists each evaluation file's tagged examples with a count,
+so a tag dropped in a merge or a split shows as a number that went down. `evals` cannot see it — one surviving tag makes the whole file a
 carrier — and `guard`'s `proof/removed` only fires when a tagged example is gone,
 not when a surviving one lost its tag.
 

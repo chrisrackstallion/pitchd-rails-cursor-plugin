@@ -110,7 +110,7 @@ only when you are the top-level agent with a working shell:
 ```bash
 agent_harness_rails evals                            # clause coverage; exits 1 on findings
 agent_harness_rails guard --base <the diff's base>   # what this change did to the record
-agent_harness_rails proofs --since <the diff's base> # what carries each tag, per file
+agent_harness_rails proofs --since <the diff's base> # tagged-example counts per touched clause
 ```
 
 **No block and no working shell → `UNVERIFIED (CLI unavailable)`.** Ask the
@@ -208,12 +208,11 @@ suggestions:
   deleted.
 - **Eval adequacy** — the check `agent_harness_rails evals` cannot make: **would
   breaking the clause turn a tagged example red?** Start from the
-  **`proofs`** output for each touched clause: it lists what carries the tag and,
-  per evaluation file, what carries none. `proofs --since <base>` carries that
-  untagged listing for every clause the change touched — the same detail
-  `proofs '<capability>#I<n>'` gives for one — so the pasted block usually
-  answers this without a further call. Read that against the plan's **Intent
-  impact** row, which names the cases the clause needs. A case the row named that sits in the untagged list is a finding —
+  **`proofs`** output for each touched clause: `proofs --since <base>` counts the
+  tagged examples per clause the change touched, and
+  `proofs '<capability>#I<n>'` lists them for one. Read the counts and listings
+  against the plan's **Intent
+  impact** row, which names the cases the clause needs. A case the row named that is missing from the tagged listing is a finding —
   `evals` is green on it, because one tag makes the whole file a carrier, so a
   clause meant to be proven by four denials passes with three tagged. Then read
   each touched clause's wording against its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one

@@ -201,7 +201,10 @@ RSpec.describe AgentHarnessRails::Guard do
       YAML
 
       expect(codes).to eq([ "intent/rewritten" ])
-      expect(message_for("intent/rewritten")).to include("A reader can reply to any comment.")
+
+      finding = guard.findings.find { |candidate| candidate.code == "intent/rewritten" }
+      expect(finding.details.map(&:text)).to include("A reader can reply to any comment.")
+        .and include("A signed-in reader can reply to any comment.")
     end
 
     it "leaves an in-place edit alone while the doc is still shaping" do

@@ -212,10 +212,15 @@ module AgentHarnessRails
         return [] if discharged.include?(before.id)
 
         [ notice(now.relative_path, after.line,
-                 "#{before.id} now promises something else, under the same id and with no provenance entry. " \
-                 "Was: #{summarise(before.text)}. Now: #{summarise(after.text)}. An amendment supersedes " \
-                 "the old clause and records the decision — only the user's decision changes intent",
-                 "intent/rewritten") ]
+                 "#{before.id} now promises something else, under the same id and with no provenance entry",
+                 "intent/rewritten",
+                 details: [
+                   Evals::Finding::Detail.new(label: "was", text: clean(before.text)),
+                   Evals::Finding::Detail.new(label: "now", text: clean(after.text)),
+                   Evals::Finding::Detail.new(label: nil, text: "an amendment supersedes the old clause " \
+                                                               "and records the decision — only the " \
+                                                               "user's decision changes intent")
+                 ]) ]
       end
 
       # Three outcomes, because "this clause names a different file now" and
@@ -351,12 +356,17 @@ module AgentHarnessRails
       def layer(path) = path.split("/")[1]
 
       def summarise(text, limit: 70)
-        one_line = text.to_s.squeeze(" ").strip.tr("\n", " ")
+        one_line = clean(text)
         one_line.length > limit ? "#{one_line[0, limit - 1]}…".inspect : one_line.inspect
       end
 
-      def notice(path, line, message, code)
-        Evals::Finding.new(severity: :notice, path: path, line: line, column: 1, message: message, code: code)
+      # Untruncated, for detail lines: the renderer decides how much fits, and
+      # JSON carries the whole clause either way.
+      def clean(text) = text.to_s.squeeze(" ").strip.tr("\n", " ")
+
+      def notice(path, line, message, code, details: nil)
+        Evals::Finding.new(severity: :notice, path: path, line: line, column: 1, message: message,
+                           code: code, details: details)
       end
 
       def sort(findings)

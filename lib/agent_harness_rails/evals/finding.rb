@@ -12,7 +12,12 @@ module AgentHarnessRails
     #
     # `:notice` is `guard`'s only severity and never an offence: it reports what
     # a change did to intent and its proof, for a person to judge.
-    Finding = Struct.new(:severity, :path, :line, :column, :message, :code, keyword_init: true) do
+    #
+    # `details` carries what does not belong on the headline: labelled lines
+    # (was/now clause text) and unlabelled guidance. The text renderer truncates
+    # labelled text; `to_h` keeps it whole, so JSON is the full record.
+    Finding = Struct.new(:severity, :path, :line, :column, :message, :code, :details,
+                         keyword_init: true) do
       SEVERITY_LETTERS = { error: "E", warning: "W", notice: "N" }.freeze
 
       def error? = severity == :error
@@ -24,8 +29,13 @@ module AgentHarnessRails
       end
 
       def to_h
-        { severity: severity, path: path, line: line, column: column, message: message, code: code }
+        base = { severity: severity, path: path, line: line, column: column, message: message, code: code }
+        details.nil? || details.empty? ? base : base.merge(details: details.map(&:to_h))
       end
     end
+
+    # Assigned onto the class rather than inside its block: a constant assigned
+    # in the block would land on the lexically enclosing module, not on Finding.
+    Finding::Detail = Struct.new(:label, :text, keyword_init: true)
   end
 end

@@ -23,7 +23,7 @@ module AgentHarnessRails
         update     re-vendor and report what changed
         evals      check every intent clause in docs/primitives/ is proven by a spec (use in CI)
         guard      report what this change did to intent and the specs that prove it
-        proofs     list the examples proving each intent clause, and what they leave untagged
+        proofs     list the examples proving each intent clause
         version    print the gem version
 
       options:
@@ -46,7 +46,7 @@ module AgentHarnessRails
         agent_harness_rails guard --base main        # what this branch changed
         agent_harness_rails proofs                   # one line per clause
         agent_harness_rails proofs orders            # a capability, with its proving examples
-        agent_harness_rails proofs 'orders#I3'       # one clause, listing what it leaves untagged
+        agent_harness_rails proofs 'orders#I3'       # one clause, with its proving examples
         agent_harness_rails proofs --since main      # the clauses this branch's specs touch
 
       On install, skills, rules, and agents already in .claude/ or .cursor/ are
@@ -67,15 +67,16 @@ module AgentHarnessRails
       that decision is the user's.
 
       Proofs answers a third question, and is a lookup rather than a check: which
-      examples prove this clause, and how many of the examples in each evaluation
-      file carry the tag. Evals is satisfied by one tag per file, so a clause the
-      plan meant to prove with four denials passes with three tagged — `3 of 7
-      examples carry this tag` is the line that shows it. Nothing here is an
-      offence and the exit code is always 0: most examples in a spec file carry no
-      tag by design, so the ratio is a number to compare with the plan's proof
-      set, not a verdict. Naming a single clause also lists that file's untagged
-      examples. A tag on a `describe` is named as proving nothing rather than
-      shown among the proofs, and the footer counts every tag evals will reject.
+      examples prove this clause. Evals is satisfied by one tag per file, so a
+      clause the plan meant to prove with four denials passes with three tagged —
+      the tagged listing is what a verify step compares against the plan's proof
+      set, and a planned example missing from it is found in the spec file and
+      tagged, or written. Nothing here is an offence and the exit code is always
+      0: most examples in a spec file carry no tag by design, so a tagged count
+      is a number to compare with the plan, not a verdict. A tag on a `describe`
+      is named as proving nothing rather than shown among the proofs, and the
+      footer counts every tag evals will reject. --format json additionally
+      carries every untagged example in the files a clause names.
 
       Evals reads intent clauses from each capability doc's YAML frontmatter and
       the `intent: "<capability>#I<n>"` metadata on spec examples; the same tag
@@ -206,9 +207,39 @@ module AgentHarnessRails
     end
 
     def guard_text(result)
-      result.findings.each { |finding| @out.puts finding }
-      @out.puts if result.findings.any?
+      findings_text(result.findings)
       @out.puts "compared against #{short(result.base)}: #{guard_summary(result)}"
+    end
+
+    # Findings grouped under one path header per file, so a burst of notices in
+    # one file reads as a block rather than a wall of repeated paths.
+    def findings_text(findings)
+      findings.group_by(&:path).each do |path, group|
+        @out.puts path
+        width = group.map { |finding| position(finding).length }.max
+        group.each { |finding| finding_text(finding, width) }
+        @out.puts
+      end
+    end
+
+    def position(finding) = "#{finding.line}:#{finding.column}"
+
+    def finding_text(finding, width)
+      @out.puts "  #{position(finding).ljust(width)}   #{paint(finding.letter, severity_colour(finding))}  " \
+                "#{finding.message}   [#{finding.code}]"
+      (finding.details || []).each { |detail| detail_text(detail, width) }
+    end
+
+    # Indented to sit under the severity letter. Labelled lines are clause text
+    # and get clipped; `--format json` carries them whole.
+    def detail_text(detail, width)
+      indent = " " * (width + 5)
+      body = detail.label ? "#{detail.label}:  #{clip(detail.text)}" : detail.text
+      @out.puts "  #{indent}#{body}"
+    end
+
+    def clip(text, limit: 100)
+      text.length > limit ? "#{text[0, limit - 1]}…" : text
     end
 
     def guard_summary(result)
@@ -241,6 +272,7 @@ module AgentHarnessRails
 
       result.detail == :summary ? proofs_summary(result) : proofs_detail(result)
       @out.puts
+      proofs_misplaced(result)
       proofs_footer(result)
     end
 
@@ -250,20 +282,33 @@ module AgentHarnessRails
       "no intent clauses found — `agent_harness_rails evals` explains what a capability doc needs"
     end
 
-    # One line per clause: the health-pass density, which stays scannable at two
-    # hundred clauses. Whether a count is the *right* count is a question for the
-    # plan, so drilling in is a second command rather than more output here.
+    # One line per clause under its capability: the health-pass density, which
+    # stays scannable at two hundred clauses. Whether a count is the *right*
+    # count is a question for the plan, so drilling in is a second command
+    # rather than more output here.
     def proofs_summary(result)
-      width = result.rows.map { |row| row.id.length }.max
-
-      result.rows.each { |row| @out.puts "#{row.id.ljust(width)}  #{clause_summary(row)}" }
+      each_capability(result) do |rows|
+        width = rows.map { |row| clause_line(row).length }.max
+        rows.each { |row| @out.puts "#{clause_line(row).ljust(width)}    #{clause_summary(row)}" }
+      end
     end
+
+    def each_capability(result)
+      result.rows.group_by(&:capability).each_with_index do |(capability, rows), index|
+        @out.puts if index.positive?
+        @out.puts "#{capability} (#{rows.first.status || 'no status'})"
+        yield rows
+      end
+    end
+
+    def clause_line(row) = "  #{row.clause.id}  #{row.clause.text}"
 
     def clause_summary(row)
       return inactive_summary(row) if row.state
       return "no evaluations" if row.files.empty?
 
-      "#{pluralize(row.tagged, 'example')}, #{pluralize(row.files.size, 'file')}"
+      count = pluralize(row.tagged, "tagged example")
+      row.tagged.zero? ? paint(count, 31) : count
     end
 
     # A tag on a superseded or retired clause is still a real example, and one
@@ -276,54 +321,56 @@ module AgentHarnessRails
     end
 
     def proofs_detail(result)
-      result.rows.group_by(&:capability).each_with_index do |(capability, rows), index|
-        @out.puts if index.positive?
-        @out.puts "#{capability} (#{rows.first.status || 'no status'})"
-        rows.each { |row| proofs_clause(row, result.detail) }
+      each_capability(result) do |rows|
+        rows.each { |row| proofs_clause(row) }
       end
     end
 
-    def proofs_clause(row, detail)
+    def proofs_clause(row)
       state = row.state ? "  [#{row.state}]" : ""
       @out.puts
-      @out.puts "  #{row.clause.id}  #{row.clause.text}#{state}"
-      return @out.puts "    no evaluations" if row.files.empty?
+      @out.puts "  #{paint(row.clause.id, 1)}  #{row.clause.text}#{state}"
+      return @out.puts "      no evaluations" if row.files.empty?
 
-      row.files.each { |file| proofs_file(file, detail) }
+      row.files.each { |file| proofs_file(file) }
     end
 
-    def proofs_file(file, detail)
-      return @out.puts "    #{file.path}  (file not found)" unless file.exists
+    def proofs_file(file)
+      return @out.puts "      #{file.path}  (file not found)" unless file.exists
 
       undeclared = file.declared ? "" : "  (not in this clause's `evaluations:`)"
-      @out.puts "    #{file.path}  #{file.ratio}#{undeclared}"
-      proofs_misplaced(file)
-      file.tagged.each do |proof|
-        @out.puts "      :#{proof.opener}  #{description(proof.description)}  (#{pluralize(proof.assertions, 'assertion')})"
-      end
-      proofs_untagged(file) if detail == :full
+      count = pluralize(file.tagged.size, "tagged example")
+      @out.puts "      #{file.path} — #{file.tagged.empty? ? paint(count, 31) : count}#{undeclared}"
+      proofs_examples(file.tagged)
     end
 
-    # Printed first, and at every density: a tag on a `describe` has no example
-    # under it, so the group line would otherwise show up among the proofs with no
-    # description and no assertions — which reads as a real, weak proof rather
-    # than as the offence it is.
-    def proofs_misplaced(file)
-      file.misplaced.each do |proof|
-        @out.puts "      :#{proof.line}  tag sits on `#{proof.group}`, so it proves nothing here — " \
-                  "`agent_harness_rails evals` reports it"
+    def proofs_examples(tagged)
+      return if tagged.empty?
+
+      openers = tagged.map { |proof| ":#{proof.opener}" }
+      described = tagged.map { |proof| description(proof.description) }
+      opener_width = openers.map(&:length).max
+      description_width = described.map(&:length).max
+
+      tagged.each_with_index do |proof, index|
+        @out.puts "        #{openers[index].ljust(opener_width)}  #{described[index].ljust(description_width)}" \
+                  "    #{pluralize(proof.assertions, 'assertion')}"
       end
     end
 
-    # Listed only for a single named clause. Most of these are unrelated examples
-    # that correctly carry no tag — printed so a reader holding the plan can see
-    # the case it named and this file never tagged, which is the one thing no
-    # other command in here can show them.
-    def proofs_untagged(file)
-      return if file.untagged.empty?
+    # A tag on a group has no example under it, so it never appears among the
+    # proofs — it is named for what it is instead, with its address. Deduplicated
+    # because one file can prove several of the listed clauses.
+    def proofs_misplaced(result)
+      tags = result.rows.flat_map do |row|
+        row.files.flat_map { |file| file.misplaced.map { |proof| [ file.path, proof.line, proof.group ] } }
+      end.uniq
+      return if tags.empty?
 
-      @out.puts "      carrying no intent tag — check each against the plan's proof set:"
-      file.untagged.each { |example| @out.puts "      :#{example.line}  #{description(example.description)}" }
+      tags.each do |path, line, group|
+        @out.puts "tag proving nothing: #{path}:#{line} sits on `#{group}` — no example under it"
+      end
+      @out.puts
     end
 
     def description(text) = text.to_s.strip.empty? ? "(no description)" : text
@@ -361,18 +408,17 @@ module AgentHarnessRails
     end
 
     def evals_text(result)
-      result.findings.each { |finding| @out.puts finding }
-      @out.puts if result.findings.any?
+      findings_text(result.findings)
       @out.puts evals_summary(result)
     end
 
     def evals_summary(result)
       warnings = result.findings.size - result.errors.size
-      counted = [ "#{pluralize(result.capabilities, 'capability', 'capabilities')} inspected",
+      counted = [ pluralize(result.capabilities, "capability", "capabilities"),
                   pluralize(result.clauses, "clause") ]
-      counted << (result.findings.empty? ? "no offences" : "#{pluralize(result.errors.size, 'offence')} detected")
-      counted << pluralize(warnings, "warning") if warnings.positive?
-      counted.join(", ")
+      tail = result.findings.empty? ? "no offences" : pluralize(result.errors.size, "offence")
+      tail += ", #{pluralize(warnings, 'warning')}" if warnings.positive?
+      "#{counted.join(', ')} — #{tail}"
     end
 
     def evals_json(result)
@@ -384,6 +430,22 @@ module AgentHarnessRails
 
     def pluralize(count, singular, plural = "#{singular}s")
       "#{count} #{count == 1 ? singular : plural}"
+    end
+
+    SEVERITY_COLOURS = { "E" => 31, "W" => 33, "N" => 33 }.freeze
+
+    def severity_colour(finding) = SEVERITY_COLOURS[finding.letter]
+
+    # Colour only when a person is watching: a TTY without NO_COLOR set. Piped
+    # output — CI logs, agents, redirects — gets exactly the plain text.
+    def paint(text, code)
+      colour? && code ? "\e[#{code}m#{text}\e[0m" : text
+    end
+
+    def colour?
+      return @colour if defined?(@colour)
+
+      @colour = @out.respond_to?(:tty?) && @out.tty? && ENV["NO_COLOR"].to_s.empty?
     end
 
     def check

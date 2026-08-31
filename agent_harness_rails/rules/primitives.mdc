@@ -347,36 +347,38 @@ agent_harness_rails proofs 'comment_threads#I2'   # a lookup; exit 0 always — 
 `evals` counts **files**. A clause naming `spec/policies/comment_policy_spec.rb`
 is satisfied by **one** tag in that file — so a clause meant to be proven by four
 denials is green with three tagged, and `guard` is silent too, because an untagged
-new example is growth. That is the gap `proofs` fills: per evaluation file, how
-many of its examples carry the tag, and — when the scope is a single clause —
-which examples carry none.
+new example is growth. That is the gap `proofs` fills: the tagged examples behind
+each clause, per evaluation file, as a listing to hold against the plan's proof
+set.
 
 ```
   I3  Only a published stage accepts entries.
-    spec/policies/long_list_policy_spec.rb  3 of 5 examples carry this tag
-      :3  allows entry to a published stage  (1 assertion)
-      :11  denies entry to an archived stage  (2 assertions)
-      :16  denies entry to a locked stage  (1 assertion)
-      carrying no intent tag — check each against the plan's proof set:
-      :7  denies entry to a draft stage
+      spec/policies/long_list_policy_spec.rb — 3 tagged examples
+        :3   allows entry to a published stage    1 assertion
+        :11  denies entry to an archived stage    2 assertions
+        :16  denies entry to a locked stage       1 assertion
 ```
 
-A tag on a `describe` is named as proving nothing rather than listed among the
-proofs — there is no example under it, so it would print with no description and
-no assertions and read as a weak proof instead of the `tag/misplaced` offence it
-is. The footer counts every tag `evals` will reject.
+A planned example missing from the listing is found in the spec file and tagged —
+or written. Untagged examples are deliberately **not** printed: they drowned the
+report in any real spec file, and a reader holding the plan already knows which
+example is missing; `--format json` carries them when a step needs the full
+picture. A tag on a `describe` is named as proving nothing rather than listed
+among the proofs — there is no example under it — and the footer counts every
+tag `evals` will reject.
 
 **Nothing here is an offence and the exit code is always 0.** Most examples in a
 spec file carry no tag by design — only evaluation examples are tagged — so a
-ratio is a number to hold against the plan's **Intent impact** row, which names
-the cases the clause needs. Made a gate it would fire on nearly every file.
-`--since main` selects the clauses whose spec files a change touched, untracked
-files included, which is the shape a task's verify step runs.
+tagged count is a number to hold against the plan's **Intent impact** row, which
+names the cases the clause needs. Made a gate it would fire on nearly every file.
+`--since main` prints one counted line per clause whose spec files a change
+touched, untracked files included, which is the shape a task's verify step runs —
+a count that comes up short is drilled into by naming the clause.
 
 ### None of these is quiet
 
-Every one of them prints. `evals` closes with `6 capabilities inspected,
-37 clauses, no offences`; `guard` with `compared against <ref>: no change to
+Every one of them prints. `evals` closes with `6 capabilities, 37 clauses — no
+offences`; `guard` with `compared against <ref>: no change to
 intent or the specs that prove it`; `proofs` with a line per clause, or `no
 intent clauses found`. A real failure prints a Bundler or Ruby stack on stderr.
 

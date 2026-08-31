@@ -135,6 +135,8 @@ RSpec.describe AgentHarnessRails::CLI do
 
       expect(status).to eq(0)
       expect(out).to include("[intent/rewritten]").and include("1 notice for review")
+        .and include("was:  A reader can reply to any comment.")
+        .and include("now:  A signed-in reader can reply to any comment.")
       expect(err).to be_empty
     end
 
@@ -177,8 +179,8 @@ RSpec.describe AgentHarnessRails::CLI do
   end
 
   # Proofs is a lookup, not a check: the exit code is 0 whatever it finds, because
-  # most examples in a spec file carry no tag by design and a ratio is a number to
-  # compare with the plan, not a verdict.
+  # most examples in a spec file carry no tag by design and a tagged count is a
+  # number to compare with the plan, not a verdict.
   describe "proofs" do
     def stages
       FileUtils.mkdir_p(File.join(project, "docs/primitives/capabilities"))
@@ -207,22 +209,26 @@ RSpec.describe AgentHarnessRails::CLI do
       SPEC
     end
 
-    it "prints one line per clause and exits 0" do
+    it "prints one line per clause under its capability and exits 0" do
       stages
 
       status, out, err = run("proofs", "--path", project)
 
       expect(status).to eq(0)
-      expect(out).to include("project_stages#I3  1 example, 1 file")
+      expect(out).to include("project_stages (built)")
+        .and include("I3  Only a published stage accepts entries.")
+        .and include("1 tagged example")
       expect(err).to be_empty
     end
 
-    it "shows how many of an evaluation file's examples carry the tag" do
+    it "shows each evaluation file with its tagged examples" do
       stages
 
       _, out, = run("proofs", "project_stages", "--path", project)
 
-      expect(out).to include("1 of 2 examples carries this tag")
+      expect(out).to include("spec/policies/long_list_policy_spec.rb — 1 tagged example")
+        .and include("denies entry to an archived stage")
+        .and include("1 assertion")
     end
 
     # The output that made a group tag look like a real, weak proof: the
@@ -243,8 +249,8 @@ RSpec.describe AgentHarnessRails::CLI do
       status, out, = run("proofs", "project_stages#I3", "--path", project)
 
       expect(status).to eq(0)
-      expect(out).to include("0 of 1 example carries this tag")
-        .and include("tag sits on `describe`, so it proves nothing here")
+      expect(out).to include("spec/policies/long_list_policy_spec.rb — 0 tagged examples")
+        .and include("tag proving nothing: spec/policies/long_list_policy_spec.rb:2 sits on `describe` — no example under it")
         .and include("1 tag in the suite is on a group rather than an example")
       expect(out).not_to include("(no description)")
     end
@@ -270,16 +276,19 @@ RSpec.describe AgentHarnessRails::CLI do
                              "1 not in `<capability>#I<n>` form; `agent_harness_rails evals` reports each")
     end
 
-    # The listing that would be noise across a whole tree, and is the answer when
-    # a reader is holding the plan and asking about one clause.
-    it "names the untagged examples only when the scope is a single clause" do
+    # A reader holding the plan already knows which example is missing from the
+    # tagged list, so the text stays tagged-only at every scope — printed,
+    # untagged examples drowned the report in any real spec file. JSON keeps
+    # them for close-out steps and reviewers.
+    it "keeps untagged examples out of the text and in the JSON" do
       stages
 
-      _, capability_wide, = run("proofs", "project_stages", "--path", project)
       _, one_clause, = run("proofs", "project_stages#I3", "--path", project)
+      _, json, = run("proofs", "project_stages#I3", "--format", "json", "--path", project)
 
-      expect(capability_wide).not_to include("denies entry to a draft stage")
-      expect(one_clause).to include("carrying no intent tag").and include("denies entry to a draft stage")
+      expect(one_clause).not_to include("denies entry to a draft stage")
+      untagged = JSON.parse(json).dig("proofs", 0, "files", 0, "untagged")
+      expect(untagged.map { |example| example["description"] }).to include("denies entry to a draft stage")
     end
 
     it "reports as JSON for a reviewer or close-out step to read" do
@@ -289,7 +298,7 @@ RSpec.describe AgentHarnessRails::CLI do
 
       expect(status).to eq(0)
       expect(JSON.parse(out))
-        .to include("clauses" => 1, "tagged_examples" => 1, "detail" => "full",
+        .to include("clauses" => 1, "tagged_examples" => 1, "detail" => "detail",
                     "unresolved_tags" => 0, "misplaced_tags" => 0, "malformed_tags" => 0)
     end
 

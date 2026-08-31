@@ -31,19 +31,21 @@ The same tag runs the proof on demand: `bundle exec rspec --tag 'intent:comment_
 
 ```console
 $ bundle exec agent_harness_rails evals
-docs/primitives/capabilities/comment_threads.md:12:1: E: I3 has no evaluation — a built clause must name the spec that proves it [clause/unproven]
+docs/primitives/capabilities/comment_threads.md
+  12:1   E  I3 has no evaluation — a built clause must name the spec that proves it   [clause/unproven]
 
-3 capabilities inspected, 14 clauses, 1 offence detected
+3 capabilities, 14 clauses — 1 offence
 ```
 
 **`guard`** — compares the tree against a base revision and reports what got smaller or different: a clause reworded under the same id, a proving example that lost assertions. Growth is silent by design; only shrinkage or substitution needs your attention. Everything it prints is a notice, never a failure — agents read their own notices and restore proof they dropped by accident, and intent notices come to you, because only the user's decision changes intent.
 
 ```console
 $ bundle exec agent_harness_rails guard --base main
-spec/system/comment_threads_spec.rb:7:1: N: the example proving comment_threads#I2 lost 1 assertion(s) — it still carries the tag while proving less of the clause [proof/weakened]
+spec/system/comment_threads_spec.rb
+  7:1   N  the example proving comment_threads#I2 lost 1 assertion(s) — it still carries the tag while proving less of the clause   [proof/weakened]
 ```
 
-**`proofs`** — a lookup, not a check: which examples prove a clause, and which examples in the same file carry no tag. `proofs --since main` scopes it to what a branch touched, which is the shape a task's verify step runs.
+**`proofs`** — a lookup, not a check: the tagged examples proving each clause, to hold against the plan's proof set — a planned example missing from the listing never got its tag, or never got written. `proofs --since main` counts them per clause a branch touched, which is the shape a task's verify step runs; `--format json` carries the untagged examples too.
 
 ### The record stays alive on its own
 

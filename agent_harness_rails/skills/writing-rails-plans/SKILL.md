@@ -396,9 +396,9 @@ deny: reader, other author, archived post`. A file name alone is the granularity
 `agent_harness_rails evals` can check, and it is satisfied by **one** tag in that
 file: so a clause whose four denials were promised in prose passes every gate
 with three of them tagged. Named cases are countable —
-`agent_harness_rails proofs 'comment_threads#I5'` prints what carries the tag and
-what does not, and both execution close-out and review check that listing against
-this row.
+`agent_harness_rails proofs 'comment_threads#I5'` lists the tagged examples
+behind the clause, and both execution close-out and review check that listing
+against this row.
 
 `Proof lands at` is a **plan**, and it lives in this file only. It is never copied
 into the doc's `evaluations:` — those are filled at close-out from the specs the

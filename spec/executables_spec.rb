@@ -16,8 +16,13 @@ RSpec.describe "executables" do
     File.expand_path("..", __dir__)
   end
 
+  # The summary line carries an em dash, so the captured bytes are forced to
+  # UTF-8 — a subprocess capture arrives in the locale encoding, which can be
+  # US-ASCII in CI and would make `include` raise instead of match.
   def run(*argv)
-    Open3.capture2e({ "RUBYOPT" => nil }, RbConfig.ruby, "-I#{File.join(root, 'lib')}", *argv, chdir: root)
+    output, status = Open3.capture2e({ "RUBYOPT" => nil }, RbConfig.ruby,
+                                     "-I#{File.join(root, 'lib')}", *argv, chdir: root)
+    [ output.force_encoding(Encoding::UTF_8), status ]
   end
 
   describe "exe/agent_harness_rails" do
@@ -36,7 +41,7 @@ RSpec.describe "executables" do
       output, status = run("exe/agent_harness_rails", "evals", "--path", "fixtures/primitives_app")
 
       expect(status).to be_success, output
-      expect(output).to include("1 capability inspected", "4 clauses", "no offences")
+      expect(output).to include("1 capability", "4 clauses", "no offences")
     end
 
     # Also the one place a nested project directory is exercised: the fixture app

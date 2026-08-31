@@ -311,8 +311,10 @@ updates the capability doc directly (see the Hard rules carve-out):
 
    **Reconcile against the plan's Intent impact table**, case by case, with
    **`agent_harness_rails proofs --since <ref>`** — the row names the cases a
-   clause needs and that listing says which of them carry the tag, per file
-   (`3 of 7 examples carry this tag`, then the examples carrying none). Do this
+   clause needs and that output counts each clause's tagged examples; a count
+   that comes up short is drilled into with
+   **`agent_harness_rails proofs '<capability>#I<n>'`**, whose tagged listing
+   shows which planned case is missing. Do this
    before filling the row: `evals` treats one tag as proof of the whole file, so
    a clause the plan meant to prove with four denials fills its row and goes
    green with three tagged. A case the row named and the listing does not show
@@ -337,7 +339,7 @@ updates the capability doc directly (see the Hard rules carve-out):
    ```bash
    agent_harness_rails evals                 # exits 1 on findings
    agent_harness_rails guard --base <ref>    # notices only; never fails a run
-   agent_harness_rails proofs --since <ref>  # what carries each tag, and what does not
+   agent_harness_rails proofs --since <ref>  # tagged-example counts per touched clause
    ```
 
    `evals` green is a precondition for step 3. Every error is a real gap — no
@@ -403,7 +405,7 @@ Deliver a short **completion package**:
 - **Whole-run coherence review** outcome (Step 6): Approved after N iterations, or skipped (single-task run).
 - **Full-suite result** (Step 7): the command run and its outcome, or that it was skipped.
 - **harness reviewer** final notes (if any non-blocking recommendations were in those reports).
-- **Primitives close-out** summary (Step 8): status, `evaluations:` updated, `agent_harness_rails evals` result, the provenance line appended — or why status could not flip. Include each touched clause's `carry this tag` ratio from `agent_harness_rails proofs`, so the user sees the count and not only the claim that it was checked.
+- **Primitives close-out** summary (Step 8): status, `evaluations:` updated, `agent_harness_rails evals` result, the provenance line appended — or why status could not flip. Include each touched clause's tagged-example count from `agent_harness_rails proofs`, so the user sees the count and not only the claim that it was checked.
 - **`agent_harness_rails guard` notices** (Step 8), each with what it was: planned, corrected during close-out, or **awaiting the user's decision** — intent notices are never resolved by the orchestrator, so any that remain are the first thing the user must rule on.
 - Anything still **uncommitted** or **needs manual verification** (tests run are reported by subagents — do not claim green unless subagents reported it). In **step-by-step** mode the user has been committing per task, so name only what remains after the last stop.
 - The plan header's **Delivery:** boundaries restated (which tasks compose which PR), so the user cuts PRs as planned — the orchestrator never commits or opens PRs itself.

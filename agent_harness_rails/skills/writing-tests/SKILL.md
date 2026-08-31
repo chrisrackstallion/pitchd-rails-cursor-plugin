@@ -532,8 +532,8 @@ Rules, format, and the list form: **`agent_harness_rails/rules/testing.mdc`**
    tags — and **nothing fails when only three of them do**, because
    `agent_harness_rails evals` counts files and one tag makes the whole file a
    carrier. Check yourself with **`agent_harness_rails proofs '<capability>#I<n>'`**:
-   it prints how many of the file's examples carry the tag and lists the ones
-   carrying none.
+   it lists the tagged examples behind the clause — a planned example missing
+   from the listing never got its tag, or never got written.
 3. **Tag only evaluation examples.** Most specs prove behaviour without proving a
    *clause*; tagging everything makes the map useless.
 4. **The capability doc must list the file too** — `evaluations:` on that clause.

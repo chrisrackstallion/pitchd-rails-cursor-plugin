@@ -100,12 +100,14 @@ clause proven by four examples is tagged on all four.
   the whole file a carrier, so a clause meant to be proven by four denials goes
   green with three tagged, and `guard` says nothing either — an untagged new
   example is growth. **`agent_harness_rails proofs '<capability>#I<n>'`** is what
-  shows the fourth: it prints how many of each evaluation file's examples carry
-  the tag, then the examples carrying none. Read it against the plan's **Intent
-  impact** row, which names the cases. Nothing it prints is an offence — most
-  examples in a spec file are untagged by design.
-- **`agent_harness_rails proofs --since main`** does the same for every clause a
-  change touched, which is what a task's verify step runs before reporting.
+  shows the fourth: it lists the tagged examples behind the clause, per
+  evaluation file. Read the listing against the plan's **Intent impact** row,
+  which names the cases — a case the row names that is missing from the listing
+  is found in the spec file and tagged, or written. Nothing it prints is an
+  offence — most examples in a spec file are untagged by design.
+- **`agent_harness_rails proofs --since main`** prints one counted line per
+  clause a change touched, which is what a task's verify step runs before
+  reporting — a count that comes up short is drilled into by naming the clause.
 - The tag is also a selector — `bundle exec rspec --tag 'intent:comment_threads#I2'`
   runs exactly the proof.
 

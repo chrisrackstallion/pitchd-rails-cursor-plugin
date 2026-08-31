@@ -12,9 +12,9 @@ no parser can settle — when a code comment earns its line.
 
 ### Added
 
-- **`agent_harness_rails proofs`** — lists the examples proving each intent
-  clause and, per evaluation file, how many of its examples carry the tag:
-  `3 of 5 examples carry this tag`.
+- **`agent_harness_rails proofs`** — lists the tagged examples proving each
+  intent clause, per evaluation file, with a count to hold against the plan's
+  proof set.
 
   It exists because `evals` counts **files**. A clause naming a spec file is
   satisfied by *one* tag in it, so a clause the plan meant to prove with four
@@ -28,16 +28,17 @@ no parser can settle — when a code comment earns its line.
   clause, sitting on a group, or malformed.
 
   **Nothing it prints is an offence and the exit code is always 0.** Most
-  examples in a spec file carry no tag by design, so a ratio is a number to
-  compare against the plan's proof set, not a verdict; made a gate it would fire
-  on nearly every file and get routed around.
+  examples in a spec file carry no tag by design, so a tagged count is a number
+  to compare against the plan's proof set, not a verdict; made a gate it would
+  fire on nearly every file and get routed around.
 
-  Scope sets the density: bare is one line per clause, a capability adds its
-  proving examples, and naming a clause (`proofs orders#I3`) adds that file's
-  **untagged** examples — the line that shows the case the plan asked for and the
-  implementation never tagged. `--since main` selects every clause whose spec
-  files the change touched, untracked files included, which is the shape a task's
-  verify step runs. `--format json` for a reviewer or close-out step.
+  Scope sets the density: bare and `--since main` print one counted line per
+  clause (`--since` selecting the clauses whose spec files the change touched,
+  untracked files included — the shape a task's verify step runs); naming a
+  capability or a clause lists the tagged examples. Untagged examples are not
+  printed — they drowned the report in any real spec file, and a reader holding
+  the plan already knows which example is missing from the tagged list —
+  `--format json` carries them for a reviewer or close-out step.
 
   Wired into `implementing-rails-task` (verify), `executing-rails-plan`
   (close-out), `reviewing-rails-work` (eval adequacy) and
@@ -185,6 +186,17 @@ no parser can settle — when a code comment earns its line.
   every diff regardless of layer.
 
 ### Changed
+
+- **The three primitives commands print for a reader now.** `evals` and `guard`
+  group findings under one path header per file instead of repeating the path
+  on every line; `guard`'s `intent/rewritten` notice puts the old and new
+  clause on their own indented `was:` / `now:` lines (clipped in text, whole in
+  `--format json`); `proofs` prints tagged examples only, aligned, with a count
+  per file and per clause — the untagged listing moved to `--format json`,
+  where close-out steps read it, because in any real spec file it drowned the
+  report. Severity letters and clause ids get colour on a TTY; piped output is
+  byte-identical to before colour existed. Summary lines tightened to match:
+  `3 capabilities, 14 clauses — 1 offence`.
 
 - **The primitives CLIs are run by the orchestrator and pasted into review
   prompts.** `rails-reviewer` is `readonly: true` and may have no shell at all;
