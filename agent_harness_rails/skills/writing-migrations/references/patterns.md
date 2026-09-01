@@ -1,8 +1,7 @@
 # Migration Patterns Reference
 
-Migrations are the authoritative, append-only record of schema changes.
-Never edit a migration that has been committed to the main branch — it has
-been run in production. Create a new migration instead.
+Worked mechanics for the conventions in
+**`agent_harness_rails/rules/migrations.mdc`**.
 
 ---
 
@@ -190,8 +189,7 @@ end
 ## Null Constraints
 
 Enforce NOT NULL at the database level for columns that must always have
-a value. Model validations are for error messages; constraints are for
-data integrity.
+a value.
 
 ```ruby
 class AddNullConstraintToArticlesTitle < ActiveRecord::Migration[8.0]
@@ -220,6 +218,33 @@ These can use `def change` — Rails generates the inverse automatically:
 - `change_column_null`
 - `rename_column` (reversible but unsafe to run on a live app — see below)
 - `rename_table`
+
+### Explicit `up` / `down` conversion
+
+Use `def up` and `def down` when the operation cannot be automatically
+reversed, or when reverting requires a different operation:
+
+```ruby
+class ChangeArticleStatusToEnum < ActiveRecord::Migration[8.0]
+  def up
+    add_column :articles, :status, :integer, default: 0, null: false
+    execute "UPDATE articles SET status = 1 WHERE published = TRUE"
+    remove_column :articles, :published
+  end
+
+  def down
+    add_column :articles, :published, :boolean, default: false, null: false
+    execute "UPDATE articles SET published = TRUE WHERE status = 1"
+    remove_column :articles, :status
+  end
+end
+```
+
+Each direction carries the data across before dropping the old column —
+`up` without the `UPDATE` would silently reset every article to draft. A
+one-shot conversion like this couples DDL and DML by necessity; that is
+acceptable on small tables, but on large live tables use the multi-deploy
+pattern instead (§ Renaming a Column Safely).
 
 ### Irreversible operations
 
@@ -255,12 +280,10 @@ lose the ability to revert a deploy quickly.
 
 ## Data Migrations
 
-Data migrations (backfills) are separate from schema migrations. Mixing them
-creates problems:
-
-- Schema migrations run fast (DDL); data migrations can be slow (many rows)
-- Schema migrations should be repeatable; data migrations are often one-time
-- Slow data migrations during a deploy hold up all subsequent schema migrations
+Mixing backfills with schema changes creates problems beyond speed:
+schema migrations should be repeatable while data migrations are often
+one-time, and a slow data migration during a deploy holds up all
+subsequent schema migrations.
 
 ### Separate migration file for small backfills
 

@@ -12,48 +12,25 @@ description: >-
 
 <objective>
 Shape URLs and `config/routes.rb` so they read like a table of contents:
-REST as default, shallow nesting where parents scope identity, member vs
-collection used correctly, constraints for real routing predicates only,
-and no clever meta-programming that hides the map of the app. Follow
-Opinionated best-practice instincts — boring routes, predictable helpers, monolith-friendly
+REST as default, boring routes, predictable helpers, monolith-friendly
 clarity.
 </objective>
 
-## Process
+The rules — REST vocabulary, shallow nesting, member vs collection,
+constraints, anti-patterns, and the verification checklist — live in
+**`agent_harness_rails/rules/routes.mdc`**. Read it first.
 
-### 1. Determine What You're Building
+## Routing
 
-| Task | Action |
-|------|--------|
-| New resource | Read `references/patterns.md` § REST Resources |
-| Nested routes | Read `references/patterns.md` § Shallow Nesting |
-| Custom action / verb on URL | Read `references/patterns.md` § Custom Actions vs New Resources; align with writing-controllers REST mapping |
-| Singleton (`session`, `account`) | Read `references/patterns.md` § Singleton `resource` |
-| API namespace | Read `references/patterns.md` § API vs HTML |
-| Format / host / subdomain | Read `references/patterns.md` § Constraints |
-| Redirects and legacy URLs | Read `references/patterns.md` § Redirects |
-| Code review | Read all references, run PR checklist below |
-
-### 2. Decision Hints
-
-**Should this be nested?** Nest when the child does not make sense without the parent in the URL for `index` / `create`. Use `shallow: true` so member routes drop the parent prefix.
-
-**Member or collection?** One record → `member`; the collection → `collection`. Otherwise consider `index` with query params or a new resource.
-
-**Non-RESTful route?** Allowed when rare, named, and honest — not as a junk drawer. Prefer new resources + CRUD (see writing-controllers) when the custom verb keeps multiplying.
-
-### 3. Verification
-
-Before finishing, verify:
-
-- [ ] `rails routes` output is scannable — no unexplained duplication of huge blocks
-- [ ] Nesting is at most one parent deep for member routes, or shallowing is used
-- [ ] `only` / `except` match real controller actions
-- [ ] Path helpers read clearly in views (`*_path` / `*_url` — no ambiguous names)
-- [ ] `constraints` are for format/host/subdomain — not user permissions
-- [ ] No meta-programmed route tables that obscure `rails routes`
-- [ ] Custom routes are justified in a comment or PR (why not standard REST?)
-
-## References
-
-For examples, edge cases, and testing notes, see [references/patterns.md](references/patterns.md).
+| Task | Read |
+|------|------|
+| New resource | `references/patterns.md` § REST Resources |
+| Nested routes | `references/patterns.md` § Shallow Nesting |
+| Custom action / verb on URL | `references/patterns.md` § Custom Actions vs New Resources; align with writing-controllers REST mapping |
+| Singleton (`session`, `account`) | `references/patterns.md` § Singleton `resource` |
+| API namespace | `references/patterns.md` § API vs HTML |
+| Format / host / subdomain | `references/patterns.md` § Constraints |
+| Admin areas, module grouping | `references/patterns.md` § Namespaces and `scope` |
+| Helper names, slugs | `references/patterns.md` § Helpers: `as`, `param` |
+| Redirects and legacy URLs | `references/patterns.md` § Redirects and Legacy Routes |
+| Code review | `agent_harness_rails/rules/routes.mdc` § Verification |

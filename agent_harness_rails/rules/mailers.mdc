@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Mailers Are Mail Controllers
 
-Each public method is one user-visible email — named after the **outcome** (`welcome`, `password_reset`, `published`), not `send_email` or `notify`. Set instance variables for templates; keep business rules on the **model** (or the job that calls the mailer), not buried in the mailer.
+Each public method is one user-visible email — named after the **outcome** (`welcome`, `password_reset`, `published`), not `send_email` or `notify`. Set instance variables for templates; keep business rules on the **model** (or the job that calls the mailer), not buried in the mailer. Pass structured context via **`Mailer.with(...)`**; use plain method args when a single, obvious recipient fits.
 
 Canonical patterns: **`agent_harness_rails/skills/writing-mailers/references/patterns.md`**. Template style (partials, helpers): **`agent_harness_rails/skills/writing-views/references/patterns.md`**. No mailer-shaped service objects: **`agent_harness_rails/rules/services.mdc`**.
 
@@ -34,6 +34,24 @@ Mailer **content** (recipients, subject, body fragment) lives in **mailer specs*
 |-------------|---------|
 | `NotificationService` that only calls a mailer | Call `Mailer.with(...).action.deliver_later` from model/job/controller |
 | Heavy domain logic in the mailer | Model methods; mailer formats what the model exposes |
+| Authorization logic only in the mailer | Caller enforces policy before sending — "can this user receive this?" is a policy or model predicate |
 | `deliver_now` in a controller during a normal POST | `deliver_later` |
+| N+1 queries in the mailer method | Preload in the mailer method or pass preloaded associations |
 | Skipping previews | Add `ActionMailer::Preview` for each important method |
 | Only HTML, no text | Add `.text.erb` or explicit documented exception |
+| Copy-pasted HTML and text bodies | Extract shared strings via I18n or small partials/helpers |
+
+## Verification
+
+- [ ] Public methods are named for the message, not `send` / `notify` generics
+- [ ] Instance variables are set in the mailer method (or a documented `before_action` pattern)
+- [ ] HTML + text templates exist, or the exception is documented
+- [ ] Links use **`_url`**, not **`_path`**
+- [ ] **`deliver_later`** unless sync delivery is truly required
+- [ ] No new "mailer service" wrapper — callers use the mailer API
+- [ ] Preview exists for non-trivial mail
+- [ ] Mailer spec covers content; callers use **`have_enqueued_mail`** where appropriate
+
+## Out of Scope
+
+SMTP credentials, provider dashboards, DNS (SPF/DKIM) — operations concerns; keep secrets in env vars. **Action Mailbox** inbound processing is a separate feature, not mailer sending. MJML/component frameworks — adopt in the app first, then document locally.

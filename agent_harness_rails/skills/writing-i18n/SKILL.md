@@ -14,56 +14,27 @@ description: >-
 # Writing I18n
 
 <objective>
-Treat locale files as part of the application: namespaced keys, static copy
-in YAML, dynamic values via interpolation. Locale files always mirror the
-application's structure so key resolution (lazy lookup, `default_i18n_subject`,
-`human_attribute_name`) works by convention. Views use lazy lookup where it reads
-naturally; helpers and shared partials use explicit keys. All user-facing error
-messages live in I18n and read as human language — rename schema-shaped
-attributes (join-table foreign keys) to their real-world names. All user-visible
-dates and times are formatted via I18n (`l()` with declared formats). Rails
-handles pluralization and time formats — do not hand-roll them in templates.
-Keep I18n boring and omakase — no parallel translation architecture.
+Treat locale files as part of the application: namespaced keys mirroring the
+app's structure, static copy in YAML, dynamic values via interpolation. Keep
+I18n boring and omakase — no parallel translation architecture.
 </objective>
 
-## Process
+The rules — key structure, lazy vs absolute lookup, error messages, dates and
+times, anti-patterns, and the verification checklist — live in
+**`agent_harness_rails/rules/i18n.mdc`**. Read it first.
 
-### 1. Determine What You're Building
+## Routing
 
-| Task | Action |
-|------|--------|
-| New feature copy | Read `references/patterns.md` § Key structure; add keys under a feature namespace |
-| Strings in a view | Prefer `t(".key")` lazy lookup; read § Lazy vs absolute |
-| Strings in a helper / shared partial | Absolute key — `t("feature.button.save")` |
-| Flash / controller messages | Absolute keys; keep messages out of fat controllers where possible |
-| Validation / attribute labels | `activerecord` tree — § Active Record |
-| Mailer subject / body phrases | `mailers.*` + § Mailers in patterns; mailer skill § subjects |
-| Pluralization / dates / numbers | § Pluralization and datetime; use `l()`, `number_to_*` |
-
-### 2. Add or Update YAML
-
-Place files under **`config/locales/`** — e.g. `en.yml`, `articles.en.yml`. Keep **default locale** complete for keys you introduce; add secondary locales when the app actually ships them.
-
-### 3. Replace String Soup
-
-Swap `"Save"`, `"Cancel"`, concatenated greetings, etc., for **`t()`** calls and keys. Use **`%{name}`** — never string math for grammar.
-
-### 4. Verify
-
-In development, **`config.i18n.raise_on_missing_translations = true`** (if enabled) catches missing keys. Run the screen or mailer preview that uses the new copy.
-
-## Verification
-
-- [ ] User-facing static strings in views/helpers/controllers use **`t()`** / **`I18n.t`**, not raw literals (domain data excepted)
-- [ ] Lazy keys match the template path; shared partials use absolute keys
-- [ ] Interpolation uses YAML placeholders, not Ruby concatenation
-- [ ] Pluralization uses `count:` and proper `one` / `other` (and locale-specific keys when required)
-- [ ] No unbounded dynamic key paths from user input
-- [ ] `activerecord` attributes/errors follow Rails structure for forms
-- [ ] Locale file nesting mirrors the app structure (view paths, mailer paths) so keys resolve by convention
-- [ ] All user-facing error messages come from I18n and read as human language — join-table / FK attributes renamed to real-world names via `activerecord.attributes`
-- [ ] All user-visible dates and times go through `l()` with formats declared in locale YAML — no `strftime` in views or helpers
-
-## References
-
-- [references/patterns.md](references/patterns.md)
+| Task | Read |
+|------|------|
+| New feature copy | `references/patterns.md` § Key structure |
+| Strings in a view | `references/patterns.md` § Lazy lookup in views |
+| Strings in a helper / shared partial / controller | `references/patterns.md` § Absolute keys |
+| Dynamic values in copy | `references/patterns.md` § Interpolation |
+| Counts | `references/patterns.md` § Pluralization |
+| Dates, times, numbers | `references/patterns.md` § Datetime and numbers |
+| Validation messages / attribute labels / enums | `references/patterns.md` § Active Record labels and errors |
+| Missing-translation surfacing | `references/patterns.md` § Defaults and missing translations |
+| Mailer subjects and body copy | `references/patterns.md` § Mailers |
+| Specs touching copy | `references/patterns.md` § Testing |
+| Code review | `agent_harness_rails/rules/i18n.mdc` § Verification |

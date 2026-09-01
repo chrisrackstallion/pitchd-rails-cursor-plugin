@@ -6,30 +6,11 @@ Server-rendered HTML first. Controllers own **HTTP responses**; templates and St
 
 ## Response Hierarchy
 
-Prefer the simplest mechanism that satisfies the UX. Each step adds complexity — maximise use of `redirect_to`:
+The normative hierarchy — redirect → frames → streams, with `render` + **`status: :unprocessable_content`** on failed saves — lives in **`agent_harness_rails/rules/hotwire.mdc`** § Response Hierarchy. Gotchas worth pinning:
 
-1. **Full-page success** — `redirect_to` after a successful mutation. Turbo Drive performs a full-page visit by default; Turbo 8 may apply morphing on some refresh paths — do not assume every redirect is a morph. Pair with model-level broadcast refresh helpers when other tabs or users should update without a full navigation. Default for ordinary CRUD.
-2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Validation failures re-render with 422 inside the frame when possible.
-3. **Turbo Streams** — multi-target DOM updates. Last resort — see § Controller responses below.
-
-### Failed validations (controllers)
-
-Never redirect after a failed save — re-render the form with errors:
-
-```ruby
-def create
-  @article = Article.new(article_params)
-  if @article.save
-    redirect_to @article, notice: "Article created."
-  else
-    render :new, status: :unprocessable_content
-  end
-end
-```
-
-`status: :unprocessable_content` (422) tells Turbo the submission failed and prevents navigation advancement. Prefer **`:unprocessable_content`**, not **`:unprocessable_entity`**.
-
-When **`render :new` / `:edit`** does not re-run `new` / `edit`, pass **`locals:`** if the partial expects symbols your action did not assign — or rely on **instance variables** already set (e.g. `@article` after `Article.new` fails validation), matching what `new` would have exposed.
+- Turbo Drive performs a full-page visit on redirect by default; Turbo 8 may apply morphing on some refresh paths — do not assume every redirect is a morph. Pair redirects with model-level broadcast refresh helpers when other tabs or users should update without a full navigation.
+- `status: :unprocessable_content` (422) tells Turbo the submission failed and prevents navigation advancement.
+- When **`render :new` / `:edit`** does not re-run `new` / `edit`, pass **`locals:`** if the partial expects symbols your action did not assign — or rely on **instance variables** already set (e.g. `@article` after `Article.new` fails validation), matching what `new` would have exposed.
 
 ---
 

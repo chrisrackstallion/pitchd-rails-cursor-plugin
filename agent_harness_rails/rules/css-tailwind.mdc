@@ -12,31 +12,67 @@ Use **Tailwind the Rails way**: the **`tailwindcss-rails`** gem and the default 
 
 Canonical procedural detail: **`agent_harness_rails/skills/writing-css-tailwind/references/patterns.md`**. **Where** classes sit in markup (partials, `class_names`, helpers) stays in **`agent_harness_rails/rules/views.mdc`** and **`skills/writing-views`**.
 
+## Identify the Stack First
+
+| Signal | Action |
+|--------|--------|
+| `tailwindcss-rails` in Gemfile, `bin/rails tailwindcss:watch` in Procfile | Read **`agent_harness_rails/skills/writing-css-tailwind/references/patterns.md`** § Rails integration |
+| `tailwind.config.js` at repo root or under `config/` | Likely **v3**-style JS config — read patterns § Version notes |
+| `@import "tailwindcss"` in a single CSS file, theme in CSS | Likely **v4** CSS-first — do not paste v3-only snippets |
+| Editing only a partial / helper | This is a views concern — **`agent_harness_rails/rules/views.mdc`**, **`skills/writing-views`** |
+
 ## Tailwind v3 vs v4
 
 **Do not mix documentation.** v3 uses **`tailwind.config.js`** (JS config). v4 is often **CSS-first** (`@import "tailwindcss"`, theme in CSS). Identify which stack the project uses before editing config or copy-pasting snippets from the web.
 
 ## Utility-First, Rails-Structured
 
+Prefer the smallest change:
+
+- **One-off layout** → utilities on the element in the template.
+- **Repeated styled block** → partial.
+- **Repeated class string across many templates** → helper with `class_names`.
+- **Design tokens (colors, fonts, spacing)** → extend the theme, not repeated arbitrary values.
+- **Cross-cutting prose/forms glue** → consider `@apply` in **one** place (see § @apply).
+
+Structural rules:
+
 - **Utilities on elements** — default. Repetition is managed with **partials** and **helpers**, not premature abstraction.
 - **Partials** = markup + structure reuse; **helpers** = `class_names` and small composed tags; **ViewComponent** = optional when a partial + helper is insufficient (repeated subtree, clear API, tests) — not “everything is a component.”
-- **No parallel design system in JS** — no CSS-in-JS or client theme layers for ordinary Hotwire-first UI. Stimulus toggles **classes** or **`data-*`** hooks.
+- **No parallel design system in JS** — no CSS-in-JS or client theme layers for ordinary Hotwire-first UI. Stimulus toggles **classes** (`classList`) or **`data-*`** hooks — not big inline `style` maps.
 
 ## @apply
 
 **Rare.** Acceptable for narrow glue (e.g. prose harness, third-party widgets). **Not** a second component framework — if `@apply` proliferates, extract partials and helpers instead. See **`agent_harness_rails/skills/writing-css-tailwind/references/patterns.md`** § @apply.
+
+## Accessibility
+
+Non-negotiable, not a polish step:
+
+- **Visible focus** — never strip focus rings (`focus:`, `ring-`, `outline-`) for aesthetics; adjust colour, don't zero them without a replacement.
+- **Contrast** — keep text/background contrast readable in both light and dark themes.
+- **Semantic HTML first** — utilities decorate structure, they don't replace it (structure: **`agent_harness_rails/rules/views.mdc`**).
 
 ## Anti-Patterns
 
 | Anti-Pattern | Instead |
 |-------------|---------|
 | Token layers / bespoke naming that duplicates Tailwind’s scale without team payoff | Tailwind utilities + partials; extend theme when truly shared |
-| CSS-in-JS or component-library styling as the primary pattern for ERB + Hotwire apps | Utilities in templates; Stimulus toggles classes |
+| CSS-in-JS or component-library styling (styled-components, emotion, CSS modules) as the primary pattern for ERB + Hotwire apps | Utilities in templates; Stimulus toggles classes |
 | `@apply` everywhere | Partials and helper-returned class strings |
 | Giant class strings **only** in Ruby as the default API | Visible markup in ERB; helpers for real repetition |
 | Global CSS that assumes full page reload only, breaking Turbo morphing / frames | Test navigations and frame updates; avoid layout CSS that fights Turbo |
 | Pasting v3 `tailwind.config.js` patterns into a v4 CSS-first project (or the reverse) | Match the project’s actual major version |
-| Extra JS bundler complexity “because React did it” when importmap + Stimulus is the standard | One clear JS story; **`agent_harness_rails/rules/javascript.mdc`** |
+| Extra JS bundler complexity “because React did it”, or Vite/webpack layers **only** for Tailwind when `tailwindcss-rails` suffices | One clear JS story; **`agent_harness_rails/rules/javascript.mdc`** |
+
+## Verification
+
+- [ ] Tailwind config and docs match the project’s **major** version (v3 JS config vs v4 CSS-first).
+- [ ] Global `@tailwind` / `@import "tailwindcss"` live in the **documented** entry stylesheet, not ERB.
+- [ ] `@apply` is exceptional — not a second utility system.
+- [ ] Project colours/spacing live in **theme extension**, not endless arbitrary values.
+- [ ] Focus states and contrast are not stripped for aesthetics.
+- [ ] No duplicate “design system” in JS for Hotwire-first CRUD UI.
 
 ## Alignment
 

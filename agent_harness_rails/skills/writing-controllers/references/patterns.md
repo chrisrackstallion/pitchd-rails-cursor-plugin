@@ -1,14 +1,9 @@
 # Controller Patterns Reference
 
+Rules, anti-patterns, and the structure skeleton live in
+`agent_harness_rails/rules/controllers.mdc` — this file is worked mechanics.
+
 ## REST Mapping
-
-Every controller action maps to one of the seven RESTful actions. When you
-need a custom action, create a new resource instead.
-
-### The Rule
-
-If the action name is not `index`, `show`, `new`, `create`, `edit`,
-`update`, or `destroy`, you need a new controller.
 
 ### Mapping Custom Actions to Resources
 
@@ -88,9 +83,8 @@ parent. Use `resources` (plural) for 1:many.
 
 ### params.expect (Rails 8+)
 
-`params.expect` is the preferred way to extract and permit parameters. It
-replaces `params.require(:key).permit(...)` — more concise, raises on
-missing keys, and reads as a declaration.
+`params.expect` replaces `params.require(:key).permit(...)` — more concise,
+raises on missing keys, and reads as a declaration.
 
 ### Basic Usage
 
@@ -146,25 +140,17 @@ end
 
 ### Guidelines
 
-- Always use `params.expect` over `params.require.permit`
 - Keep params methods private and named `resource_params`
 - One params method per resource type
 - Never permit `:id` for creation — only for nested `_attributes`
 
 ---
 
-## Response Hierarchy
+## Failed Validations
 
-Prefer the simplest mechanism that satisfies the UX. Each step adds
-controller complexity — maximise use of `redirect_to`:
-
-1. **Full-page success** — `redirect_to` after a successful mutation. Turbo Drive performs a full-page visit by default; Turbo 8 may apply morphing on some refresh paths — do not assume every redirect is a morph. Pair with model-level broadcast refresh helpers when other tabs or users should update without a full navigation. Default for ordinary CRUD.
-2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Validation failures re-render with 422 inside the frame when possible.
-3. **Turbo Streams** — multi-target DOM updates. Last resort — see **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**.
-
-### Failed Validations
-
-Never redirect after a failed save — re-render the form with errors:
+Response ordering (redirect → frames → streams) is the canon in
+`agent_harness_rails/rules/controllers.mdc` § Response Hierarchy (Hotwire).
+The mechanics of the failure path:
 
 ```ruby
 def create
@@ -181,20 +167,17 @@ Here **`@article`** is already assigned, so templates that use **`@article`**
 need no **`locals:`**.
 
 `status: :unprocessable_content` (422) tells Turbo the submission failed
-and prevents navigation advancement. Prefer **`:unprocessable_content`**, not
-**`:unprocessable_entity`**.
+and prevents navigation advancement.
 
 When **`render :new` / `:edit`** does not re-run `new` / `edit`, pass **`locals:`**
 if the partial expects symbols your action did not assign — or rely on
 **instance variables** already set (e.g. `@article` after `Article.new` fails
 validation), matching what `new` would have exposed.
 
-#### The re-render must be resubmittable
+### The re-render must be resubmittable
 
-Re-rendering is only half of it: the form that comes back has to reach a route
-that exists with the verb it will emit. `form_with model:` infers that verb from
-`persisted?`, so an action whose finder can hand back either a new or an existing
-record has **two** failure renderings:
+The rule and its full rationale: `agent_harness_rails/rules/controllers.mdc`
+§ Response Hierarchy (Hotwire). The trap, worked:
 
 ```ruby
 # POST /cards/:card_id/closure — a singular resource whose create doubles as
@@ -211,8 +194,9 @@ def create
 end
 ```
 
-On the persisted branch the re-rendered form emits `PATCH`. If the resource is
-routed `POST`-only, the user's corrected resubmit 404s — no exception, no log
+On the persisted branch the re-rendered form emits `PATCH` (from
+`form_with model:` reading `persisted?`). If the resource is routed
+`POST`-only, the user's corrected resubmit 404s — no exception, no log
 line the app raises, the input simply gone. Fix it in the template by pinning
 `url:` and `method:` (`agent_harness_rails/rules/views.mdc` § Form Conventions),
 and confirm the verb with `bin/rails routes -g <resource>`.
@@ -311,7 +295,7 @@ logged-in user. To open specific controllers to unauthenticated visitors:
 ```ruby
 class SessionsController < ApplicationController
   allow_unauthenticated_access
-  skip_after_action :verify_authorized  # no user to authorize yet — see § Skipping Verification
+  skip_after_action :verify_authorized  # no user to authorize yet
   rate_limit to: 10, within: 3.minutes, only: :create
 
   def new
@@ -400,116 +384,17 @@ belongs_to :creator, class_name: "User", default: -> { Current.user }
 
 ## Authorization with Pundit
 
-### Philosophy
+Single-sourced elsewhere:
 
-Authorization logic lives in policy objects — one per model, one method
-per action. The controller calls `authorize`, the policy decides. This
-replaces Pundit policy checks in `before_action` and duplicating the full
-permission matrix on the model. Domain predicates (`published?`, `owned_by?(user)`)
-stay on the model; policies compose them.
+- **Rules** — every action calls `authorize`, index calls `policy_scope`,
+  the `ApplicationController` verification callbacks, and when to
+  `skip_after_action`: `agent_harness_rails/rules/policies.mdc`.
+- **Worked examples** — `policy_class:` for noun-resource policies, scopes,
+  namespaced policies, `pundit_user` shapes, view integration:
+  `agent_harness_rails/skills/writing-policies/references/patterns.md`.
 
-### Controller Integration
-
-```ruby
-class ArticlesController < ApplicationController
-  before_action :set_article, only: %i[show edit update destroy]
-
-  def index
-    @articles = policy_scope(Article).chronologically
-    authorize Article
-  end
-
-  def show
-    authorize @article
-  end
-
-  def create
-    @article = Article.new(article_params)
-    authorize @article
-
-    if @article.save
-      redirect_to @article
-    else
-      render :new, status: :unprocessable_content
-    end
-  end
-
-  def update
-    authorize @article
-
-    if @article.update(article_params)
-      redirect_to @article
-    else
-      render :edit, status: :unprocessable_content
-    end
-  end
-
-  def destroy
-    authorize @article
-    @article.destroy!
-    redirect_to articles_path
-  end
-
-  private
-    def set_article
-      @article = Article.find(params[:id])
-    end
-
-    def article_params
-      params.expect(article: %i[title body visibility])
-    end
-end
-```
-
-### State-Change Controllers (Noun Resources)
-
-State changes are modelled as CRUD on noun resources. The policy mirrors
-this — a `Cards::ClosurePolicy` with standard `create?`/`destroy?`. See
-the ClosuresController example above in "Mapping Custom Actions to
-Resources" for the full implementation with `before_action :set_card` and
-`authorize`. See the policies skill for the `Cards::ClosurePolicy` pattern.
-
-### ApplicationController Setup
-
-```ruby
-class ApplicationController < ActionController::Base
-  include Pundit::Authorization
-
-  after_action :verify_authorized
-  after_action :verify_policy_scoped, only: :index
-
-  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
-
-  private
-    def user_not_authorized
-      flash[:alert] = "You are not authorized to perform this action."
-      redirect_back_or_to(root_path)
-    end
-end
-```
-
-`verify_authorized` catches actions that never called `authorize`.
-`verify_policy_scoped` catches index actions that never called `policy_scope`.
-Use `skip_after_action` only for actions that intentionally skip authorization
-or scoping (public pages, health checks). See the policies skill § Skipping
-Verification.
-
-### Skipping Verification
-
-For actions that genuinely don't need authorization:
-
-```ruby
-class PagesController < ApplicationController
-  skip_after_action :verify_authorized
-  skip_after_action :verify_policy_scoped
-
-  def home
-  end
-end
-```
-
-See the policies skill for full policy patterns, scopes, roles, and
-namespaced policies.
+The state-change controllers above (§ REST Mapping) show the
+`authorize @card, policy_class: Cards::ClosurePolicy` call in place.
 
 ---
 
@@ -761,4 +646,3 @@ class ReportsController < ApplicationController
   end
 end
 ```
-
