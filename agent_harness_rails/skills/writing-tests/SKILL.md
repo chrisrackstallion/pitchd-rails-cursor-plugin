@@ -136,25 +136,13 @@ pointers, not restated here:
 Before finishing, verify:
 
 - [ ] Tests cover the happy path and key error paths
-- [ ] No mocks of ActiveRecord or internal objects
 - [ ] Each test is self-contained — can run in isolation
 - [ ] Factory uses minimal required attributes
-- [ ] Every system spec passes the **Five Gates** (interaction, uniqueness, JS-necessity, single-home, one-story)
-- [ ] System-spec count is within budget: ~1 canonical journey per CRUD resource, 1 per cross-resource journey, 1 per JS behaviour across the suite
-- [ ] No `visit`-and-assert-only specs in `spec/system/` — they live in `spec/requests/` with `response.body.include?`
-- [ ] No view specs (`spec/views/`, `type: :view`) — request specs own all rendering assertions
-- [ ] No Selenium spec passes under `rack_test` — if it does, move it back
-- [ ] System specs assert resource state on the page as the primary signal; flash copy is at most secondary
-- [ ] Request specs verify status codes, redirects, auth gates (one authorized + one unauthorized per endpoint), and rendering smoke for resources without a system spec
-- [ ] Model specs cover domain verbs, scopes, and state transitions
-- [ ] Policy specs cover the full role × action matrix
+- [ ] Every spec passes the tables in `agent_harness_rails/rules/testing.mdc`: the **Budget** and **Five Gates** for any system spec, § Ownership by Layer for where each assertion lives (no cross-layer duplication), and § What NOT to Do for the anti-patterns — mocking, view specs, visit-only specs, Selenium where `rack_test` passes, flash-as-signal, unanchored absences, indiscriminate setup
 - [ ] Tests read as documentation — a new developer understands the feature from reading them
 - [ ] No flaky tests — no sleep, no order-dependent state
 - [ ] Transactional fixtures are on — they cover system specs too (Rails 5.1+ shares the connection); database_cleaner is unnecessary
-- [ ] No cross-layer duplication — each behaviour is tested in exactly one spec type per the ownership table
 - [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
-- [ ] Every absence read off a page, response, or reloaded record has an anchor that goes red when the request breaks — and no assertion was added that cannot fail
-- [ ] Setup discriminates — no assertion is satisfied by the wrong outcome; each new example has been seen red once
 - [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
 - [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without an earned reason
 - [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag per `agent_harness_rails/rules/intent-tags.mdc`, the clause lists the file in `evaluations:`, and **`agent_harness_rails evals`** is green

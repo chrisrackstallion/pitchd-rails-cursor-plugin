@@ -223,9 +223,9 @@ Each class does one thing. The alternative is indirection.
 
 ### Partials Are Your Components
 
-In React, you extract a component to reuse a styled block. In Rails,
-you extract a partial. This is the primary reuse mechanism — not
-`@apply`, not CSS component classes.
+A repeated styled block extracts to a partial — the escalation ladder is
+**`agent_harness_rails/rules/css-tailwind.mdc`** § Utility-First,
+Rails-Structured.
 
 ```erb
 <%# Reuse by rendering the partial — not by creating a .card CSS class %>
@@ -263,9 +263,9 @@ end
 
 ### Helpers for Repeated Class Patterns
 
-When the *same set of classes* appears on different elements across
-many templates, a helper that returns the class string is cleaner than
-`@apply`. It's Ruby, it's testable, it composes.
+A class string repeated across many templates extracts to a helper — same
+ladder (**`agent_harness_rails/rules/css-tailwind.mdc`** § Utility-First,
+Rails-Structured). Worked example:
 
 ```ruby
 module ComponentHelper

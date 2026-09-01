@@ -64,15 +64,10 @@ Before touching any controller:
   and Budget rules govern which controllers get a system spec.
 - **Skim `agent_harness_rails/rules/javascript.mdc` and `agent_harness_rails/rules/hotwire.mdc`** for the
   anti-pattern tables.
-- **Capture a baseline.** Run the suite (or the relevant slice) and record:
-  ```bash
-  bin/rspec --format documentation > tmp/stimulus-spec-baseline.txt
-  bin/rubocop > tmp/stimulus-rubocop-baseline.txt 2>&1 || true
-  ```
-  Note: total spec count, system-spec count, Selenium spec count, runtime,
-  pass rate.
-- **Confirm the suite is green** — refactoring on red hides regressions. If
-  red, stop and report.
+- **Capture a baseline and confirm the suite is green** per
+  `agent_harness_rails/skills/refactoring-rails-specs/SKILL.md` § Pre-flight —
+  recording **controller count and total controller LOC** alongside the spec,
+  Selenium, runtime, and pass-rate numbers.
 - **Confirm scope.** Refactor in **batches by behaviour**, not "everything".
   If the user said "refactor Stimulus", ask which behaviour or page to start
   with — one cluster at a time (e.g. all disclosure / reveal-style
@@ -410,50 +405,15 @@ After all verdicts in the batch are executed:
 
 ### 8. Report
 
-Single-screen summary:
-
-```markdown
-## Refactored Stimulus: <cluster name>
-
-### Controllers touched
-- app/javascript/controllers/reveal_controller.js (REWRITE)
-- app/javascript/controllers/disclosure_controller.js (DELETE, merged into reveal)
-- app/javascript/controllers/dropdown_controller.js (SPLIT into dropdown + dismiss)
-
-### ERB partials updated
-- app/views/articles/_details.html.erb
-- app/views/layouts/_nav.html.erb
-- …
-
-### Specs
-- spec/system/disclosure_spec.rb (NEW canonical spec)
-- spec/system/dropdown_menu_spec.rb (KEEP)
-- spec/system/article_navigation_spec.rb (DELETED — duplicated disclosure coverage)
-
-### Counts
-                        Before   After
-Stimulus controllers     14        9
-Total controller LOC     1,820     980
-Selenium specs           7         4
-Suite runtime            42s       28s
-
-### Verdicts applied
-- KEEP: 4
-- REWRITE: 3
-- MERGE: 2 → 1 canonical
-- SPLIT: 1 → 2
-- DELETE: 2 (1 unused, 1 merged)
-
-### Coverage
-Every Stimulus behaviour has exactly one canonical system spec on the simplest
-representative page. Audit plan: tmp/refactor-stimulus-disclosure-plan.md
-
-### Verification
-- bin/rspec: green (N examples, 0 failures, 0 pending)
-- bin/rubocop: green
-- eslint (if configured): green
-- No ERB references to deleted controller names remain
-```
+Use the single-screen scaffold in
+`agent_harness_rails/skills/refactoring-rails-specs/SKILL.md` § Report, with
+the fleet substitutions: files touched lists **controllers (with their
+verdicts), ERB partials updated, and specs**; the counts table compares
+**Stimulus controllers, total controller LOC, Selenium specs, and runtime**;
+verdicts include **SPLIT**; verification adds **eslint (if configured)** and
+**"No ERB references to deleted controller names remain"**; the coverage
+statement is "Every Stimulus behaviour has exactly one canonical system spec
+on the simplest representative page."
 
 End with one line: **"Stimulus refactor complete. Suite is green and the
 fleet is harness-compliant."**
@@ -462,24 +422,20 @@ fleet is harness-compliant."**
 
 - **One behaviour cluster per session.** Fleet-wide audit plans become
   unreviewable.
-- **Never reduce behavioural coverage.** If a controller's behaviour is
-  currently uncovered by any spec, write the canonical system spec **before**
-  refactoring; refactor against a green spec.
 - **Never delete a controller without scanning every attachment.** ERB,
   view helpers that emit `data-controller`, mailers (rare), JSON responses
   embedding HTML — all candidates.
-- **Do not change server-side behaviour.** If the audit surfaces a server
-  problem (a bad route, a missing Turbo Stream, a JSON endpoint that should be
-  HTML), flag it in the report and stop. Server refactors run in a separate
-  session per **`agent_harness_rails/skills/implementing-rails-task/SKILL.md`**.
-- **Do not skip the audit plan.** Writing it to a temp file or printing it
-  before executing is mandatory — it is the reviewer's checklist.
 - **Selenium budget is a ceiling, not a target.** If a behaviour can be
   proved by a request spec asserting `Content-Type: text/vnd.turbo-stream.html`
   and the rendered fragment, do that — only Selenium when JS is truly
   necessary.
-- **Stop if the suite goes red and you cannot immediately restore it.** Roll
-  back the last verdict and report.
+- **Everything else follows the session protocol** in
+  `agent_harness_rails/skills/refactoring-rails-specs/SKILL.md` § Boundaries —
+  never reduce coverage (an uncovered controller gets its canonical system spec
+  **before** refactoring), do not change production/server-side code (a bad
+  route, a missing Turbo Stream, a JSON endpoint that should be HTML: flag and
+  stop), do not skip the audit plan, and stop if the suite goes red — with
+  "cluster" standing in for "resource" throughout.
 
 ## Anti-Patterns
 
@@ -507,16 +463,9 @@ Before declaring done:
 - [ ] Quality audit complete per the dimensions table
 - [ ] Audit plan written with one verdict per controller and rationale
 - [ ] Every controller passing audit has a one-sentence purpose
-- [ ] No controller exceeds ~100 lines without justification
-- [ ] All controllers use `static targets / values / classes / outlets`; no `querySelector` for the controller's own elements
-- [ ] State is derived from the DOM in every controller (no stranded closure variables)
-- [ ] Every `connect()` listener / timer / observer has a matching `disconnect()` teardown
+- [ ] Every controller passes the per-controller boxes of `agent_harness_rails/rules/javascript.mdc` § Verification (size, static declarations, DOM-derived state, lifecycle teardown, DOM safety, CSRF'd network calls, focus/`aria-*`, one canonical system spec per behaviour)
 - [ ] Cross-controller wiring uses outlets or `this.dispatch` — no globals
-- [ ] No `innerHTML = userInput`, no `eval`, no `alert()`
-- [ ] Network calls use `@rails/request.js` or hand-rolled `fetch` with CSRF
-- [ ] Overlay/modal controllers manage focus and toggle `aria-*`
 - [ ] No ERB still references a deleted controller name, target, value, class, or outlet
-- [ ] Each Stimulus behaviour has **exactly one** canonical system spec on the simplest representative page
 - [ ] Redundant per-page Stimulus system specs deleted; behaviour-level coverage preserved
 - [ ] `bin/rspec` is green (no new skipped/pending)
 - [ ] `bin/rubocop` is green; JS lint (if configured) is green
@@ -526,14 +475,10 @@ Before declaring done:
 
 ## Subagent (optional)
 
-Delegate to the **`rails-implementor`** subagent
-(`agent_harness_rails/agents/rails-implementor.md`) when the work is scoped to
-a single behaviour cluster and the parent wants to keep the main context
-clean; the parent passes the cluster, the controller map, baseline
-expectations, and a pointer to this skill in the task prompt.
-
-For larger fleets, prefer running this skill one cluster at a time in the main
-session — audit plans stay reviewable when diffs are small.
+Delegation follows `agent_harness_rails/skills/refactoring-rails-specs/SKILL.md`
+§ Subagent, with a single behaviour **cluster** as the scope unit and the
+parent passing the cluster, the **controller map**, baseline expectations, and
+a pointer to this skill in the task prompt.
 
 ## Related
 

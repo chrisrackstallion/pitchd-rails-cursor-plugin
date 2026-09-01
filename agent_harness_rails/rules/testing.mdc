@@ -165,6 +165,8 @@ about the same outcome. Worked example:
 | Anti-Pattern | Instead |
 |-------------|---------|
 | Mocking ActiveRecord | Use real records via FactoryBot |
+| Mocking the object under test | Never — stub a collaborator at a real boundary if you must, but the class or method being specified always runs for real |
+| Keeping a spec that only breaks during refactors | Delete it; keep the spec that documents a non-obvious business rule |
 | Testing private methods | Test through public interface |
 | `allow_any_instance_of` | Inject the dependency or test through the real path |
 | Shared examples for unrelated specs | Inline the assertion — duplication is fine |

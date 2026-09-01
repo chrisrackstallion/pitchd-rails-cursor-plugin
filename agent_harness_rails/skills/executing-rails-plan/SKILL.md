@@ -191,17 +191,14 @@ only once answered.
 
 #### R2. Delegate implementation
 
-Invoke **`rails-implementor`** with a self-contained revision prompt:
-
-- **Task name:** `Revision: <one-line summary of the change>`
-- **Task description:** Full description of what needs changing and why,
-  including the file(s) to touch and the expected outcome.
-- **Context:** Which plan task this relates to; any prior implementor output
-  that is relevant (paste key snippets — the subagent has no chat history).
-- **Work directory**, **Plan path**, **Spec path** as used in the original run.
-- Instruction: scope the change tightly — **do not** refactor surrounding code
-  outside the revision; follow `agent_harness_rails/skills/implementing-rails-task/SKILL.md` and
-  `agent_harness_rails/rules/rubocop.mdc`; no `git commit`.
+Invoke **`rails-implementor`** with a self-contained revision prompt — the
+same fields as step 1 of the per-task loop, with the task name
+`Revision: <one-line summary of the change>`, the full description of what
+needs changing (files to touch, expected outcome) as the task text, and
+Context naming which plan task the revision relates to (paste key prior
+implementor output — the subagent has no chat history). Add the instruction to
+scope the change tightly: **do not** refactor surrounding code outside the
+revision.
 
 #### R3. Delegate review
 
@@ -214,10 +211,11 @@ stdout. The reviewer never shells out for them.
 
 #### R4. Branch on status
 
-- **`Status: Approved`** → report back to the user (see **R5** below).
-- **`Issues found`** → feed review feedback to the implementor as a fix pass.
-  When re-invoking the reviewer after the fix, pass **User revisions** scoped
-  to what changed — do not re-review the full revision scope. Loop until Approved.
+- **`Status: Approved`** / **`Issues found`** → as
+  `agent_harness_rails/skills/writing-rails-plans/SKILL.md` § R4, except the fix
+  pass goes to **`rails-implementor`** rather than a plan edit (re-review scoped
+  via **User revisions** to what changed); loop until Approved, then report per
+  **R5** below.
 - **BLOCKED / NEEDS_CONTEXT** from implementor → stop, present the blocker to
   the user, and wait for a decision. If the user abandons an intent-change
   revision here, **revert the R1 clause amendments** — no shipped change
@@ -226,11 +224,11 @@ stdout. The reviewer never shells out for them.
 
 #### R5. Revision completion report
 
-Deliver a brief summary:
+Deliver the brief summary of
+`agent_harness_rails/skills/writing-rails-plans/SKILL.md` § R5 — what changed
+and where (files here, not plan sections), reviewer status, non-blocking notes
+— plus what is specific to an implementation revision:
 
-- What was changed and in which file(s).
-- Reviewer status (`Approved` after N iteration(s)).
-- Any non-blocking notes from the reviewer worth the user knowing.
 - Whether anything needs manual verification (tests run, RuboCop status).
 - Primitives sync, if any (clause amendments, `evaluations:`, the one provenance
   line — per the R1 classification), and the `agent_harness_rails guard --base <ref>`

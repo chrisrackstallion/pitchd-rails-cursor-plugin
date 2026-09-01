@@ -277,16 +277,9 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 | Loading every `writing-*` and rule without routing | Route by the compass's **Where to go next** index; expand only when cross-cutting. |
 | Coding or migrating during brainstorm | Stop; complete spec and **`writing-rails-plans`** first. |
 | Defaulting to JSON/SPA for app flows | Re-read **HTML as primary interface** in **`rails-omakase-compass`**. |
-| "If an RPC-shaped action is unavoidable…" | It almost never is. Model it RESTfully first — find the resource the action creates, updates, or destroys. Document exception only after the attempt. |
-| New "service object" as the first idea | Ask what **model** or **concern** owns the behaviour (`agent_harness_rails/rules/services.mdc`). Name the specific collaborator type if extraction is genuinely needed. |
+| Design drift the compass and rules already settle — RPC-shaped actions, service objects as the first idea, unscoped queries, context passed as parameters instead of `Current`, premature namespacing, speculative polymorphism, over-normalized schema, async as a default | Re-check **`rails-omakase-compass`** and the rule files the grounding step loaded (`agent_harness_rails/rules/services.mdc`, `models.mdc`, `routes.mdc`, `jobs.mdc`) instead of re-deriving them here. |
 | "Justified collaborator" as rationale for extraction | Justify specifically: form object, value object, query object. "Justified" without specifics is how service layer creep starts. |
 | Skipping compass on "small" features | Skim **`rails-omakase-compass`** whenever boundaries move. |
-| Skipping account scoping on any resource design | Ask: is every query in this design scoped to the account? |
-| Skipping `Current` attributes for request context | Thread `Current.user` / `Current.account`; do not pass context as method parameters or re-query it redundantly. |
-| Premature namespacing (`Admin::`, `Api::V1::`) | Ask: does this namespace pay for itself **today**? Speculative structure is YAGNI. |
-| Speculative polymorphism | Build for what exists today; extract when the second concrete case actually arrives. |
-| Over-normalized schema for unproven domain richness | Prefer simple foreign keys and denormalized columns; add junction tables and polymorphic joins when domain complexity is demonstrated. |
-| Async for "separation of concerns" | Job if it's slow, unreliable, or high-volume. Not as an architectural default. |
 | Big cohesive feature sent to planning as one plan | "Independent subsystems" does not fire on a single large capability. Use `## Delivery sequence` — one spec, deployable slices, one plan each. |
 | Splitting a spec into slices that cannot ship alone | Severable is not shippable. Fold it into the next slice, or keep one slice. |
 | Drafting every slice's plan up front | Plan one slice at a time; execution of slice 1 changes what slice 2's plan should say. |

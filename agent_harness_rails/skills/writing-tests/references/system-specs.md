@@ -296,58 +296,21 @@ end
 Add a second system spec only when edit or delete has UI that genuinely
 differs (e.g. delete is a confirmation modal driven by Stimulus).
 
-### Flash message and copy as the primary signal
+### Flash-as-signal, negative paths, needless Selenium, drive-bys
 
-Asserting `have_content("Article created.")` is brittle to copy changes.
-Use the resource state ("the article title appears on the page") as the
-primary signal that the action succeeded. Flash assertions are a fine
-*secondary* check when the flash itself is the feature (account locked,
-session expired, rate limited).
-
-### Negative-path proliferation
-
-Every "unauthorized user sees X," "missing param returns Y," "empty
-state shows Z" does not need a system spec. These belong in request
-specs (status / redirect) and policy specs (logic). Empty-state copy
-gets at most a request spec asserting `response.body.include?`.
-
-### Selenium when rack_test would do
-
-If the spec passes under `rack_test`, it is not a JavaScript spec.
-Selenium adds 10× the runtime and an order of magnitude more flakiness.
-Default to `rack_test`; switch only when the behaviour under test
-provably fails without JS.
-
-### Drive-by assertions
-
-A spec titled "user creates an article" must not also assert nav links,
-footer copy, sidebar widgets, or the global search bar. Each system
-spec tells one story. Drive-by assertions couple unrelated changes
-together — a footer copy change breaks the article-creation spec.
+Four more shapes to move or trim — all rows in
+`agent_harness_rails/rules/testing.mdc` § What NOT to Do: resource state, not
+flash copy, is the primary success signal; negative paths belong in request
+and policy specs; `rack_test` is the default driver, Selenium only when the
+spec provably fails without JS; and one story per spec, no drive-by
+assertions on nav, footer, or sidebar.
 
 ### `not_to` with nothing anchoring it
 
-Already in the skill, but worth restating for system specs, where it is
-the common case: `expect(page).not_to have_*` reads a **by-product**. It
-passes when the element is correctly hidden, and equally when the page
-500s, when the route is gone, and when the render comes back blank.
-
-Keep the `not_to` — it is what the example means — and add one assertion
-that goes red when the page breaks:
-
-```ruby
-expect(page).to have_content(article.title)   # anchor
-expect(page).not_to have_button("Delete")     # the behaviour under test
-```
-
-An anchor has to be able to fail. A line like
-`expect(page).to have_current_path(article_path(article))` earns its place;
-`expect(described_class).not_to be_nil` does not
-(`AgentHarnessRails/TautologicalAssertion`).
-
-This is about pages, not about negation. A negation the unit answers for
-itself — `expect(policy).not_to permit(...)`,
-`expect(article).not_to be_published` — needs nothing added
+The common case on pages: `expect(page).not_to have_*` passes when the
+element is correctly hidden, and equally when the page breaks. Keep the
+`not_to` and anchor it with one assertion that can fail; unit-level
+negations need nothing added
 (`agent_harness_rails/rules/testing.mdc` § Every Assertion Must Be Able to Fail).
 
 ---

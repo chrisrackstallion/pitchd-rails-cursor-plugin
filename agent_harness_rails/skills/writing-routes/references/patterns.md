@@ -200,5 +200,5 @@ Avoid testing every line of `routes.rb` syntax; test the integration surface tea
 
 ## Cross-References
 
-- **Controller action shape and new resources:** writing-controllers skill, `references/patterns.md` § REST Mapping.
+- **Controller action shape and new resources:** `agent_harness_rails/skills/writing-controllers/references/patterns.md` § REST Mapping.
 - **Authorization:** writing-policies skill — not in the router.

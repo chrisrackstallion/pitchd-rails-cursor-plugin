@@ -116,7 +116,7 @@ Read only what the task touches. Skills live under
 
 | Area | Skill | Rules |
 |------|-------|-------|
-| Plans / task breakdown; planning & execution workflows (workflow skills only when the question is about **how** to plan or run them) | `writing-rails-plans`, `executing-rails-plan` | — |
+| Plans / task breakdown; planning & execution workflows (workflow skills only when the question is about **how** to plan or run them) | `writing-rails-plans`, `executing-rails-plan`, `implementing-rails-task`, `reviewing-rails-work` | — |
 | Models / concerns / domain | `writing-models` | `models.mdc` |
 | Controllers / Turbo responses | `writing-controllers` | `controllers.mdc` |
 | Routes / REST mapping | `writing-routes` | `routes.mdc` |
