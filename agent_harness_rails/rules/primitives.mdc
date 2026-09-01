@@ -437,6 +437,10 @@ or the harness has no home here.
 
 ## Style
 
+- **Plain sentences a stranger can skim.** A clause or Shape bullet states its
+  constraint once, with no hedging, meta-commentary, or rationale paragraphs —
+  rationale is a one-line provenance entry. The size limits above bound length;
+  this bounds density: prose that pads within the limits is still a finding.
 - Prefer **relative links** inside the tree.
 - Capability filenames follow the app's resource names (`agent_harness_rails/rules/naming.mdc`)
   so code → doc lookup works by grep — and because the filename is what an

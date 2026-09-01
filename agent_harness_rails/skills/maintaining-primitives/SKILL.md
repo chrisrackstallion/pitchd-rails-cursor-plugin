@@ -213,6 +213,10 @@ clause out of the doc.
   capability), >~3 evaluations on one clause (two promises sharing an id, or a
   padded row), multi-line provenance entries, doc >~150 lines,
   `compilation.md` >~50 lines.
+- **Prose padding inside the limits** — a Shape bullet carrying hedging,
+  meta-commentary, or a rationale paragraph (rationale is a one-line provenance
+  entry). The constraint stays; the rhetoric goes
+  (`agent_harness_rails/rules/primitives.mdc` § Style).
 - No content that belongs elsewhere: app code, plan tasks, restated harness rules.
 - **Process noise** — provenance lines carrying review or task counts, agent or
   skill names, commands run, or progress narration

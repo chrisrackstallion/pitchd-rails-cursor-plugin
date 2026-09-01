@@ -261,6 +261,12 @@ restated mechanism), the **Approach** follows from it, **Alternatives
 considered:** is present (an explicit "none credible" counts — absence does
 not), and no task works around a framework default. Fighting the framework is
 a `philosophy:` finding even when every tactic is clean.
+**Readability:** the plan carries only key information in plain sentences —
+restated harness rules or requirements (rule paths and clause IDs own those),
+per-task justification paragraphs, filler prose, or a plan past ~300 lines
+outside code fences is a finding
+(`writing-rails-plans` § Write for the human reader). The same test applies to
+a spec under review (`brainstorming-rails-omakase` § Spec style).
 
 **Implementation:** Map changed files to skills; compass on overall drift; one
 home per behaviour for tests (`writing-tests`). **One home per behaviour for

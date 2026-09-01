@@ -487,6 +487,25 @@ Run: `bundle exec rspec spec/system/bars_spec.rb:12`
 Expected: PASS
 ````
 
+## Write for the human reader
+
+A person reads the plan before any agent executes it. Every line must earn its
+place:
+
+- **Don't restate what a citation already carries.** Requirements live in the
+  capability doc — cite clause IDs. Conventions live in the harness — cite the
+  rule path. Restating either is the largest source of plan bloat.
+- **Reasoning lives in the header, once.** **Problem / Approach / Alternatives
+  considered** carry the why for the whole plan; tasks state what and where,
+  with no per-task justification paragraphs.
+- **Task prose is one or two sentences.** The file list, the snippet, and the
+  RED/GREEN commands carry the detail; prose covers only what they cannot.
+- **No filler.** Cut hedges ("it's worth noting"), narration ("now we will"),
+  and summaries that repeat what a section just said.
+- **Size tripwire:** past ~300 lines outside code fences, the plan is either
+  restating rules and requirements (cut) or covering too big a slice (split —
+  see **PR and deployment scope**).
+
 ## No placeholders
 
 These are **plan failures** — fix before sharing:
@@ -562,6 +581,10 @@ After drafting the plan:
    explicit in both plan and doc; nothing contradicts `compilation.md` or the
    doc's recorded Shape and Provenance. Untraceable behaviour means either a
    missing clause (add it) or scope creep (cut it).
+10. **Readability scan:** Read the plan as the implementing developer. Cut
+    every sentence that doesn't change what they would type — restated rules
+    or clauses, per-task justification, filler — and check the ~300-line
+    tripwire (**Write for the human reader**).
 
 Fix issues inline; add tasks for missing requirements.
 

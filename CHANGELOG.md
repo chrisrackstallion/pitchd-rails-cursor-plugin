@@ -187,6 +187,17 @@ no parser can settle — when a code comment earns its line.
 
 ### Changed
 
+- **Plans, specs, and primitives docs are written for a human skimming, not a
+  model reading.** `writing-rails-plans` gains § Write for the human reader
+  (cite rule paths and clause IDs instead of restating them, one–two sentences
+  of prose per task, ~300-line tripwire) plus a matching self-review step;
+  `brainstorming-rails-omakase` gains § Spec style (a decision record, not a
+  transcript — one line per rejected approach, ~120-line tripwire) plus a
+  matching self-review step; `agent_harness_rails/rules/primitives.mdc` § Style
+  now bounds density as well as length (prose that pads within the size limits
+  is a finding, echoed in `maintaining-primitives` lint); and
+  `reviewing-rails-work` flags verbose plans and specs at plan phase.
+
 - **The three primitives commands print for a reader now.** `evals` and `guard`
   group findings under one path header per file instead of repeating the path
   on every line; `guard`'s `intent/rewritten` notice puts the old and new

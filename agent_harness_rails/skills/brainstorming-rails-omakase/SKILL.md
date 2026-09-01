@@ -134,6 +134,20 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 
 **Design for clear Rails boundaries:** Vertical slices (resource/feature cohesion), one obvious home for domain rules (models, concerns — not generic service registries). If the brainstorm drifts toward "generic executor," "repository on thin models," or duplicated rules in JS, stop and realign with **`rails-omakase-compass`**.
 
+### Spec style — a decision record, not a transcript
+
+The spec records what was agreed: outcome, chosen shape, constraints, intent,
+delivery sequence. It does not record how the conversation got there.
+
+- **Decisions and their one-line reasons only.** Rejected approaches get one
+  line each; the dialogue, option essays, and restated harness philosophy get
+  none — cite the rule or skill path instead.
+- **Plain declarative sentences, scaled to complexity.** A lens from the table
+  above that settles nothing for this feature is omitted, not filled in. Most
+  specs fit on one screen.
+- **Size tripwire:** a spec past ~120 lines is usually narrating rather than
+  deciding — or bundling subsystems that should split.
+
 ### Intent (in the spec)
 
 When the app has a `docs/primitives/` tree, the spec states the intent it settles
@@ -243,6 +257,9 @@ invalidates plans drafted ahead.
    at planning. A **single-slice** sequence is correct for most features —
    check that any split earns itself rather than that a split exists.
 4. Ambiguity — resolve dual interpretations.
+5. **Readability** — only key information in plain sentences: cut narration,
+   restated philosophy, empty lens sections, and check the ~120-line tripwire
+   (see **Spec style**).
 
 **User review gate**
 
@@ -295,6 +312,7 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 | Big cohesive feature sent to planning as one plan | "Independent subsystems" does not fire on a single large capability. Use `## Delivery sequence` — one spec, deployable slices, one plan each. |
 | Splitting a spec into slices that cannot ship alone | Severable is not shippable. Fold it into the next slice, or keep one slice. |
 | Drafting every slice's plan up front | Plan one slice at a time; execution of slice 1 changes what slice 2's plan should say. |
+| Spec narrates the conversation or restates harness philosophy | A spec is a decision record — keep decisions and one-line reasons; cite rules instead of restating them (see **Spec style**). |
 | Skipping user approval of the **file** | Chat agreement is not enough — gate on reviewed spec on disk. |
 
 ## Related
