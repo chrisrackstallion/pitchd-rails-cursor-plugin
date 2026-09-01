@@ -65,7 +65,7 @@ Do not assert findings from memory, diff headers, or inference alone. Drop any f
    no stdout, no stderr and no exit code. Cite the **Mechanical primitives
    output** block the delegating prompt carries; `evals`, `guard`, and `proofs`
    all print on every run, so an empty result is a missing result, not a clean
-   one (`agent_harness_rails/rules/primitives.mdc` § None of these is quiet).
+   one (`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet).
 
    No block: ask once. Still nothing — report **`UNVERIFIED (CLI unavailable)`**
    on the report's **Mechanical checks** line, naming the checks that did not

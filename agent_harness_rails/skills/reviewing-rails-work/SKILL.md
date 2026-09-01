@@ -115,21 +115,16 @@ delegating agent once for the output; retry a call once if you have a shell.
 Then report those checks as unverified in the **primitives:** section and name
 what stayed unchecked. A hand read of the frontmatter and the `intent:` tags is
 **not** the same check — reporting it as coverage hides that nothing ran
-(`agent_harness_rails/rules/primitives.mdc` § None of these is quiet). None of
-these commands is silent, so an empty result is a missing result and never a
+(`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet). None
+of these commands is silent, so an empty result is a missing result and never a
 green one: `Status: Approved` resting on the mechanical checks is not available
 on one.
 
-**`evals` settles** clause coverage, dead spec paths, untagged evaluations, and
-tags naming a superseded clause, with file:line — cite it rather than
-re-deriving it by hand, and spend the review on what it cannot judge: whether a
-clause is the *right* clause.
-
-**`guard` reads what `evals` cannot.** `evals` reads the tree as it stands;
-`guard` reads what this change *did* to it — a clause reworded under the same
-id, one deleted rather than superseded, an evaluation dropped or moved to a
-layer that cannot hold it, a tagged example hollowed out, an edited provenance
-entry. Its output is notices, never offences, so cite them with a
+What each command checks — and the guard notice taxonomy — is
+**`agent_harness_rails/rules/primitives-cli.mdc`**. `evals` settles the
+mechanical layer with file:line output: cite it rather than re-deriving it by
+hand, and spend the review on what it cannot judge — whether a clause is the
+*right* clause. `guard` output is notices, never offences, so cite them with a
 verdict rather than copying them in as findings. Two turn into findings:
 
 - An **intent** notice (`intent/rewritten`, `intent/vanished`, `doc/removed`,

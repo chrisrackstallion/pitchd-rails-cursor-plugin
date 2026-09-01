@@ -80,7 +80,8 @@ a vague line is what produces a duplicate doc.
   revision changes intent (`executing-rails-plan` R1 classification).
   Never silently rewritten by an implementor — every amendment traces to an
   explicit user decision, which **`agent_harness_rails guard`** reports as
-  `intent/rewritten` when one does not (§ What a change did to the record).
+  `intent/rewritten` when one does not
+  (`agent_harness_rails/rules/primitives-cli.mdc` § What a change did to the record).
 - **`## Shape`** / **`evaluations:`** / `status:` — Agent-maintained at the
   defined write points: brainstorm (seeds the doc: `status: shaping`, rough
   Shape), planner (Shape; `status: planned` at final approval, except
@@ -268,7 +269,8 @@ it "shows replies nested under their parent", intent: "comment_threads#I2" do
 The capability is the doc's filename without `.md`. One example may carry
 several clauses as a list — `intent: %w[comment_threads#I2 comment_threads#I3]`
 — and a clause proven by four examples is tagged on all four. Nothing fails when
-only three of them are (§ Which examples prove a clause), so this is the rule
+only three of them are (`agent_harness_rails/rules/primitives-cli.mdc`
+§ Which examples prove a clause), so this is the rule
 that has to be held rather than relied on.
 
 **On the example, never on the group.** A tag on a `describe`, `context`, or
@@ -289,117 +291,17 @@ Renaming an example cannot break the link; deleting it breaks it loudly.
 
 ### Checked mechanically
 
-```bash
-agent_harness_rails evals                    # from the app root; exits 1 on findings
-```
-
-It checks clause ↔ evaluation and nothing else: unproven built clauses, evaluations
-naming a file that does not exist or does not carry the tag, tags naming a clause
-that is absent or superseded, tags sitting on a group rather than an example,
-duplicate ids, dangling supersessions, capability docs nested in a subdirectory,
-and docs still in the retired prose format. Everything below — sizes, index sync, provenance
-style — is judgment, and stays with the `lint` operation in `maintaining-primitives`.
-
-### What a change did to the record
-
-```bash
-agent_harness_rails guard --base main        # notices only; exit 0 whenever it ran
-```
-
-`evals` is stateless — it asks whether the tree is well-formed **now**, and a
-whole class of drift passes it green. Reword a clause under the same id, hollow
-out the example proving it, move a browser promise onto a model spec: every link
-stays well-formed while the record stops describing the app. Seeing that needs a
-**before**, so `guard` parses the tree twice — at `--base` and in the working
-tree — and reports what got **smaller or different**. Growth is silent: new
-clauses, new tagged examples, added evaluations and appended provenance produce
-nothing.
-
-| Notice | What moved |
-|--------|------------|
-| `intent/rewritten` | a clause promises something else under the same id, with no provenance entry |
-| `intent/vanished` | a clause id is gone with no tombstone |
-| `intent/deactivated` | a clause was superseded or retired — the sanctioned path, still worth seeing |
-| `evaluation/dropped` · `evaluation/relayered` | an active clause is proven by less, or at a layer that may not hold it |
-| `evaluation/moved` | the same layer, a different file — confirm it proves what the old one did |
-| `proof/removed` · `proof/weakened` · `proof/changed` | a tagged example went, lost assertions, or changed |
-| `doc/removed` · `status/downgraded` · `provenance/rewritten` | the record itself got smaller |
-| `doc/unreadable` | the doc stopped parsing, so nothing about it can be compared |
-
-**Everything it prints is a notice and nothing fails.** Each of these has an
-innocent cause as well as a suspicious one — a spec refactor legitimately
-produces most of the proof notices — and a check that stops honest work is a
-check that gets routed around.
-
-The split in handling is what makes it useful. **Proof** notices belong to the
-agent that caused them: restore the assertion, the example, or the row, then
-re-run. **Intent** notices belong to the user. An intent notice is discharged by
-a provenance entry naming the clause — and an agent writing that entry to quiet
-its own notice has laundered exactly the change this exists to surface. Surface
-it instead; only a user decision amends intent (§ Ownership and write points).
-
-### Which examples prove a clause
-
-```bash
-agent_harness_rails proofs 'comment_threads#I2'   # a lookup; exit 0 always — quote the `#`
-```
-
-`evals` counts **files**. A clause naming `spec/policies/comment_policy_spec.rb`
-is satisfied by **one** tag in that file — so a clause meant to be proven by four
-denials is green with three tagged, and `guard` is silent too, because an untagged
-new example is growth. That is the gap `proofs` fills: the tagged examples behind
-each clause, per evaluation file, as a listing to hold against the plan's proof
-set.
-
-```
-  I3  Only a published stage accepts entries.
-      spec/policies/long_list_policy_spec.rb — 3 tagged examples
-        :3   allows entry to a published stage    1 assertion
-        :11  denies entry to an archived stage    2 assertions
-        :16  denies entry to a locked stage       1 assertion
-```
-
-A planned example missing from the listing is found in the spec file and tagged —
-or written. Untagged examples are deliberately **not** printed: they drowned the
-report in any real spec file, and a reader holding the plan already knows which
-example is missing; `--format json` carries them when a step needs the full
-picture. A tag on a `describe` is named as proving nothing rather than listed
-among the proofs — there is no example under it — and the footer counts every
-tag `evals` will reject.
-
-**Nothing here is an offence and the exit code is always 0.** Most examples in a
-spec file carry no tag by design — only evaluation examples are tagged — so a
-tagged count is a number to hold against the plan's **Intent impact** row, which
-names the cases the clause needs. Made a gate it would fire on nearly every file.
-`--since main` prints one counted line per clause whose spec files a change
-touched, untracked files included, which is the shape a task's verify step runs —
-a count that comes up short is drilled into by naming the clause.
-
-### None of these is quiet
-
-Every one of them prints. `evals` closes with `6 capabilities, 37 clauses — no
-offences`; `guard` with `compared against <ref>: no change to
-intent or the specs that prove it`; `proofs` with a line per clause, or `no
-intent clauses found`. A real failure prints a Bundler or Ruby stack on stderr.
-
-So **an empty result is not a clean run — it is a missing result.** A call that
-came back with no stdout, no stderr and no exit code observed nothing about the
-tree, and "the CLI returned no output" describes the tool bridge, not the CLI.
-The common shape is a subagent: a worker whose shell is withheld (a `readonly`
-agent type) or whose result never arrived.
-
-Retry once, then report **`UNVERIFIED (CLI unavailable)`** against the checks
-that did not run, and name what rested on them. Reading the frontmatter and the
-`intent:` tags by hand is a different check and does not discharge this one — a
-hand audit that happens to agree is luck, and recorded as a pass it hides that
-nothing ran.
-
-The arrangement that holds: whoever **can** run them does, once, and hands the
-output over. An orchestrator dispatching a review runs the three commands and
-pastes their stdout into the review prompt; the reviewer cites that block
-instead of shelling out
-(`agent_harness_rails/skills/executing-rails-plan/SKILL.md` § Delegate harness
-review).
+Three CLI commands keep this record honest: **`agent_harness_rails evals`**
+(is every clause proven and every proof live — exits 1 on findings),
+**`agent_harness_rails guard --base <ref>`** (what a change did to the record,
+as notices that never fail a run), and **`agent_harness_rails proofs`** (which
+tagged examples stand behind a clause). Their command reference, the guard
+notice taxonomy, and the silent-CLI protocol
+(**`UNVERIFIED (CLI unavailable)`**) are in
+**`agent_harness_rails/rules/primitives-cli.mdc`** — none of them is quiet, so
+an empty result is a missing result, never a clean one. Everything they do not
+check — sizes, index sync, provenance style — is judgment, and stays with the
+`lint` operation in `maintaining-primitives`.
 
 ### Provenance
 

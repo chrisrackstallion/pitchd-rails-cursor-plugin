@@ -27,37 +27,33 @@ Apply **`agent_harness_rails/rules/primitives.mdc`** for any edits under `docs/p
 Intent clauses and their evaluations live in each doc's **YAML frontmatter**, not
 in prose sections.
 
-Run **`agent_harness_rails evals`** before reporting on any operation that touched the tree,
-and as the first step of **`lint`**. It settles everything mechanical
-(`agent_harness_rails/rules/primitives.mdc` § Checked mechanically) with
-file:line output you should cite rather than restate. Every error is a real
-defect; there is no annotation that excuses an unproven clause. Its one
-warning, `clause/in-flight` (a doc whose plan landed ahead of its code), is an
-honest state, not a defect to silence.
+The CLI semantics — what `evals`, `guard`, and `proofs` each check, the guard
+notice taxonomy, and the silent-CLI protocol — are in
+**`agent_harness_rails/rules/primitives-cli.mdc`**. Your part as maintainer:
 
-Any operation that **wrote** to the tree also ends with
-**`agent_harness_rails guard --base <the commit the pass started from>`** —
-notice-only, never fails — and its notices go in your report. You hold the widest
-write access of any agent in this harness, so your own diff is the one most worth
-reading back. Restore proof you dropped from a live clause; hand
-`intent/rewritten`, `intent/vanished`, and `provenance/rewritten` to the human
-untouched, and never discharge one by writing the provenance entry that silences
-it (`agent_harness_rails/skills/maintaining-primitives/SKILL.md` § Close every
-writing pass by reading your own diff back).
-
-**A run with no output is not a green run.** Both commands print a summary line
-on every invocation, so an empty tool result — no stdout, no stderr, no exit
-code — means the call did not reach the CLI, which happens to subagents. Retry
-once, then report **`UNVERIFIED (CLI unavailable)`** for the checks that did not
-run rather than reading the frontmatter by hand and reporting that as the check
-(`agent_harness_rails/rules/primitives.mdc` § None of these is quiet).
-
-What it **cannot** settle is whether a tagged example actually proves its
-clause: breaking the clause has to turn one of its evaluations red
-(`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
-A green row over a clause claiming *only* or *never* with one happy path behind
-it is the failure mode this tree is most prone to — nothing mechanical will
-flag it.
+- Run **`agent_harness_rails evals`** before reporting on any operation that
+  touched the tree, and as the first step of **`lint`**; cite its file:line
+  output rather than restating it. Its one warning, `clause/in-flight`, is an
+  honest state, not a defect to silence.
+- Any operation that **wrote** to the tree also ends with
+  **`agent_harness_rails guard --base <the commit the pass started from>`**,
+  and its notices go in your report. You hold the widest write access of any
+  agent in this harness, so your own diff is the one most worth reading back.
+  Restore proof you dropped from a live clause; hand `intent/rewritten`,
+  `intent/vanished`, and `provenance/rewritten` to the human untouched, and
+  never discharge one by writing the provenance entry that silences it
+  (`agent_harness_rails/skills/maintaining-primitives/SKILL.md` § Close every
+  writing pass by reading your own diff back).
+- **A run with no output is not a green run** — which happens to subagents.
+  Retry once, then report **`UNVERIFIED (CLI unavailable)`** for the checks
+  that did not run rather than reading the frontmatter by hand and reporting
+  that as the check
+  (`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet).
+- What nothing mechanical settles is whether a tagged example actually proves
+  its clause (`agent_harness_rails/rules/intent-tags.mdc` § What counts as
+  proving a clause) — a green row over a clause claiming *only* or *never*
+  with one happy path behind it is the failure mode this tree is most prone
+  to, and it is yours to judge.
 
 Parent must supply: **operation** (`capture` | `trace` | `update` | `lint`),
 tree root (default `docs/primitives/`), the target capability or question text,

@@ -155,17 +155,16 @@ target capability doc, and **`compilation.md`**.
      one-sentence `clause:` entries (`I1`, `I2`, …). **Split as you
      transcribe.** Gate answers arrive in umbrella form — *"users need to
      manage their comments"* — and one behaviour per clause is the rule
-     (`agent_harness_rails/rules/primitives.mdc` § Intent clauses); a verbatim
-     umbrella is the largest source of clauses no example can prove. Draft
+     (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). Draft
      `## Shape` (deltas only) from the approach-gate outcome. Skeleton:
      `agent_harness_rails/skills/maintaining-primitives/references/templates.md`.
    - **Missing, existing feature (lazy backfill):** create it from what the
      code demonstrably does plus the requirements-gate answers; `evaluations:`
      from specs that exist and carry the `intent:` tag — shipped behaviour with
-     **no** spec home still gets its clause, bare, and `agent_harness_rails
-     evals` fails on it until a spec proves it (same as a `capture` backfill:
-     record the gap, report it as blocking `writing-tests` work, and never
-     annotate it into passing); provenance opens with
+     **no** spec home still gets its clause, bare: record the gap and report it
+     as blocking `writing-tests` work; no annotation excuses it
+     (`agent_harness_rails/rules/primitives.mdc` § Evaluations); provenance
+     opens with
      `YYYY-MM-DD — backfilled from existing behaviour; prior history in git.`
      Set **`status: built`** — the feature is already shipped, and the plan
      being drafted is an amendment to it (final approval leaves `built` docs
@@ -610,7 +609,7 @@ After drafting, delegate to **`rails-reviewer`**
 | **Spec path** | Path to the spec or requirements doc, or `none` |
 | **Scope** | The plan file path again, or `full plan` |
 | **User revisions** | (optional) Bullet summary of what the user changed — reviewer focuses only on these sections. Example: `- Task 3: replaced form object with model verb; - File map: removed app/forms/publish_form.rb` |
-| **Mechanical primitives output** | When the app has a `docs/primitives/` tree: the **full stdout** of `agent_harness_rails evals` and `agent_harness_rails guard --base <ref>`, run by you and pasted under the heading **Mechanical primitives output (authoritative — do not re-run)**. `no primitives tree` when the app has none. The reviewer is `readonly: true` and may have no shell — and a subagent shell that returns no stdout, no stderr and no exit code reads to it as a silent CLI (`agent_harness_rails/rules/primitives.mdc` § None of these is quiet). |
+| **Mechanical primitives output** | When the app has a `docs/primitives/` tree: the **full stdout** of `agent_harness_rails evals` and `agent_harness_rails guard --base <ref>`, run by you and pasted under the heading **Mechanical primitives output (authoritative — do not re-run)**. `no primitives tree` when the app has none. The reviewer is `readonly: true` and may have no shell — and a subagent shell that returns no stdout, no stderr and no exit code reads to it as a silent CLI (`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet). |
 
 Invoke with **`/rails-reviewer`** plus that context, or use the Task tool.
 
@@ -662,18 +661,14 @@ Once the plan is finally approved (Pass 1 with no edits, or Pass 2 Approved):
 
 1. Flip the capability doc's frontmatter to **`status: planned`** (leave
    `built` docs at `built` — an amendment plan does not un-build a capability).
-2. Append **one** provenance line covering the whole planning session —
-   **provenance records events, not edits**; five drafting revisions are still
-   one `planned` event:
+2. Append **one** provenance line covering the whole planning session — one
+   line per event, not per edit, and nothing about how the plan got written
+   (`agent_harness_rails/rules/primitives.mdc` § Provenance):
 
    ```markdown
    - YYYY-MM-DD — planned: docs/plans/YYYY-MM-DD-<feature>.md. [Rejected
      alternatives from the header's Alternatives considered, one line.]
    ```
-
-   Nothing about how the plan got written — reviewer passes, questions asked,
-   sections rewritten (`agent_harness_rails/rules/primitives.mdc`
-   § Provenance).
 
 3. Add or update the capability's line in `docs/primitives/index.md`.
 

@@ -97,7 +97,7 @@ Invoke **`rails-reviewer`** with:
   agent_harness_rails proofs --since <the ref this task started from>
   ```
 
-  The reviewer is `readonly: true` and may have no shell at all, and a subagent shell can hand back a result with no stdout, no stderr and no exit code — which reads to the reviewer as a silent CLI and gets substituted with a hand audit of the frontmatter (`agent_harness_rails/rules/primitives.mdc` § None of these is quiet). Running them here removes that failure from the loop. Paste verbatim **including the summary lines** — a truncated block reads as a clean run. If a command fails in your own shell, fix that before dispatching rather than sending the reviewer a gap. No tree → say `no primitives tree`.
+  The reviewer is `readonly: true` and may have no shell at all — an empty result would read to it as a silent CLI (`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet); running them here removes that failure from the loop. Paste verbatim **including the summary lines** — a truncated block reads as a clean run. If a command fails in your own shell, fix that before dispatching rather than sending the reviewer a gap. No tree → say `no primitives tree`.
 
 Instruction: follow **`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`** and return the standard **harness review** report. The pasted block is the mechanical result — the reviewer cites it and does not re-run it.
 
@@ -314,26 +314,24 @@ updates the capability doc directly (see the Hard rules carve-out):
    clause needs and that output counts each clause's tagged examples; a count
    that comes up short is drilled into with
    **`agent_harness_rails proofs '<capability>#I<n>'`**, whose tagged listing
-   shows which planned case is missing. Do this
-   before filling the row: `evals` treats one tag as proof of the whole file, so
-   a clause the plan meant to prove with four denials fills its row and goes
-   green with three tagged. A case the row named and the listing does not show
+   shows which planned case is missing. Do this before filling the row —
+   `evals` counts files, not cases
+   (`agent_harness_rails/rules/primitives-cli.mdc` § Which examples prove a
+   clause). A case the row named and the listing does not show
    goes back through the implement → review loop, not into `evaluations:`.
    A declared row no spec delivered is a gap. A clause listed `unchanged — regression contract`
    whose evaluation had its **assertions** edited is the one to stop on: a
    refactor may move an evaluation's file, never change what it asserts — an
    edited assertion means behaviour moved and the plan was a mislabelled
    amendment; say so rather than filing the row. `agent_harness_rails guard`
-   (step 2) names that case mechanically as `proof/weakened`, so it does not
-   depend on spotting it by eye.
+   (step 2) names that case mechanically as `proof/weakened`.
 
-   **Read the reported examples against the clause before filling the row.**
-   Breaking the clause has to turn one of them red
+   **Read the reported examples against the clause before filling the row** —
+   breaking the clause has to turn one of them red
    (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
    A clause claiming *only*, *never*, or *any* that came back with a single
-   happy-path example is **not** covered — send it back through the
-   implement → review loop for the missing spec rather than filling a row that
-   proves less than the clause says.
+   happy-path example goes back through the implement → review loop for the
+   missing spec, not into a row that proves less than the clause says.
 2. **Run the mechanical checks** — they are the check, not a formality:
 
    ```bash
@@ -342,17 +340,17 @@ updates the capability doc directly (see the Hard rules carve-out):
    agent_harness_rails proofs --since <ref>  # tagged-example counts per touched clause
    ```
 
-   `evals` green is a precondition for step 3. Every error is a real gap — no
-   annotation excuses an unproven clause; close it by writing the spec and
-   tagging the example, never by editing the doc. The one non-blocking warning
-   is `clause/in-flight`, the doc's own mid-amendment state, which this
-   close-out clears.
+   `evals` green is a precondition for step 3. Every error is closed by
+   writing the spec and tagging the example, never by editing the doc
+   (`agent_harness_rails/rules/primitives.mdc` § Evaluations). The one
+   non-blocking warning is `clause/in-flight`, the doc's own mid-amendment
+   state, which this close-out clears.
 
-   `guard` answers what `evals` structurally cannot: not "is every clause
-   hooked up" but "what did this run do to promises that already existed".
-   Pass the commit the run started from — the branch point (`--base main`) for
-   a whole-branch close-out. Then act by kind, because the two kinds have
-   opposite handling:
+   `guard` reads what this run did to promises that already existed
+   (`agent_harness_rails/rules/primitives-cli.mdc` § What a change did to the
+   record). Pass the commit the run started from — the branch point
+   (`--base main`) for a whole-branch close-out. Then act by kind, because the
+   two kinds have opposite handling:
 
    - **Proof got smaller** (`proof/removed`, `proof/weakened`,
      `evaluation/dropped`, `evaluation/relayered`) — a live clause is proven by
@@ -382,9 +380,8 @@ updates the capability doc directly (see the Hard rules carve-out):
      rejected alternatives, or notable reviewer-approved exceptions, one line.]
    ```
 
-   **No run mechanics** — task counts, review iterations, fix passes, which
-   subagents ran, commands executed. Those belong in this run's handoff report
-   (step 9) and git (`agent_harness_rails/rules/primitives.mdc` § Provenance).
+   **No run mechanics** — those belong in this run's handoff report (step 9)
+   and git (`agent_harness_rails/rules/primitives.mdc` § Provenance).
 
    Fold in any **`primitives:` provenance candidates** from the reviewer
    reports (decisions, constraints, accepted debt) — one line each, only those

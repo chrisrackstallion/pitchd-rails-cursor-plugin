@@ -47,16 +47,14 @@ docs/primitives/
 
 `compilation.md` comes from steps 2–4, not the skeleton alone.
 
-Capability docs carry their intent clauses and evaluations in **YAML
-frontmatter**, not prose sections — that is what lets **`agent_harness_rails evals`** check
-that every clause is proven (`agent_harness_rails/rules/primitives.mdc`). The
-first docs arrive later, from planning or a `capture` backfill.
+The first capability docs arrive later, from planning or a `capture` backfill
+(format: `agent_harness_rails/rules/primitives.mdc`).
 
 Mention `agent_harness_rails evals` to the user once, here: it ships with this gem and belongs
 in CI beside RuboCop, so the tree cannot quietly rot. Say what it does and does
-not settle — it proves every clause **names** a spec that carries its tag; no
-parser can tell whether that spec would actually go red if the clause stopped
-being true. That judgment is a review responsibility from day one
+not settle (`agent_harness_rails/rules/primitives-cli.mdc` § Checked
+mechanically) — the judgment it cannot make, whether a tagged spec would
+actually go red, is a review responsibility from day one
 (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
 
 ### 2. Survey (read-only)
