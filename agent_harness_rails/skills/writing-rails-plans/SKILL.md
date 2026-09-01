@@ -1,20 +1,12 @@
 ---
 name: writing-rails-plans
 description: >-
-  Write implementation plans for multi-step Rails work before application
-  code. Plans follow vertical REST slices, opinionated Rails best practice,
-  and this harness's skills and rules. After drafting: review with
-  rails-reviewer and apply that feedback to the plan file; re-run for final
-  sign-off when Pass 1 required edits. Use when turning a spec into tasks,
-  planning a feature, or breaking work into checklisted steps. When the app
-  has a docs/primitives/ tree, planning also creates or amends the feature's
-  capability doc (intent clauses, shape) via the primitives gate. May use
-  referencing-unofficial-37signals-guide for supplemental third-party topic
-  fetches or referencing-rails-guides for authoritative Rails API docs when
-  compass and scoped harness material are insufficient for best-practice
-  clarity. Also handles post-session revision requests — when the user says
-  something needs changing or isn't right after the skill has run, treat it as
-  a self-contained plan revision and run a scoped reviewer pass.
+  Write implementation plans for multi-step Rails work before application code
+  — vertical REST slices, harness skills and rules, rails-reviewer sign-off.
+  Use when turning a spec into tasks, planning a feature, or breaking work
+  into checklisted steps; also handles post-session plan revisions. With a
+  docs/primitives/ tree, creates or amends the feature's capability doc via
+  the primitives gate.
 ---
 
 # Writing Rails Implementation Plans

@@ -1,12 +1,12 @@
 ---
 name: rails-omakase-compass
 description: >-
-  High-level decision lens for Rails work grounded in opinionated Rails best
-  practice — omakase defaults, server-owned truth, REST gravity, majestic
-  monolith, and when to simplify vs extract. Use before debating architecture,
-  when choosing HTML vs API, or when a change feels "off-Rails"; defers HOW to
-  writing-* skills and agent_harness_rails/rules/*.mdc. Not for Stimulus/Turbo
-  syntax, plan templates, or file layout.
+  High-level decision lens for Rails work — omakase defaults, server-owned
+  truth, REST gravity, majestic monolith, simplify vs extract. Use before
+  debating architecture, when choosing HTML vs API, or when a change feels
+  "off-Rails"; defers HOW to writing-* skills and
+  agent_harness_rails/rules/*.mdc. Not for Stimulus/Turbo syntax, plan
+  templates, or file layout.
 ---
 
 # Rails Omakase Compass

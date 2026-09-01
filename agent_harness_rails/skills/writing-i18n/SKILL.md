@@ -2,13 +2,11 @@
 name: writing-i18n
 description: >-
   Organize Rails I18n — YAML structure, lazy lookup in views, absolute keys in
-  helpers and controllers, interpolation and pluralization, datetime/number
-  formats, and Active Record error messages. Opinionated Rails best practice: boring keys,
-  framework-first, no string concatenation in templates. Use when adding or
-  changing locales, extracting user-facing copy from ERB, flash messages, or
-  validation messages; not for translation vendor tooling or SPA i18n-js.
-  Triggers: locales, config/locales YAML, t(), I18n.t, missing translations,
-  flash copy, human_attribute_name.
+  helpers and controllers, interpolation, pluralization, datetime/number
+  formats, Active Record error messages. Triggers: locales, config/locales
+  YAML, t(), I18n.t, missing translations, flash copy, validation messages,
+  human_attribute_name, extracting user-facing copy from ERB. Not for
+  translation vendor tooling or SPA i18n-js.
 ---
 
 # Writing I18n

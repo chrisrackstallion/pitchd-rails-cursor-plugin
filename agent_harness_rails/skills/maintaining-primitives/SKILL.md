@@ -1,15 +1,12 @@
 ---
 name: maintaining-primitives
 description: >-
-  Maintain the durable primitives tree under docs/primitives/ — capability docs
-  holding intent clauses, shape constraints, evaluation maps, and append-only
-  provenance, plus the human-owned compilation.md. Operations: capture (backfill
-  a capability doc from existing code and specs), trace (answer "why is X like
-  this" with citations), update (sync status, evaluations, provenance), lint
-  (size limits, clause/eval coverage, orphans). Use when backfilling historical
-  features, answering provenance questions, or running a health pass — not for
-  writing app code or plans. For one-time adoption setup use
-  bootstrapping-primitives; for delegation use rails-primitives-maintainer.
+  Maintain the primitives tree under docs/primitives/ — capability docs with
+  intent clauses, evaluations, append-only provenance, plus the human-owned
+  compilation.md. Operations: capture (backfill from existing code and specs),
+  trace ("why is X like this"), update (sync status/evaluations/provenance),
+  lint (health pass). Not for app code or plans; adoption setup:
+  bootstrapping-primitives; delegation: rails-primitives-maintainer.
 ---
 
 # Maintaining primitives (durable intent, evaluations, provenance)

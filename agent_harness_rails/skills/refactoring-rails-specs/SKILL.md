@@ -1,18 +1,12 @@
 ---
 name: refactoring-rails-specs
 description: >-
-  Refactor an existing RSpec suite — typically a batch of bloated system specs
-  and their related request, model, policy, job, mailer, concern, and factory
-  specs — into a Rails best-practice test suite per writing-tests and
-  agent_harness_rails/rules/testing.mdc. Discover related specs, audit each test against the Five
-  Gates and per-layer ownership, then move, merge, delete, or rewrite tests so
-  each behaviour has exactly one home. Verify the suite is green and coverage
-  is preserved. Use when the user mentions refactoring tests, rebalancing
-  specs, "the system specs are too heavy", "we have too many browser tests",
-  reducing test runtime, cleaning up a drifting test suite, or porting an
-  older suite to current harness conventions. Not for writing new specs for
-  untested code (use writing-tests) or for fixing failing specs unrelated to
-  layering (debug them in writing-tests).
+  Refactor an existing RSpec suite — bloated system specs plus related
+  request, model, policy, job, mailer, and factory specs — so each behaviour
+  has one home per writing-tests. Use for refactoring or rebalancing tests,
+  "the system specs are too heavy", "too many browser tests", reducing test
+  runtime, or porting an older suite. Not for new specs or non-layering
+  failures (writing-tests).
 ---
 
 # Refactoring Rails Specs

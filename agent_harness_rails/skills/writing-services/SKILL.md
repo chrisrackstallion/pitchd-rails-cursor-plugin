@@ -1,11 +1,11 @@
 ---
 name: writing-services
 description: >-
-  Where application logic lives in Rails without an app/services layer —
-  opinionated Rails best practice: rich models, concerns, model-namespaced POROs,
-  ActiveModel form objects, and jobs. Use when deciding where behaviour
-  belongs, or when the user mentions services, service objects, POROs, forms,
-  jobs, operations, interactors, or use cases.
+  Where application logic lives in Rails without an app/services layer — rich
+  models, concerns, model-namespaced POROs, ActiveModel form objects, jobs.
+  Use when deciding where behaviour belongs, or when the user mentions
+  services, service objects, POROs, forms, jobs, operations, interactors, or
+  use cases.
 ---
 
 # Writing Services (The Rails Way)

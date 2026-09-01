@@ -1,12 +1,10 @@
 ---
 name: writing-mailers
 description: >-
-  Write ActionMailer classes, mailer templates, and previews following
-  opinionated Rails best practice — thin mailers, parameterized Mailer.with,
-  deliver_later, multipart HTML/text, I18n for subjects, and previews for
-  development. Use when creating or changing mailers, mailer views, email
-  copy, or mailer specs; not for SMTP provider setup or Action Mailbox inbound
-  mail.
+  Write ActionMailer classes, templates, and previews — thin mailers,
+  parameterized Mailer.with, deliver_later, multipart HTML/text, I18n
+  subjects. Use when creating or changing mailers, mailer views, email copy,
+  or mailer specs; not for SMTP provider setup or Action Mailbox inbound mail.
 ---
 
 # Writing Mailers

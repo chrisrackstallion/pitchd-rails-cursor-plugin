@@ -1,11 +1,11 @@
 ---
 name: writing-models
 description: >-
-  Write Rails models following opinionated Rails best practice — rich domain models,
-  concerns for horizontal behaviour, state-as-records, scopes, database
-  constraints, and vanilla Rails patterns. Use when creating new models,
-  adding model methods, extracting concerns, refactoring model logic, or
-  when the user mentions models, concerns, scopes, callbacks, or domain logic.
+  Write Rails models — rich domain models, concerns for horizontal behaviour,
+  state-as-records, scopes, database constraints, vanilla Rails patterns. Use
+  when creating models, adding model methods, extracting concerns, refactoring
+  model logic, or when the user mentions models, concerns, scopes, callbacks,
+  or domain logic.
 ---
 
 # Writing Rails Models

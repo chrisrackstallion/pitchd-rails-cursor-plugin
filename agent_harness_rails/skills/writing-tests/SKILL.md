@@ -1,12 +1,11 @@
 ---
 name: writing-tests
 description: >-
-  Write Rails tests following opinionated Rails best-practice testing
-  philosophy, adapted for RSpec and FactoryBot — system specs as the backbone,
-  real objects over mocks, behaviour-driven testing over implementation
-  testing. Use when writing specs, adding test coverage, debugging test
-  failures, creating factories, or when the user mentions tests, specs, RSpec,
-  FactoryBot, Capybara, system tests, request specs, or test coverage.
+  Write Rails tests with RSpec and FactoryBot — system specs as the backbone,
+  real objects over mocks, behaviour-driven over implementation testing. Use
+  when writing specs, adding test coverage, debugging test failures, creating
+  factories, or when the user mentions tests, specs, RSpec, FactoryBot,
+  Capybara, system tests, or request specs.
 ---
 
 # Writing Rails Tests

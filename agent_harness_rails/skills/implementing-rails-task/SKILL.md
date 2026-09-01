@@ -1,12 +1,11 @@
 ---
 name: implementing-rails-task
 description: >-
-  Implement a plan task in a Rails app using harness conventions: first
-  rails-omakase-compass (opinionated best-practice omakase), then applicable
-  writing-* skills and agent_harness_rails/rules/*.mdc for tactics. Use when
-  executing a single task from an implementation plan, a vertical slice, or a
-  scoped feature. For isolated delegation, use the rails-implementor subagent
-  (see agent_harness_rails/agents/rails-implementor.md).
+  Implement a plan task in a Rails app: rails-omakase-compass first, then
+  applicable writing-* skills and agent_harness_rails/rules/*.mdc for tactics.
+  Use when executing a single plan task, a vertical slice, or a scoped
+  feature. Isolated delegation: the rails-implementor subagent
+  (agent_harness_rails/agents/rails-implementor.md).
 ---
 
 # Implementing Rails Agent Harness (plan tasks & scoped work)
@@ -117,7 +116,7 @@ more once the failures are green. A failure that will not reproduce is a flake t
 with its seed (`agent_harness_rails/rules/testing.mdc` § When a Run Comes Back Red, §
 Flaky and Order-Dependent Failures). If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`agent_harness_rails/rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. **No** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
 
-   **When the app has a `docs/primitives/` tree and the task served an intent clause,** run **`agent_harness_rails proofs --since HEAD`** and read it against the plan's **Intent impact** row for each clause you served. The row names the cases the clause needs; the output counts each clause's tagged examples. A count that comes up short against the row means a proof you wrote and never tagged, or never wrote — drill in with **`agent_harness_rails proofs '<capability>#I<n>'`**, whose tagged listing shows which planned case is missing, then find the example in the spec file and tag it (or write it) before reporting. No other check can see this, because `evals` treats one tag as proof of the whole file and `guard` says nothing about an untagged new example. Quote each touched clause's tagged-count line in **Tests and verification**, so the count reaches review rather than your reading of it.
+   **When the app has a `docs/primitives/` tree and the task served an intent clause,** run **`agent_harness_rails proofs --since HEAD`** and read it against the plan's **Intent impact** row for each clause you served. The row names the cases the clause needs; the output counts each clause's tagged examples. A count that comes up short against the row means a proof you wrote and never tagged, or never wrote — drill in with **`agent_harness_rails proofs '<capability>#I<n>'`**, whose tagged listing shows which planned case is missing, then find the example in the spec file and tag it (or write it) before reporting. No other check can see this, because `evals` treats one tag as proof of the whole file and `guard` says nothing about an untagged new example. Quote each touched clause's tagged-count line in **Tests and verification**, so the count reaches review rather than your reading of it. If the task's spec list does not cover a cited clause's full wording, say so in your report instead of tagging past it.
 
    **When the task touched a spec carrying an `intent:` tag,** finish with **`agent_harness_rails guard --base HEAD`** (notices only — it never fails). It reports what your work did to promises that already existed. A **proof** notice (`proof/removed`, `proof/weakened`, `evaluation/dropped`) on a still-active clause is yours to fix before reporting: you took coverage off a promise the app still makes, so restore the assertion or the example. An **intent** notice (`intent/rewritten`, `intent/vanished`, `provenance/rewritten`) means an intent clause moved — **you do not own that file**. Report it in the completion notes and change nothing: intent is amended by the user's decision, never by an implementor, and never by writing the provenance line that silences the notice (`agent_harness_rails/rules/primitives.mdc` § Ownership and write points).
 5. **Self-review** (below) before reporting.

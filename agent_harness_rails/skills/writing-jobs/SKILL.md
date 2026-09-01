@@ -1,11 +1,11 @@
 ---
 name: writing-jobs
 description: >-
-  Write Rails background jobs following opinionated Rails best practice — thin jobs
-  that delegate to model methods, idempotent execution, after_commit timing,
-  and retry discipline. Use when writing ActiveJob subclasses, scheduling
-  background work, handling async processing, or when the user mentions jobs,
-  queues, background processing, perform_later, or ActiveJob.
+  Write Rails background jobs — thin jobs delegating to model methods,
+  idempotent execution, after_commit timing, retry discipline. Use when
+  writing ActiveJob subclasses, scheduling background work, handling async
+  processing, or when the user mentions jobs, queues, background processing,
+  perform_later, or ActiveJob.
 ---
 
 # Writing Rails Jobs

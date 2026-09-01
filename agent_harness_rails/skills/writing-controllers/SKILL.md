@@ -1,12 +1,11 @@
 ---
 name: writing-controllers
 description: >-
-  Write Rails controllers following opinionated Rails best practice — thin CRUD
-  controllers, REST-mapped resources, redirect-first Hotwire responses, concerns
-  for shared behaviour, and strong parameters with params.expect. Use when
-  creating new controllers, adding actions, extracting concerns, handling
-  Turbo responses, or when the user mentions controllers, actions, strong
-  parameters, or REST routing.
+  Write Rails controllers — thin CRUD controllers, REST-mapped resources,
+  redirect-first Hotwire responses, concerns for shared behaviour, strong
+  parameters with params.expect. Use when creating controllers, adding
+  actions, extracting concerns, handling Turbo responses, or when the user
+  mentions controllers, actions, strong parameters, or REST routing.
 ---
 
 # Writing Rails Controllers

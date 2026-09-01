@@ -1,11 +1,11 @@
 ---
 name: writing-policies
 description: >-
-  Write Pundit authorization policies following Rails conventions — one policy
-  per model, plain Ruby objects, deny-by-default, scoped collections, and
-  controller integration via authorize/policy_scope. Use when creating policies,
-  adding authorization, checking permissions, scoping queries by user, or when
-  the user mentions policies, Pundit, authorization, permissions, or access control.
+  Write Pundit authorization policies — one policy per model, plain Ruby
+  objects, deny-by-default, scoped collections, authorize/policy_scope in
+  controllers. Use when creating policies, adding authorization, scoping
+  queries by user, or when the user mentions policies, Pundit, authorization,
+  permissions, or access control.
 ---
 
 # Writing Pundit Policies

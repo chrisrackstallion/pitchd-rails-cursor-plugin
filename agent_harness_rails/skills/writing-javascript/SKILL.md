@@ -1,16 +1,13 @@
 ---
 name: writing-javascript
 description: >-
-  Write JavaScript in a Rails app the omakase way — importmap-first delivery,
-  optional bundling (esbuild, Vite) when justified, focused Stimulus
-  controllers under app/javascript/controllers, modern ES module hygiene,
-  accessible DOM updates, safe fetching with CSRF, and a clear boundary with
-  Turbo/HTML. Opinionated Rails best practice. Use when editing importmap,
-  package.json, application.js, Stimulus controllers, shared JS modules, or
-  choosing bundling; not for Hotwire/Turbo *behaviour in templates* (see
-  writing-hotwire), Tailwind/config/global CSS (see writing-css-tailwind), or
-  ERB markup (see writing-views). For rebalancing an existing Stimulus fleet
-  (merging, splitting, spec coverage), see refactoring-stimulus-controllers.
+  Write JavaScript in a Rails app — importmap-first delivery, optional
+  bundling (esbuild, Vite), focused Stimulus controllers under
+  app/javascript/controllers, ES module hygiene, CSRF-safe fetch. Use when
+  editing importmap, package.json, application.js, Stimulus controllers, or
+  choosing bundling. Not for Hotwire behaviour in templates (writing-hotwire),
+  CSS (writing-css-tailwind), or ERB markup (writing-views); rebalancing an
+  existing Stimulus fleet: refactoring-stimulus-controllers.
 ---
 
 # Writing JavaScript (Rails Boundary + Quality)

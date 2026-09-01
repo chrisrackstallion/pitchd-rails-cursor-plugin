@@ -1,11 +1,11 @@
 ---
 name: writing-routes
 description: >-
-  Declare Rails routes in opinionated best-practice style — REST-first resources, shallow
-  nesting, clear path helpers, constraints for wiring not auth, boring
-  routes.rb. Use when editing config/routes.rb, adding resources, namespaces,
-  member/collection routes, API boundaries, or when the user mentions routing,
-  rails routes, paths, or URL design.
+  Declare Rails routes — REST-first resources, shallow nesting, clear path
+  helpers, constraints for wiring not auth, boring routes.rb. Use when editing
+  config/routes.rb, adding resources, namespaces, member/collection routes,
+  API boundaries, or when the user mentions routing, rails routes, paths, or
+  URL design.
 ---
 
 # Writing Rails Routes

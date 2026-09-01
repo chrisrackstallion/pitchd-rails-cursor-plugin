@@ -3,11 +3,10 @@ name: bootstrapping-primitives
 description: >-
   One-time adoption of the primitives tree in a Rails app: scaffold
   docs/primitives/ (SCHEMA.md, index.md, capabilities/) and draft the
-  human-owned compilation.md via a read-only codebase survey followed by a
-  structured interview. Use when a repo has no docs/primitives/ tree and the
-  team wants durable intent/compilation/evaluations/provenance, or when the
-  user says set up primitives, adopt primitives, or generate compilation.
-  Recurring maintenance and backfill belong to maintaining-primitives, not here.
+  human-owned compilation.md via codebase survey plus structured interview.
+  Use when a repo has no docs/primitives/ tree, or the user says set up
+  primitives, adopt primitives, or generate compilation. Maintenance and
+  backfill: maintaining-primitives.
 ---
 
 # Bootstrapping primitives (one-time adoption)

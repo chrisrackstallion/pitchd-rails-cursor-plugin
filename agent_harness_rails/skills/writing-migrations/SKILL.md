@@ -1,12 +1,11 @@
 ---
 name: writing-migrations
 description: >-
-  Write Rails database migrations following opinionated Rails best practice —
-  reversible changes, database constraints as the source of integrity, safe
-  operations on live tables, and never editing past migrations. Use when
-  creating or modifying migrations, adding columns or indexes, changing
-  constraints, or when the user mentions migrations, schema changes, or
-  database columns.
+  Write Rails database migrations — reversible changes, database constraints
+  as the source of integrity, safe operations on live tables, never editing
+  past migrations. Use when creating or modifying migrations, adding columns
+  or indexes, changing constraints, or when the user mentions migrations,
+  schema changes, or database columns.
 ---
 
 # Writing Rails Migrations

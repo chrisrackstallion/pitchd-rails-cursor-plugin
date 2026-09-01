@@ -1,17 +1,12 @@
 ---
 name: refactoring-stimulus-controllers
 description: >-
-  Audit and refactor an existing fleet of Stimulus controllers in a Rails app —
-  discover every controller, score each against single-responsibility,
-  DOM-derived state, lifecycle cleanup, and cross-controller coupling rules,
-  then merge or split as appropriate. After the structural refactor, ensure
-  each Stimulus behaviour has exactly one canonical system spec on the simplest
-  page that exercises it, per writing-tests. Use when the user mentions
-  refactoring Stimulus, "the Stimulus controllers are a mess", consolidating
-  duplicate JS behaviour, splitting a god controller, or filling in Stimulus
-  spec coverage. Not for writing brand-new controllers from scratch (use
-  writing-javascript) or refactoring server-side specs (use
-  refactoring-rails-specs).
+  Audit and refactor an existing Stimulus controller fleet in a Rails app —
+  merge or split against single-responsibility and coupling rules, then ensure
+  one canonical system spec per behaviour (writing-tests). Use for refactoring
+  Stimulus, "the Stimulus controllers are a mess", duplicate JS behaviour,
+  splitting a god controller, or Stimulus spec coverage. New controllers:
+  writing-javascript; server-side specs: refactoring-rails-specs.
 ---
 
 # Refactoring Stimulus Controllers

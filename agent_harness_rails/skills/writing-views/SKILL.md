@@ -1,16 +1,13 @@
 ---
 name: writing-views
 description: >-
-  Write Rails views, partials, and helpers following opinionated Rails best practice —
-  ERB templates as HTML-first documents, strict-local partials, collection
-  rendering, helpers for presentation logic, Tailwind utility-first styling,
-  layouts with content_for. Stimulus and Turbo — writing-hotwire skill. User-
-  facing static copy and locales — writing-i18n skill. JS delivery (importmap,
-  bundling) — writing-javascript skill. Tailwind build/config/global CSS —
-  writing-css-tailwind skill. Use when creating new views, extracting partials,
-  writing helpers, building forms, styling with Tailwind in templates, working
-  with layouts, or when the user mentions views, partials, ERB, helpers,
-  Tailwind, Stimulus, Turbo, importmap, JavaScript, I18n, locales, or templates.
+  Write Rails views, partials, helpers, forms, and layouts — HTML-first ERB,
+  strict-local partials, helpers for presentation logic, Tailwind
+  utility-first styling in templates, content_for. Use when the user mentions
+  views, partials, ERB, helpers, forms, layouts, or templates. Stimulus/Turbo
+  behaviour: writing-hotwire; copy and locales (I18n): writing-i18n; JS
+  delivery (importmap, bundling): writing-javascript; Tailwind
+  build/config/global CSS: writing-css-tailwind.
 ---
 
 # Writing Rails Views

@@ -1,12 +1,9 @@
 ---
 name: rails-query
 description: >-
-  Answers questions about Rails application development using the full
-  harness: rails-omakase-compass, only the writing-* skills and
-  agent_harness_rails/rules/*.mdc files that match the question's topic, plus
-  referencing-unofficial-37signals-guide for supplemental third-party topics
-  or referencing-rails-guides for authoritative Rails API docs when harness
-  material is insufficient. Opinionated Rails best practice (omakase,
+  Answers Rails development questions using the harness: rails-omakase-compass
+  plus only the writing-* skills and agent_harness_rails/rules/*.mdc files
+  matching the question's topic. Opinionated Rails best practice (omakase,
   server-owned truth, REST gravity, Hotwire-first, boring code). Readonly;
   explains and recommends — does not implement or commit unless the parent
   explicitly asks for code in the same turn.

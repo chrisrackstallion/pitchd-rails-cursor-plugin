@@ -1,12 +1,11 @@
 ---
 name: brainstorming-rails-omakase
 description: >-
-  Use when shaping Rails features or behavior changes before planning or code —
-  unclear scope, multiple valid directions, HTML vs JSON, client-owned vs
-  server-owned truth, REST vs RPC-shaped endpoints, premature service objects or
-  SPA layers, or duplication of business rules in JavaScript. Symptoms include
-  reaching for new gems or microservices first, CRUD flows dressed as bespoke
-  protocols, or designs that would fight omakase defaults in an omakase-shaped app.
+  Use when shaping Rails features or behavior changes before planning or code
+  — unclear scope, multiple valid directions, HTML vs JSON, client- vs
+  server-owned truth, REST vs RPC endpoints, premature service objects or SPA
+  layers, business rules duplicated in JavaScript, reaching for new gems or
+  microservices first, or designs that fight omakase defaults.
 ---
 
 # Brainstorming Into Rails-Shaped Designs

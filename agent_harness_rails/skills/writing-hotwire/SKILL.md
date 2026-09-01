@@ -2,12 +2,10 @@
 name: writing-hotwire
 description: >-
   Build Hotwire-first UIs — Turbo Drive, Frames, Streams, morphing,
-  broadcasts, and Stimulus — with server-rendered HTML as the source of truth.
-  Opinionated Rails best practice: redirect before frames before streams;
-  small Stimulus controllers; no accidental SPA. Use when adding Turbo frames
-  or streams, Stimulus behaviour, real-time updates, modal/inline-edit flows,
-  or when front-end work drifts toward client-side routing or JSON-first CRUD
-  for same-origin pages.
+  broadcasts, and Stimulus — with server-rendered HTML as the source of truth;
+  redirect before frames before streams. Use when adding Turbo frames or
+  streams, Stimulus behaviour, real-time updates, modal/inline-edit flows, or
+  when front-end work drifts toward client-side routing or JSON-first CRUD.
 ---
 
 # Writing Hotwire (Turbo + Stimulus)

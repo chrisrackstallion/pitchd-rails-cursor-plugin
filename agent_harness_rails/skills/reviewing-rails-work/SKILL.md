@@ -1,11 +1,11 @@
 ---
 name: reviewing-rails-work
 description: >-
-  Review Rails plans and/or implementation against the harness: first
-  rails-omakase-compass (solution shape), then applicable writing-* skills and
-  rules (tactics). Use when requesting a code review, plan review, PR review, or
-  sign-off before merge. For isolated delegation with a clean context, use the
-  rails-reviewer subagent (see `agent_harness_rails/agents/rails-reviewer.md`).
+  Review Rails plans and/or implementation against the harness:
+  rails-omakase-compass first (solution shape), then applicable writing-*
+  skills and rules (tactics). Use for code review, plan review, PR review, or
+  sign-off before merge. Isolated delegation: the rails-reviewer subagent
+  (`agent_harness_rails/agents/rails-reviewer.md`).
 ---
 
 # Reviewing Rails Agent Harness (plans & implementation)
