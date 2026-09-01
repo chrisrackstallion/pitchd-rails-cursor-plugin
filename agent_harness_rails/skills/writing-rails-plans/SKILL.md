@@ -188,7 +188,7 @@ target capability doc, and **`compilation.md`**.
    another system spec — and its **Intent impact** row names those cases one by
    one, because a proof set promised in prose is one nothing can count. A clause whose proof was never planned becomes a green
    row that proves nothing at close-out
-   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause). When this gate **creates** a doc (new feature or lazy backfill),
+   (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause). When this gate **creates** a doc (new feature or lazy backfill),
    add its `docs/primitives/index.md` line at creation, same as `capture` —
    final approval then updates it.
 

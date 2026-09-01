@@ -57,7 +57,7 @@ in CI beside RuboCop, so the tree cannot quietly rot. Say what it does and does
 not settle — it proves every clause **names** a spec that carries its tag; no
 parser can tell whether that spec would actually go red if the clause stopped
 being true. That judgment is a review responsibility from day one
-(`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+(`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
 
 ### 2. Survey (read-only)
 

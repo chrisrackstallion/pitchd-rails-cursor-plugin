@@ -54,7 +54,7 @@ run rather than reading the frontmatter by hand and reporting that as the check
 
 What it **cannot** settle is whether a tagged example actually proves its
 clause: breaking the clause has to turn one of its evaluations red
-(`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+(`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
 A green row over a clause claiming *only* or *never* with one happy path behind
 it is the failure mode this tree is most prone to — nothing mechanical will
 flag it.

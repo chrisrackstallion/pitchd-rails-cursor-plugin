@@ -352,17 +352,9 @@ For each controller, one of three is true:
 
 #### Writing a canonical Stimulus system spec
 
-Apply the Five Gates from `agent_harness_rails/skills/writing-tests/references/system-specs.md`:
-
-1. **Interaction gate** — the spec calls a real action (`click_button`,
-   `fill_in`, `select`, etc.).
-2. **Uniqueness gate** — no other system spec already proves this behaviour.
-3. **JavaScript-necessity gate** — the behaviour cannot be proven by a
-   request spec asserting Turbo Stream content or by trusting lower layers;
-   Selenium is justified.
-4. **Single-home gate** — the assertion is not owned by a model, request,
-   or policy spec.
-5. **One-story gate** — one behaviour, one story, no drive-by assertions.
+Apply the **Five Gates** — interaction, uniqueness, JS-necessity, single-home,
+one-story (`agent_harness_rails/rules/testing.mdc` § The Five Gates for System
+Specs):
 
 ```ruby
 RSpec.describe "Disclosure", type: :system do

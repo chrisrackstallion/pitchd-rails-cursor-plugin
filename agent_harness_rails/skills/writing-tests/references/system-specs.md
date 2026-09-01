@@ -498,47 +498,11 @@ Requires the `axe-core-rspec` gem.
 
 ---
 
-## Boundaries — What Belongs Here vs. Elsewhere
+## Boundaries
 
-### What system specs own
-
-- The canonical happy path through each major user journey
-- Multi-request journeys where rendered HTML feeds the next step
-- Behaviour that genuinely requires JavaScript to function
-- One validation-error path per non-trivial form
-- UI authorization, only when product-required
-
-### What system specs do NOT test
-
-- Model internals (`article.publication.present?`) — model spec
-- Status codes (`response.status`) — request spec
-- Auth gates (unauthenticated → redirect) — request spec
-- Authorization logic (admin vs. member matrix) — policy spec
-- Job / mailer work — job / mailer spec
-- Helper output — helper spec or canonical system spec implicitly
-- Every CRUD action when the actions share a shape — request spec
-- Every field, every validation, every role — push down
-
-### Trust the lower layers
-
-```ruby
-# Good — asserts what the user sees
-it "user publishes an article" do
-  visit article_path(article)
-  click_button "Publish"
-
-  expect(page).to have_content("Published")
-end
-
-# Bad — reaches into model internals
-it "user publishes an article" do
-  visit article_path(article)
-  click_button "Publish"
-
-  expect(article.reload.publication).to be_present  # model spec's job
-  expect(article.reload).to be_published             # model spec's job
-end
-```
+What system specs own versus every other layer:
+**`agent_harness_rails/rules/testing.mdc`** § Ownership by Layer. System specs
+trust the lower layers — they assert what the user sees, never model internals.
 
 ---
 

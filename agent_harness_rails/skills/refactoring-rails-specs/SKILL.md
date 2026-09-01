@@ -47,8 +47,7 @@ layer, either already or via a new spec written first.
 
 Before touching any spec:
 
-- **Read `agent_harness_rails/skills/writing-tests/SKILL.md` and `agent_harness_rails/skills/writing-tests/references/system-specs.md`** if not already in context. The Five Gates and Budget are the rubric you will apply.
-- **Skim `agent_harness_rails/rules/testing.mdc`** for the ownership table and anti-pattern table.
+- **Read `agent_harness_rails/rules/testing.mdc`** if not already in context — the ownership table, anti-pattern table, Budget, and Five Gates are the rubric you will apply. **`agent_harness_rails/skills/writing-tests/references/system-specs.md`** has the gates' full rationale.
 - **Capture a baseline.** Run the relevant slice (or the full suite if the batch is small):
   ```bash
   bin/rspec --format documentation > tmp/spec-baseline.txt
@@ -108,7 +107,7 @@ capability doc's evaluation, so a verdict on it is a verdict on the record too:
   merge did not swallow the half that proved a quantifier: two examples proving
   *"only the author can edit"* — one permitting, one denying — cannot become one
   example without the clause losing a side
-  (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+  (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
 - **DELETE** — a tagged example is only deletable if its clause is still proven
   elsewhere afterwards. If it is the last proof, the deletion is out of scope for
   a refactor: it removes coverage, not duplication. Flag it and leave it.
@@ -140,11 +139,13 @@ spec refactor never does — stop and surface those.
 
 #### Duplication audit — is this assertion already proven elsewhere?
 
-Walk every assertion and check the other layers for the same claim. Common duplications:
+Walk every assertion and check the other layers for the same claim — the owner
+for each is settled by `agent_harness_rails/rules/testing.mdc` § Ownership by
+Layer. Common duplications:
 
-- **Happy-path triplets:** same create flow in model spec (`Article.create!`), request spec (`POST /articles` → record exists), and system spec (`fill_in` → see article). Keep the system spec for the canonical journey only; trim the request spec to status/auth/422 and the model spec to domain logic.
+- **Happy-path triplets:** same create flow in model, request, and system specs. Keep the system spec for the canonical journey only; trim the request spec to status/auth/422 and the model spec to domain logic.
 - **Stimulus controllers tested across files:** the same `data-controller="counter"` exercised in five system specs. Keep one, on the simplest page.
-- **Field round-tripping:** "user sets visibility to private and it persists" tested as a system spec when the model and request specs already prove it. Drop the system spec.
+- **Field round-tripping:** persistence-via-UI tested as a system spec when the model and request specs already prove it. Drop the system spec.
 - **Validation rules in two places:** `validates :title, presence: true` tested in both the model spec (deletion candidate — that's Rails) and the system spec ("user sees can't be blank" — keep as the canonical validation-error system spec for the form).
 
 #### Anti-pattern audit — flag specifically
@@ -361,15 +362,8 @@ Before declaring done:
 - [ ] Baseline captured: total spec count, system-spec count, Selenium count, runtime, pass rate
 - [ ] All related specs for each input discovered (model / request / policy / job / mailer / concern / factory / support) and read
 - [ ] Audit plan written, one verdict per `it` block
-- [ ] No system spec remains unless it passes **all** Five Gates
+- [ ] The refactored files pass the layering items of the writing-tests checklist (`agent_harness_rails/skills/writing-tests/SKILL.md` § Verification): Five Gates, no `visit`-only or view specs, no Selenium that passes under `rack_test`, no per-field or CRUD-parity system specs, no repeated Stimulus/Turbo coverage, anchored absences, no removal receipts
 - [ ] System-spec count per resource is within budget (typically 1 canonical journey; up to a few for multi-step journeys)
-- [ ] No `visit`-only specs remain in `spec/system/`
-- [ ] No view specs remain — `spec/views/` is empty or absent; rendering assertions live in request specs
-- [ ] No Selenium specs pass under `rack_test`
-- [ ] No per-field or per-attribute system specs
-- [ ] No CRUD parity proliferation (one canonical journey, not one per action)
-- [ ] No repeated Stimulus controller / Turbo pattern tests across system specs
-- [ ] No `not_to`-only removal receipts; every absence read off a page or response has an anchor, and sound negations were left alone
 - [ ] No duplicate happy-path coverage across model + request + system
 - [ ] Each assertion from the original suite is reachable at exactly one layer in the new suite
 - [ ] Every `intent:` tag moved with its example, still sits on an `it` block, and its clause's `evaluations:` paths were updated; no tag was deleted to resolve a verdict
@@ -389,7 +383,8 @@ For larger refactors spanning multiple resources, prefer running this skill one 
 ## Related
 
 - **Test-writing conventions:** `agent_harness_rails/skills/writing-tests/SKILL.md` (`references/system-specs.md`, `references/request-specs.md`, `references/model-specs.md`, `references/support-specs.md`, `references/factory-patterns.md`)
-- **Testing rule:** `agent_harness_rails/rules/testing.mdc` (ownership table, anti-patterns, budget, Five Gates, intent tags)
+- **Testing rule:** `agent_harness_rails/rules/testing.mdc` (ownership table, anti-patterns, budget, Five Gates)
+- **Intent tags:** `agent_harness_rails/rules/intent-tags.mdc` (tag placement, what counts as proving a clause)
 - **Primitives rule:** `agent_harness_rails/rules/primitives.mdc` — read only when the app has a `docs/primitives/` tree and the refactor touches tagged examples
 - **RuboCop:** `agent_harness_rails/skills/running-rubocop/SKILL.md` — run after every refactor batch
 - **Implementor subagent:** `agent_harness_rails/agents/rails-implementor.md` — optional delegation

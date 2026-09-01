@@ -147,7 +147,7 @@ Skeletons: `agent_harness_rails/skills/maintaining-primitives/references/templat
   reused**; provenance entries and old plans reference them.
 - **`clause:`** — **one sentence, in outcome terms.** Write the quantifier you
   mean — *any*, *every*, *never*, *only* — because it is what the evaluations
-  must cover (`agent_harness_rails/rules/testing.mdc` § What counts as proving
+  must cover (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving
   a clause).
 
 #### What is and is not a clause
@@ -231,7 +231,7 @@ stopped being true is judgment: a clause with a green row that proves nothing
 is worse than a bare clause, which at least fails honestly. The test and its
 three common failures — asserting the affordance instead of the outcome,
 proving one case where the clause claims a quantifier, proving it at a layer
-that cannot hold it — are in **`agent_harness_rails/rules/testing.mdc`**
+that cannot hold it — are in **`agent_harness_rails/rules/intent-tags.mdc`**
 § What counts as proving a clause.
 
 A clause often lists **several files across several layers** — the permission

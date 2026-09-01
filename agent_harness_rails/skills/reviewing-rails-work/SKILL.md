@@ -216,7 +216,7 @@ suggestions:
   happy path is a finding; so is an example asserting the affordance (form
   renders, `200` returned) where the clause names an outcome; so is a denial
   bolted onto a canonical journey instead of living in the policy or request
-  spec that owns it (`agent_harness_rails/rules/testing.mdc`
+  spec that owns it (`agent_harness_rails/rules/intent-tags.mdc`
   § What counts as proving a clause). Report the missing case, not "add more
   tests" — name the clause, the half that is unproven, and the layer it belongs
   at.

@@ -329,7 +329,7 @@ updates the capability doc directly (see the Hard rules carve-out):
 
    **Read the reported examples against the clause before filling the row.**
    Breaking the clause has to turn one of them red
-   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+   (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
    A clause claiming *only*, *never*, or *any* that came back with a single
    happy-path example is **not** covered — send it back through the
    implement → review loop for the missing spec rather than filling a row that

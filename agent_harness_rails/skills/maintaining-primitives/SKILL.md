@@ -98,7 +98,7 @@ human confirmation between, ordered by where change is coming.
 
    **Do not promote an adjacent spec into a proof.** The example you tag has to
    go red if the clause stops being true
-   (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+   (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
    Backfilled clauses are written from what the code does, so their wording
    arrives *wider* than any single existing example — tagging the nearest happy
    path hides the gap. Where the clause claims *only*, *never*, or *any* and
@@ -186,7 +186,7 @@ clause out of the doc.
 - **Rows that do not prove their clause** — for each `built` clause, read its
   wording against its tagged examples and ask whether breaking the clause would
   turn one of them red
-  (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+  (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
   Quantifiers are where the rot collects: a clause saying *only* or *never*
   whose evaluations are one happy path is a finding, however green the run.
   Report it as an unproven clause with the missing case named; narrowing the
