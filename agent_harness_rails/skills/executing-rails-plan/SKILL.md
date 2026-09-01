@@ -84,12 +84,14 @@ Use the prompt template in **`agent_harness_rails/agents/rails-implementor.md`**
 
 ### 2. Delegate harness review
 
-Invoke **`rails-reviewer`** with:
+Invoke **`rails-reviewer`** — same field shape as the delegation table in
+`agent_harness_rails/skills/writing-rails-plans/SKILL.md` § Plan review, with
+these implementation-phase values:
 
 - **Phase:** `implementation` (or `both` if the task required plan-level re-validation).
 - **Plan path**, **Spec path**, **Scope:** paths changed, or a short `git diff` summary / file list the orchestrator gathered read-only.
 - **User revisions:** omit on the **first review** for a task. On **loop calls** (reviewing after a fix pass), set this to a bullet list of what the implementor changed — the reviewer will read only those areas.
-- **Mechanical primitives output** — when the app has a `docs/primitives/` tree. Run the three commands yourself first (orchestration, per Hard rule 1) and paste their **full stdout** into the prompt under the heading **Mechanical primitives output (authoritative — do not re-run)**:
+- **Mechanical primitives output** — when the app has a `docs/primitives/` tree. Implementation phase sends **three** commands, not the plan phase's two. Run them yourself first (orchestration, per Hard rule 1) and paste their **full stdout** into the prompt under the heading **Mechanical primitives output (authoritative — do not re-run)**:
 
   ```bash
   agent_harness_rails evals
@@ -99,7 +101,7 @@ Invoke **`rails-reviewer`** with:
 
   The reviewer is `readonly: true` and may have no shell at all — an empty result would read to it as a silent CLI (`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet); running them here removes that failure from the loop. Paste verbatim **including the summary lines** — a truncated block reads as a clean run. If a command fails in your own shell, fix that before dispatching rather than sending the reviewer a gap. No tree → say `no primitives tree`.
 
-Instruction: follow **`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`** and return the standard **harness review** report. The pasted block is the mechanical result — the reviewer cites it and does not re-run it.
+Instruction: follow **`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`** and return the standard **harness review** report.
 
 ### 3. Branch on status
 
@@ -148,11 +150,10 @@ If the implementor returns **BLOCKED** or **NEEDS_CONTEXT**, **stop** and presen
 ### When to enter revision mode
 
 After this skill has already run in the current chat session, treat any user
-message as a **revision request** if it matches phrases like — but not limited
-to — these:
-
-> "this needs changing", "that's not right", "can you fix…", "this is wrong",
-> "update this", "adjust…", "tweak…", "it should do X instead", "change the…"
+message matching the trigger-phrase list in
+`agent_harness_rails/skills/writing-rails-plans/SKILL.md` § Revision mode
+("this needs changing", "that's not right", "it should do X instead", and the
+rest) as a **revision request**.
 
 **Do not** re-run the full plan. When the message is specific enough to act on
 — what to change, where, and what "fixed" looks like — treat it as the complete
@@ -167,13 +168,11 @@ tightly to what the user described:
 
 #### R1. Scope the revision
 
-Extract from the user's message:
-
-- **What to change** — the behaviour, output, or code the user flagged.
-- **Where** — infer the file(s) from context (last task completed, files
-  mentioned in the plan or conversation).
-- **Acceptance** — what "fixed" looks like (derive from the user's wording;
-  do not ask for a formal AC).
+Extract **what to change**, **where**, and **acceptance** from the user's
+message — the same three fields as
+`agent_harness_rails/skills/writing-rails-plans/SKILL.md` § R1, except that
+**where** here means the file(s), inferred from context (last task completed,
+files mentioned in the plan or conversation), not plan sections.
 
 **Classify against Intent (when a capability doc exists):** read the doc's
 `intent:` frontmatter and decide which of two revisions this is — the distinction
@@ -193,8 +192,8 @@ surfaces *before* delegating, not after:
   Report all of it in R5.
 
 If any of the three is unclear from the message plus session context, **ask —
-do not assume.** One focused message (the structured question tool works well
-here) covering everything unclear; delegate only once answered.
+do not assume** (one focused message covering everything unclear); delegate
+only once answered.
 
 #### R2. Delegate implementation
 
@@ -212,13 +211,12 @@ Invoke **`rails-implementor`** with a self-contained revision prompt:
 
 #### R3. Delegate review
 
-Invoke **`rails-reviewer`** with:
-
-- **Phase:** `implementation`
-- **Scope:** only the files changed by the revision (not the full plan scope).
-- **Plan path**, **Spec path** as above.
-- **User revisions:** omit on the first review call. On loop calls (reviewing after a fix pass), set to a bullet list of what the implementor changed — the reviewer reads only those areas.
-- **Mechanical primitives output:** as in step 2 — you run `evals`, `guard --base <ref>`, and `proofs --since <ref>`, and paste the stdout. The reviewer never shells out for them.
+Invoke **`rails-reviewer`** as in step 2, scoped to the revision: **Phase**
+`implementation`; **Scope** only the files changed by the revision (not the
+full plan scope); **Plan path**, **Spec path** as above; **User revisions**
+per step 2's loop rule; **Mechanical primitives output** as in step 2 — you
+run `evals`, `guard --base <ref>`, and `proofs --since <ref>`, and paste the
+stdout. The reviewer never shells out for them.
 
 #### R4. Branch on status
 

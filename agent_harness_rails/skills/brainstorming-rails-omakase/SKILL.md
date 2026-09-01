@@ -19,41 +19,24 @@ Turn ideas into an approved **requirements spec** through dialogue, with **omaka
 
 ## Grounding order (always)
 
-Use the **same order** as **`agent_harness_rails/agents/rails-query.md`** so this skill has the full harness stack at hand — not just the compass.
+Same grounding as **`agent_harness_rails/agents/rails-query.md`**: the
+**compass** first (`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`)
+for anything that could change solution shape; then **only** the **`writing-*`**
+skills and **`agent_harness_rails/rules/*.mdc`** files the brainstorm topic
+touches — route by the compass's **Where to go next** index (its scoping notes
+on the primitives and planning rows apply as written), and **do not skip** a
+rule file that applies to what you are designing; then the **user's codebase**
+(relevant models, controllers, routes, policies), so the spec ties to what you
+saw.
 
-1. **`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`** — For **architectural** questions (boundaries, "should we…", API vs HTML, where logic belongs, jobs vs request, anything that could pull the app off-Rails or split ownership badly), read the compass **first**. For **purely tactical** questions (e.g. local Hotwire / Stimulus wiring in an otherwise settled design), you may open the relevant **`writing-*`** skill first; still use the **compass** whenever the answer could change solution shape.
+**Supplementary reference — required when compass and writing-* leave a gap:**
+before the codebase step, consult the supplementary references per
+`agent_harness_rails/rules/harness-contract.mdc`; for this skill the consult is
+a **required** step for those gaps, not optional enrichment.
 
-2. **Scoped tactical layer** — Read **`agent_harness_rails/skills/writing-*/SKILL.md`** files that match the brainstorm topic (see **Topic → assets** below). Pair with **`agent_harness_rails/rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are designing.
-
-3. **Supplementary reference — required when compass and writing-* leave a gap** — consult the supplementary references per `agent_harness_rails/rules/harness-contract.mdc`; for this skill the consult is a **required** step for those gaps, not optional enrichment.
-
-4. **User's codebase** — If the workspace is a Rails app and the brainstorm is project-specific, read the **relevant** files (models, controllers, routes, policies, etc.) after the harness layers above; tie the spec to what you saw.
-
-**Routing:** Use **Topic → assets** to load **only** the **`writing-*`** skills and **`agent_harness_rails/rules/*.mdc`** files that match the topic — not every file unless the brainstorm is genuinely cross-cutting.
-
-### Topic → assets (load what applies)
-
-| Area | Skill(s) | Rules |
-|------|----------|--------|
-| Stack shape, boundaries, "where should this live?" | compass (+ `writing-services` if extraction) | `services.mdc`, `models.mdc`, `controllers.mdc` as needed |
-| Models, AR, domain | `writing-models` | `models.mdc` |
-| Controllers, params, REST | `writing-controllers` | `controllers.mdc` |
-| Routes | `writing-routes` | `routes.mdc` |
-| Views, helpers, partials | `writing-views` | `views.mdc` |
-| Hotwire, Turbo, Stimulus | `writing-hotwire` | `hotwire.mdc` |
-| CSS / Tailwind | `writing-css-tailwind` | `css-tailwind.mdc` |
-| JavaScript | `writing-javascript` | `javascript.mdc` |
-| I18n | `writing-i18n` | `i18n.mdc` |
-| Mailers | `writing-mailers` | `mailers.mdc` |
-| Jobs, Solid Queue, async | `writing-jobs` | `jobs.mdc` |
-| Policies / authorization | `writing-policies` | `policies.mdc` |
-| Migrations, schema | `writing-migrations` | `migrations.mdc` |
-| Tests | `writing-tests` | `testing.mdc` |
-| RuboCop / style gates | `running-rubocop` when relevant to the design | `rubocop.mdc` |
-| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` | `naming.mdc` |
-| Planning / execution context | `writing-rails-plans`, `executing-rails-plan`, `implementing-rails-task`, `reviewing-rails-work` | only when the brainstorm is about **how** to plan or run those workflows in this harness |
-
-Pull in workflow skills only when the conversation is explicitly about those processes — not for routine feature design (those stay behind the HARD-GATE until **`writing-rails-plans`**).
+Workflow skills (`writing-rails-plans`, `executing-rails-plan`, …) load only
+when the conversation is explicitly about those processes — routine feature
+design stays behind the HARD-GATE until **`writing-rails-plans`**.
 
 <HARD-GATE>
 Do **not** invoke **`implementing-rails-task`**, **`executing-rails-plan`**, or any implementation skill; do **not** write application code, migrations, or tests; do **not** scaffold until you have presented a design and the user has approved it, then written the spec file and passed the user review gate below. This applies to every change regardless of perceived size.
@@ -292,7 +275,7 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 | Mistake | Fix |
 |---------|-----|
 | Reading the app before compass / **`writing-*`** / **`agent_harness_rails/rules/*.mdc`** on architectural questions | Follow **Grounding order (always)** — same order as **`rails-query`**. |
-| Loading every `writing-*` and rule without routing | Use **Topic → assets**; expand only when cross-cutting. |
+| Loading every `writing-*` and rule without routing | Route by the compass's **Where to go next** index; expand only when cross-cutting. |
 | Coding or migrating during brainstorm | Stop; complete spec and **`writing-rails-plans`** first. |
 | Defaulting to JSON/SPA for app flows | Re-read **HTML as primary interface** in **`rails-omakase-compass`**. |
 | "If an RPC-shaped action is unavoidable…" | It almost never is. Model it RESTfully first — find the resource the action creates, updates, or destroys. Document exception only after the attempt. |
@@ -313,7 +296,7 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 
 ## Related
 
-- **`agent_harness_rails/agents/rails-query.md`** — same **Grounding order** and **Topic → assets** table (readonly Q&A; this skill is brainstorm + spec).
+- **`agent_harness_rails/agents/rails-query.md`** — same **Grounding order** (readonly Q&A; this skill is brainstorm + spec).
 - **`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`** — whether the shape fits.
 - **`agent_harness_rails/skills/writing-rails-plans/SKILL.md`** — next step after an approved spec.
 - **`agent_harness_rails/skills/implementing-rails-task/SKILL.md`** — after a plan exists, not during brainstorm.

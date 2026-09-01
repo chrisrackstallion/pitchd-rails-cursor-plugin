@@ -81,8 +81,8 @@ whether a "how" that arrived in the prompt survives scrutiny. A plan can be
 fully convention-compliant and still be the wrong solution.
 
 1. **Read `agent_harness_rails/skills/rails-omakase-compass/SKILL.md` first** — before the file
-   map, before any tasks. Mandatory for every plan, not just a row in the
-   conventions table below.
+   map, before any tasks. Mandatory for every plan, not just the source of
+   the conventions index below.
 2. **A prompter-suggested approach is an input, not a decision.** Evaluate it
    against the compass exactly as you would a candidate you generated
    yourself.
@@ -202,25 +202,12 @@ not intention, and are correct to write at plan time.
 
 ## Philosophy (Rails Agent Harness)
 
-- **Vertical slices over layers:** Prefer tasks that complete **one resource's
-  slice** (schema → model → policy → routes → controller → views → specs) over
-  scattering "all models, then all controllers."
-- **REST is the vocabulary:** New behavior is usually **new resources** or
-  **standard CRUD**, not RPC routes — see `agent_harness_rails/rules/routes.mdc`. If the plan adds
-  `post :publish`, it needs a **one-line justification** or a **nested resource**
-  / `update` shape instead.
-- **Domain logic lives on the model** (and concerns, form objects, jobs — not
-  `app/services` wrappers). Plans must not introduce **`SomethingService#call`**
-  that only forwards to Active Record — see `agent_harness_rails/rules/services.mdc`.
-- **Authorization is explicit:** Tasks must name **policy** changes (`authorize`,
-  `policy_scope`) — see `agent_harness_rails/rules/policies.mdc`.
-- **UI is server-rendered first:** Turbo Drive → Frames → Streams as complexity
-  grows — see `agent_harness_rails/rules/hotwire.mdc`, `agent_harness_rails/skills/writing-hotwire/SKILL.md`,
-  `agent_harness_rails/rules/views.mdc`, `agent_harness_rails/rules/javascript.mdc`.
-- **Tests are behaviour-first:** **System spec** for user-visible flows when
-  possible; request / model / policy specs only where
-  `agent_harness_rails/skills/writing-tests/SKILL.md` says — **one home per behaviour**, no duplicate
-  coverage across layers (`agent_harness_rails/rules/testing.mdc`).
+Solution shape belongs to the compass
+(`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`); shared premises
+to `agent_harness_rails/rules/harness-contract.mdc`; per-area tactics to the
+rules and skills in the compass's **Where to go next** index. Plans cite those
+homes instead of restating them. Task decomposition follows **vertical slices
+over layers** — see **Task order** below.
 
 ## When to plan
 
@@ -275,36 +262,19 @@ Default: **`docs/plans/YYYY-MM-DD-<feature-name>.md`** in the app repo (create
 
 ## Harness conventions to apply
 
-**This table is a gate, not a suggestion.** Before writing tasks for an area,
-read the matching row (rule + skill): no migration tasks before
-`agent_harness_rails/rules/migrations.mdc`, no controller tasks before `agent_harness_rails/rules/controllers.mdc`, no spec
-tasks before `agent_harness_rails/skills/writing-tests/SKILL.md` — and so on for every row the
-plan touches. A plan that specifies code for an area whose conventions were
-never loaded is **not ready for review**:
-
-| Area | Read |
-|------|------|
-| Architecture, omakase fit, boundaries ("whether" before "how") | `agent_harness_rails/skills/rails-omakase-compass/SKILL.md` |
-| Models, domain verbs, state-as-records | `agent_harness_rails/rules/models.mdc`, `agent_harness_rails/skills/writing-models/SKILL.md` |
-| Routes, shallow nesting, REST | `agent_harness_rails/rules/routes.mdc`, `agent_harness_rails/skills/writing-routes/SKILL.md` |
-| Controllers, params, Hotwire response order | `agent_harness_rails/rules/controllers.mdc`, `agent_harness_rails/skills/writing-controllers/SKILL.md` |
-| Pundit | `agent_harness_rails/rules/policies.mdc`, `agent_harness_rails/skills/writing-policies/SKILL.md` |
-| No service layer / where logic goes | `agent_harness_rails/rules/services.mdc` |
-| Tests (RSpec, FactoryBot, spec types) | `agent_harness_rails/rules/testing.mdc`, `agent_harness_rails/skills/writing-tests/SKILL.md` |
-| Hotwire, Stimulus | `agent_harness_rails/rules/hotwire.mdc`, `agent_harness_rails/skills/writing-hotwire/SKILL.md` |
-| Views, partials, components discipline | `agent_harness_rails/rules/views.mdc`, `agent_harness_rails/skills/writing-views/SKILL.md` |
-| Tailwind / CSS | `agent_harness_rails/rules/css-tailwind.mdc`, `agent_harness_rails/skills/writing-css-tailwind/SKILL.md` |
-| JavaScript | `agent_harness_rails/rules/javascript.mdc`, `agent_harness_rails/skills/writing-javascript/SKILL.md` |
-| I18n | `agent_harness_rails/rules/i18n.mdc`, `agent_harness_rails/skills/writing-i18n/SKILL.md` |
-| Mailers | `agent_harness_rails/rules/mailers.mdc`, `agent_harness_rails/skills/writing-mailers/SKILL.md` |
-| Background jobs | `agent_harness_rails/rules/jobs.mdc`, `agent_harness_rails/skills/writing-jobs/SKILL.md` |
-| Migrations | `agent_harness_rails/rules/migrations.mdc`, `agent_harness_rails/skills/writing-migrations/SKILL.md` |
-| Naming (classes, methods, columns, routes, specs) | `agent_harness_rails/rules/naming.mdc`, `agent_harness_rails/skills/writing-naming-conventions/SKILL.md` |
-| Linting | `agent_harness_rails/rules/rubocop.mdc`, `agent_harness_rails/skills/running-rubocop/SKILL.md` |
+The area → rule + skill mapping lives in the compass's **Where to go next**
+index (`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`). **For
+planning, that index is a gate, not a suggestion.** Before writing tasks for
+an area, read its row (rule + skill): no migration tasks before
+`agent_harness_rails/rules/migrations.mdc`, no controller tasks before
+`agent_harness_rails/rules/controllers.mdc`, no spec tasks before
+`agent_harness_rails/skills/writing-tests/SKILL.md` — and so on for every row
+the plan touches. A plan that specifies code for an area whose conventions
+were never loaded is **not ready for review**.
 
 ### Supplementary reference (optional)
 
-When **`rails-omakase-compass`**, this skill's philosophy section, and the scoped **`agent_harness_rails/rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap, consult the supplementary references per `agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for this workflow.
+When **`rails-omakase-compass`**, this skill, and the scoped rows still leave a **Rails best-practice** gap, consult the supplementary references per `agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for this workflow.
 
 ## Map files before tasks
 
@@ -320,7 +290,10 @@ the spec or file size demands it.
 
 ## Task order (repeatable template)
 
-Order tasks by **dependency**, not arbitrary numbering:
+**Vertical slices over layers:** prefer tasks that complete **one resource's
+slice** (schema → model → policy → routes → controller → views → specs) over
+scattering "all models, then all controllers." Order tasks by **dependency**,
+not arbitrary numbering:
 
 1. **Migration / schema** — if the data shape changes (`db/migrate/...`).
 2. **Model** — associations, domain verbs, transactions, scopes
@@ -428,7 +401,7 @@ Omit this line otherwise.]
 
 **Conventions:** `agent_harness_rails/skills/rails-omakase-compass/SKILL.md` (shape), `agent_harness_rails/rules/models.mdc`,
 `agent_harness_rails/rules/routes.mdc`, `agent_harness_rails/rules/controllers.mdc`, `agent_harness_rails/rules/policies.mdc`, `agent_harness_rails/rules/services.mdc`,
-`agent_harness_rails/rules/testing.mdc`, `agent_harness_rails/rules/hotwire.mdc` (and UI rules as needed — see table above)
+`agent_harness_rails/rules/testing.mdc`, `agent_harness_rails/rules/hotwire.mdc` (and UI rules as needed — see the compass index)
 
 ---
 ```
@@ -514,22 +487,15 @@ These are **plan failures** — fix before sharing:
 
 ## Rails anti-patterns to reject in plans
 
-**Reject or rewrite tasks that follow these patterns — regardless of whether the
-current application already does them.** If an anti-pattern is already present in
-the codebase, do not extend it. Name it, cite the rule, and route around it.
+**Reject or rewrite tasks that follow an anti-pattern — regardless of whether
+the current application already does it** (harness rules beat application
+patterns, `agent_harness_rails/rules/harness-contract.mdc`). If an
+anti-pattern is already present in the codebase, do not extend it. Name it,
+cite the rule, and route around it. Area-level anti-patterns (service
+wrappers, RPC routes, duplicate coverage, Turbo escalation, …) live in the
+`agent_harness_rails/rules/*.mdc` files the gate above loads. Two failures are
+plan-shaped and visible only at plan level:
 
-- **`app/services` wrappers** that only call Active Record — use model verbs,
-  form objects, or jobs (`agent_harness_rails/rules/services.mdc`).
-- **Custom member routes** for state that belongs in **`update`** or a **small
-  resource** (`post :publish` vs `PublicationsController`) without justification
-  (`agent_harness_rails/rules/routes.mdc`).
-- **Duplicate system + request + model** coverage for the **same** behaviour
-  (`agent_harness_rails/rules/testing.mdc`).
-- **Standalone `not_to` assertions** that only prove an element is absent — every
-  spec must assert positive behaviour the user *sees*; `not_to` is a secondary
-  side-effect assertion, not a primary one (`agent_harness_rails/rules/testing.mdc`).
-- **Turbo Streams** before **redirect** / **frame** solutions when the UX allows
-  (`agent_harness_rails/rules/controllers.mdc`, `agent_harness_rails/skills/writing-hotwire/SKILL.md`).
 - **One vertical slice split** across many tasks that **never** pass CI in between.
 - **The same method or behaviour defined on more than one entity** across tasks —
   shared behaviour gets **one home**: a concern or the owning model
@@ -541,27 +507,23 @@ the codebase, do not extend it. Name it, cite the rule, and route around it.
 After drafting the plan:
 
 1. **Spec coverage:** Every requirement maps to at least one task (list gaps).
-2. **Placeholder scan:** Search for forbidden vague phrases (see above).
-3. **Naming consistency:** Method names, policy methods, and route helpers match
+2. **Naming consistency:** Method names, policy methods, and route helpers match
    across tasks (no `publish` vs `publish!` drift unless intentional).
-4. **Duplication scan:** Read the plan as a whole — not task by task — and
-   search for the same method name or behaviour defined on more than one
-   model or entity across tasks. Each hit is a defect: rewrite so the
-   behaviour has one home — a concern or the owning model
-   (`agent_harness_rails/rules/models.mdc`) — and the other tasks reference it.
-5. **Anti-pattern scan:** Check that no task normalizes a current application
-   anti-pattern — even if the existing code does it. Flag and route around it.
-6. **Convention coverage:** List every area the plan touches (migrations,
+3. **Placeholder and anti-pattern scan:** Hold the plan against **No
+   placeholders** and **Rails anti-patterns to reject in plans** above —
+   reading the plan as a whole, not task by task, since the duplication
+   anti-pattern only shows there.
+4. **Convention coverage:** List every area the plan touches (migrations,
    models, policies, routes, controllers, views, Hotwire, i18n, mailers, jobs,
-   tests, …) and confirm you read that area's rule + skill from the table
-   before writing its tasks. Any area written from memory: re-read the row
-   and re-check those tasks now.
-7. **Frame check:** Re-read the **Problem:** line. Confirm every task serves
+   tests, …) and confirm you read that area's rule + skill from the compass
+   index before writing its tasks. Any area written from memory: re-read the
+   row and re-check those tasks now.
+5. **Frame check:** Re-read the **Problem:** line. Confirm every task serves
    it, no task exists only to prop up the chosen mechanism, and nothing in the
    plan works around a framework default. If a task fails this check, the
    issue is usually the approach — go back through the **Approach gate**
    before patching.
-8. **Delivery check:** Estimate the changed application-code lines the plan
+6. **Delivery check:** Estimate the changed application-code lines the plan
    produces and hold it against **PR and deployment scope**: one PR under the
    ~400-line target, or declared seam-based boundaries in the **Delivery:**
    line, each independently deployable. A migration whose contract step rides
@@ -569,16 +531,15 @@ After drafting the plan:
    lands, fails this check. An estimate past ~800 means the slice itself is
    too big — route it back to the spec's **Delivery sequence** as a split,
    not a fatter plan.
-9. **Primitives trace (when the tree exists):** Every task's behaviour maps to
+7. **Primitives trace (when the tree exists):** Every task's behaviour maps to
    an active Intent clause in the capability doc; every clause this plan
    touches appears in the header's **Capability:** line; supersessions are
    explicit in both plan and doc; nothing contradicts `compilation.md` or the
    doc's recorded Shape and Provenance. Untraceable behaviour means either a
    missing clause (add it) or scope creep (cut it).
-10. **Readability scan:** Read the plan as the implementing developer. Cut
-    every sentence that doesn't change what they would type — restated rules
-    or clauses, per-task justification, filler — and check the ~300-line
-    tripwire (**Write for the human reader**).
+8. **Readability scan:** Read the plan as the implementing developer and hold
+   it against **Write for the human reader**, including the ~300-line
+   tripwire.
 
 Fix issues inline; add tasks for missing requirements.
 
@@ -594,24 +555,43 @@ If the user requests changes to the plan at any point during the session, enter
 and the scoped review is complete, resume or close the pass flow as described
 there.
 
-### Pass 1 — Feature / plan shape (`rails-reviewer`)
+### Delegating to `rails-reviewer` (all passes)
 
-After drafting, delegate to **`rails-reviewer`**
-(`agent_harness_rails/agents/rails-reviewer.md` — [Cursor subagents](https://cursor.com/docs/subagents)).
+Delegate to **`rails-reviewer`**
+(`agent_harness_rails/agents/rails-reviewer.md` — [Cursor subagents](https://cursor.com/docs/subagents));
+invoke with **`/rails-reviewer`** plus this context, or use the Task tool.
 **Canonical workflow and report format:** `agent_harness_rails/skills/reviewing-rails-work/SKILL.md`.
-
-**Delegation prompt must include:**
+Every pass sends the same fields — **Scope** and **User revisions** take
+per-pass values (semantics note below):
 
 | Field | Value |
 |-------|--------|
 | **Phase** | `plan` (or `both` if you also want implementation-adjacent checks) |
 | **Plan path** | Path to this plan file (e.g. `docs/plans/2026-04-09-feature.md`) |
 | **Spec path** | Path to the spec or requirements doc, or `none` |
-| **Scope** | The plan file path again, or `full plan` |
-| **User revisions** | (optional) Bullet summary of what the user changed — reviewer focuses only on these sections. Example: `- Task 3: replaced form object with model verb; - File map: removed app/forms/publish_form.rb` |
-| **Mechanical primitives output** | When the app has a `docs/primitives/` tree: the **full stdout** of `agent_harness_rails evals` and `agent_harness_rails guard --base <ref>`, run by you and pasted under the heading **Mechanical primitives output (authoritative — do not re-run)**. `no primitives tree` when the app has none. The reviewer is `readonly: true` and may have no shell — and a subagent shell that returns no stdout, no stderr and no exit code reads to it as a silent CLI (`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet). |
+| **Scope** | Per pass — see the semantics note |
+| **User revisions** | Per pass — see the semantics note; its meaning **inverts** between passes |
+| **Mechanical primitives output** | When the app has a `docs/primitives/` tree: the **full stdout** of the plan-phase commands `agent_harness_rails evals` and `agent_harness_rails guard --base <ref>`, run by you and pasted under the heading **Mechanical primitives output (authoritative — do not re-run)**. (Implementation-phase reviews send a third command, `agent_harness_rails proofs --since <ref>` — `agent_harness_rails/skills/executing-rails-plan/SKILL.md`.) `no primitives tree` when the app has none. The reviewer is `readonly: true` and may have no shell — and a subagent shell that returns no stdout, no stderr and no exit code reads to it as a silent CLI (`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet). |
 
-Invoke with **`/rails-reviewer`** plus that context, or use the Task tool.
+**Per-pass semantics — the differences carry meaning; do not average them:**
+
+- **Pass 1:** **Scope** = the plan file path again, or `full plan`.
+  **User revisions** (optional) = bullet summary of what the user changed —
+  **scope**: the reviewer focuses only on these sections (e.g. `- Task 3:
+  replaced form object with model verb`).
+- **Pass 2, initial:** **Scope** = `full plan`; state that this is **final
+  sign-off before implementation** and whether prompted by **Pass 1 edits**
+  or **user revisions**. **User revisions** (optional) = **context only**:
+  the reviewer reads the full plan — the bullets say where to pay extra
+  attention, not where to stop.
+- **Pass 2, loop (after fixing Pass 2 issues):** **Scope** = the changed
+  sections only (e.g. `Task 3 — replaced approach`). **User revisions**
+  reverts to **scope**: exactly what was fixed — the reviewer reads only
+  these sections.
+
+### Pass 1 — Feature / plan shape (`rails-reviewer`)
+
+After drafting, delegate with the Pass 1 field values above.
 
 **Incorporate** Approved items or **address** Issues found by **editing the plan**
 (tasks, file map, snippets). "Implemented" at this stage means **feedback is
@@ -626,33 +606,10 @@ Present a brief summary to the user: Pass 1 outcome and what was changed in the 
 materially changed the plan (tasks added/removed, approach changed, file map
 altered).
 
-Then delegate to **`rails-reviewer`** again.
-
-**Initial Pass 2 call:**
-
-| Field | Value |
-|-------|--------|
-| **Phase** | `plan` (use `both` only if you also need implementation-shaped checks) |
-| **Plan path** | Updated plan file |
-| **Spec path** | Unchanged from Pass 1, or `none` |
-| **Scope** | `full plan` — state that this is **final sign-off before implementation** and whether prompted by **Pass 1 edits** or **user revisions** |
-| **User revisions** | (optional) Bullet summary — **context only**: the reviewer reads the full plan; User revisions tells them where to pay extra attention, not where to stop |
-| **Mechanical primitives output** | As Pass 1 — you run the commands, the reviewer cites the pasted block |
-
-**Loop call (after fixing Pass 2 issues):**
-
-| Field | Value |
-|-------|--------|
-| **Phase** | same as initial |
-| **Plan path** | Updated plan file |
-| **Spec path** | Unchanged, or `none` |
-| **Scope** | The changed sections only (e.g. `Task 3 — replaced approach`, `File map — removed entry`) |
-| **User revisions** | Bullet list of exactly what was fixed — the reviewer reads only these sections |
-| **Mechanical primitives output** | As Pass 1 — you run the commands, the reviewer cites the pasted block |
-
-Treat the outcome as **final plan approval** before implementation. If Pass 2
-raises issues, fix the plan and re-run **scoped to the fixes only** per the
-loop call above — do not send the full plan again; repeat the same scoped
+Then delegate again with the Pass 2 initial field values above. Treat the
+outcome as **final plan approval** before implementation. If Pass 2 raises
+issues, fix the plan and re-run **scoped to the fixes only** per the Pass 2
+loop semantics — do not send the full plan again; repeat the same scoped
 pattern if another loop is needed.
 
 ### At final approval — primitives sync (when the tree exists)
@@ -727,17 +684,12 @@ After editing:
 
 #### R3. Delegate a scoped review
 
-Invoke **`rails-reviewer`** with:
-
-- **Phase:** `plan`
-- **Plan path:** the plan file.
-- **Spec path:** as used earlier in this session, or `none`.
-- **Scope:** the changed sections only (not the full plan).
-- **User revisions:** the bullet summary from R2 — the reviewer focuses only on
-  what changed.
-- **Mechanical primitives output:** as in Pass 1 — you run `evals` and
-  `guard --base <ref>` and paste the stdout; the reviewer never shells out for
-  them.
+Delegate with the field values in **Delegating to `rails-reviewer`** above,
+using Pass 2 loop semantics: **Scope** = the changed sections only (not the
+full plan); **User revisions** = the bullet summary from R2 — the reviewer
+focuses only on what changed. Mechanical primitives output as always: you run
+`evals` and `guard --base <ref>` and paste the stdout; the reviewer never
+shells out for them.
 
 **Exception:** if no full pass has yet reviewed the plan (the revision happened
 before Pass 1 ever ran), send a **full-scope** review — scoping to changed
@@ -772,9 +724,6 @@ from **R1**.
 ## Executing the plan (orchestration)
 
 To **run** an approved plan without the main agent writing app code, use
-**`agent_harness_rails/skills/executing-rails-plan/SKILL.md`**: delegate each task to
-**`rails-implementor`**, review with **`rails-reviewer`** in a loop
-until Approved, then hand off to the user for sign-off. In **step-by-step** mode
-that skill stops after each Approved task for the user to review and commit it —
-so each task in this plan is also a **commit checkpoint**, which is what the
-granularity guidance above is sizing.
+**`agent_harness_rails/skills/executing-rails-plan/SKILL.md`** — in its
+step-by-step mode each task in this plan is a **commit checkpoint**, which is
+what the granularity guidance above is sizing.

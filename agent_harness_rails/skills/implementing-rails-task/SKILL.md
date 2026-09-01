@@ -42,11 +42,11 @@ scope.
 
 | Skill | Role |
 |-------|------|
-| `executing-rails-plan` | **Orchestration** — run a whole plan (or subset) by delegating each task to **`rails-implementor`** and **`rails-reviewer`** in a loop; orchestrator does **not** write app code. |
+| `executing-rails-plan` | **Orchestration** — runs a whole plan (or subset) through implement → review loops; the orchestrator writes no app code. |
 | `rails-omakase-compass` | **Whether** the approach fits majestic monolith / server truth / REST — read **before** coding when the task involves boundaries or product shape. |
 | `writing-*` + `agent_harness_rails/rules/*.mdc` | **How** to write routes, models, controllers, Hotwire, tests, etc., for this repo. |
 | `writing-rails-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
-| `writing-tests` | Tests: opinionated best-practice philosophy (system backbone, real objects, behaviour over mocks) plus `agent_harness_rails/rules/testing.mdc`. |
+| `writing-tests` | Testing philosophy and spec-layer choice, with `agent_harness_rails/rules/testing.mdc`. |
 | `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `agent_harness_rails/rules/rubocop.mdc`. Not a substitute for compass or tests. |
 | `maintaining-primitives` | **Primitives tree only** — capability docs, `compilation.md`, provenance under `docs/primitives/` per `agent_harness_rails/rules/primitives.mdc`. Implementation **reads** intent/shape excerpts pasted into the task prompt but **never writes** to the tree — the planner and execution close-out own those write points. If the task is code, stay in this skill. |
 
@@ -82,16 +82,14 @@ For purely local edits inside an established pattern, still **skim** the compass
 
 ### 3. Select tactical skills by scope
 
-From the task description and files you will touch, read **only** the relevant:
-
-`writing-rails-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
-`writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
-`writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-jobs`, `writing-migrations`, `writing-tests`.
+From the task description and files you will touch, read **only** the
+relevant areas — route by the compass's **Where to go next** index
+(`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`), which maps each
+area to its `writing-*` skill and `agent_harness_rails/rules/*.mdc` file.
 
 For each area, open the skill's **SKILL.md** and the relevant
-**`references/patterns.md`** (or sectioned references). Cross-check
-**`rules/<area>.mdc`** for the same area. The list is a **menu**, not permission
+**`references/patterns.md`** (or sectioned references). Cross-check the paired
+**`rules/<area>.mdc`**. The index is a **menu**, not permission
 to add JS or service layers by reflex — apply the **defaults under Load the compass** first.
 
 **Hard rule:** do not write or edit code for a layer before reading that

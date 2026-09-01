@@ -111,28 +111,30 @@ choice.
 
 ## Where to go next (tactical index)
 
-Read only what the task touches:
+Read only what the task touches. Skills live under
+`agent_harness_rails/skills/`, rules under `agent_harness_rails/rules/`:
 
-| Area | Skill |
-|------|--------|
-| Plans / task breakdown | `writing-rails-plans` |
-| Models / concerns / domain | `writing-models` |
-| Controllers / Turbo responses | `writing-controllers` |
-| Routes / REST mapping | `writing-routes` |
-| Hotwire / Turbo / Stimulus | `writing-hotwire` |
-| Views / partials | `writing-views` |
-| JS | `writing-javascript` |
-| CSS / Tailwind | `writing-css-tailwind` |
-| I18n | `writing-i18n` |
-| Mailers | `writing-mailers` |
-| Policies / Pundit | `writing-policies` |
-| Service objects (when justified) | `writing-services` |
-| Background jobs / ActiveJob | `writing-jobs` |
-| Database migrations | `writing-migrations` |
-| Tests / RSpec | `writing-tests` |
-| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` |
-| Code comments (when one earns its line) | `agent_harness_rails/rules/comments.mdc` |
-| Lint gate | `running-rubocop` |
+| Area | Skill | Rules |
+|------|-------|-------|
+| Plans / task breakdown; planning & execution workflows (workflow skills only when the question is about **how** to plan or run them) | `writing-rails-plans`, `executing-rails-plan` | — |
+| Models / concerns / domain | `writing-models` | `models.mdc` |
+| Controllers / Turbo responses | `writing-controllers` | `controllers.mdc` |
+| Routes / REST mapping | `writing-routes` | `routes.mdc` |
+| Hotwire / Turbo / Stimulus | `writing-hotwire` | `hotwire.mdc` |
+| Views / partials | `writing-views` | `views.mdc` |
+| JS | `writing-javascript` | `javascript.mdc` |
+| CSS / Tailwind | `writing-css-tailwind` | `css-tailwind.mdc` |
+| I18n | `writing-i18n` | `i18n.mdc` |
+| Mailers | `writing-mailers` | `mailers.mdc` |
+| Policies / Pundit | `writing-policies` | `policies.mdc` |
+| Service objects (when justified) / where logic goes | `writing-services` | `services.mdc` |
+| Background jobs / ActiveJob | `writing-jobs` | `jobs.mdc` |
+| Database migrations | `writing-migrations` | `migrations.mdc` |
+| Tests / RSpec | `writing-tests` | `testing.mdc` |
+| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` | `naming.mdc` |
+| Code comments (when one earns its line) | — | `comments.mdc` |
+| Lint gate | `running-rubocop` | `rubocop.mdc` |
+| Primitives (capability docs, intent clauses, provenance) — when paths are under `docs/primitives/` | `maintaining-primitives` (setup: `bootstrapping-primitives`) | `primitives.mdc`, `primitives-cli.mdc` |
 
 ### Optional external references
 

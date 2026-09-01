@@ -64,16 +64,14 @@ Prefix these findings **`philosophy:`**.
 
 ### 3. Select tactical skills by scope
 
-From the diff or plan, pick **only** the skills that apply:
-
-`writing-rails-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
-`writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
-`writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-jobs`, `writing-migrations`, `writing-tests`,
-`running-rubocop` (when the app uses RuboCop: expect **zero** offences — fix in code, no disables, no `.rubocop_todo.yml`; not architecture).
-
-Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
-sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
+From the diff or plan, pick **only** the areas that apply — route by the
+compass's **Where to go next** index
+(`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`), which maps each
+area to its `writing-*` skill and `agent_harness_rails/rules/*.mdc` file. Read
+each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
+sections (not necessarily entire files); cross-check the paired rule. When
+the app uses RuboCop (`running-rubocop`): expect **zero** offences — fix in
+code, no disables, no `.rubocop_todo.yml`; not architecture.
 
 **Every diff, whatever the layer:** `agent_harness_rails/rules/naming.mdc` and
 `agent_harness_rails/rules/comments.mdc`. A comment that restates the code,
@@ -235,9 +233,10 @@ candidate must be something a reader a year out would act on
 
 **Plan:** Completeness (no blocking TODOs), spec alignment, vertical slices,
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
-layer for rules; `writing-rails-plans` fit; red flags from `writing-rails-plans` (services,
-RPC, missing policy, Turbo escalation before simpler options, duplicate test
-coverage). **Cross-task duplication:** read the task list as a whole — the
+layer for rules; `writing-rails-plans` fit; red flags from the touched area
+rules (services, RPC, missing policy, Turbo escalation before simpler options,
+duplicate test coverage) and the plan-shaped anti-patterns in
+`writing-rails-plans`. **Cross-task duplication:** read the task list as a whole — the
 same method or behaviour defined on more than one entity across tasks is a
 finding (one home: a concern or the owning model, `agent_harness_rails/rules/models.mdc`);
 per-task reading hides it. **Delivery scope:** the header carries a
