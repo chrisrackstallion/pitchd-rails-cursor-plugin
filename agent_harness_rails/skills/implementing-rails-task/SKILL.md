@@ -21,15 +21,13 @@ drive-by refactors outside scope.
 execute it without hedging. When something is genuinely ambiguous, pause and
 ask once — then proceed.
 
-**Harness rules beat application patterns:** For the **code you write in this
-task**, apply harness rules — do not inherit anti-patterns from the surrounding
-codebase. If every controller in the app calls service objects but this task
-adds a new action, write the action using model logic per `agent_harness_rails/rules/services.mdc`,
-not by calling into an existing service object. If integrating correctly is
-genuinely blocked by surrounding anti-pattern infrastructure (e.g. you must
-call into an existing service that carries side effects or state), escalate as
-**NEEDS_CONTEXT** — do not silently copy the anti-pattern. Do not refactor
-surrounding code outside this task's scope.
+**Harness rules beat application patterns**
+(`agent_harness_rails/rules/harness-contract.mdc`) for the **code you write in
+this task**. If integrating correctly is genuinely blocked by surrounding
+anti-pattern infrastructure (e.g. you must call into an existing service that
+carries side effects or state), escalate as **NEEDS_CONTEXT** — do not silently
+copy the anti-pattern. Do not refactor surrounding code outside this task's
+scope.
 </objective>
 
 **Announce:** "I'm using the implementing-rails-task skill."
@@ -52,10 +50,7 @@ surrounding code outside this task's scope.
 | `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `agent_harness_rails/rules/rubocop.mdc`. Not a substitute for compass or tests. |
 | `maintaining-primitives` | **Primitives tree only** — capability docs, `compilation.md`, provenance under `docs/primitives/` per `agent_harness_rails/rules/primitives.mdc`. Implementation **reads** intent/shape excerpts pasted into the task prompt but **never writes** to the tree — the planner and execution close-out own those write points. If the task is code, stay in this skill. |
 
-**Conflict rule (same as reviewing-rails-work):**
-
-- **Tactics** (`writing-*`, `agent_harness_rails/rules/*.mdc`) win on **specific HOW**.
-- **Compass** wins on **whether** the solution shape matches omakase intent — unless the user or plan has **explicitly** chosen a different shape (API-first, SPA); then implement **consistently** with that documented exception.
+**Conflict rule:** per `agent_harness_rails/rules/harness-contract.mdc` — under a documented exception, implement **consistently** with that documented exception.
 
 ## Process
 
@@ -220,7 +215,7 @@ End with a **one-line summary**.
 The **`rails-implementor`** custom subagent at
 **`agent_harness_rails/agents/rails-implementor.md`** runs this workflow in an
 **isolated** context (`readonly: false`, `model: inherit`). It does not commit
-code. It does not see parent chat — the delegating agent must pass **full task
+code. Context isolation applies (`agent_harness_rails/rules/harness-contract.mdc`) — the delegating agent must pass **full task
 text** (including acceptance criteria and file layout when the plan would have
 them), **context**, **working directory**, and paths to **plan/spec** when
 relevant. When **plan path** is `none`, **pasted task text** must stand in for

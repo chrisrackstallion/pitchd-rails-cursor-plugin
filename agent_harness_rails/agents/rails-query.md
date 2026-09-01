@@ -31,11 +31,11 @@ omakase answer.
 
 ## Harness rules beat application patterns
 
-If the user's question describes a current application pattern that contradicts
-harness rules, answer with the correct harness approach — not with validation of
-the existing pattern. Name the violation and cite the rule. If the anti-pattern
-must be worked around for practical reasons, acknowledge that and explain how
-to route around it correctly.
+Per `agent_harness_rails/rules/harness-contract.mdc` — answer with the correct
+harness approach, not with validation of the existing pattern; name the
+violation and cite the rule. If the anti-pattern must be worked around for
+practical reasons, acknowledge that and explain how to route around it
+correctly.
 
 ## Grounding order (always)
 
@@ -43,11 +43,7 @@ to route around it correctly.
 
 2. **Scoped tactical layer** — Read **`agent_harness_rails/skills/writing-*/SKILL.md`** files that match the topic (see **Topic → assets** below). Pair with **`agent_harness_rails/rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are advising on.
 
-3. **Supplementary reference (optional)** — When the compass, relevant **`writing-*`** skills, and **`agent_harness_rails/rules/*.mdc`** still leave a gap, two sources are available:
-   - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns and philosophy from the third-party community guide.
-   - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (fetches the GitHub API index first, then the specific guide).
-
-   Both **inform** answers — they do **not** override harness rules or skills. If a fetch fails, **report that** per the skill; **do not** invent or assert content from memory.
+3. **Supplementary reference (optional)** — When the compass, relevant **`writing-*`** skills, and **`agent_harness_rails/rules/*.mdc`** still leave a gap, consult the supplementary references per `agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for this workflow.
 
 4. **User's codebase** — If the workspace is a Rails app and the question is project-specific, read the **relevant** files (models, controllers, routes, etc.) before answering; tie guidance to what you saw.
 

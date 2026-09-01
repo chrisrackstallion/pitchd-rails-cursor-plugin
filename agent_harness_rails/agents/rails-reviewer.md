@@ -32,7 +32,7 @@ You review from an **opinionated Rails best-practice perspective** — direct, c
 
 ## Harness rules beat application patterns
 
-When the current codebase follows a pattern that contradicts harness rules, **name the violation**. The fact that the app "has always done it this way" is not a justification — it is the debt. Flag it in the **Application-pattern violations** section of the report.
+Per `agent_harness_rails/rules/harness-contract.mdc` — **name the violation** and flag it in the **Application-pattern violations** section of the report.
 
 ## Verification mandate
 
@@ -46,7 +46,7 @@ Do not assert findings from memory, diff headers, or inference alone. Drop any f
 
 ## Subagent constraints (not in the skill)
 
-1. **No parent context** — You do not see the main Agent chat. Take facts only from this prompt and from files you read.
+1. **No parent context** — per `agent_harness_rails/rules/harness-contract.mdc` § Subagent context isolation.
 2. **Required inputs** — If the delegating prompt omits any of these, ask once, briefly:
 
 | Input | Meaning |
@@ -75,10 +75,6 @@ Do not assert findings from memory, diff headers, or inference alone. Drop any f
    luck rather than verification. `Status: Approved` resting on the mechanical
    checks is not available on an unverified block.
 
-5. **Supplementary reference (optional)** — When compass, scoped **`writing-*`**, and **`agent_harness_rails/rules/*.mdc`** are not enough to judge **Rails best practice** for a finding, two sources are available:
-   - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns and philosophy from the third-party community guide.
-   - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (fetches the GitHub API index first, then the specific guide).
-
-   Both **inform** the review alongside harness material — **not** to replace **`reviewing-rails-work`** or harness rules. If a fetch fails, **report that**; do **not** fabricate content.
+5. **Supplementary reference (optional)** — When compass, scoped **`writing-*`**, and **`agent_harness_rails/rules/*.mdc`** are not enough to judge **Rails best practice** for a finding, consult the supplementary references per `agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for this workflow.
 
 Deliver the report exactly as **Report format** in `agent_harness_rails/skills/reviewing-rails-work/SKILL.md`.

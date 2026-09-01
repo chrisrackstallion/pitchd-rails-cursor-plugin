@@ -44,10 +44,9 @@ proceed.
 
 ## Harness rules beat application patterns
 
-For **the code you write in this task**, apply harness rules — do not inherit
-anti-patterns from the surrounding codebase. If every controller in the app calls
-service objects but this task adds a new action, write the action using model
-logic per `agent_harness_rails/rules/services.mdc`, not by calling into an existing service object.
+The premise and the service-object example live in
+`agent_harness_rails/rules/harness-contract.mdc` — apply it to **the code you
+write in this task**.
 
 If integrating correctly with harness rules is genuinely blocked by the surrounding
 anti-pattern infrastructure (e.g. the task requires calling into an existing
@@ -59,23 +58,15 @@ this task's scope.
 ## Supplementary reference (optional)
 
 When **`rails-omakase-compass`**, the relevant **`writing-*`** skills, and
-**`agent_harness_rails/rules/*.mdc`** still leave a **Rails best-practice** gap, two supplementary
-sources are available — use the one that fits the gap:
-
-- **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns, philosophy, and tradeoffs from the third-party community guide.
-- **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API
-  and feature docs** (e.g. querying, routing DSL, callbacks, Action Cable). Fetches
-  the GitHub API index first, then the specific guide.
-
-Both **inform** harness conventions — they do **not** override them; **tactics in
-this harness win** on HOW, same as the compass conflict rule in
-**`implementing-rails-task`**. If a fetch fails, follow that skill: **report
-the failure** and do **not** invent or assert content.
+**`agent_harness_rails/rules/*.mdc`** still leave a **Rails best-practice** gap,
+consult the supplementary references per
+`agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for
+this workflow.
 
 ## Subagent constraints
 
-1. **No parent context** — You do not see the main Agent chat. Take facts only
-   from this prompt and from files you read.
+1. **No parent context** — per `agent_harness_rails/rules/harness-contract.mdc`
+   § Subagent context isolation.
 2. **Required inputs** — If the delegating prompt omits any of these, ask once,
    briefly:
 

@@ -15,7 +15,7 @@ Turn ideas into an approved **requirements spec** through dialogue, with **omaka
 
 **Announce:** "I'm using the brainstorming-rails-omakase skill."
 
-**Harness rules beat application patterns:** Where the app contradicts harness rules, the spec describes the **correct** omakase direction for new work and notes integration friction — same as **`agent_harness_rails/agents/rails-query.md`**.
+**Harness rules beat application patterns** (`agent_harness_rails/rules/harness-contract.mdc`): where the app contradicts harness rules, the spec describes the **correct** omakase direction for new work and notes integration friction.
 
 ## Grounding order (always)
 
@@ -25,11 +25,7 @@ Use the **same order** as **`agent_harness_rails/agents/rails-query.md`** so thi
 
 2. **Scoped tactical layer** — Read **`agent_harness_rails/skills/writing-*/SKILL.md`** files that match the brainstorm topic (see **Topic → assets** below). Pair with **`agent_harness_rails/rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are designing.
 
-3. **Supplementary reference — required when compass and writing-* leave a gap** — a required consult for those gaps, not optional enrichment:
-   - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — supplemental patterns and philosophy from the third-party community guide.
-   - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — authoritative Rails API and feature docs.
-
-   Both **inform** the brainstorm — they do **not** override harness rules or skills. If a fetch fails, **report that** per the skill; **do not** invent or assert content from memory.
+3. **Supplementary reference — required when compass and writing-* leave a gap** — consult the supplementary references per `agent_harness_rails/rules/harness-contract.mdc`; for this skill the consult is a **required** step for those gaps, not optional enrichment.
 
 4. **User's codebase** — If the workspace is a Rails app and the brainstorm is project-specific, read the **relevant** files (models, controllers, routes, policies, etc.) after the harness layers above; tie the spec to what you saw.
 
@@ -215,7 +211,7 @@ Rules for the sequence:
 time, as each slice comes up** — not all up front; execution of earlier slices
 invalidates plans drafted ahead.
 
-**Working in existing codebases:** Follow patterns that match **harness rules**. Where the app contradicts them, the spec describes the **correct** Rails-shaped direction for new work and notes integration friction (same rule as **`implementing-rails-task`** and **`writing-rails-plans`**) — never silently entrench anti-patterns.
+**Working in existing codebases:** Follow patterns that match **harness rules**. Where the app contradicts them, the spec describes the **correct** Rails-shaped direction for new work and notes integration friction (`agent_harness_rails/rules/harness-contract.mdc`) — never silently entrench anti-patterns.
 
 ## The process (mirrors superpowers brainstorming)
 

@@ -89,11 +89,8 @@ Prefix these findings **`tactical:`**.
 
 ### 4. Conflict rule
 
-- **Tactics** win on **specific** HOW (this repo’s rules and patterns).
-- **Compass** wins on **whether** the approach matches **majestic monolith /
-  omakase** intent — unless the user or plan has **explicitly** chosen a
-  different shape (API-first, SPA, etc.); then treat it as a documented
-  exception and review tactics for consistency with that choice.
+Per `agent_harness_rails/rules/harness-contract.mdc` — under a documented
+exception, review tactics for consistency with that choice.
 
 ### 5. Primitives checks
 
@@ -325,11 +322,11 @@ files, or need migrations/QA — still report them; label clearly.
 
 ### 8. Calibration
 
-**Flag all violations of harness rules.** Harness conventions — `rails-omakase-compass`,
-`writing-*` skills, and `agent_harness_rails/rules/*.mdc` — apply even when the application currently does
-otherwise. An established application pattern is not a justification; it may be exactly
-the debt worth naming. State violations directly: "This violates `agent_harness_rails/rules/services.mdc`:
-a thin wrapper around Active Record is not a service object."
+**Flag all violations of harness rules.** Harness rules beat application
+patterns (`agent_harness_rails/rules/harness-contract.mdc`) — flag violations in
+**Application-pattern violations**, and state them directly: "This violates
+`agent_harness_rails/rules/services.mdc`: a thin wrapper around Active Record is
+not a service object."
 
 **Assign a confidence score (0.0–1.0) to every finding:**
 - **0.9–1.0:** You read the exact code and confirmed the rule violation. High certainty.
@@ -432,7 +429,8 @@ End with a **one-line summary** for quick scanning.
 The **`rails-reviewer`** custom subagent ([Cursor
 subagents](https://cursor.com/docs/subagents)) at **`agent_harness_rails/agents/rails-reviewer.md`**
 implements **this skill** in an **isolated context** (`readonly: true`,
-`model: inherit`). It does not see parent chat — the delegating agent must pass
+`model: inherit`). Context isolation applies
+(`agent_harness_rails/rules/harness-contract.mdc`) — the delegating agent must pass
 **Phase**, plan path, spec path, **Scope**, and, when the app has a primitives
 tree, the **Mechanical primitives output** block in the task prompt.
 `readonly: true` is deliberate — a reviewer that edits the tree launders the

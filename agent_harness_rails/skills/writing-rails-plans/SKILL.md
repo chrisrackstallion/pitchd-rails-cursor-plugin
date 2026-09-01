@@ -35,9 +35,9 @@ and defer to the reader — "Use a model concern here", not "you might consider 
 concern". Doubt belongs in the gates below (**Requirements gate**, **Approach
 gate**): interrogate first, write confidently after.
 
-**Harness rules beat application patterns:** If the current codebase uses service
-objects, custom routes, or test patterns that contradict harness rules, the plan
-does **not** inherit those patterns — name the correct approach and cite the rule.
+**Harness rules beat application patterns**
+(`agent_harness_rails/rules/harness-contract.mdc`): the plan does **not**
+inherit contradicting patterns — name the correct approach and cite the rule.
 If an existing anti-pattern must be worked around for this task, say so explicitly
 and mark it as technical debt — do not normalize it.
 </objective>
@@ -305,12 +305,7 @@ never loaded is **not ready for review**:
 
 ### Supplementary reference (optional)
 
-When **`rails-omakase-compass`**, this skill's philosophy section, and the scoped **`agent_harness_rails/rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap, two sources are available — use the one that fits:
-
-- **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns and philosophy from the third-party community guide, when not spelled out in the harness (README TOC → raw `.md`).
-- **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (GitHub API index → specific guide `.md`).
-
-Both **inform** the plan — they do **not** override harness rules or skills; **tactics in this harness win** on HOW, same as the compass conflict rule in **`implementing-rails-task`**. If a fetch fails or returns nothing usable, **report** that; **do not** invent or assert content.
+When **`rails-omakase-compass`**, this skill's philosophy section, and the scoped **`agent_harness_rails/rules/*.mdc`** / **`writing-*`** rows above still leave a **Rails best-practice** gap, consult the supplementary references per `agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for this workflow.
 
 ## Map files before tasks
 

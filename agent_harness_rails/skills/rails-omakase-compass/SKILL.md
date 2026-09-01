@@ -104,11 +104,10 @@ Ask — do not treat answers as automatic fail:
 
 ## Conflict resolution
 
-- **`agent_harness_rails/rules/*.mdc` and `writing-*` skills** win on **specifics** (this repo’s HOW).
-- **This compass** wins on **kind of solution** — e.g. "this drifts toward a
-  client-as-source-of-truth SPA" — unless the user or plan has **explicitly**
-  chosen that product shape (API-first, SPA, public JSON API); then treat it as
-  a **documented exception** and review tactics for consistency with that choice.
+Per `agent_harness_rails/rules/harness-contract.mdc` — this compass wins on
+**kind of solution**, e.g. "this drifts toward a client-as-source-of-truth
+SPA"; under a documented exception, review tactics for consistency with that
+choice.
 
 ## Where to go next (tactical index)
 
@@ -137,11 +136,7 @@ Read only what the task touches:
 
 ### Optional external references
 
-Two fetch-based skills supplement the harness when it leaves a gap — neither
-overrides harness rules:
-
-- **`referencing-unofficial-37signals-guide`** — targeted fetches from the third-party [37signals-skills guide](https://github.com/marckohlbrugge/37signals-skills) (Fizzy-derived topics, README TOC → raw `guide/*.md` files).
-- **`referencing-rails-guides`** — authoritative Rails API and feature docs (GitHub API index → specific guide `.md`).
+Supplementary-reference policy: `agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for this skill.
 
 **Successful fetches** are required **to attribute or cite content as coming from those sources** — if a fetch fails, **do not** invent text; you may still give **general Rails** guidance using harness rules and skills without claiming a source.
 
