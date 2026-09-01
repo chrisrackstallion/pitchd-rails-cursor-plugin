@@ -16,7 +16,7 @@ module AgentHarnessRails
   # with four denials, three of which got tagged, passes — and `Guard` is silent
   # too, because an untagged new example is growth and growth is silent there by
   # design. The rule those two leave unenforced is the one in
-  # `agent_harness_rails/rules/testing.mdc` § Tagging the Intent a Spec Proves:
+  # `agent_harness_rails/rules/intent-tags.mdc` § Tagging the Intent a Spec Proves:
   # a clause proven by four examples is tagged on all four.
   #
   # This closes that gap as a **report**, not a gate. Exit code is always 0 and

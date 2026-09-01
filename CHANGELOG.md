@@ -187,6 +187,37 @@ no parser can settle — when a code comment earns its line.
 
 ### Changed
 
+- **Helpers are organised by app domain, split by size.** Every helper module
+  is globally available, so the boundary exists for the human reader:
+  `agent_harness_rails/rules/views.mdc` § Helpers gains an organisation
+  section — one module per domain, `ApplicationHelper` only for the genuinely
+  app-wide, and a ~100-line tripwire past which the cohesive cluster extracts
+  into a more focused domain module (`BillingHelper` →
+  `BillingInvoicesHelper`), keeping the prefix greppable. Mirrored in
+  `writing-views` (naming row, anti-pattern row, verification item) and its
+  patterns reference.
+
+- **The setup must discriminate.** `agent_harness_rails/rules/testing.mdc`
+  § Every Assertion Must Be Able to Fail gains a subsection extending the
+  question to positive assertions: an example whose setup gives the right and
+  wrong outcome the same evidence — two records or pages sharing the asserted
+  value — passes whichever one the app produced. The cure is setup that
+  differs in exactly what is asserted, or an identity assertion
+  (`have_current_path`, the record's id); the cheap check is one deliberate
+  red run. Mirrored in `writing-tests` (prose, an anti-pattern row, a
+  verification item) and flagged at review by `reviewing-rails-work`.
+
+- **Plans, specs, and primitives docs are written for a human skimming, not a
+  model reading.** `writing-rails-plans` gains § Write for the human reader
+  (cite rule paths and clause IDs instead of restating them, one–two sentences
+  of prose per task, ~300-line tripwire) plus a matching self-review step;
+  `brainstorming-rails-omakase` gains § Spec style (a decision record, not a
+  transcript — one line per rejected approach, ~120-line tripwire) plus a
+  matching self-review step; `agent_harness_rails/rules/primitives.mdc` § Style
+  now bounds density as well as length (prose that pads within the size limits
+  is a finding, echoed in `maintaining-primitives` lint); and
+  `reviewing-rails-work` flags verbose plans and specs at plan phase.
+
 - **The three primitives commands print for a reader now.** `evals` and `guard`
   group findings under one path header per file instead of repeating the path
   on every line; `guard`'s `intent/rewritten` notice puts the old and new

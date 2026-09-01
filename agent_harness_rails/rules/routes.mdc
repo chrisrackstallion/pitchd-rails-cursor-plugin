@@ -70,14 +70,19 @@ Same REST shape when possible. Introduce `namespace :api` (or versioned API) whe
 |-------------|---------|
 | `post :do_the_thing` on every resource | New noun resource + CRUD, or model method |
 | Deep `/a/:a_id/b/:b_id/c/:c_id/...` | Shallow nesting, fewer segments, or separate top-level resource |
+| Duplicate HTML vs JSON trees with divergent names | One REST shape; namespace when the contract differs |
 | Authorization in `constraints` | Policies + controller |
 | Dynamic route generation obscuring `rails routes` | Explicit declarations; small helpers only where repetition is real |
 | Greedy `match '*path'` swallowing real routes | Narrow redirects; explicit routes first |
 
-## PR Checklist (Routes-Clean)
+## Verification
 
-1. `rails routes` reads like a table of contents.
-2. No nest deeper than one level without shallowing or splitting — or a documented exception.
-3. Every custom action has a sentence-level justification.
-4. Path helpers are not ambiguous (`article_path` vs `project_article_path`).
-5. No user permission logic in routes beyond format / host constraints.
+Before finishing, verify:
+
+- [ ] `rails routes` reads like a table of contents — scannable, no unexplained duplication of huge blocks
+- [ ] No nest deeper than one parent for member routes without shallowing or splitting — or a documented exception
+- [ ] `only` / `except` match real controller actions
+- [ ] Path helpers are not ambiguous (`article_path` vs `project_article_path`) and read clearly in views
+- [ ] `constraints` are for format/host/subdomain — no user permission logic in routes
+- [ ] No meta-programmed route tables that obscure `rails routes`
+- [ ] Every custom action has a sentence-level justification (comment or PR — why not standard REST?)

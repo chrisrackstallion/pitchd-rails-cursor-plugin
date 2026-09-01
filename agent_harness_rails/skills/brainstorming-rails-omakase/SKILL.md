@@ -1,12 +1,11 @@
 ---
 name: brainstorming-rails-omakase
 description: >-
-  Use when shaping Rails features or behavior changes before planning or code —
-  unclear scope, multiple valid directions, HTML vs JSON, client-owned vs
-  server-owned truth, REST vs RPC-shaped endpoints, premature service objects or
-  SPA layers, or duplication of business rules in JavaScript. Symptoms include
-  reaching for new gems or microservices first, CRUD flows dressed as bespoke
-  protocols, or designs that would fight omakase defaults in an omakase-shaped app.
+  Use when shaping Rails features or behavior changes before planning or code
+  — unclear scope, multiple valid directions, HTML vs JSON, client- vs
+  server-owned truth, REST vs RPC endpoints, premature service objects or SPA
+  layers, business rules duplicated in JavaScript, reaching for new gems or
+  microservices first, or designs that fight omakase defaults.
 ---
 
 # Brainstorming Into Rails-Shaped Designs
@@ -15,49 +14,28 @@ Turn ideas into an approved **requirements spec** through dialogue, with **omaka
 
 **Announce:** "I'm using the brainstorming-rails-omakase skill."
 
-**Harness rules beat application patterns:** Where the app contradicts harness rules, the spec describes the **correct** omakase direction for new work and notes integration friction — same as **`agent_harness_rails/agents/rails-query.md`**.
+**Harness rules beat application patterns** (`agent_harness_rails/rules/harness-contract.mdc`): where the app contradicts harness rules, the spec describes the **correct** omakase direction for new work and notes integration friction.
 
 ## Grounding order (always)
 
-Use the **same order** as **`agent_harness_rails/agents/rails-query.md`** so this skill has the full harness stack at hand — not just the compass.
+Same grounding as **`agent_harness_rails/agents/rails-query.md`**: the
+**compass** first (`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`)
+for anything that could change solution shape; then **only** the **`writing-*`**
+skills and **`agent_harness_rails/rules/*.mdc`** files the brainstorm topic
+touches — route by the compass's **Where to go next** index (its scoping notes
+on the primitives and planning rows apply as written), and **do not skip** a
+rule file that applies to what you are designing; then the **user's codebase**
+(relevant models, controllers, routes, policies), so the spec ties to what you
+saw.
 
-1. **`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`** — For **architectural** questions (boundaries, "should we…", API vs HTML, where logic belongs, jobs vs request, anything that could pull the app off-Rails or split ownership badly), read the compass **first**. For **purely tactical** questions (e.g. local Hotwire / Stimulus wiring in an otherwise settled design), you may open the relevant **`writing-*`** skill first; still use the **compass** whenever the answer could change solution shape.
+**Supplementary reference — required when compass and writing-* leave a gap:**
+before the codebase step, consult the supplementary references per
+`agent_harness_rails/rules/harness-contract.mdc`; for this skill the consult is
+a **required** step for those gaps, not optional enrichment.
 
-2. **Scoped tactical layer** — Read **`agent_harness_rails/skills/writing-*/SKILL.md`** files that match the brainstorm topic (see **Topic → assets** below). Pair with **`agent_harness_rails/rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are designing.
-
-3. **Supplementary reference — required when compass and writing-* leave a gap** — a required consult for those gaps, not optional enrichment:
-   - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — supplemental patterns and philosophy from the third-party community guide.
-   - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — authoritative Rails API and feature docs.
-
-   Both **inform** the brainstorm — they do **not** override harness rules or skills. If a fetch fails, **report that** per the skill; **do not** invent or assert content from memory.
-
-4. **User's codebase** — If the workspace is a Rails app and the brainstorm is project-specific, read the **relevant** files (models, controllers, routes, policies, etc.) after the harness layers above; tie the spec to what you saw.
-
-**Routing:** Use **Topic → assets** to load **only** the **`writing-*`** skills and **`agent_harness_rails/rules/*.mdc`** files that match the topic — not every file unless the brainstorm is genuinely cross-cutting.
-
-### Topic → assets (load what applies)
-
-| Area | Skill(s) | Rules |
-|------|----------|--------|
-| Stack shape, boundaries, "where should this live?" | compass (+ `writing-services` if extraction) | `services.mdc`, `models.mdc`, `controllers.mdc` as needed |
-| Models, AR, domain | `writing-models` | `models.mdc` |
-| Controllers, params, REST | `writing-controllers` | `controllers.mdc` |
-| Routes | `writing-routes` | `routes.mdc` |
-| Views, helpers, partials | `writing-views` | `views.mdc` |
-| Hotwire, Turbo, Stimulus | `writing-hotwire` | `hotwire.mdc` |
-| CSS / Tailwind | `writing-css-tailwind` | `css-tailwind.mdc` |
-| JavaScript | `writing-javascript` | `javascript.mdc` |
-| I18n | `writing-i18n` | `i18n.mdc` |
-| Mailers | `writing-mailers` | `mailers.mdc` |
-| Jobs, Solid Queue, async | `writing-jobs` | `jobs.mdc` |
-| Policies / authorization | `writing-policies` | `policies.mdc` |
-| Migrations, schema | `writing-migrations` | `migrations.mdc` |
-| Tests | `writing-tests` | `testing.mdc` |
-| RuboCop / style gates | `running-rubocop` when relevant to the design | `rubocop.mdc` |
-| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` | `naming.mdc` |
-| Planning / execution context | `writing-rails-plans`, `executing-rails-plan`, `implementing-rails-task`, `reviewing-rails-work` | only when the brainstorm is about **how** to plan or run those workflows in this harness |
-
-Pull in workflow skills only when the conversation is explicitly about those processes — not for routine feature design (those stay behind the HARD-GATE until **`writing-rails-plans`**).
+Workflow skills (`writing-rails-plans`, `executing-rails-plan`, …) load only
+when the conversation is explicitly about those processes — routine feature
+design stays behind the HARD-GATE until **`writing-rails-plans`**.
 
 <HARD-GATE>
 Do **not** invoke **`implementing-rails-task`**, **`executing-rails-plan`**, or any implementation skill; do **not** write application code, migrations, or tests; do **not** scaffold until you have presented a design and the user has approved it, then written the spec file and passed the user review gate below. This applies to every change regardless of perceived size.
@@ -134,6 +112,20 @@ Scale sections to complexity. Prefer vocabulary that will survive into **`writin
 
 **Design for clear Rails boundaries:** Vertical slices (resource/feature cohesion), one obvious home for domain rules (models, concerns — not generic service registries). If the brainstorm drifts toward "generic executor," "repository on thin models," or duplicated rules in JS, stop and realign with **`rails-omakase-compass`**.
 
+### Spec style — a decision record, not a transcript
+
+The spec records what was agreed: outcome, chosen shape, constraints, intent,
+delivery sequence. It does not record how the conversation got there.
+
+- **Decisions and their one-line reasons only.** Rejected approaches get one
+  line each; the dialogue, option essays, and restated harness philosophy get
+  none — cite the rule or skill path instead.
+- **Plain declarative sentences, scaled to complexity.** A lens from the table
+  above that settles nothing for this feature is omitted, not filled in. Most
+  specs fit on one screen.
+- **Size tripwire:** a spec past ~120 lines is usually narrating rather than
+  deciding — or bundling subsystems that should split.
+
 ### Intent (in the spec)
 
 When the app has a `docs/primitives/` tree, the spec states the intent it settles
@@ -201,7 +193,7 @@ Rules for the sequence:
 time, as each slice comes up** — not all up front; execution of earlier slices
 invalidates plans drafted ahead.
 
-**Working in existing codebases:** Follow patterns that match **harness rules**. Where the app contradicts them, the spec describes the **correct** Rails-shaped direction for new work and notes integration friction (same rule as **`implementing-rails-task`** and **`writing-rails-plans`**) — never silently entrench anti-patterns.
+**Working in existing codebases:** Follow patterns that match **harness rules**. Where the app contradicts them, the spec describes the **correct** Rails-shaped direction for new work and notes integration friction (`agent_harness_rails/rules/harness-contract.mdc`) — never silently entrench anti-patterns.
 
 ## The process (mirrors superpowers brainstorming)
 
@@ -243,6 +235,9 @@ invalidates plans drafted ahead.
    at planning. A **single-slice** sequence is correct for most features —
    check that any split earns itself rather than that a split exists.
 4. Ambiguity — resolve dual interpretations.
+5. **Readability** — only key information in plain sentences: cut narration,
+   restated philosophy, empty lens sections, and check the ~120-line tripwire
+   (see **Spec style**).
 
 **User review gate**
 
@@ -279,27 +274,21 @@ Per question: use visuals only when **seeing** beats **reading** (layouts, wiref
 | Mistake | Fix |
 |---------|-----|
 | Reading the app before compass / **`writing-*`** / **`agent_harness_rails/rules/*.mdc`** on architectural questions | Follow **Grounding order (always)** — same order as **`rails-query`**. |
-| Loading every `writing-*` and rule without routing | Use **Topic → assets**; expand only when cross-cutting. |
+| Loading every `writing-*` and rule without routing | Route by the compass's **Where to go next** index; expand only when cross-cutting. |
 | Coding or migrating during brainstorm | Stop; complete spec and **`writing-rails-plans`** first. |
 | Defaulting to JSON/SPA for app flows | Re-read **HTML as primary interface** in **`rails-omakase-compass`**. |
-| "If an RPC-shaped action is unavoidable…" | It almost never is. Model it RESTfully first — find the resource the action creates, updates, or destroys. Document exception only after the attempt. |
-| New "service object" as the first idea | Ask what **model** or **concern** owns the behaviour (`agent_harness_rails/rules/services.mdc`). Name the specific collaborator type if extraction is genuinely needed. |
+| Design drift the compass and rules already settle — RPC-shaped actions, service objects as the first idea, unscoped queries, context passed as parameters instead of `Current`, premature namespacing, speculative polymorphism, over-normalized schema, async as a default | Re-check **`rails-omakase-compass`** and the rule files the grounding step loaded (`agent_harness_rails/rules/services.mdc`, `models.mdc`, `routes.mdc`, `jobs.mdc`) instead of re-deriving them here. |
 | "Justified collaborator" as rationale for extraction | Justify specifically: form object, value object, query object. "Justified" without specifics is how service layer creep starts. |
 | Skipping compass on "small" features | Skim **`rails-omakase-compass`** whenever boundaries move. |
-| Skipping account scoping on any resource design | Ask: is every query in this design scoped to the account? |
-| Skipping `Current` attributes for request context | Thread `Current.user` / `Current.account`; do not pass context as method parameters or re-query it redundantly. |
-| Premature namespacing (`Admin::`, `Api::V1::`) | Ask: does this namespace pay for itself **today**? Speculative structure is YAGNI. |
-| Speculative polymorphism | Build for what exists today; extract when the second concrete case actually arrives. |
-| Over-normalized schema for unproven domain richness | Prefer simple foreign keys and denormalized columns; add junction tables and polymorphic joins when domain complexity is demonstrated. |
-| Async for "separation of concerns" | Job if it's slow, unreliable, or high-volume. Not as an architectural default. |
 | Big cohesive feature sent to planning as one plan | "Independent subsystems" does not fire on a single large capability. Use `## Delivery sequence` — one spec, deployable slices, one plan each. |
 | Splitting a spec into slices that cannot ship alone | Severable is not shippable. Fold it into the next slice, or keep one slice. |
 | Drafting every slice's plan up front | Plan one slice at a time; execution of slice 1 changes what slice 2's plan should say. |
+| Spec narrates the conversation or restates harness philosophy | A spec is a decision record — keep decisions and one-line reasons; cite rules instead of restating them (see **Spec style**). |
 | Skipping user approval of the **file** | Chat agreement is not enough — gate on reviewed spec on disk. |
 
 ## Related
 
-- **`agent_harness_rails/agents/rails-query.md`** — same **Grounding order** and **Topic → assets** table (readonly Q&A; this skill is brainstorm + spec).
+- **`agent_harness_rails/agents/rails-query.md`** — same **Grounding order** (readonly Q&A; this skill is brainstorm + spec).
 - **`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`** — whether the shape fits.
 - **`agent_harness_rails/skills/writing-rails-plans/SKILL.md`** — next step after an approved spec.
 - **`agent_harness_rails/skills/implementing-rails-task/SKILL.md`** — after a plan exists, not during brainstorm.

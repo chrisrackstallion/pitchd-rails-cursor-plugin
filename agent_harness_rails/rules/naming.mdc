@@ -6,7 +6,14 @@ alwaysApply: false
 
 # Naming Conventions
 
-Use Rails idioms first, domain language second, and invent nothing. Boring, obvious names are correct; clever names are a smell.
+Use Rails idioms first, domain language second, and invent nothing. Boring, obvious names are correct; clever names are a smell. When Rails convention and domain language conflict, **Rails convention wins for class and file names**; **domain language wins for method and variable names**.
+
+## Suffixes and Casing
+
+- **Add:** `Controller`, `Job`, `Mailer`, `Policy`, `Scope` (Pundit), `_spec`, `_path`
+- **Never add:** `Model`, `Class`, `Manager`, `Handler`, `Helper` (on non-helpers), `Service`
+- **Singular vs plural:** models, form objects, and factory symbols are singular (`factory :article`); controllers and tables are plural; factory files take the plural (`spec/factories/articles.rb`)
+- **Casing:** classes PascalCase, methods and columns snake_case, constants SCREAMING_SNAKE_CASE, Stimulus identifiers kebab-case
 
 ## Domain Layer (Models, Concerns, POROs)
 
@@ -23,6 +30,8 @@ Use Rails idioms first, domain language second, and invent nothing. Boring, obvi
 | Form object | Standalone domain noun | `Registration`, `Invitation`, `ArticleTransfer` |
 
 Do **not** use generic CRUD verbs as domain names: `set_status`, `update_flag`, `create_record`. The name should reflect what happens in the domain, not which SQL call fires underneath.
+
+Default to non-bang for domain verbs — they are the normal path and propagate exceptions from inner `create!` / `update!` naturally. Add a bang only when you also offer a non-raising alternative (`lock` returns false on failure; `lock!` raises).
 
 ## Controllers
 

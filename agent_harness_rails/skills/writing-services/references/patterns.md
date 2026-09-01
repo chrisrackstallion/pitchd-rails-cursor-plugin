@@ -101,29 +101,10 @@ class Project < ApplicationRecord
 end
 ```
 
-### When to Use a Concern vs. a PORO
-
-| Situation | Use |
-|-----------|-----|
-| Same behaviour needed on two or more unrelated models | Concern |
-| Complex operation on one aggregate that outgrows a method | PORO under that model |
-| Behaviour intrinsic to what a model *is* | Concern |
-| Operation representing a distinct workflow step | PORO |
-
-A concern is a **mixin** — it gets included and becomes part of the model.
-A PORO is an **operation** — it receives the model and coordinates it.
-Don't use a concern just to organise a large model file; extract when there
-is genuine shared capability.
-
-### Guidelines
-
-- **50–150 lines** — if a concern exceeds 150 lines it likely contains multiple
-  responsibilities
-- **Named as adjectives** — `Archivable`, `Publishable`, `Searchable`, `Taggable`
-- **Self-contained** — include all associations, scopes, and methods the
-  capability needs; don't scatter related code across multiple concerns
-- **Not for organisation** — `ArticleCallbacks` or `ArticleValidations` are
-  not concerns; extract when there is genuine reuse or a distinct concept
+Concern-vs-PORO criteria: **`agent_harness_rails/rules/services.mdc`**
+§ Where Logic Actually Lives. Concern conventions (size, adjective names,
+self-containment): **`agent_harness_rails/rules/models.mdc`** § Concerns for
+Horizontal Behaviour.
 
 ---
 
@@ -131,8 +112,7 @@ is genuine shared capability.
 
 When an operation involves multiple steps within one aggregate, or coordinates
 closely related models under a single named concept, extract to a PORO
-namespaced under the primary model. The signal is a good domain noun — if you
-can't name it cleanly, it belongs on the model.
+namespaced under the primary model.
 
 ### Structure
 
@@ -180,25 +160,9 @@ class Account < ApplicationRecord
 end
 ```
 
-### Guidelines
-
-- **Namespace under the primary model** — `Order::Fulfillment`, not
-  `FulfillOrderService`
-- **Initialise with the aggregate root** — the PORO receives the model
-  it operates on
-- **Methods are domain verbs** — `complete`, `process`, `import`
-- **Use the model's transaction** — `account.transaction` keeps the scope clear
-- **No base class** — each PORO stands alone; `ApplicationService` is an
-  anti-pattern
-- **Return meaningful values** — return the updated model or created records,
-  not a result object
-- **Let exceptions propagate** — use bang methods internally; the controller
-  or caller handles the exception
-- **Every method earns its place** — before adding a method, question
-  whether the PORO is where it belongs. Each public method should be a
-  verb of the named concept; a method that operates on the model alone
-  goes back on the model, presentation goes to a helper. A PORO that
-  accumulates unrelated methods is a service object with a nicer name
+PORO rules (naming, transactions, no base class, every method earning its
+place): **`agent_harness_rails/rules/services.mdc`** § POROs Under Model
+Namespaces.
 
 ### File Organisation
 
@@ -222,10 +186,9 @@ to `app/models/account/onboarding.rb`.
 
 ## Form Objects
 
-Form objects handle the gap between user input and model persistence. Use
-them when a form creates or updates records across multiple models, when
-validations are workflow-specific, or when `accepts_nested_attributes_for`
-would be the alternative.
+Form objects handle the gap between user input and model persistence. When
+to use one (and when a PORO instead): **`agent_harness_rails/rules/services.mdc`**
+§ Form Objects for Multi-Model Writes.
 
 ### Basic Form Object
 
@@ -383,17 +346,6 @@ end
 <% end %>
 ```
 
-### When to Use Form Objects
-
-| Scenario | Use Form Object? |
-|----------|-----------------|
-| Single model, standard validations | No — use the model directly |
-| Single model, workflow-specific validations | Yes — keeps model validations clean |
-| Form spans two or more models | Yes — replaces `accepts_nested_attributes_for` |
-| Wizard / multi-step form | Yes — one form object per step |
-| Import from CSV / external data | Yes — validates before persisting |
-| API payload mapping | Yes — transforms input to model attributes |
-
 ---
 
 ## Jobs as the Async Layer
@@ -441,15 +393,10 @@ def create
 end
 ```
 
-### Guidelines
-
-- **One job, one responsibility** — `SendWelcomeEmailJob`, not `UserSetupJob`
-- **Pass IDs, not objects** — find the record fresh in `perform`; this is the harness-wide job convention (see the writing-jobs skill, which also covers the GlobalID alternative and its `DeserializationError` handling)
-- **Use `retry_on`** for transient failures (network, rate limits)
-- **Use `discard_on`** for permanent failures (record deleted, invalid state)
-- **Idempotent** — jobs may run more than once; guard against double execution
-- **No return values** — jobs communicate through side effects (database writes,
-  emails, broadcasts)
+Job conventions — one responsibility, IDs not objects (and the GlobalID
+alternative), `retry_on` / `discard_on`, idempotency — live in
+**`agent_harness_rails/rules/jobs.mdc`**. Jobs have no return values — they
+communicate through side effects (database writes, emails, broadcasts).
 
 ---
 

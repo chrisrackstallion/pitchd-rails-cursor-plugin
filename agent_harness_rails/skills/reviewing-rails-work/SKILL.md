@@ -1,11 +1,11 @@
 ---
 name: reviewing-rails-work
 description: >-
-  Review Rails plans and/or implementation against the harness: first
-  rails-omakase-compass (solution shape), then applicable writing-* skills and
-  rules (tactics). Use when requesting a code review, plan review, PR review, or
-  sign-off before merge. For isolated delegation with a clean context, use the
-  rails-reviewer subagent (see `agent_harness_rails/agents/rails-reviewer.md`).
+  Review Rails plans and/or implementation against the harness:
+  rails-omakase-compass first (solution shape), then applicable writing-*
+  skills and rules (tactics). Use for code review, plan review, PR review, or
+  sign-off before merge. Isolated delegation: the rails-reviewer subagent
+  (`agent_harness_rails/agents/rails-reviewer.md`).
 ---
 
 # Reviewing Rails Agent Harness (plans & implementation)
@@ -64,16 +64,14 @@ Prefix these findings **`philosophy:`**.
 
 ### 3. Select tactical skills by scope
 
-From the diff or plan, pick **only** the skills that apply:
-
-`writing-rails-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
-`writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
-`writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-jobs`, `writing-migrations`, `writing-tests`,
-`running-rubocop` (when the app uses RuboCop: expect **zero** offences — fix in code, no disables, no `.rubocop_todo.yml`; not architecture).
-
-Read each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
-sections (not necessarily entire files). Cross-check **`rules/<area>.mdc`**.
+From the diff or plan, pick **only** the areas that apply — route by the
+compass's **Where to go next** index
+(`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`), which maps each
+area to its `writing-*` skill and `agent_harness_rails/rules/*.mdc` file. Read
+each skill’s **SKILL.md** and the relevant **`references/patterns.md`**
+sections (not necessarily entire files); cross-check the paired rule. When
+the app uses RuboCop (`running-rubocop`): expect **zero** offences — fix in
+code, no disables, no `.rubocop_todo.yml`; not architecture.
 
 **Every diff, whatever the layer:** `agent_harness_rails/rules/naming.mdc` and
 `agent_harness_rails/rules/comments.mdc`. A comment that restates the code,
@@ -89,11 +87,8 @@ Prefix these findings **`tactical:`**.
 
 ### 4. Conflict rule
 
-- **Tactics** win on **specific** HOW (this repo’s rules and patterns).
-- **Compass** wins on **whether** the approach matches **majestic monolith /
-  omakase** intent — unless the user or plan has **explicitly** chosen a
-  different shape (API-first, SPA, etc.); then treat it as a documented
-  exception and review tactics for consistency with that choice.
+Per `agent_harness_rails/rules/harness-contract.mdc` — under a documented
+exception, review tactics for consistency with that choice.
 
 ### 5. Primitives checks
 
@@ -118,34 +113,22 @@ delegating agent once for the output; retry a call once if you have a shell.
 Then report those checks as unverified in the **primitives:** section and name
 what stayed unchecked. A hand read of the frontmatter and the `intent:` tags is
 **not** the same check — reporting it as coverage hides that nothing ran
-(`agent_harness_rails/rules/primitives.mdc` § None of these is quiet). None of
-these commands is silent, so an empty result is a missing result and never a
+(`agent_harness_rails/rules/primitives-cli.mdc` § None of these is quiet). None
+of these commands is silent, so an empty result is a missing result and never a
 green one: `Status: Approved` resting on the mechanical checks is not available
 on one.
 
-**`evals` settles** clause coverage, dead spec paths, untagged evaluations, and
-tags naming a superseded clause, with file:line — cite it rather than
-re-deriving it by hand, and spend the review on what it cannot judge: whether a
-clause is the *right* clause.
-
-**`guard` reads what `evals` cannot.** `evals` reads the tree as it stands;
-`guard` reads what this change *did* to it — a clause reworded under the same
-id, one deleted rather than superseded, an evaluation dropped or moved to a
-layer that cannot hold it, a tagged example hollowed out, an edited provenance
-entry. Its output is notices, never offences, so cite them with a
-verdict rather than copying them in as findings. Two turn into findings:
-
-- An **intent** notice (`intent/rewritten`, `intent/vanished`, `doc/removed`,
-  `status/downgraded`, `provenance/rewritten`) with no matching row in the plan's
-  **Intent impact** table — the change amended a promise nothing scheduled, which
-  is scope creep into intent whatever the code does.
-- A **proof** notice (`proof/removed`, `proof/weakened`, `evaluation/dropped`,
-  `evaluation/relayered`) on a clause that is still active — **Eval adequacy**
-  below, with the before-state attached: the clause is now proven by less than it
-  was, and the report should name what stopped being covered.
-
-Never clear a notice by editing the tree — a reviewer that writes the provenance
-entry discharging an intent notice has laundered the finding it was reading.
+What each command checks — and the guard notice taxonomy with its
+proof-vs-intent handling split — is
+**`agent_harness_rails/rules/primitives-cli.mdc`**. Cite `evals` file:line
+output rather than re-deriving it by hand, and cite `guard` notices with a
+verdict rather than copying them in as findings. Two turn into findings: an
+**intent** notice with no matching row in the plan's **Intent impact** table
+(scope creep into intent, whatever the code does), and a **proof** notice on a
+still-active clause (**Eval adequacy** below, with the before-state attached —
+name what stopped being covered). Never clear a notice by editing the tree — a
+reviewer that writes the provenance entry discharging an intent notice has
+laundered the finding it was reading.
 
 Prefix these findings **`primitives:`**. They are checkable properties, not
 suggestions:
@@ -154,28 +137,16 @@ suggestions:
   `intent:` clause. Untraceable behaviour is a finding: either a missing clause
   or scope creep. A plan whose header lacks the **Capability:** line when the
   tree exists is a finding.
-- **Intent impact declared** — plan phase. The plan header carries the **Intent
-  impact** table: every touched clause, its change (`new` / `amended` /
-  `superseded by I<n>` / `unchanged — regression contract`), and the layer its
-  proof will land at (`writing-rails-plans` § Plan document header). A missing
-  table, a clause the tasks touch that the table omits, or a table row no task
-  delivers is a finding. A Shape-only plan states `no intent delta` and lists its
-  regression contract; a plan claiming `no intent delta` while a clause's wording
-  changes is a mislabelled amendment.
-- **Clause admissibility** — every new or amended clause passes all four tests:
-  observable, falsifiable, one behaviour, **durable**
-  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses). Architecture,
-  technology choices, refactors, and task lists written as clauses are the common
-  failure and belong in `## Shape` or the task list; run the durable test first,
-  since it disposes of all four at once.
-- **Clause granularity** — **plan phase.** One behaviour per clause: an umbrella
-  verb (*manage*, *handle*, *support*) or an `and` joining two different actions
-  is several promises in one sentence
-  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses); missed here, its
-  only possible proof is a sprawling system spec, against the budget and the Five
-  Gates. Report the split with the per-action sentences written out. The opposite
-  is also a finding: clauses split so fine they differ only by which layer proves
-  them are the suite transcribed into the tree.
+- **Intent impact declared** — plan phase: the header carries a complete, honest
+  **Intent impact** table per `writing-rails-plans` § Plan document header; a
+  missing table, an omitted touched clause, an undelivered row, or `no intent
+  delta` beside a wording change is a finding.
+- **Clause admissibility** — every new or amended clause passes the four tests
+  in `agent_harness_rails/rules/primitives.mdc` § Intent clauses; run the
+  durable test first, since it disposes of all four at once.
+- **Clause granularity** — plan phase: one behaviour per clause, umbrella verbs
+  and `and`-joins split, layer-only splits merged
+  (`agent_harness_rails/rules/primitives.mdc` § Intent clauses).
 - **No overlap** — a new capability doc whose intent overlaps an existing one
   is a plan defect (should be an amendment). Read `index.md` end to end before
   accepting a new doc — the only place overlap is visible without opening the
@@ -186,12 +157,10 @@ suggestions:
 - **Compilation and Shape** — nothing contradicts `compilation.md` or the
   doc's recorded Shape; a change that needs a constraint amended says so
   explicitly rather than working around it. These are `philosophy:`-grade.
-- **Supersession hygiene** — intent changes are explicit (tombstone + new ID,
-  never renumbered or silently deleted). Plan phase: the plan **schedules**
-  row retirement and deletion of the superseded clause's now-dead specs.
-  Post-close-out: retired clauses have their rows retired and those specs
-  actually deleted (a live spec enforcing a dead clause is a zombie). During
-  per-task loops that state is pending, not a finding.
+- **Supersession hygiene** — intent changes follow
+  `agent_harness_rails/rules/primitives.mdc` § Lifecycle: the plan schedules row
+  retirement and dead-spec deletion, post-close-out both have happened (pending
+  during per-task loops is not a finding).
 - **Eval coverage** — plan phase: every touched clause gets a spec home in the
   plan's tasks. Rows for **new** work are written at close-out — a plan
   pre-filling them from intention is a finding; rows transcribed from
@@ -219,7 +188,7 @@ suggestions:
   happy path is a finding; so is an example asserting the affordance (form
   renders, `200` returned) where the clause names an outcome; so is a denial
   bolted onto a canonical journey instead of living in the policy or request
-  spec that owns it (`agent_harness_rails/rules/testing.mdc`
+  spec that owns it (`agent_harness_rails/rules/intent-tags.mdc`
   § What counts as proving a clause). Report the missing case, not "add more
   tests" — name the clause, the half that is unproven, and the layer it belongs
   at.
@@ -228,24 +197,24 @@ suggestions:
   evaluation you could delete with the clause still fully proven is padding.
   More than ~3 on one clause is a tripwire — usually two promises sharing an id
   (`agent_harness_rails/rules/primitives.mdc` § Size discipline).
-- **Provenance conflicts** — the work does not re-litigate a recorded
-  rejection or undo a recorded deliberate decision without saying so.
+- **Provenance conflicts** — the work does not re-litigate a recorded rejection
+  or undo a recorded deliberate decision without saying so
+  (`agent_harness_rails/rules/primitives.mdc` § Provenance).
 
-**Provenance candidates (non-blocking):** decisions with rationale, non-obvious
-constraints discovered, knowingly accepted debt — list them in the report's
-**primitives:** section so the execution close-out pass can file them as
-one-line provenance entries. Not routine implementation details, and never run
-mechanics (review iterations, fix passes, commands, who did the work) — a
-candidate must be something a reader a year out would act on
-(`agent_harness_rails/rules/primitives.mdc` § Provenance).
+**Provenance candidates (non-blocking):** list decisions, constraints, and
+accepted debt that pass the earns-its-place test of
+`agent_harness_rails/rules/primitives.mdc` § Provenance in the report's
+**primitives:** section, so the execution close-out pass can file them as
+one-line entries.
 
 ### 6. What to check by phase
 
 **Plan:** Completeness (no blocking TODOs), spec alignment, vertical slices,
 runnable tasks, buildability; compass on interface (HTML vs API) and correct
-layer for rules; `writing-rails-plans` fit; red flags from `writing-rails-plans` (services,
-RPC, missing policy, Turbo escalation before simpler options, duplicate test
-coverage). **Cross-task duplication:** read the task list as a whole — the
+layer for rules; `writing-rails-plans` fit; red flags from the touched area
+rules (services, RPC, missing policy, Turbo escalation before simpler options,
+duplicate test coverage) and the plan-shaped anti-patterns in
+`writing-rails-plans`. **Cross-task duplication:** read the task list as a whole — the
 same method or behaviour defined on more than one entity across tasks is a
 finding (one home: a concern or the owning model, `agent_harness_rails/rules/models.mdc`);
 per-task reading hides it. **Delivery scope:** the header carries a
@@ -261,6 +230,12 @@ restated mechanism), the **Approach** follows from it, **Alternatives
 considered:** is present (an explicit "none credible" counts — absence does
 not), and no task works around a framework default. Fighting the framework is
 a `philosophy:` finding even when every tactic is clean.
+**Readability:** the plan carries only key information in plain sentences —
+restated harness rules or requirements (rule paths and clause IDs own those),
+per-task justification paragraphs, filler prose, or a plan past ~300 lines
+outside code fences is a finding
+(`writing-rails-plans` § Write for the human reader). The same test applies to
+a spec under review (`brainstorming-rails-omakase` § Spec style).
 
 **Implementation:** Map changed files to skills; compass on overall drift; one
 home per behaviour for tests (`writing-tests`). **One home per behaviour for
@@ -269,21 +244,21 @@ files for method definitions that repeat across entities; the same method on
 multiple models is a `tactical:` finding (shared behaviour belongs in a
 concern or on the owning model, `agent_harness_rails/rules/models.mdc`).
 
-**Failure and recovery paths:** the happy path is the one the plan describes, the
-specs cover, and every reader follows — so read the **other** branches on purpose.
-For each mutation in scope, follow the failure path as far as the user does: not
-to the error, to the successful retry. Re-read the template the failed action
-re-renders and confirm the form it emits reaches a route that exists with the verb
-it will send (`bin/rails routes -g <resource>` settles it) — `form_with model:`
-infers that verb from `persisted?`, so an action whose finder can return either a
-new or an existing record has two renderings and the specs typically exercise one.
-Then ask the same question of every branch in the changed code: which record
-states can reach this line, and does each one still produce something the user can
-act on? A dead-end re-render is a `tactical:` finding
-(`agent_harness_rails/rules/controllers.mdc` § Response Hierarchy); the branch no
-example reaches is a second one (`agent_harness_rails/rules/testing.mdc` § Every
-Assertion Must Be Able to Fail). Both are invisible to a green suite, because the
-suite only ran the branch it set up.
+**Setup discrimination in new specs:** for each new example, ask whether the
+wrong outcome would present the same evidence — an assertion satisfied by two
+records, pages, or states that share the asserted value is a `tactical:`
+finding, however green the run
+(`agent_harness_rails/rules/testing.mdc` § The setup must discriminate).
+
+**Failure and recovery paths:** read the branches the happy path skips — for
+each mutation, follow the failure to the successful retry and cover every
+record state the action's finder can produce
+(`agent_harness_rails/rules/testing.mdc` §§ A status code is not a working
+page / Cover every state the action's finder can produce); a dead-end
+re-render is a `tactical:` finding
+(`agent_harness_rails/rules/controllers.mdc` § Response Hierarchy), and the
+branch no example reaches is a second one
+(`agent_harness_rails/rules/testing.mdc` § Every Assertion Must Be Able to Fail).
 
 ### 7. Surroundings pass (pre-existing code in touched files)
 
@@ -313,11 +288,11 @@ files, or need migrations/QA — still report them; label clearly.
 
 ### 8. Calibration
 
-**Flag all violations of harness rules.** Harness conventions — `rails-omakase-compass`,
-`writing-*` skills, and `agent_harness_rails/rules/*.mdc` — apply even when the application currently does
-otherwise. An established application pattern is not a justification; it may be exactly
-the debt worth naming. State violations directly: "This violates `agent_harness_rails/rules/services.mdc`:
-a thin wrapper around Active Record is not a service object."
+**Flag all violations of harness rules.** Harness rules beat application
+patterns (`agent_harness_rails/rules/harness-contract.mdc`) — flag violations in
+**Application-pattern violations**, and state them directly: "This violates
+`agent_harness_rails/rules/services.mdc`: a thin wrapper around Active Record is
+not a service object."
 
 **Assign a confidence score (0.0–1.0) to every finding:**
 - **0.9–1.0:** You read the exact code and confirmed the rule violation. High certainty.
@@ -326,7 +301,9 @@ a thin wrapper around Active Record is not a service object."
 - **Below 0.5:** Drop the finding or flag explicitly as "uncertain — verify before acting."
 
 Suppress only findings you cannot verify at all. Do not suppress because the issue
-seems small — small harness violations are still violations.
+seems small — small harness violations are still violations. Do not soften
+findings to avoid friction — and approve confidently when the work is correct:
+"This is correct Rails. Approved."
 
 **Necessity gate for everything that is not a rule violation.** Before a
 recommendation or judgment-based item reaches the report: is it actually
@@ -420,7 +397,8 @@ End with a **one-line summary** for quick scanning.
 The **`rails-reviewer`** custom subagent ([Cursor
 subagents](https://cursor.com/docs/subagents)) at **`agent_harness_rails/agents/rails-reviewer.md`**
 implements **this skill** in an **isolated context** (`readonly: true`,
-`model: inherit`). It does not see parent chat — the delegating agent must pass
+`model: inherit`). Context isolation applies
+(`agent_harness_rails/rules/harness-contract.mdc`) — the delegating agent must pass
 **Phase**, plan path, spec path, **Scope**, and, when the app has a primitives
 tree, the **Mechanical primitives output** block in the task prompt.
 `readonly: true` is deliberate — a reviewer that edits the tree launders the

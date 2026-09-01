@@ -42,10 +42,8 @@ Status: shaping → planned → built → deprecated.
 (None yet.)
 ```
 
-The outcome has to **discriminate** — a reader choosing between two capabilities
-should be able to tell them apart without opening either — and `Owns:` is how a
-capability whose name is not a resource name is still findable from code. This
-file is the tree's entire discovery surface
+The outcome has to **discriminate** and `Owns:` is the grep bridge — this file
+is the tree's entire discovery surface
 (`agent_harness_rails/rules/primitives.mdc` § Finding the right capability).
 
 ## `compilation.md` skeleton
@@ -104,26 +102,9 @@ intent:
 
 `evaluations:` is filled from specs that **exist** — at execution close-out,
 capture, or a planner lazy backfill — never from what a plan promises. A
-`shaping` or `planned` doc for new work leaves it empty.
-
-## Tagging the proof
-
-Each named spec file must carry the clause id as RSpec metadata, or `agent_harness_rails evals`
-reports the evaluation as untagged — a path alone is a claim, the tag is proof:
-
-```ruby
-# spec/system/comment_threads_spec.rb
-it "shows replies nested under their parent", intent: "comment_threads#I2" do
-```
-
-On the example, never on the group around it (`tag/misplaced`). One example may
-carry several clauses as a list:
-
-```ruby
-it "nests three deep", intent: %w[comment_threads#I2 comment_threads#I3] do
-```
-
-The same tag runs the proof: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
+`shaping` or `planned` doc for new work leaves it empty. Tagging mechanics —
+the `intent:` metadata tag lives on the example, never the group:
+`agent_harness_rails/rules/primitives.mdc` § Tagging the proof.
 
 ## Built doc, fully wired
 
@@ -168,8 +149,9 @@ the red as blocking `writing-tests` work, and close it by writing the spec.
 - 2026-10-03 — backfill intent confirmed by human.
 ```
 
-Supersession in place — the old clause stays as a tombstone with its successors
-and date recorded as data; only the new clause carries evaluations:
+Supersession in place — only the new clause carries evaluations
+(mechanics, including the `superseded_on:`-not-`on:` YAML trap:
+`agent_harness_rails/rules/primitives.mdc` § Capability doc format / § Lifecycle):
 
 ```yaml
 intent:
@@ -182,10 +164,6 @@ intent:
     evaluations:
       - spec/system/comment_threads_spec.rb
 ```
-
-The key is **`superseded_on:`**, not `on:` — YAML resolves a bare `on` to the
-boolean `true`, so an `on:` key silently loses its date. A clause withdrawn with
-no replacement uses `retired_on: YYYY-MM-DD` instead.
 
 Retagging is part of the amendment: examples tagged `#I4` must move to `#I5`, or
 `agent_harness_rails evals` reports them as pointing at a superseded clause.

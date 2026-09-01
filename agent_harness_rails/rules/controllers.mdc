@@ -148,6 +148,12 @@ class ArticlesController < ApplicationController
 end
 ```
 
+This is the baseline. It uses `redirect_to` for every mutation — no
+`respond_to`, no format negotiation, no stream templates. Stay here as long
+as possible. Flash copy is hardcoded here to keep the example focused — in
+application code, flash strings live in `config/locales` (e.g.
+`notice: t("articles.created_notice")`; see the i18n rule).
+
 ## Response Hierarchy (Hotwire)
 
 Prefer the simplest mechanism that satisfies the UX. Each step adds controller complexity — resist climbing until you must:
@@ -158,7 +164,7 @@ Prefer the simplest mechanism that satisfies the UX. Each step adds controller c
 
 **Successful mutations:** prefer **`redirect_to`**. **Failed validations:** **`render`** the same template (`:new` / `:edit` / a partial context) with **`status: :unprocessable_content`** — never redirect a failed save. Use **`:unprocessable_content`** (422), not **`:unprocessable_entity`**.
 
-**The re-rendered form has to be resubmittable.** The 422 is half the contract; the other half is that the form coming back targets a route that exists and accepts the verb it will emit. `form_with model:` derives that verb from `record.persisted?`, so any action that can be reached with its record in either state — `find_or_initialize_by`, a singular resource, a create that revives or updates an existing row, a record loaded before validation failed — has **two** renderings, and only one of them is the one you looked at. When the resource's routes do not serve both `POST` and `PATCH`, the other rendering points at a verb that does not exist: the corrected resubmit 404s and the user's work is lost with no error raised anywhere. Pin `url:` and `method:` in the template (**`agent_harness_rails/rules/views.mdc`** § Form Conventions) rather than letting the failure path decide, and check the verb you pin against `bin/rails routes -g <resource>`. The specs that own this are in **`agent_harness_rails/rules/testing.mdc`** § Every Assertion Must Be Able to Fail.
+**The re-rendered form has to be resubmittable.** The 422 is half the contract; the other half is that the form coming back targets a route that exists and accepts the verb it will emit. `form_with model:` derives that verb from `record.persisted?`, so any action that can be reached with its record in either state — `find_or_initialize_by`, a singular resource, a create that revives or updates an existing row, a record loaded before validation failed — has **two** renderings, and only one of them is the one you looked at. When the resource's routes do not serve both `POST` and `PATCH`, the other rendering points at a verb that does not exist: the corrected resubmit 404s and the user's work is lost with no error raised anywhere. Pin `url:` and `method:` in the template (**`agent_harness_rails/rules/views.mdc`** § Form Conventions) rather than letting the failure path decide, and check the verb you pin against `bin/rails routes -g <resource>`. Worked example: **`agent_harness_rails/skills/writing-controllers/references/patterns.md`** § The re-render must be resubmittable. The specs that own this are in **`agent_harness_rails/rules/testing.mdc`** § Every Assertion Must Be Able to Fail.
 
 **Turbo-heavy flows** (modal close + refresh underlying list, frame-targeted success): use `respond_to` with `format.html` and `format.turbo_stream` when needed; **compose stream payloads** in `ApplicationController` helpers or small concerns so actions stay thin. Frames, streams, Stimulus, and anti-SPA patterns: **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**. The **`agent_harness_rails/rules/hotwire.mdc`** rule applies when editing views and Stimulus controllers.
 
@@ -208,46 +214,22 @@ end
 
 ## Authorization with Pundit
 
-Use Pundit for authorization. Call `authorize` in every action — including `index`. Use `policy_scope` in `index` to filter records, then call `authorize` (usually `authorize Article` after scoping; see the policies rule). See the policies rule for full conventions.
+Every action calls `authorize` — including `index`, which also calls `policy_scope` to filter records, then `authorize` (usually `authorize Article` after scoping). Authorization conventions are single-sourced in **`agent_harness_rails/rules/policies.mdc`**: policy shape, scoping, the `ApplicationController` verification callbacks (`verify_authorized` / `verify_policy_scoped`), and when to `skip_after_action`.
 
-```ruby
-class ArticlesController < ApplicationController
-  def index
-    @articles = policy_scope(Article).chronologically
-    authorize Article
-  end
+## Decision Framework
 
-  def update
-    @article = Article.find(params[:id])
-    authorize @article
+**"Does this need a new controller or a new action?"**
+- Action outside CRUD (close, archive, publish) → new noun resource with its own controller
+- Standard CRUD operation → action on existing controller
+- Shared behaviour across controllers → concern
 
-    if @article.update(article_params)
-      redirect_to @article
-    else
-      render :edit, status: :unprocessable_content
-    end
-  end
-end
-```
+**"Where does the logic live?"**
+- Single-model operation → model method, controller just calls it
+- Multi-model orchestration → controller coordinates, each model does its part
+- External system call → job enqueued by controller or model callback
+- Query/filtering → named scope on the model
 
-Default: every action calls `authorize`. Use `after_action :verify_authorized` and `after_action :verify_policy_scoped, only: :index` in `ApplicationController`. For actions that intentionally need no authorization (public pages, health checks), use `skip_after_action` — see the policies skill § Skipping Verification.
-
-```ruby
-class ApplicationController < ActionController::Base
-  include Pundit::Authorization
-
-  after_action :verify_authorized
-  after_action :verify_policy_scoped, only: :index
-
-  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
-
-  private
-    def user_not_authorized
-      flash[:alert] = "You are not authorized to perform this action."
-      redirect_back_or_to(root_path)
-    end
-end
-```
+**"What response mechanism?"** — see § Response Hierarchy (Hotwire) above.
 
 ## Anti-Patterns
 
@@ -260,10 +242,40 @@ end
 | Reaching for Turbo Streams first | Redirect → frames → streams (`agent_harness_rails/skills/writing-hotwire/references/patterns.md`) |
 | Unscoped find for nested resources | Scope through parent association |
 | `redirect_to` after failed save | `render :action, status: :unprocessable_content` |
+| A 422 re-render whose form emits a verb the route does not serve | Pin `url:` / `method:` in the template; check `bin/rails routes -g <resource>` |
+| Service object wrapping a single model call | Let the controller call the model directly |
 | Multiple `before_action` setting the same chain | Base controller concern or inheritance |
 | `rescue => e` in actions | `rescue_from` at the controller class level |
+| Skipping CSRF / auth checks per-action | Dedicated controller with appropriate base class |
 | Inline `current_user.admin?` permission checks | `authorize @record` delegates to policy |
 | Manually raising `Pundit::NotAuthorizedError`, or re-checking a condition the action already `authorize`d | One gate: `authorize` raises on denial; the policy is the single home for the logic |
 | Pundit policy checks in `before_action` | `authorize` in the action body — keep `before_action` for authentication and finders, not permission rules |
-| Forgetting authorization in an action | `after_action :verify_authorized` catches it |
-| Forgetting `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it |
+| Forgetting authorization in an action | `after_action :verify_authorized` catches it (`agent_harness_rails/rules/policies.mdc` § Verification Callbacks) |
+| Forgetting `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it (same section) |
+
+## Naming
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Controllers | Plural noun matching resource | `ArticlesController`, `CommentsController` |
+| Nested state controllers | `Parent::StateNounController` | `Cards::ClosuresController`, `Articles::PublicationsController` |
+| Namespace controllers | Module wrapping | `Admin::ArticlesController` |
+| Resource finders | `set_` + singular resource name | `set_article`, `set_comment` |
+| Params methods | `resource_params` | `article_params`, `comment_params` |
+| Concerns | Adjective or `Scoped` suffix | `Searchable`, `BoardScoped`, `Sortable` |
+
+## Verification
+
+Before finishing, verify:
+
+- [ ] No business logic in controller actions — only orchestration
+- [ ] Every action maps to one of the seven RESTful actions (index, show, new, create, edit, update, destroy)
+- [ ] Strong parameters use `params.expect`, not `params.require.permit`
+- [ ] Failed validations render with `status: :unprocessable_content`, not redirect
+- [ ] The re-rendered form is resubmittable — it targets a route that exists with the verb it emits, on **every** record state the action's finder can produce (§ Response Hierarchy above)
+- [ ] Nested resource lookups are scoped through parent associations
+- [ ] Response uses the simplest Turbo mechanism (full-page redirect → frames → streams — see `agent_harness_rails/skills/writing-hotwire/references/patterns.md`)
+- [ ] Every action calls `authorize` (Pundit) — including index, which also uses `policy_scope`; verification callbacks per `agent_harness_rails/rules/policies.mdc` § Verification Callbacks
+- [ ] Controller has no more than ~7 public methods (CRUD actions only)
+- [ ] Shared behaviour is extracted to concerns, not duplicated
+- [ ] Rate limiting applied to creation/mutation endpoints where appropriate

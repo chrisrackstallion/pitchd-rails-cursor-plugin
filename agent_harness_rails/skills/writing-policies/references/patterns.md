@@ -1,59 +1,8 @@
 # Policy Patterns Reference
 
-## ApplicationPolicy
-
-The base policy defines defaults and the Scope base class. All policies
-inherit from it. The default is **deny everything** — each policy explicitly
-opens what it allows.
-
-### Structure
-
-```ruby
-# app/policies/application_policy.rb
-class ApplicationPolicy
-  attr_reader :user, :record
-
-  def initialize(user, record)
-    @user = user
-    @record = record
-  end
-
-  # Default: deny all actions
-  def index?   = false
-  def show?    = false
-  def create?  = false
-  def new?     = create?
-  def update?  = false
-  def edit?    = update?
-  def destroy? = false
-
-  class Scope
-    def initialize(user, scope)
-      @user = user
-      @scope = scope
-    end
-
-    def resolve
-      raise NotImplementedError, "#{self.class} must implement #resolve"
-    end
-
-    private
-      attr_reader :user, :scope
-  end
-end
-```
-
-### Guidelines
-
-- `new?` always delegates to `create?`, `edit?` always delegates to `update?`
-  — override only when the form page itself has different access from the
-  submission (rare)
-- Keep the base policy minimal — no role-checking helpers here unless
-  every policy needs them
-- The `Scope` base class raises `NotImplementedError` to catch missing
-  implementations early
-
----
+Rules, the `ArticlePolicy` / `ApplicationPolicy` skeletons, controller
+integration, and the verification callbacks live in
+`agent_harness_rails/rules/policies.mdc` — this file is worked mechanics.
 
 ## Action Methods
 
@@ -71,37 +20,6 @@ tenant, etc. For membership and role checks, either call **`user.user.admin?`**
 (and similar) or **delegate** `admin?` / `member?` on `Current` to the underlying
 user so `user.admin?` stays readable — otherwise `user.admin?` resolves to
 **`Current#admin?`**, not `User#admin?`.
-
-### Standard CRUD
-
-```ruby
-class ArticlePolicy < ApplicationPolicy
-  def index?
-    true  # Anyone can see the list (scope filters what they see)
-  end
-
-  def show?
-    true  # Anyone can view a single article
-  end
-
-  def create?
-    user.present?  # Must be logged in
-  end
-
-  def update?
-    owner_or_admin?
-  end
-
-  def destroy?
-    user.admin?  # Only admins can delete
-  end
-
-  private
-    def owner_or_admin?
-      record.creator == user || user.admin?
-    end
-end
-```
 
 ### State-Change Controllers (Noun Resources)
 
@@ -243,23 +161,14 @@ cannot be `.or`-ed with a plain `where` directly; Rails raises
 (`scope.where(id: scope.published.select(:id))`) so both sides of the
 `.or` stay plain.
 
-### Usage in Controllers
-
-```ruby
-def index
-  @articles = policy_scope(Article).chronologically
-  authorize Article
-end
-```
-
-You may use `authorize @articles` instead — Pundit passes the relation as
-`record` to `index?`. Prefer `authorize Article` when `index?` only needs
-the model class (common; matches Pundit examples).
+### Resolution Mechanics
 
 `policy_scope` resolves `ArticlePolicy::Scope` with **`pundit_user`** (often
 `Current` or `Current.user`) and the model class, then calls `#resolve` — it
 returns an `ActiveRecord::Relation`, fully chainable with scopes. The scope’s
-`user` is the same object Pundit passes to policies.
+`user` is the same object Pundit passes to policies. Which argument to hand
+`authorize` after scoping (`Article` vs `@articles`):
+`agent_harness_rails/rules/policies.mdc` § Scoping Collections.
 
 ### Nested Resource Scopes
 
@@ -280,7 +189,7 @@ so `record` is the relation.
 
 - `resolve` must return an `ActiveRecord::Relation`, never an `Array`
 - **`Scope` receives the same `user` as policies** — your `pundit_user` object.
-  When it is `Current`, use `user.user` (or helpers)   anywhere the scope compares
+  When it is `Current`, use `user.user` (or helpers) anywhere the scope compares
   to a `User` or calls user predicates that live on `User`.
 - Scopes compose with named scopes: `policy_scope(Article).published.search(q)`
 - Don't duplicate scope logic in the controller — the policy scope is the
@@ -370,103 +279,7 @@ end
 
 ---
 
-## Controller Integration
-
-### Basic Pattern
-
-Call `authorize` in every action — including `index`. Use `policy_scope` in
-`index` to filter records, then `authorize` (typically `authorize Article`
-after scoping; see § Scopes).
-
-```ruby
-class ArticlesController < ApplicationController
-  def index
-    @articles = policy_scope(Article).chronologically
-    authorize Article
-  end
-
-  def show
-    @article = Article.find(params[:id])
-    authorize @article
-  end
-
-  def new
-    @article = Article.new
-    authorize @article
-  end
-
-  def create
-    @article = Article.new(article_params)
-    authorize @article
-
-    if @article.save
-      redirect_to @article, notice: "Article created."
-    else
-      render :new, status: :unprocessable_content
-    end
-  end
-
-  def edit
-    @article = Article.find(params[:id])
-    authorize @article
-  end
-
-  def update
-    @article = Article.find(params[:id])
-    authorize @article
-
-    if @article.update(article_params)
-      redirect_to @article, notice: "Article updated."
-    else
-      render :edit, status: :unprocessable_content
-    end
-  end
-
-  def destroy
-    @article = Article.find(params[:id])
-    authorize @article
-    @article.destroy!
-    redirect_to articles_path, notice: "Article deleted."
-  end
-
-  private
-    def article_params
-      params.expect(article: %i[title body visibility])
-    end
-end
-```
-
-### With before_action Finders
-
-You can still use `before_action` for finding records — just call
-`authorize` in the action body, not in the callback:
-
-```ruby
-class ArticlesController < ApplicationController
-  before_action :set_article, only: %i[show edit update destroy]
-
-  def show
-    authorize @article
-  end
-
-  def update
-    authorize @article
-
-    if @article.update(article_params)
-      redirect_to @article
-    else
-      render :edit, status: :unprocessable_content
-    end
-  end
-
-  private
-    def set_article
-      @article = Article.find(params[:id])
-    end
-end
-```
-
-### One Gate, One Home
+## One Gate, One Home
 
 **Never raise `Pundit::NotAuthorizedError` manually.** `authorize` *is* the
 raise: give the policy the record (with `policy_class:` when resolution needs
@@ -519,39 +332,14 @@ The same rule in views: `policy(@article).update?` is the sanctioned check —
 never re-derive the logic (`<% if article.creator == Current.user %>`) in
 ERB. One policy method, consulted everywhere; zero copies of its logic.
 
-### Verification Callbacks
+---
 
-Add these to `ApplicationController` to catch missed authorizations:
+## Skipping Verification
 
-```ruby
-class ApplicationController < ActionController::Base
-  include Pundit::Authorization
-
-  after_action :verify_authorized
-  after_action :verify_policy_scoped, only: :index
-
-  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
-
-  private
-    def user_not_authorized
-      flash[:alert] = "You are not authorized to perform this action."
-      redirect_back_or_to(root_path)
-    end
-end
-```
-
-`verify_authorized` raises if the action didn't call `authorize`.
-`verify_policy_scoped` with `only: :index` raises if **`index`** didn't call
-`policy_scope`. It does **not** cover other actions that call `policy_scope`
-— widen `only:` / `except:` or add `skip_after_action` where needed.
-
-Default is to run both; use `skip_after_action` only for actions that
-intentionally have no authorization or no scoped index (public pages, health
-checks, unscoped feeds you have explicitly decided are OK).
-
-### Skipping Verification
-
-For actions that genuinely don't need authorization (public pages, health
+The verification callbacks themselves (`verify_authorized` /
+`verify_policy_scoped` in `ApplicationController`) are canon in
+`agent_harness_rails/rules/policies.mdc` § Verification Callbacks. For
+actions that genuinely don't need authorization (public pages, health
 checks), skip explicitly:
 
 ```ruby

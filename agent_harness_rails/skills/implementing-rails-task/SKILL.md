@@ -1,12 +1,11 @@
 ---
 name: implementing-rails-task
 description: >-
-  Implement a plan task in a Rails app using harness conventions: first
-  rails-omakase-compass (opinionated best-practice omakase), then applicable
-  writing-* skills and agent_harness_rails/rules/*.mdc for tactics. Use when
-  executing a single task from an implementation plan, a vertical slice, or a
-  scoped feature. For isolated delegation, use the rails-implementor subagent
-  (see agent_harness_rails/agents/rails-implementor.md).
+  Implement a plan task in a Rails app: rails-omakase-compass first, then
+  applicable writing-* skills and agent_harness_rails/rules/*.mdc for tactics.
+  Use when executing a single plan task, a vertical slice, or a scoped
+  feature. Isolated delegation: the rails-implementor subagent
+  (agent_harness_rails/agents/rails-implementor.md).
 ---
 
 # Implementing Rails Agent Harness (plan tasks & scoped work)
@@ -21,15 +20,13 @@ drive-by refactors outside scope.
 execute it without hedging. When something is genuinely ambiguous, pause and
 ask once — then proceed.
 
-**Harness rules beat application patterns:** For the **code you write in this
-task**, apply harness rules — do not inherit anti-patterns from the surrounding
-codebase. If every controller in the app calls service objects but this task
-adds a new action, write the action using model logic per `agent_harness_rails/rules/services.mdc`,
-not by calling into an existing service object. If integrating correctly is
-genuinely blocked by surrounding anti-pattern infrastructure (e.g. you must
-call into an existing service that carries side effects or state), escalate as
-**NEEDS_CONTEXT** — do not silently copy the anti-pattern. Do not refactor
-surrounding code outside this task's scope.
+**Harness rules beat application patterns**
+(`agent_harness_rails/rules/harness-contract.mdc`) for the **code you write in
+this task**. If integrating correctly is genuinely blocked by surrounding
+anti-pattern infrastructure (e.g. you must call into an existing service that
+carries side effects or state), escalate as **NEEDS_CONTEXT** — do not silently
+copy the anti-pattern. Do not refactor surrounding code outside this task's
+scope.
 </objective>
 
 **Announce:** "I'm using the implementing-rails-task skill."
@@ -44,18 +41,15 @@ surrounding code outside this task's scope.
 
 | Skill | Role |
 |-------|------|
-| `executing-rails-plan` | **Orchestration** — run a whole plan (or subset) by delegating each task to **`rails-implementor`** and **`rails-reviewer`** in a loop; orchestrator does **not** write app code. |
+| `executing-rails-plan` | **Orchestration** — runs a whole plan (or subset) through implement → review loops; the orchestrator writes no app code. |
 | `rails-omakase-compass` | **Whether** the approach fits majestic monolith / server truth / REST — read **before** coding when the task involves boundaries or product shape. |
 | `writing-*` + `agent_harness_rails/rules/*.mdc` | **How** to write routes, models, controllers, Hotwire, tests, etc., for this repo. |
 | `writing-rails-plans` | Plan structure and task quality — use when the **plan** is wrong or incomplete, not to rewrite the plan silently during implementation. |
-| `writing-tests` | Tests: opinionated best-practice philosophy (system backbone, real objects, behaviour over mocks) plus `agent_harness_rails/rules/testing.mdc`. |
+| `writing-tests` | Testing philosophy and spec-layer choice, with `agent_harness_rails/rules/testing.mdc`. |
 | `running-rubocop` | **Lint gate:** `bin/rubocop` **zero offences** before DONE/review — fix code only, no inline or config disables — see `agent_harness_rails/rules/rubocop.mdc`. Not a substitute for compass or tests. |
 | `maintaining-primitives` | **Primitives tree only** — capability docs, `compilation.md`, provenance under `docs/primitives/` per `agent_harness_rails/rules/primitives.mdc`. Implementation **reads** intent/shape excerpts pasted into the task prompt but **never writes** to the tree — the planner and execution close-out own those write points. If the task is code, stay in this skill. |
 
-**Conflict rule (same as reviewing-rails-work):**
-
-- **Tactics** (`writing-*`, `agent_harness_rails/rules/*.mdc`) win on **specific HOW**.
-- **Compass** wins on **whether** the solution shape matches omakase intent — unless the user or plan has **explicitly** chosen a different shape (API-first, SPA); then implement **consistently** with that documented exception.
+**Conflict rule:** per `agent_harness_rails/rules/harness-contract.mdc` — under a documented exception, implement **consistently** with that documented exception.
 
 ## Process
 
@@ -87,16 +81,14 @@ For purely local edits inside an established pattern, still **skim** the compass
 
 ### 3. Select tactical skills by scope
 
-From the task description and files you will touch, read **only** the relevant:
-
-`writing-rails-plans`, `writing-models`, `writing-routes`, `writing-controllers`,
-`writing-hotwire`, `writing-views`, `writing-javascript`, `writing-css-tailwind`,
-`writing-i18n`, `writing-mailers`, `writing-policies`, `writing-services`,
-`writing-jobs`, `writing-migrations`, `writing-tests`.
+From the task description and files you will touch, read **only** the
+relevant areas — route by the compass's **Where to go next** index
+(`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`), which maps each
+area to its `writing-*` skill and `agent_harness_rails/rules/*.mdc` file.
 
 For each area, open the skill's **SKILL.md** and the relevant
-**`references/patterns.md`** (or sectioned references). Cross-check
-**`rules/<area>.mdc`** for the same area. The list is a **menu**, not permission
+**`references/patterns.md`** (or sectioned references). Cross-check the paired
+**`rules/<area>.mdc`**. The index is a **menu**, not permission
 to add JS or service layers by reflex — apply the **defaults under Load the compass** first.
 
 **Hard rule:** do not write or edit code for a layer before reading that
@@ -124,7 +116,7 @@ more once the failures are green. A failure that will not reproduce is a flake t
 with its seed (`agent_harness_rails/rules/testing.mdc` § When a Run Comes Back Red, §
 Flaky and Order-Dependent Failures). If the app uses RuboCop, follow the **fix loop in `running-rubocop`** and **`agent_harness_rails/rules/rubocop.mdc`**: run `bin/rubocop`, fix every offence in code, run again — repeat until **exit 0 with zero offences** before you consider work **complete or ready for review**. **No** `# rubocop:disable` and **no** new cop disables / excludes in RuboCop YAML. Do not report BLOCKED after a single failing run; work the fix loop first. If you truly cannot fix an offence after the loop, **BLOCKED** (rare) — see **When you cannot ship RuboCop green** below.
 
-   **When the app has a `docs/primitives/` tree and the task served an intent clause,** run **`agent_harness_rails proofs --since HEAD`** and read it against the plan's **Intent impact** row for each clause you served. The row names the cases the clause needs; the output counts each clause's tagged examples. A count that comes up short against the row means a proof you wrote and never tagged, or never wrote — drill in with **`agent_harness_rails proofs '<capability>#I<n>'`**, whose tagged listing shows which planned case is missing, then find the example in the spec file and tag it (or write it) before reporting. No other check can see this, because `evals` treats one tag as proof of the whole file and `guard` says nothing about an untagged new example. Quote each touched clause's tagged-count line in **Tests and verification**, so the count reaches review rather than your reading of it.
+   **When the app has a `docs/primitives/` tree and the task served an intent clause,** run **`agent_harness_rails proofs --since HEAD`** and read it against the plan's **Intent impact** row for each clause you served. The row names the cases the clause needs; the output counts each clause's tagged examples. A count that comes up short against the row means a proof you wrote and never tagged, or never wrote — drill in with **`agent_harness_rails proofs '<capability>#I<n>'`**, whose tagged listing shows which planned case is missing, then find the example in the spec file and tag it (or write it) before reporting. No other check can see this, because `evals` treats one tag as proof of the whole file and `guard` says nothing about an untagged new example. Quote each touched clause's tagged-count line in **Tests and verification**, so the count reaches review rather than your reading of it. If the task's spec list does not cover a cited clause's full wording, say so in your report instead of tagging past it.
 
    **When the task touched a spec carrying an `intent:` tag,** finish with **`agent_harness_rails guard --base HEAD`** (notices only — it never fails). It reports what your work did to promises that already existed. A **proof** notice (`proof/removed`, `proof/weakened`, `evaluation/dropped`) on a still-active clause is yours to fix before reporting: you took coverage off a promise the app still makes, so restore the assertion or the example. An **intent** notice (`intent/rewritten`, `intent/vanished`, `provenance/rewritten`) means an intent clause moved — **you do not own that file**. Report it in the completion notes and change nothing: intent is amended by the user's decision, never by an implementor, and never by writing the provenance line that silences the notice (`agent_harness_rails/rules/primitives.mdc` § Ownership and write points).
 5. **Self-review** (below) before reporting.
@@ -220,7 +212,7 @@ End with a **one-line summary**.
 The **`rails-implementor`** custom subagent at
 **`agent_harness_rails/agents/rails-implementor.md`** runs this workflow in an
 **isolated** context (`readonly: false`, `model: inherit`). It does not commit
-code. It does not see parent chat — the delegating agent must pass **full task
+code. Context isolation applies (`agent_harness_rails/rules/harness-contract.mdc`) — the delegating agent must pass **full task
 text** (including acceptance criteria and file layout when the plan would have
 them), **context**, **working directory**, and paths to **plan/spec** when
 relevant. When **plan path** is `none`, **pasted task text** must stand in for

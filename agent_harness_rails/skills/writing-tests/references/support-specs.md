@@ -257,35 +257,12 @@ end
 The controller calls `authorize @card, policy_class: Cards::ClosurePolicy`
 — the spec instantiates the policy class directly with the card as the record.
 
-### Boundaries — What Belongs Here vs. Elsewhere
+### Boundaries
 
-Policy specs own the permission logic. Other layers trust them:
-
-| Assertion | Tested in | NOT tested in |
-|-----------|-----------|---------------|
-| Admin can destroy articles | Policy spec | Request spec doesn't re-check the logic |
-| Regular user cannot destroy | Policy spec | Request spec tests the redirect |
-| Scope filters by user | Policy spec | Controller uses `policy_scope`; request spec trusts it |
-| Endpoint redirects unauthorized users | Request spec | Policy spec doesn't test HTTP |
-| Button is hidden for unauthorized user | System spec | Policy spec doesn't test views |
-
-```ruby
-# Policy spec — owns the logic
-it "denies non-owners" do
-  policy = described_class.new(other_user, article)
-  expect(policy.update?).to be false
-end
-
-# Request spec — owns the HTTP gate (e.g. redirect from Pundit handler)
-it "redirects unauthorized users" do
-  sign_in other_user
-  patch article_path(article), params: { article: { title: "Hacked" } }
-  expect(response).to redirect_to(root_path)
-end
-
-# The request spec does NOT also check policy.update? — that's duplication.
-# The policy spec does NOT make HTTP requests — that's the wrong layer.
-```
+Policy specs own the permission logic — including scoped collections
+(`Policy::Scope`); the request spec tests the HTTP gate and trusts
+`policy_scope`. The full split, including where a hidden button belongs:
+**`agent_harness_rails/rules/testing.mdc`** § Ownership by Layer.
 
 ### Guidelines
 
@@ -789,67 +766,13 @@ spec/support/
 
 ---
 
-## Boundaries — What Belongs Here vs. Elsewhere
+## Boundaries
 
-Support specs own the work that jobs, mailers, concerns, and POROs perform.
-Callers (models, controllers) only assert that work was enqueued — they
-don't re-test the work itself.
-
-### Enqueuing vs. Performing
-
-```ruby
-# Model spec — asserts the job is enqueued (does NOT test what the job does)
-describe "#publish" do
-  it "enqueues a notification job" do
-    expect { article.publish(by: article.author) }.to have_enqueued_job(NotifySubscribersJob)
-  end
-end
-
-# Job spec — owns what the job actually does
-describe NotifySubscribersJob do
-  it "sends notification emails" do
-    expect {
-      described_class.perform_now(article.id)
-    }.to have_enqueued_mail(ArticleMailer, :update).exactly(3).times
-  end
-end
-```
-
-The model spec does not call `perform_now` and check that emails were sent.
-The job spec does not re-test that `article.publish` enqueues the job.
-Each spec owns its layer.
-
-The same applies to mailers:
-
-```ruby
-# Request spec — asserts the mailer was enqueued
-it "sends a welcome email" do
-  expect {
-    post registrations_path, params: { registration: valid_params }
-  }.to have_enqueued_mail(NotificationMailer, :welcome)
-end
-
-# Mailer spec — owns the mail content
-describe "#welcome" do
-  it "addresses the new user" do
-    mail = described_class.welcome(user)
-    expect(mail.to).to eq([user.email_address])
-  end
-end
-```
-
-### Concern Specs and Model Specs
-
-Every concern with behaviour has its own spec file — the model spec never
-stands in for it. The split is:
-
-- **Concern spec** (`spec/models/concerns/<concern>_spec.rb`) owns the
-  concern's whole contract: methods, scopes, callbacks. Pick one real
-  including model to exercise it through.
-- **Including-model specs** assert nothing about concern behaviour — they
-  trust the concern spec. The one exception: when a model **overrides or
-  extends** a concern method, that model's spec tests the override — and
-  only the delta, not the inherited behaviour around it.
+Support specs own the work that jobs, mailers, concerns, and POROs perform;
+callers only assert that work was enqueued. The arbitration table:
+**`agent_harness_rails/rules/testing.mdc`** § Ownership by Layer. Worked
+enqueue-side examples: § Testing Job Enqueuing and § Testing Mailer Delivery
+above.
 
 ## Guidelines
 
@@ -860,7 +783,3 @@ stands in for it. The split is:
 - **POROs get the same treatment as models** — real records, real database
 - **One spec file per object** — `spec/models/account/onboarding_spec.rb`
 - **Test observable behaviour** — emails sent, records created, state changed
-- **Don't test that Rails works** — `has_many` declarations, built-in validations
-- **Callers assert enqueuing, not performing** — `have_enqueued_job`, not inline `perform_now`
-- **Don't re-test across layers** — model spec says "job enqueued"; job spec says "job works"
-- **One home per concern** — the concern's own spec file; including-model specs test overrides only

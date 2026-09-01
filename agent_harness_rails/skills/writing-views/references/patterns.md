@@ -4,6 +4,39 @@
 
 Prefer **`t()`** for static copy; use **lazy lookup** (`t(".title")`) where it matches the template path. Helpers and shared partials use **absolute keys**. Interpolation, pluralization, and YAML layout: **`agent_harness_rails/skills/writing-i18n/references/patterns.md`**.
 
+## Keep Logic Out of Templates
+
+The rule ("views are HTML with sprinkles") lives in
+**`agent_harness_rails/rules/views.mdc`**. What it looks like in practice:
+
+```erb
+<%# Good — view reads like annotated HTML %>
+<article>
+  <h1><%= @article.title %></h1>
+  <p class="text-sm text-gray-500"><%= @article.byline %></p>
+  <p class="text-xs text-gray-400"><%= time_ago_in_words(@article.created_at) %> ago</p>
+  <%= render @article.comments %>
+</article>
+
+<%# Bad — computation and business logic in the template %>
+<article>
+  <h1><%= @article.title %></h1>
+  <p>
+    By <%= @article.creator.first_name %> <%= @article.creator.last_name %>
+    <% if @article.updated_at > @article.created_at + 1.hour %>
+      (edited)
+    <% end %>
+    <% if @article.comments.where(flagged: true).any? %>
+      <span class="text-red-600">Has flagged comments</span>
+    <% end %>
+  </p>
+</article>
+```
+
+The bad version's fixes: `article.byline` and `article.edited?` as model
+methods, and the flagged-comments check as a model predicate the controller
+exposes — not a query the template runs.
+
 ## Partials
 
 Partials are the unit of reuse in Rails views. A partial represents one
@@ -82,21 +115,8 @@ This makes partials portable, testable, and self-documenting. The
 
 ### When to Extract a Partial
 
-Extract when:
-- The same markup appears in two or more templates
-- A section represents a distinct domain concept (a card, a comment, a
-  form field group)
-- The template exceeds ~50 lines
-- A section needs to be a Turbo Frame target
-- You need to render something as part of a collection
-- You want to reuse a styled block — partials are your components,
-  not `@apply`
-
-Don't extract when:
-- The markup is used once and is only a few lines
-- Extracting would create a partial with 10+ locals (too many — the
-  abstraction is wrong)
-- You're just hiding code to make a template "look shorter"
+Decision framework ("Should this be a partial?"):
+**`agent_harness_rails/rules/views.mdc`** § Decision Framework.
 
 ---
 
@@ -203,9 +223,9 @@ Each class does one thing. The alternative is indirection.
 
 ### Partials Are Your Components
 
-In React, you extract a component to reuse a styled block. In Rails,
-you extract a partial. This is the primary reuse mechanism — not
-`@apply`, not CSS component classes.
+A repeated styled block extracts to a partial — the escalation ladder is
+**`agent_harness_rails/rules/css-tailwind.mdc`** § Utility-First,
+Rails-Structured.
 
 ```erb
 <%# Reuse by rendering the partial — not by creating a .card CSS class %>
@@ -243,9 +263,9 @@ end
 
 ### Helpers for Repeated Class Patterns
 
-When the *same set of classes* appears on different elements across
-many templates, a helper that returns the class string is cleaner than
-`@apply`. It's Ruby, it's testable, it composes.
+A class string repeated across many templates extracts to a helper — same
+ladder (**`agent_harness_rails/rules/css-tailwind.mdc`** § Utility-First,
+Rails-Structured). Worked example:
 
 ```ruby
 module ComponentHelper
@@ -456,9 +476,12 @@ tag.hr(class: "my-8 border-gray-200")
 tag.img(src: image_path("logo.png"), alt: "Logo", class: "h-8 w-auto")
 ```
 
-### Application-Wide Helpers
+### Organisation
 
-Put helpers used across all views in `ApplicationHelper`:
+One module per app domain, `ApplicationHelper` only for the genuinely
+app-wide, split past ~100 lines into a more focused domain module:
+**`agent_harness_rails/rules/views.mdc`** § Organised by domain. A genuinely
+app-wide helper looks like this:
 
 ```ruby
 # app/helpers/application_helper.rb
@@ -471,16 +494,8 @@ end
 
 ### When Helper vs Partial vs Model Method
 
-| Need | Solution |
-|------|----------|
-| Format a value (date, currency, truncation) | Helper |
-| Single HTML element with dynamic attributes | Helper with `tag` builder |
-| Small composed element (badge with icon + text) | Helper with `tag` builder |
-| Multi-line HTML with structure (card, section) | Partial |
-| Domain predicate (`published?`, `editable?`) | Model method |
-| Computed display value (`byline`, `summary`) | Model method |
-| Complex conditional HTML | Partial, not helper |
-| Repeated Tailwind class pattern (buttons, inputs) | Helper returning class string |
+Decision framework: **`agent_harness_rails/rules/views.mdc`** § Decision
+Framework.
 
 ---
 
@@ -690,41 +705,14 @@ and Turbo submission behaviour:
 
 ### Pinning `url:` and `method:`
 
-`form_with model:` derives the verb from `record.persisted?` — `POST` for a new
-record, `PATCH` for a saved one. That inference is correct only while the
-record's state is fixed by the action that rendered the template. It stops being
-correct as soon as the same template can render both states: a shared `_form`
-reached from several actions, a singular resource, a controller whose finder is
-`find_or_initialize_by`, or a 422 re-render on a `create` that may have loaded an
-existing row.
-
-```erb
-<%# Bad — the verb depends on which branch produced the record. On the
-    persisted branch this emits PATCH; a POST-only route answers 404 %>
-<%= form_with model: closure do |f| %>
-  ...
-<% end %>
-
-<%# Good — the form declares where it submits and how %>
-<%= form_with model: closure, url: card_closure_path(card), method: :post do |f| %>
-  ...
-<% end %>
-```
-
-Rails hides the mismatch until submit time: the emitted `<form>` is always
-`method="post"` with the real verb tunnelled in a `_method` hidden field, so the
-page renders fine and only the submission fails. Nothing in a render-only spec
-catches it.
-
-Check the resource's verbs before you rely on inference:
-
-```bash
-bin/rails routes -g closure
-```
-
-If the routes do not serve **both** `POST` and `PATCH`, pin the verb the route
-accepts. Specs that exercise this — the corrected resubmit, and one example per
-record state the finder can return — are in
+The rule — when `form_with model:` verb inference stops being safe and the
+form must pin `url:` and `method:` — lives in
+**`agent_harness_rails/rules/views.mdc`** § Form Conventions. The gotcha that
+makes it easy to miss: Rails hides the mismatch until submit time. The emitted
+`<form>` is always `method="post"` with the real verb tunnelled in a `_method`
+hidden field, so the page renders fine and only the submission fails — nothing
+in a render-only spec catches it. Specs that exercise this — the corrected
+resubmit, and one example per record state the finder can return — are in
 `agent_harness_rails/skills/writing-tests/references/request-specs.md`
 § Failure Paths.
 
@@ -849,18 +837,9 @@ dom_class(@article, :featured) # => "featured_article"
 
 ## Empty States
 
-Handle empty collections gracefully. Never show a blank page. For one-line
-fallbacks, `<%= render(@articles) || ... %>` works (see § Collections →
-Empty States); for a designed empty state like this one, branch to a
-dedicated partial:
-
-```erb
-<% if @articles.any? %>
-  <%= render @articles %>
-<% else %>
-  <%= render "articles/empty" %>
-<% end %>
-```
+Handle empty collections gracefully. Never show a blank page. The one-line
+fallback idiom and the explicit branch are in § Collections → Empty States;
+for a designed empty state, branch to a dedicated partial:
 
 ```erb
 <%# app/views/articles/_empty.html.erb %>

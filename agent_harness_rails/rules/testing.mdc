@@ -73,106 +73,10 @@ end
 
 ## Tagging the Intent a Spec Proves
 
-When the app has a **`docs/primitives/`** tree, the example that proves an intent
-clause carries the clause id as RSpec metadata:
-
-```ruby
-it "shows replies nested under their parent", intent: "comment_threads#I2" do
-```
-
-The capability is the doc's filename without `.md`
-(`agent_harness_rails/rules/primitives.mdc`). One example can carry several
-clauses as a list — `intent: %w[comment_threads#I2 comment_threads#I3]` — and a
-clause proven by four examples is tagged on all four.
-
-- **On the example, never on the group.** A tag on a `describe`, `context`, or
-  `shared_examples` is an offence — `AgentHarnessRails/IntentTag` at lint time,
-  `tag/misplaced` from `agent_harness_rails evals`. A group tag can lie: delete
-  the example it stood for and its siblings keep the group green, so the clause
-  still claims a proof that no longer exists.
-- **Only evaluation examples are tagged.** Most specs prove behaviour without
-  proving a *clause*; those stay untagged. Tagging everything makes the map
-  useless.
-- The capability doc's `evaluations:` must list the spec file, and the file must
-  carry the tag. **`agent_harness_rails evals`** checks both directions and fails when either
-  side drifts.
-- **Tagging all four is a rule, not a check.** `evals` counts files: one tag makes
-  the whole file a carrier, so a clause meant to be proven by four denials goes
-  green with three tagged, and `guard` says nothing either — an untagged new
-  example is growth. **`agent_harness_rails proofs '<capability>#I<n>'`** is what
-  shows the fourth: it lists the tagged examples behind the clause, per
-  evaluation file. Read the listing against the plan's **Intent impact** row,
-  which names the cases — a case the row names that is missing from the listing
-  is found in the spec file and tagged, or written. Nothing it prints is an
-  offence — most examples in a spec file are untagged by design.
-- **`agent_harness_rails proofs --since main`** prints one counted line per
-  clause a change touched, which is what a task's verify step runs before
-  reporting — a count that comes up short is drilled into by naming the clause.
-- The tag is also a selector — `bundle exec rspec --tag 'intent:comment_threads#I2'`
-  runs exactly the proof.
-
-Metadata rather than a comment for that reason: renaming an example cannot break
-the link, and deleting it breaks the link loudly.
-
-### What counts as proving a clause
-
-`agent_harness_rails evals` only checks a tag is well-formed — clause exists,
-example carries the tag. Whether the example **proves** the clause is judgment.
-The test:
-
-> **An evaluation proves a clause when breaking the clause turns it red.**
-
-If the behaviour could regress while the tagged example still passes, the tag
-is decoration and the clause is unproven behind a green run.
-
-Three ways a tag fails that test:
-
-1. **It asserts the affordance, not the outcome.** The form renders, the button
-   is on the page, the request came back `200` — strip the behaviour out and the
-   example still passes. Assert the outcome the clause names.
-2. **It proves one case, not the quantifier.** Clause sentences carry scope —
-   *any*, *every*, *never*, *only*, *at most*. A happy path proves the
-   existential case only. "Never nests deeper than three" is unproven until
-   something tries for four.
-3. **It proves the clause at a layer that cannot hold it.** Denials, role
-   matrices, and boundaries have owners in § Ownership by Layer. Bolting "and
-   the other user cannot" onto a canonical journey breaks the One-story gate
-   *and* still leaves the matrix uncovered.
-
-So a clause often needs **more than one evaluation, across more than one
-layer** — that is normal, not duplication:
-
-```ruby
-# Clause: articles#I3 — Only the author can edit an article.
-
-# bad — tagged, green, and half the clause is untested. Nothing here would
-# go red if every reader could suddenly edit.
-# spec/system/articles_spec.rb
-it "lets the author edit their article", intent: "articles#I3" do
-
-# good — the permission and the denial, each at the layer that owns it
-# spec/policies/article_policy_spec.rb
-it "denies edit to a reader who is not the author", intent: "articles#I3" do
-# spec/requests/articles_spec.rb
-it "redirects a non-author away from edit", intent: "articles#I3" do
-```
-
-`evaluations:` on that clause then lists both files. A clause whose evaluations
-all sit in one happy-path example, when its wording claims a universal or a
-denial, is a finding at review — not a passing row.
-
-**Sufficient as a set, necessary individually.** The red test asks whether the
-evaluations are *enough*; the inverse question is **could you delete this
-evaluation and still have the clause fully proven?** If yes, it is padding, and
-the tag comes off.
-
-Past about three evaluations, suspect the clause rather than the coverage — a
-sentence needing four separate proofs is usually two promises wearing one id
-(`agent_harness_rails/rules/primitives.mdc` § Size discipline).
-
-A clause that **no** spec could falsify is not a clause at all: it is a Shape
-bullet, or an aspiration. Send it back rather than tagging something adjacent to
-it (`agent_harness_rails/rules/primitives.mdc` § Intent clauses).
+When the app has a **`docs/primitives/`** tree, the example proving an intent
+clause carries `intent: "<capability>#I<n>"` metadata. Tag format, placement
+rules, tooling, and what counts as proving a clause:
+**`agent_harness_rails/rules/intent-tags.mdc`**.
 
 ## FactoryBot
 
@@ -217,12 +121,22 @@ slows the suite, obscures what each layer proves, and creates maintenance drag.
 | Behaviour | Tested in | NOT tested in |
 |-----------|-----------|---------------|
 | Domain logic (publish, close, scopes) | Model spec | System/request spec don't re-test the logic |
+| `Current`-dependent behaviour (`Current.set` / `as_user`) and time-dependent methods (`travel_to`) | Model spec | Higher layers trust the model's answer |
+| Counter caches and dependent-destroy chains, when part of the domain contract | Model spec | System spec doesn't reload records to count |
 | Canonical happy-path journey (form → submit → see result) | System spec — **one per resource** within budget | Request spec doesn't duplicate the canonical journey; lower-priority CRUD actions stay in request specs |
+| Multi-request integration journeys (signup, checkout, password reset) | System spec — **one** end-to-end per journey | Request specs don't chain the whole journey step by step |
 | HTTP concerns (status codes, redirects, params) | Request spec | System spec doesn't assert status codes |
 | Rendering smoke for index/show pages (key content present in response) | Request spec with `response.body.include?` | System spec doesn't do `visit`-only assertions; view specs (`spec/views/`) are never written |
-| CRUD round-trip (record created, redirect lands) for non-canonical actions (edit, delete, show) | Request spec | System spec only covers the canonical flow |
+| CRUD round-trip for non-canonical actions (show, edit, update, destroy) | Request spec — the **only** spec for these actions: happy path + auth gate, not the full validation matrix (model spec owns that) | System spec only covers the canonical flow |
+| Per-field round-tripping (PATCH sets the attribute and persists) | Request spec (param permitted) and model spec (attribute set) | System spec — never one spec per field |
 | Policy logic (who can do what) | Policy spec | Request spec doesn't re-test policy logic; it tests the HTTP gate |
-| Auth gates at the HTTP layer | Request spec — **always**, even if a system spec exists | Auth is critical enough to test at the HTTP layer |
+| Scoped collections (what a role sees) | Policy spec — `Policy::Scope` | Request spec trusts `policy_scope`; controller wiring is not re-queried per role |
+| UI affordance hidden for an unauthorized user (button, link) | System spec — **only** when the hiding is a stated product requirement (budget default 0) | Policy spec doesn't test views |
+| Auth gates at the HTTP layer | Request spec — **always**, even if a system spec exists: **one authorized + one unauthorized case per endpoint** | Auth is critical enough to test at the HTTP layer |
+| Rate limiting (429 after exceeding the limit) | Request spec — with a real cache store (`agent_harness_rails/skills/writing-tests/references/request-specs.md` § Rate Limiting) | System spec never loops requests |
+| CSRF and security headers | Request spec | — |
+| Turbo Stream content type for Turbo endpoints | Request spec asserting `text/vnd.turbo-stream.html` | System spec — unless the update genuinely requires JS |
+| Helper output | Helper spec, or implicitly via the canonical system spec | System spec doesn't assert helper output directly |
 | Job performs work correctly | Job spec | Model spec just asserts `have_enqueued_job` |
 | Mailer content | Mailer spec | Request spec just asserts delivery was enqueued |
 
@@ -230,67 +144,50 @@ Mailer classes, previews, `deliver_later`, and template layout: **`agent_harness
 
 ### The Rule
 
-If a system spec already proves the user can create an article (fills form,
-clicks save, sees the article), **don't** write a request spec that posts
-the same params and checks the same record was created. The request spec
-should only exist if it tests something the system spec can't: a specific
-status code, a redirect chain, or rate limiting.
-
-If a model spec proves `article.publish` creates a publication record,
-the system spec just clicks "Publish" and asserts the page shows "Published"
-— it doesn't also check `article.publication.present?`.
+A higher layer never re-proves what a lower layer already owns. If a system
+spec proves the user can create an article, the request spec exists only for
+what the system spec can't test — a specific status code, a redirect chain,
+rate limiting. If a model spec proves `article.publish` creates a publication,
+the system spec asserts the page shows "Published" — never
+`article.publication.present?`.
 
 ### Within a Single Spec File
 
-Don't test the same path twice with different wording:
-
-```ruby
-# Bad — two tests for one behaviour
-it "publishes the article" do
-  article.publish
-  expect(article).to be_published
-end
-
-it "creates a publication record" do
-  article.publish
-  expect(article.publication).to be_present
-end
-
-# Good — one test, multiple assertions for one behaviour
-it "publishes the article" do
-  article.publish
-
-  expect(article).to be_published
-  expect(article.publication).to be_present
-  expect(article.publication.publisher).to eq(Current.user)
-end
-```
-
-Multiple assertions in one test are fine when they verify the same action.
-Split tests when the *setup* differs (different context), not when you want
-to assert more things about the same outcome.
+Don't test the same path twice with different wording. Multiple assertions in
+one test are fine when they verify the same action; split tests when the
+*setup* differs (different context), not when you want to assert more things
+about the same outcome. Worked example:
+**`agent_harness_rails/skills/writing-tests/references/model-specs.md`**
+§ No Redundant Tests Within the File.
 
 ## What NOT to Do
 
 | Anti-Pattern | Instead |
 |-------------|---------|
 | Mocking ActiveRecord | Use real records via FactoryBot |
+| Mocking the object under test | Never — stub a collaborator at a real boundary if you must, but the class or method being specified always runs for real |
+| Keeping a spec that only breaks during refactors | Delete it; keep the spec that documents a non-obvious business rule |
 | Testing private methods | Test through public interface |
 | `allow_any_instance_of` | Inject the dependency or test through the real path |
 | Shared examples for unrelated specs | Inline the assertion — duplication is fine |
 | `before(:all)` for database records | `before(:each)` or inline `create` |
 | Testing framework behaviour (validates presence) | Test your domain logic, not Rails |
 | Deep `let` / `subject` chains that obscure setup | Inline setup — each test tells its own story; a single `let` for auth user is fine |
+| `is_expected.to` with implicit subject | Explicit subject and expectation |
+| Asserting exact error messages | Assert error keys or behaviour |
+| Giant setup blocks | Extract to factory traits |
 | Controller specs | Request specs (controller specs are deprecated) |
 | View specs (`spec/views/`, `type: :view`) | Request specs — rendering is tested through the full stack with `response.body.include?`, never in template isolation |
 | `stub_const` / `allow(ENV)` | Use Rails credentials or test configuration |
 | System spec asserting model internals | System spec asserts what the user sees |
 | Re-testing domain logic in integration specs | Model spec owns the logic; integration asserts the outcome |
+| Job spec re-testing what the model spec covers | Job spec tests orchestration; model spec tests the domain method the job calls |
 | Separate tests for each assertion on one action | Multiple assertions in one test for one behaviour |
 | Testing the same happy path in model + request + system | One home per behaviour — pick the right layer |
 | An absence read off a page or response, with nothing proving the page rendered | Keep the `not_to`; anchor it with the status or a landmark the page must show |
 | A negation the unit answers directly (`not_to permit`, `not_to be_published`) treated as needing a positive assertion | Leave it alone — nothing can fail into its passing side |
 | An assertion that cannot fail (`be_a(described_class)`) added to satisfy a rule | If no honest anchor exists, the negation needed none |
+| Asserting evidence the wrong outcome would also show (two records or pages sharing the asserted value) | Set the records up to differ in what's asserted, or assert identity — `have_current_path`, the record's id |
 | Comparing a status (`be < 403`, `be_between(200, 299)`) | `have_http_status(:symbol)` — a status is an identity, not a magnitude |
 | System spec that only `visit`s and asserts content (no interaction) | Request spec with `response.body.include?` |
 | One system spec per CRUD action (show/edit/delete) on the same resource | One canonical happy-path system spec; other CRUD actions to request specs |
@@ -444,6 +341,34 @@ post card_closure_path(card), params: { closure: { reason: "Duplicate card" } }
 expect(response).to redirect_to(card_path(card))
 expect(card.reload).to be_closed
 ```
+
+#### The setup must discriminate
+
+The same question applies to **positive** assertions, through the data: **could
+the wrong outcome present the same evidence?** When two records, pages, or
+states involved in the example share the asserted value, the assertion is
+honest but the setup has made it worthless — the example passes whichever one
+the app actually produced:
+
+```ruby
+# Bad — the draft carries the article's title, so this passes on the draft's
+# own page too; the redirect to the article could vanish and nothing goes red
+visit draft_path(draft)
+
+expect(page).to have_content(article.title)
+
+# Good — the evidence is unique to the expected outcome
+visit draft_path(draft)
+
+expect(page).to have_current_path(article_path(article))
+```
+
+Wherever an assertion must tell two things apart, set them up to **differ in
+exactly what is asserted** — distinct values on the attribute the expectation
+reads — or assert **identity** instead of shared content: the path, the
+record's id, a marker only the expected state renders. The cheap check is the
+red run: break or revert the behaviour once and watch the example fail. An
+example that has never been red is not known to catch anything.
 
 #### Cover every state the action's finder can produce
 

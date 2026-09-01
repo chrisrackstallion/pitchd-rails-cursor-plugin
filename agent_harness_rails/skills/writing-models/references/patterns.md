@@ -34,34 +34,8 @@ module Publishable
 end
 ```
 
-### Guidelines
-
-- **50–150 lines** — if a concern exceeds 150 lines, it likely contains
-  multiple responsibilities
-- **Named as adjectives** — `Publishable`, `Closeable`, `Watchable`,
-  `Searchable`, `Taggable`
-- **Self-contained** — include all associations, scopes, and methods the
-  capability needs; don't scatter related code across multiple concerns
-- **Not for mere organisation** — don't create `UserCallbacks` or
-  `UserValidations` concerns; extract when there's genuine reuse or the
-  capability is a distinct concept
-- **One concern, one concept** — `Closeable` handles closing/reopening;
-  it should not also handle archiving
-- **Every method earns its place** — before adding a method, question
-  whether the concern is where it belongs. It belongs only if it is part
-  of the capability every includer gets; a method only one includer uses,
-  or that isn't about the capability, goes on that model instead
-
-### When to Extract
-
-Extract a concern when:
-- Two or more models share the same behaviour (horizontal reuse)
-- A model file exceeds ~300 lines and contains distinct capability clusters
-- A concept has its own vocabulary (verbs, predicates, scopes)
-
-Don't extract when:
-- The code is only used by one model and fits comfortably in the file
-- You're just moving code to make the model "look cleaner"
+Naming, size limits, and extraction criteria:
+**`agent_harness_rails/rules/models.mdc`** § Concerns for Horizontal Behaviour.
 
 ---
 
@@ -114,63 +88,14 @@ Card.joins(:closure)          # all closed cards
 Card.where.missing(:closure)  # all open cards
 ```
 
-### When to Use
-
-| Scenario | Use |
-|----------|-----|
-| Need to know *who* made the change | State record |
-| Need to know *when* it happened | State record |
-| Need to query by state with joins | State record |
-| Simple flag, no audit trail needed | Boolean column |
-| Toggled frequently with no history | Boolean column |
-
-### Enums, state records, and state machine gems
-
-Rails already gives you most of what you need: **associations**, **transactions**,
-**validations**, and **domain verbs** on the parent. A **child row whose presence
-is the state** is often the smallest accurate model. Prefer proving you need a
-**state machine gem** (AASM, Statesman, Workflow, etc.) with **real complexity**,
-not because “serious apps use state machines.”
-
-| Layer | Use when |
-|-------|----------|
-| **`enum` on a column** | Small ordered lifecycle (`draft` → `active` → `archived`), no rich audit on that axis, transitions stay obvious |
-| **State record** (`has_one` / polymorphic child) | Binary or few modes; need **timestamps, actor, joins**; **destroy** = revert feels natural |
-| **Per-transition / history table** | Compliance, undo, or **timeline** is a product requirement — not for every app by default |
-| **State machine gem** | **Many named states**, **non-obvious allowed transitions**, **guards** across several attributes, or **external workflow** integration would otherwise sprawl |
-
 **Retention:** Reverting with `destroy` fits when the child row is only current state plus metadata and **discarding the row is allowed**. If **policy forbids deletes** (audit retention, legal hold), use a **history table**, **superseding rows**, or **soft flags** on a durable record — not `DELETE` as undo.
 
-**Heuristic:** If the lifecycle fits **two or three nouns** on a napkin and rules
-live in **a few well-named methods**, you likely need **better names and maybe
-one more table** — not a gem.
-
-### REST and noun resources
-
 State changes map cleanly to **noun resources** and standard HTTP (`POST` to
-create the state record, `DELETE` to remove it). Routing, authorization, and
-request specs stay conventional. Generic **`transition_to!`**-style APIs on the
-model often **fight REST** and duplicate policy boundaries — prefer resources
-like `Cards::ClosuresController` (see the writing-controllers skill) unless the
-domain truly is a single object with a complex internal machine.
-
-### Anti-patterns (state machines)
-
-- **Callback-heavy gems** driving transitions through `after_save` or magic
-  hooks — same pain as callback-heavy domain logic; hard to test and follow.
-- **Scattered** `if` / `case` on `state` across controllers and jobs when **one
-  place** (model verbs or a small PORO next to the model) would do.
-- **Over-modeled enums** — twelve `status` values when the domain is really
-  **“has publication” / “has closure”** plus clear verbs.
-- **Reaching for a gem** before **state-as-record + verbs** has been tried.
-
-### When a state machine library is justified
-
-- Large **transition matrix** with role-based or attribute-heavy **guards**.
-- **External workflow** or BPM integration with a contract that expects a
-  formal state model.
-- Team agreement that the gem’s API is the **single choke point** for
-  transitions — not as a substitute for modeling state as data.
+create the state record, `DELETE` to remove it) — prefer resources like
+`Cards::ClosuresController` (see the writing-controllers skill) over generic
+`transition_to!`-style APIs. The ladder (`enum` → state record → history →
+gem) and its decision criteria: **`agent_harness_rails/rules/models.mdc`**
+§ State as Records.
 
 ### Contrast — verbs and records vs callback transitions
 
@@ -242,24 +167,13 @@ def self.available_for(project, search: nil)
 end
 ```
 
-### Guidelines
-
-- Use **business terms** for scope names: `active`, `pending`, `featured`
-  — not SQL-ish names like `with_status_active`
-- One `preloaded` scope per model for standard eager loading
-- Scopes should be **composable** — each does one thing
-- **Never use `default_scope`** — it contaminates every query, breaks
-  `unscoped` expectations, and hides intent. Use named scopes instead.
-
 ---
 
 ## Validations
 
-### Philosophy
-
-Database constraints are the source of truth for data integrity. Model
-validations exist to produce user-facing error messages. Attribute labels and
-error strings live under **`activerecord`** in **`config/locales`** — see
+The migration enforces integrity; the model provides the error messages.
+Attribute labels and error strings live under **`activerecord`** in
+**`config/locales`** — see
 **`agent_harness_rails/skills/writing-i18n/references/patterns.md`** § Active Record labels and errors.
 
 ```ruby
@@ -305,18 +219,8 @@ end
 
 ## Callbacks
 
-### Use For
-
-- `after_commit` / `after_create_commit` — enqueue async work
-- `before_save` — compute derived data from the model's own attributes
-- `before_validation` — normalise data (prefer `normalizes` in Rails 7.1+)
-
-### Avoid
-
-- Callbacks that touch other models
-- Callbacks that call external services
-- Chains of callbacks that create ordering dependencies
-- `after_save` for side effects (use `after_commit` for safety)
+Boundaries (what callbacks may and may not do):
+**`agent_harness_rails/rules/models.mdc`** § Callbacks.
 
 ```ruby
 # Good — async dispatch after commit
@@ -341,18 +245,6 @@ private
 ---
 
 ## Associations
-
-### Ordering
-
-Declare associations in this order: `belongs_to`, `has_many`, `has_one`,
-`has_and_belongs_to_many`.
-
-### Defaults with Current
-
-```ruby
-belongs_to :creator, class_name: "User", default: -> { Current.user }
-belongs_to :account, default: -> { Current.account }
-```
 
 ### Counter Caches
 
@@ -640,20 +532,9 @@ end
 
 ## Error Handling
 
-### Let It Crash
-
-Use bang AR methods internally. `ActiveRecord::RecordInvalid` propagates
-to the controller, where it becomes a 422 response. Domain verbs use the
-non-bang form — they are the normal way to perform the action:
-
-```ruby
-def publish(by: Current.user)
-  create_publication!(publisher: by)
-end
-```
-
-Reserve a bang domain verb (`publish!`) only when you offer both a "try"
-form (returns false on failure) and a "must succeed" form (raises).
+Use bang AR methods internally — `ActiveRecord::RecordInvalid` propagates
+to the controller, where it becomes a 422 response. The bang convention:
+**`agent_harness_rails/rules/models.mdc`** § Bang Convention.
 
 ### Domain Exceptions
 

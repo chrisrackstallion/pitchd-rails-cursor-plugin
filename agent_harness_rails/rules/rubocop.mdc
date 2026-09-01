@@ -33,6 +33,13 @@ when, and why** — not by the YAML, which looks identical:
 | Suppressing an offence on work in progress — inline disable, a new `Exclude:`, `.rubocop_todo.yml` | Agent or human | **Forbidden**, as above |
 | A standing decision that a harness cop does not suit this app, recorded with a reason comment | **Human only** | **Allowed** |
 
+In the app's `.rubocop.yml` it looks like this:
+
+```yaml
+Layout/ClassStructure:
+  Enabled: false            # We order models by reading flow, not macro type.
+```
+
 Agents: **never add one, never re-enable one, never route around one, and never
 report one as a finding.** Raise it as a review observation if you think it is
 wrong. This mirrors `compilation.md` ownership in
@@ -74,10 +81,11 @@ are judgment. The layer narrows what review has to catch; it does not replace it
 
 ## When you cannot fix (rare)
 
-- If an offence cannot be resolved correctly without a policy call (true edge case), **stop**: status **BLOCKED**, explain the cop, what you tried, and what the user must decide. **Do not** ship with offences or suppressions.
+- If an offence cannot be resolved correctly without a policy call (true edge case), **stop**: status **BLOCKED**, with the cop name, the offence, what you tried, and what the user must decide. **Do not** ship with offences or suppressions.
+- When the blocker is a **harness cop that is genuinely wrong for this app** — not wrong for this branch — the escalation is the same **BLOCKED**, plus the opt-out you would **propose**. Never apply it: the opt-out is the human's to make (worked message in the skill).
 
 ## What green does not mean
 
 - Passing RuboCop does **not** prove well-shaped Rails design (REST, fat models, thin controllers). It is still **required** before completion — pair with **tests** per the repo.
 
-For procedure and escalation detail, use **`agent_harness_rails/skills/running-rubocop/SKILL.md`**.
+For procedure — the baseline reading table, the fix loop, the cop-dodge examples, and the worked BLOCKED message — use **`agent_harness_rails/skills/running-rubocop/SKILL.md`**.

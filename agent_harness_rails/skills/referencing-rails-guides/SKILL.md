@@ -2,10 +2,10 @@
 name: referencing-rails-guides
 description: >-
   Load specific topics from the official Rails guides (rails/rails on GitHub)
-  via two fetches: first the GitHub API directory index to discover available
-  filenames, then the raw markdown for the matched guide. Never invent or
-  paraphrase content as if it came from the official docs. Use when you need
-  authoritative Rails API or feature documentation beyond this harness's rules.
+  in two fetches: the GitHub API directory index, then the matched guide's raw
+  markdown. Never invent or paraphrase content as if from the official docs.
+  Use for authoritative Rails API or feature documentation beyond this
+  harness's rules.
 ---
 
 # Referencing the official Rails guides

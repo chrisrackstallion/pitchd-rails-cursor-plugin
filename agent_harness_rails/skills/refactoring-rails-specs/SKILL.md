@@ -1,18 +1,12 @@
 ---
 name: refactoring-rails-specs
 description: >-
-  Refactor an existing RSpec suite — typically a batch of bloated system specs
-  and their related request, model, policy, job, mailer, concern, and factory
-  specs — into a Rails best-practice test suite per writing-tests and
-  agent_harness_rails/rules/testing.mdc. Discover related specs, audit each test against the Five
-  Gates and per-layer ownership, then move, merge, delete, or rewrite tests so
-  each behaviour has exactly one home. Verify the suite is green and coverage
-  is preserved. Use when the user mentions refactoring tests, rebalancing
-  specs, "the system specs are too heavy", "we have too many browser tests",
-  reducing test runtime, cleaning up a drifting test suite, or porting an
-  older suite to current harness conventions. Not for writing new specs for
-  untested code (use writing-tests) or for fixing failing specs unrelated to
-  layering (debug them in writing-tests).
+  Refactor an existing RSpec suite — bloated system specs plus related
+  request, model, policy, job, mailer, and factory specs — so each behaviour
+  has one home per writing-tests. Use for refactoring or rebalancing tests,
+  "the system specs are too heavy", "too many browser tests", reducing test
+  runtime, or porting an older suite. Not for new specs or non-layering
+  failures (writing-tests).
 ---
 
 # Refactoring Rails Specs
@@ -47,8 +41,7 @@ layer, either already or via a new spec written first.
 
 Before touching any spec:
 
-- **Read `agent_harness_rails/skills/writing-tests/SKILL.md` and `agent_harness_rails/skills/writing-tests/references/system-specs.md`** if not already in context. The Five Gates and Budget are the rubric you will apply.
-- **Skim `agent_harness_rails/rules/testing.mdc`** for the ownership table and anti-pattern table.
+- **Read `agent_harness_rails/rules/testing.mdc`** if not already in context — the ownership table, anti-pattern table, Budget, and Five Gates are the rubric you will apply. **`agent_harness_rails/skills/writing-tests/references/system-specs.md`** has the gates' full rationale.
 - **Capture a baseline.** Run the relevant slice (or the full suite if the batch is small):
   ```bash
   bin/rspec --format documentation > tmp/spec-baseline.txt
@@ -84,18 +77,30 @@ Use `Bash` with `find` and `Grep` to locate related files. For multi-resource jo
 
 ### 3. Audit — score every test
 
-Build a structured plan. For each `it` / `scenario` block across the discovered specs, answer four questions and assign a verdict.
+Build a structured plan. For each `it` / `scenario` block across the discovered specs, run the audits below and assign a verdict.
 
-#### Layer audit — is it in the right file?
+#### Layer, duplication, and anti-pattern audit
 
-| Spec type | Belongs here if… | Move it if… |
-|-----------|------------------|-------------|
-| System | Passes all Five Gates (interaction, uniqueness, JS-necessity, single-home, one-story) | `visit` + assert only, per-field, CRUD parity, repeats a JS pattern, drives by on unrelated UI, asserts model internals |
-| Request | Tests status code, redirect, auth gate, params, rendering smoke, or non-canonical CRUD round-trip | Re-asserts `article.publish` (model spec), re-walks policy matrix (policy spec), duplicates canonical happy path (system spec) |
-| Model | Tests a domain verb, scope, callback, normalization, or business-rule validation | Asserts `validates :title, presence: true` (Rails framework), asserts HTTP, asserts UI |
-| Policy | Tests `Policy.new(user, record).action?` returning true/false for each role | Makes HTTP requests, asserts UI, signs in via the form |
-| Job | Tests what `perform_now(id)` does, including idempotency | Re-tests the model method the job calls, asserts mail content (that's the mailer spec) |
-| Mailer | Tests recipient/subject/body of the generated mail object | Tests delivery (callers do that with `have_enqueued_mail`) |
+Which layer owns each assertion is settled by
+`agent_harness_rails/rules/testing.mdc` § Ownership by Layer, and the shapes to
+flag by § What NOT to Do — apply both tables to every `it` block and to every
+assertion (checking the other layers for the same claim) rather than
+re-deriving them here. Map what they flag to verdicts:
+
+- Visit-only system spec (`visit` + assert, no interaction) → **MOVE** to a request spec asserting `response.body.include?`.
+- View spec (`spec/views/`, `type: :view`) → **MOVE** the rendering assertion to a request spec, then **DELETE** the file — view specs are never kept.
+- Selenium driver where `rack_test` passes → **REWRITE** to `rack_test`.
+- Unanchored `not_to` read off a page or response → **REWRITE**: add an anchor that goes red when the request breaks; keep the `not_to`. **DELETE** only a removal receipt with no behaviour behind it. A `not_to` the unit answers directly (`not_to permit`, `not_to be_published`, `not_to raise_error`) is **KEEP** — optionally **REWRITE** to the positive spelling (`expect(policy.destroy?).to be false`).
+- Policy matrix walked in a request spec — or a policy spec that makes HTTP requests or **signs in via the form** → **MOVE** the matrix branches to the policy spec; the request spec keeps one authorized + one unauthorized case.
+- Happy-path triplets (same flow in model + request + system) → keep **one** home per § Ownership by Layer: the system spec keeps the canonical journey, the request spec trims to status/auth/422, the model spec to domain logic.
+- Per-field system specs, or CRUD parity (separate show/edit/delete specs with identical shape) → **MERGE** per-field assertions into the canonical create flow; **MOVE** show/edit/delete to request specs.
+- Repeated JS-behaviour tests (same Stimulus controller or Turbo pattern across files) → **DELETE** the duplicates; keep one on the simplest page.
+- Drive-by assertions (nav, footer, sidebar inside a feature spec) → **DELETE** the drive-bys; assert them in a layout/helper test if at all.
+- Flash copy as the primary success signal → **REWRITE** to assert resource state on the page; flash becomes secondary.
+- System spec asserting model internals (`article.reload.publication`) → **MOVE** the assertion to the model spec.
+- Request spec asserting `article.published?` → **MOVE** to the model spec; the request spec keeps only the HTTP shape.
+- Job spec calling `article.publish` directly, re-testing the model method the job calls, or asserting mail content → **MOVE** the model assertion to the model spec (mail content to the mailer spec); the job spec asserts what `perform_now(id)` orchestrates, **including idempotency**.
+- Framework-behaviour specs (`validates :title, presence: true`, `belongs_to :author`) → **DELETE** — that is Rails, not the domain. The user-visible "can't be blank" case stays only as the form's one canonical validation-error system spec.
 
 #### Intent audit — does this `it` block carry an `intent:` tag?
 
@@ -108,7 +113,7 @@ capability doc's evaluation, so a verdict on it is a verdict on the record too:
   merge did not swallow the half that proved a quantifier: two examples proving
   *"only the author can edit"* — one permitting, one denying — cannot become one
   example without the clause losing a side
-  (`agent_harness_rails/rules/testing.mdc` § What counts as proving a clause).
+  (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause).
 - **DELETE** — a tagged example is only deletable if its clause is still proven
   elsewhere afterwards. If it is the last proof, the deletion is out of scope for
   a refactor: it removes coverage, not duplication. Flag it and leave it.
@@ -137,37 +142,6 @@ notice against its MERGE / DELETE / REWRITE verdict. One with no verdict behind 
 is coverage this session dropped by accident; restore it. Notices about **intent**
 (`intent/rewritten`, `intent/vanished`) mean the session edited promises, which a
 spec refactor never does — stop and surface those.
-
-#### Duplication audit — is this assertion already proven elsewhere?
-
-Walk every assertion and check the other layers for the same claim. Common duplications:
-
-- **Happy-path triplets:** same create flow in model spec (`Article.create!`), request spec (`POST /articles` → record exists), and system spec (`fill_in` → see article). Keep the system spec for the canonical journey only; trim the request spec to status/auth/422 and the model spec to domain logic.
-- **Stimulus controllers tested across files:** the same `data-controller="counter"` exercised in five system specs. Keep one, on the simplest page.
-- **Field round-tripping:** "user sets visibility to private and it persists" tested as a system spec when the model and request specs already prove it. Drop the system spec.
-- **Validation rules in two places:** `validates :title, presence: true` tested in both the model spec (deletion candidate — that's Rails) and the system spec ("user sees can't be blank" — keep as the canonical validation-error system spec for the form).
-
-#### Anti-pattern audit — flag specifically
-
-Mark any of these and assign verdicts:
-
-| Anti-pattern | Default verdict |
-|--------------|----------------|
-| `visit` + assert with no interaction | **MOVE** to request spec with `response.body.include?` |
-| View spec (`spec/views/`, `type: :view`) | **MOVE** the rendering assertion to a request spec (`response.body.include?`), then delete the file — view specs are never kept |
-| `not_to` as the only assertion, read off a page or response | **REWRITE** — add an anchor that goes red when the request breaks (the status, or a landmark); keep the `not_to`. **DELETE** only if no behaviour is behind it at all |
-| `not_to` as the only assertion, answered directly by the unit (`not_to permit`, `not_to be_published`, `not_to raise_error`) | **KEEP** — nothing can fail into its passing side. Optionally **REWRITE** to the positive spelling (`expect(policy.destroy?).to be false`) |
-| One system spec per field/attribute | **MERGE** into the canonical create flow |
-| CRUD parity: separate system specs for show / edit / delete with identical shape | **MOVE** show/edit/delete to request specs; keep the create as canonical |
-| Selenium driver where `rack_test` passes | **REWRITE** to use `rack_test` |
-| Repeated JS-behaviour tests across files | **DELETE** the duplicates; keep one on the simplest page |
-| Drive-by assertions (nav, footer, sidebar inside a feature spec) | **DELETE** drive-bys; assert them in a layout/helper test if at all |
-| Flash copy as the primary success signal | **REWRITE** to assert resource state on the page; flash becomes secondary |
-| System spec asserting `article.reload.publication` | **MOVE** the assertion to the model spec |
-| Request spec asserting `article.published?` | **MOVE** to the model spec |
-| Request spec walking the policy matrix | **MOVE** matrix branches to the policy spec; keep one authorized + one unauthorized in the request spec |
-| Job spec calling `article.publish` directly | **MOVE** the model assertion to the model spec; the job spec asserts what the job orchestrates |
-| Model spec testing `belongs_to :author` | **DELETE** (Rails framework) |
 
 #### Verdict
 
@@ -361,15 +335,8 @@ Before declaring done:
 - [ ] Baseline captured: total spec count, system-spec count, Selenium count, runtime, pass rate
 - [ ] All related specs for each input discovered (model / request / policy / job / mailer / concern / factory / support) and read
 - [ ] Audit plan written, one verdict per `it` block
-- [ ] No system spec remains unless it passes **all** Five Gates
+- [ ] The refactored files pass the layering items of the writing-tests checklist (`agent_harness_rails/skills/writing-tests/SKILL.md` § Verification): Five Gates, no `visit`-only or view specs, no Selenium that passes under `rack_test`, no per-field or CRUD-parity system specs, no repeated Stimulus/Turbo coverage, anchored absences, no removal receipts
 - [ ] System-spec count per resource is within budget (typically 1 canonical journey; up to a few for multi-step journeys)
-- [ ] No `visit`-only specs remain in `spec/system/`
-- [ ] No view specs remain — `spec/views/` is empty or absent; rendering assertions live in request specs
-- [ ] No Selenium specs pass under `rack_test`
-- [ ] No per-field or per-attribute system specs
-- [ ] No CRUD parity proliferation (one canonical journey, not one per action)
-- [ ] No repeated Stimulus controller / Turbo pattern tests across system specs
-- [ ] No `not_to`-only removal receipts; every absence read off a page or response has an anchor, and sound negations were left alone
 - [ ] No duplicate happy-path coverage across model + request + system
 - [ ] Each assertion from the original suite is reachable at exactly one layer in the new suite
 - [ ] Every `intent:` tag moved with its example, still sits on an `it` block, and its clause's `evaluations:` paths were updated; no tag was deleted to resolve a verdict
@@ -389,7 +356,8 @@ For larger refactors spanning multiple resources, prefer running this skill one 
 ## Related
 
 - **Test-writing conventions:** `agent_harness_rails/skills/writing-tests/SKILL.md` (`references/system-specs.md`, `references/request-specs.md`, `references/model-specs.md`, `references/support-specs.md`, `references/factory-patterns.md`)
-- **Testing rule:** `agent_harness_rails/rules/testing.mdc` (ownership table, anti-patterns, budget, Five Gates, intent tags)
+- **Testing rule:** `agent_harness_rails/rules/testing.mdc` (ownership table, anti-patterns, budget, Five Gates)
+- **Intent tags:** `agent_harness_rails/rules/intent-tags.mdc` (tag placement, what counts as proving a clause)
 - **Primitives rule:** `agent_harness_rails/rules/primitives.mdc` — read only when the app has a `docs/primitives/` tree and the refactor touches tagged examples
 - **RuboCop:** `agent_harness_rails/skills/running-rubocop/SKILL.md` — run after every refactor batch
 - **Implementor subagent:** `agent_harness_rails/agents/rails-implementor.md` — optional delegation

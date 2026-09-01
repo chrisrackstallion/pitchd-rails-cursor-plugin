@@ -1,12 +1,12 @@
 ---
 name: rails-omakase-compass
 description: >-
-  High-level decision lens for Rails work grounded in opinionated Rails best
-  practice — omakase defaults, server-owned truth, REST gravity, majestic
-  monolith, and when to simplify vs extract. Use before debating architecture,
-  when choosing HTML vs API, or when a change feels "off-Rails"; defers HOW to
-  writing-* skills and agent_harness_rails/rules/*.mdc. Not for Stimulus/Turbo
-  syntax, plan templates, or file layout.
+  High-level decision lens for Rails work — omakase defaults, server-owned
+  truth, REST gravity, majestic monolith, simplify vs extract. Use before
+  debating architecture, when choosing HTML vs API, or when a change feels
+  "off-Rails"; defers HOW to writing-* skills and
+  agent_harness_rails/rules/*.mdc. Not for Stimulus/Turbo syntax, plan
+  templates, or file layout.
 ---
 
 # Rails Omakase Compass
@@ -104,44 +104,41 @@ Ask — do not treat answers as automatic fail:
 
 ## Conflict resolution
 
-- **`agent_harness_rails/rules/*.mdc` and `writing-*` skills** win on **specifics** (this repo’s HOW).
-- **This compass** wins on **kind of solution** — e.g. "this drifts toward a
-  client-as-source-of-truth SPA" — unless the user or plan has **explicitly**
-  chosen that product shape (API-first, SPA, public JSON API); then treat it as
-  a **documented exception** and review tactics for consistency with that choice.
+Per `agent_harness_rails/rules/harness-contract.mdc` — this compass wins on
+**kind of solution**, e.g. "this drifts toward a client-as-source-of-truth
+SPA"; under a documented exception, review tactics for consistency with that
+choice.
 
 ## Where to go next (tactical index)
 
-Read only what the task touches:
+Read only what the task touches. Skills live under
+`agent_harness_rails/skills/`, rules under `agent_harness_rails/rules/`:
 
-| Area | Skill |
-|------|--------|
-| Plans / task breakdown | `writing-rails-plans` |
-| Models / concerns / domain | `writing-models` |
-| Controllers / Turbo responses | `writing-controllers` |
-| Routes / REST mapping | `writing-routes` |
-| Hotwire / Turbo / Stimulus | `writing-hotwire` |
-| Views / partials | `writing-views` |
-| JS | `writing-javascript` |
-| CSS / Tailwind | `writing-css-tailwind` |
-| I18n | `writing-i18n` |
-| Mailers | `writing-mailers` |
-| Policies / Pundit | `writing-policies` |
-| Service objects (when justified) | `writing-services` |
-| Background jobs / ActiveJob | `writing-jobs` |
-| Database migrations | `writing-migrations` |
-| Tests / RSpec | `writing-tests` |
-| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` |
-| Code comments (when one earns its line) | `agent_harness_rails/rules/comments.mdc` |
-| Lint gate | `running-rubocop` |
+| Area | Skill | Rules |
+|------|-------|-------|
+| Plans / task breakdown; planning & execution workflows (workflow skills only when the question is about **how** to plan or run them) | `writing-rails-plans`, `executing-rails-plan`, `implementing-rails-task`, `reviewing-rails-work` | — |
+| Models / concerns / domain | `writing-models` | `models.mdc` |
+| Controllers / Turbo responses | `writing-controllers` | `controllers.mdc` |
+| Routes / REST mapping | `writing-routes` | `routes.mdc` |
+| Hotwire / Turbo / Stimulus | `writing-hotwire` | `hotwire.mdc` |
+| Views / partials | `writing-views` | `views.mdc` |
+| JS | `writing-javascript` | `javascript.mdc` |
+| CSS / Tailwind | `writing-css-tailwind` | `css-tailwind.mdc` |
+| I18n | `writing-i18n` | `i18n.mdc` |
+| Mailers | `writing-mailers` | `mailers.mdc` |
+| Policies / Pundit | `writing-policies` | `policies.mdc` |
+| Service objects (when justified) / where logic goes | `writing-services` | `services.mdc` |
+| Background jobs / ActiveJob | `writing-jobs` | `jobs.mdc` |
+| Database migrations | `writing-migrations` | `migrations.mdc` |
+| Tests / RSpec | `writing-tests` | `testing.mdc` |
+| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` | `naming.mdc` |
+| Code comments (when one earns its line) | — | `comments.mdc` |
+| Lint gate | `running-rubocop` | `rubocop.mdc` |
+| Primitives (capability docs, intent clauses, provenance) — when paths are under `docs/primitives/` | `maintaining-primitives` (setup: `bootstrapping-primitives`) | `primitives.mdc`, `primitives-cli.mdc` |
 
 ### Optional external references
 
-Two fetch-based skills supplement the harness when it leaves a gap — neither
-overrides harness rules:
-
-- **`referencing-unofficial-37signals-guide`** — targeted fetches from the third-party [37signals-skills guide](https://github.com/marckohlbrugge/37signals-skills) (Fizzy-derived topics, README TOC → raw `guide/*.md` files).
-- **`referencing-rails-guides`** — authoritative Rails API and feature docs (GitHub API index → specific guide `.md`).
+Supplementary-reference policy: `agent_harness_rails/rules/harness-contract.mdc` — an **optional** consult for this skill.
 
 **Successful fetches** are required **to attribute or cite content as coming from those sources** — if a fetch fails, **do not** invent text; you may still give **general Rails** guidance using harness rules and skills without claiming a source.
 

@@ -532,38 +532,16 @@ end
 
 ---
 
-## Boundaries — What Belongs Here vs. Elsewhere
+## Boundaries
 
-Model specs own domain logic. Other spec types trust that it works.
-Because system specs are tightly budgeted and request specs trust the
-domain layer, **most behavioural coverage lives here**. If a behaviour
-can be expressed as "given this state, calling this method produces
-this outcome," it belongs in a model spec.
+Model specs own domain logic — including `Current`-dependent behaviour,
+time-dependent methods (`travel_to`), and counter caches / dependent-destroy
+chains that are part of the domain contract. Other spec types trust that it
+works; because system specs are tightly budgeted and request specs trust the
+domain layer, **most behavioural coverage lives here**. The full arbitration
+table: **`agent_harness_rails/rules/testing.mdc`** § Ownership by Layer.
 
-### What Model Specs Own
-
-- Domain verbs: `publish`, `close`, `archive`, `cancel` — every public method that changes state or returns derived data
-- Scopes: `.published`, `.chronologically`, `.search` — the query returns the right records
-- State transitions: draft → published → unpublished lifecycle and the invariants between them
-- Business rules: "can't publish without a body", "can't close twice", uniqueness with case-insensitivity
-- Callbacks: derived data computed, jobs enqueued (assertion: `have_enqueued_job` — not what the job does)
-- Normalizations: email stripped and downcased, slug generated
-- Counter caches and dependent-destroy chains when they are part of the domain contract
-- Time-dependent methods using `travel_to`
-- `Current`-dependent behaviour using `Current.set` / `as_user`
-
-### What Model Specs Do NOT Test
-
-- Framework declarations: `validates :title, presence: true`, `belongs_to :author`, `has_many :comments` — Rails owns these
-- That the user can fill in a form and see the result — system spec
-- That `POST /articles` returns 201 or that `response.body` includes the title — request spec
-- That the HTML renders correctly — system spec (canonical journey) or request spec (rendering smoke)
-- That the mailer body contains the right text — mailer spec
-- That the job processes correctly — job spec (model spec asserts `have_enqueued_job` and nothing more)
-- Authorization rules: who can call `publish` — policy spec owns the matrix
-- Pure helper formatting that doesn't live on the model — helper spec
-
-### No Redundant Tests Within the File
+## No Redundant Tests Within the File
 
 Group assertions about the same action into one test:
 

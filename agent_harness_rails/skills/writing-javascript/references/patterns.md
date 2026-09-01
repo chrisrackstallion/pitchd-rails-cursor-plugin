@@ -1,31 +1,15 @@
 # JavaScript Patterns
 
-This document covers **where JS lives**, **how it is delivered**, **how Stimulus
-controllers are written**, and the **modern JavaScript quality** expectations
-across the codebase. Turbo Drive, Frames, Streams, and Stimulus *behaviour in
-templates* (ERB data attributes, frame markup, stream actions) live in
-**`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**. Refactoring an existing fleet
-of Stimulus controllers — merging, splitting, spec coverage — lives in
+Worked mechanics for JS delivery and Stimulus in a Rails app. The normative
+rules — one stack per app, boundary, hygiene, fetching, accessibility,
+performance, anti-patterns, verification — live in
+**`agent_harness_rails/rules/javascript.mdc`**. Turbo Drive, Frames, Streams,
+and Stimulus *behaviour in templates* (ERB data attributes, frame markup,
+stream actions) live in
+**`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**.
+Refactoring an existing fleet of Stimulus controllers — merging, splitting,
+spec coverage — lives in
 **`agent_harness_rails/skills/refactoring-stimulus-controllers/SKILL.md`**.
-
----
-
-## One Stack Per App
-
-Pick **one** JS delivery story per codebase. Importmap is the omakase default
-since Rails 7. Bundling (esbuild, Vite, rollup) is an intentional decision when
-you have a real need: deep npm graph, TypeScript as a standard, workers, or
-tooling that assumes a Node build step.
-
-What you must **not** ship:
-
-- importmap loading Turbo + a separate webpack bundle also loading Turbo
-- a "main" pipeline plus a "legacy" pipeline both registering Stimulus
-  controllers from different paths
-- half the app from a CDN, half from importmap, with no documented split
-
-Document the choice in `README.md` or the team's onboarding docs. Reference
-`bin/dev` and the `Procfile.dev` setup when bundling.
 
 ---
 
@@ -111,63 +95,25 @@ app/javascript/
 
 ---
 
-## Modern JavaScript Hygiene
+## Hygiene Gotchas
 
-Default to the modern ECMAScript subset Rails and Hotwire already assume.
-
-### Variables and binding
-
-- `const` by default; `let` only when reassignment is genuine; **never `var`**.
-- No top-level mutation of imported modules.
-
-### Functions
-
-- Arrow functions for callbacks; named `function` declarations when stack traces
-  matter (event handlers attached via `addEventListener`, debouncers).
-- Prefer **pure functions** in `lib/` modules; reach for classes only when state
-  is genuinely encapsulated (Stimulus controllers are the canonical case).
-
-### Async
-
-- **`async` / `await`** over raw `.then` chains.
-- `try / catch` **only** where you can do something useful (render an error,
-  retry once, surface a flash). Otherwise let the promise reject and Turbo /
-  the browser surface the failure.
-- Never swallow errors silently:
-
-  ```js
-  // Bad — silently hides failures
-  try { await something() } catch (e) {}
-
-  // Good — handle deliberately or don't catch
-  try {
-    await something()
-  } catch (error) {
-    this.showError(error.message)
-  }
-  ```
-
-### Comparisons and operators
-
-- Strict equality `===` / `!==` — never `==` / `!=`.
-- Optional chaining `?.` for deep access; nullish coalescing `??` for defaults.
-- Template literals over string concatenation; destructuring for params and
-  return shapes.
-
-### Iteration
-
-- `map` / `filter` / `reduce` for pure transforms.
-- `for…of` when the body needs `await`. (`forEach` does **not** await — using
-  it with async callbacks is a common bug.)
-
-### Modules
-
-- Named exports for shared code; default exports are fine for Stimulus
-  controllers (Stimulus expects the default export to be the controller class).
-- One concern per file. If a `lib/` module exports six unrelated helpers, split.
+Rules: **`agent_harness_rails/rules/javascript.mdc`** § Modern JavaScript
+Hygiene. Two shapes worth pinning:
 
 ```js
-// app/javascript/lib/csrf.js
+// Bad — silently hides failures
+try { await something() } catch (e) {}
+
+// Good — handle deliberately or don't catch
+try {
+  await something()
+} catch (error) {
+  this.showError(error.message)
+}
+```
+
+```js
+// app/javascript/lib/csrf.js — named exports for shared code
 export function csrfToken() {
   return document.querySelector("meta[name='csrf-token']")?.content
 }
@@ -181,8 +127,7 @@ export function csrfHeaders() {
 
 ## Stimulus Controllers — Anatomy
 
-Stimulus controllers are **small, single-purpose, DOM-driven**. Each controller
-file is named for its behaviour, registered automatically via
+Each controller file is named for its behaviour, registered automatically via
 `pin_all_from "app/javascript/controllers"`, and attached in ERB through
 `data-controller`.
 
@@ -341,23 +286,12 @@ When you see those signals, split — see
 
 ---
 
-## Layout and Tags
-
-- **Importmap:** `<%= javascript_importmap_tags %>` in `app/views/layouts/application.html.erb`.
-- **Bundled:** use the helper your integration documents (`javascript_include_tag` for the compiled bundle, or Vite helpers). **One** canonical include for application JS.
-- **CSP / nonces:** if Content Security Policy is enabled, the importmap and Stimulus pipelines respect Rails' nonce helpers — don't hand-roll `<script>` tags that bypass them.
-
-Avoid loading half the app from a CDN and half from importmap without a clear
-split (e.g. only analytics from CDN, with a documented reason).
-
----
-
 ## Fetching from JavaScript
 
 For first-party pages, the right answer is almost always **`form_with` + Turbo**
-(see `agent_harness_rails/skills/writing-hotwire/references/patterns.md`). Reach for `fetch` only when
-HTML + Turbo cannot express the interaction — presigned uploads, debounced
-search-as-you-type that hits a JSON endpoint, third-party widget integration.
+(see `agent_harness_rails/skills/writing-hotwire/references/patterns.md`).
+Rules — when `fetch` is warranted, CSRF, error handling, no secrets:
+**`agent_harness_rails/rules/javascript.mdc`** § Fetching from JavaScript.
 
 ### Use @rails/request.js by default
 
@@ -401,61 +335,7 @@ async function uploadAvatar(file) {
 }
 ```
 
-- Always send the CSRF header for first-party endpoints.
-- Send `Accept: text/vnd.turbo-stream.html` when the response is a Turbo
-  Stream; the Turbo runtime applies the DOM update for you.
-- Wrap calls in `try / catch` **where you can act**. Render an error message
-  in the DOM; never `alert()`; never swallow.
-- Don't manually parse JSON when an HTML/Turbo response would do.
-
-### Never embed secrets
-
-API keys, signing tokens, or any credential **must not** ship in the JS bundle.
-Use server-side proxies, signed URLs, or server-rendered nonces.
-
----
-
-## Accessibility and DOM Safety
-
-JavaScript that changes UI state has to keep the UI accessible.
-
-- Toggle **`aria-*`** alongside CSS classes:
-  - `aria-expanded` on disclosure buttons
-  - `aria-hidden` on offscreen panels
-  - `aria-busy` on regions doing async work
-  - `aria-selected` / `aria-current` on tab-like UI
-- Toggle the **`hidden`** attribute (not just `display: none`) when an element
-  should be removed from the accessibility tree.
-- Manage **focus** on overlay open and close. Save the previously-focused
-  element on open; restore it on close. Trap focus inside true modal dialogs.
-- Respect **`prefers-reduced-motion`**:
-
-  ```js
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  if (!reduceMotion) element.animate(...)
-  ```
-
-- Honor keyboard interaction: `Escape` closes overlays, `Enter` / `Space`
-  activates buttons, `Tab` moves focus normally.
-
-### XSS hygiene
-
-- **`textContent`**, not `innerHTML`, for user-controlled strings.
-- `innerHTML` is fine for server-rendered HTML responses (Turbo handles that).
-- Never `eval`, never `new Function`, never `setTimeout("…string…")`.
-- Don't assemble URLs from user input without `encodeURIComponent`.
-
----
-
-## Performance
-
-- **Debounce** input handlers (search-as-you-type) at 150–300 ms.
-- **Throttle** high-frequency events (scroll, resize) — `requestAnimationFrame`
-  is usually the right ceiling.
-- Tear down `MutationObserver` / `IntersectionObserver` in `disconnect()`.
-- Use `{ passive: true }` for scroll/touch listeners that don't `preventDefault`.
-- Importmap: pin the **minified** vendor build for production.
-- Don't ship dev-only debug logging; gate behind a build flag or remove.
+Don't manually parse JSON when an HTML/Turbo response would do.
 
 ---
 
@@ -471,57 +351,6 @@ with ad hoc copies in `public/` for assets that belong in the manifest.
 This skill does **not** duplicate Tailwind or view styling guidance — templates
 and utilities: **`agent_harness_rails/skills/writing-views/references/patterns.md`**; pipeline and
 global CSS: **`agent_harness_rails/skills/writing-css-tailwind/references/patterns.md`**.
-
----
-
-## Boundary: Server Owns Truth
-
-- **Sessions and cookies** authenticate same-origin browser requests — you do
-  not need JWT in JS for your own ERB pages.
-- **Routes** live in **`config/routes.rb`** — not a client-side router mapping
-  `/articles` parallel to Rails.
-- **Authorization** runs on the server (Pundit, etc.) — Stimulus may hide UI,
-  but it does not enforce security. Anything you hide in JS is still callable
-  via direct request.
-
-Repeated from Hotwire: **`fetch` + JSON** for CRUD on pages you fully control
-is usually pipeline drift — prefer **`form_with`**, Turbo, and streams.
-
----
-
-## Defer to Hotwire
-
-For **`data-turbo-*`**, frame targeting, stream templates, morphing, and
-*how Stimulus is wired into ERB*: **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**.
-
----
-
-## Anti-Patterns
-
-- **Two bootstraps** — importmap-loaded Turbo plus a separate webpack bundle
-  both initializing Stimulus or Turbo.
-- **`node_modules` by default** — adding npm for every feature without a build
-  requirement.
-- **God controllers** — one Stimulus controller doing five unrelated things.
-  Split per behaviour.
-- **State in closures** — `this.count = 0` in `connect()` instead of a
-  `countValue`. Morphing strands it.
-- **Leaked listeners** — `connect()` calls `addEventListener` on `window`
-  without a matching `removeEventListener` in `disconnect()`.
-- **`querySelector` over targets** — bypassing `static targets` and reaching
-  into the DOM by selector defeats Stimulus' contract.
-- **Hard-coded class strings** — `element.classList.add("bg-red-500")`
-  scattered across controllers instead of `static classes`.
-- **Global event buses** — `window.dispatchEvent` to coordinate controllers
-  instead of `this.dispatch` + outlets.
-- **`fetch` + JSON for first-party CRUD** — re-implementing what `form_with`
-  and Turbo already do.
-- **Embedding secrets in JS** — API keys in the bundle for client-exposed
-  trees.
-- **`innerHTML = userInput`** — XSS waiting to happen.
-- **`alert()` and `console.log`** in production code paths.
-- **Micro-frontends** and module federation for a typical monolith-shaped
-  Rails app — out of scope and opposite of omakase.
 
 ---
 

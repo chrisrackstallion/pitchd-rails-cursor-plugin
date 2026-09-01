@@ -1,13 +1,11 @@
 ---
 name: referencing-unofficial-37signals-guide
 description: >-
-  Load specific topics from marckohlbrugge/37signals-skills (formerly
-  unofficial-37signals-coding-style-guide) via HTTP fetch of raw GitHub
-  markdown only — use the README table of contents to choose paths (guide
-  topics live under guide/, agent skills under skills/); fetch the minimum
-  needed; if a fetch fails, stop and report (never invent or paraphrase from
-  memory as if it were the guide). Use when you need external Fizzy-derived
-  patterns beyond this harness’s rules and skills.
+  Load specific topics from marckohlbrugge/37signals-skills via raw GitHub
+  fetches only — choose paths from the README table of contents (guide/,
+  skills/), fetch the minimum, and stop and report on failure; never
+  paraphrase from memory as if it were the guide. Use for external
+  Fizzy-derived patterns beyond this harness's rules and skills.
 ---
 
 # Referencing the unofficial 37signals coding style guide

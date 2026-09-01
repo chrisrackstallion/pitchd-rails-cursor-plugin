@@ -1,12 +1,11 @@
 ---
 name: writing-naming-conventions
 description: >-
-  Name files, classes, methods, columns, routes, and variables following Rails
-  conventions and opinionated best-practice domain language. Use when creating
-  new files or classes, renaming anything, reviewing naming decisions, or when
-  the user asks what to call something in a Rails app. Covers every layer:
-  models, concerns, controllers, jobs, mailers, policies, database, routes,
-  tests, and locals.
+  Name files, classes, methods, columns, routes, and variables per Rails
+  conventions and best-practice domain language, across every layer — models,
+  concerns, controllers, jobs, mailers, policies, database, routes, tests,
+  locals. Use when creating or renaming anything, or deciding what to call
+  something in a Rails app.
 ---
 
 # Writing Naming Conventions
@@ -20,12 +19,13 @@ called.
 
 ## Process
 
-### 1. Identify the Layer
-
-Look up the convention in `agent_harness_rails/rules/naming.mdc` for the layer you are working in:
+Every naming rule — the per-layer tables, suffix and casing rules, tie-breaks,
+and the anti-pattern table — lives in **`agent_harness_rails/rules/naming.mdc`**.
+Look up the section for the layer you are naming:
 
 | Layer | Section in `agent_harness_rails/rules/naming.mdc` |
 |-------|-------------------------------|
+| Suffixes, singular vs plural, casing | § Suffixes and Casing |
 | Model, concern, scope, domain verb, state record, PORO, form object | § Domain Layer |
 | Controller class or action name | § Controllers |
 | View template, partial, local variable, Stimulus identifier | § Views and Partials |
@@ -37,92 +37,4 @@ Look up the convention in `agent_harness_rails/rules/naming.mdc` for the layer y
 | Spec file, factory, trait, `let`, `context`, `it` | § Tests and Factories |
 | Local variable, block parameter, boolean local | § Variables and Locals |
 
-### 2. Ask: What Does This Thing Do in the Domain?
-
-Before reaching for a generic term, name the domain action or concept:
-
-- A method that marks an article as visible → `publish`, not `update_published_status`
-- A concern giving a model lock capability → `Lockable`, not `LockingBehavior`
-- A state record representing a project being closed → `Closure`, not `ClosedState`
-- A job that sends a digest to watchers → `NotifyWatchersJob`, not `DigestNotificationJob`
-- A column tracking when something expired → `expired_at`, not `expiry_time`
-
-### 3. Rails Convention Check
-
-Use the Rails name — do not add suffixes Rails does not expect, and do not drop the ones it does:
-
-- **Add:** `Controller`, `Job`, `Mailer`, `Policy`, `Scope` (Pundit), `_spec`, `_path`
-- **Never add:** `Model`, `Class`, `Manager`, `Handler`, `Helper` (on non-helpers), `Service`
-- **Singular vs plural:** models, form objects, and factory symbols are singular (`factory :article`); controllers and tables are plural; factory files take the plural (`spec/factories/articles.rb`)
-- **Casing:** classes PascalCase, methods and columns snake_case, constants SCREAMING_SNAKE_CASE, Stimulus identifiers kebab-case
-
-When Rails convention and domain language conflict, **Rails convention wins for class and file names**; **domain language wins for method and variable names**.
-
-### 4. Common Decision Points
-
-**Concern or model method?**
-Genuine reuse across two or more models → concern (adjective: `Publishable`).
-Logic on one model → model method (domain verb: `publish`).
-
-**Domain verb or predicate?**
-Changes state → verb (`publish`, `close`, `lock`).
-Reads state → predicate with `?` (`published?`, `closed?`, `locked?`).
-
-**Bang or not?**
-Default to non-bang for domain verbs — they are the normal path and propagate exceptions from inner `create!` / `update!` naturally.
-Add a bang only when you also offer a non-raising alternative (`lock` returns false on failure; `lock!` raises).
-
-**Semantic foreign key or `{model}_id`?**
-When the role is generic, use the model name: `user_id`.
-When the column encodes a role, use the role: `creator_id`, `approver_id`, `reviewer_id` — even when all three point at the `users` table.
-
-**`status` column?**
-Fine for a single obvious lifecycle enum (`draft` / `published` / `archived` —
-see the models skill § Enum). The moment a second lifecycle dimension appears,
-name each axis: `publication_state`, `review_stage`, `membership_role`.
-
-**`user1` / `user2` in specs?**
-Never. Name the role: `author`, `reviewer`, `admin`, `guest`, `member`.
-
-### 5. Anti-Pattern Check
-
-Before finalising any name, check the Anti-Patterns table in `agent_harness_rails/rules/naming.mdc`. Most common traps:
-
-| Trap | Fix |
-|------|-----|
-| `is_` prefix on a boolean column | Drop it: `active`, not `is_active` |
-| `Service` suffix anywhere | Model method or namespaced PORO |
-| `execute` / `run` / `do` on a PORO | Domain verb: `complete`, `import`, `transfer` |
-| Abbreviations in locals or parameters | Full word: `article`, not `art` |
-| Ordinal variables in specs | Role names: `author`, not `user1` |
-| `it "should …"` | `it "…"` — no "should" |
-| `ConcernBehavior`, `ConcernModule` | Adjective only: `Taggable` |
-
-### 6. Verification
-
-Before finishing, confirm:
-
-- [ ] Class name follows Rails convention for its layer — no extra suffixes, correct plural/singular
-- [ ] Methods use domain verbs for state changes; `?` suffix for predicates
-- [ ] Boolean columns have no `is_` prefix
-- [ ] Concerns are adjectives: `Publishable`, not `PublishingConcern`
-- [ ] Database columns are semantic — `_at` for datetimes, `_on` for dates, no generic `status`/`data`/`info`
-- [ ] Foreign keys encode the role when the role is specific (`creator_id`, not always `user_id`)
-- [ ] Migration name is a descriptive verb phrase: `add_published_at_to_articles`
-- [ ] Join table is in alphabetical order: `articles_tags`, not `tags_articles`
-- [ ] Spec blocks use domain language: `let(:author)`, `context "when published"`, `it "archives the record"`
-- [ ] No abbreviations in locals or block parameters
-
-## Relationship to Other Rules and Skills
-
-| Rule / Skill | Role |
-|-------------|------|
-| `agent_harness_rails/rules/naming.mdc` | Authoritative naming tables — this skill's reference |
-| `agent_harness_rails/rules/models.mdc`, `skills/writing-models` | Domain verbs, concern names, scope names |
-| `agent_harness_rails/rules/controllers.mdc`, `skills/writing-controllers` | Action names, REST resource naming |
-| `agent_harness_rails/rules/routes.mdc`, `skills/writing-routes` | Resource and helper naming |
-| `agent_harness_rails/rules/jobs.mdc`, `skills/writing-jobs` | Job class naming pattern |
-| `agent_harness_rails/rules/mailers.mdc`, `skills/writing-mailers` | Mailer class and method naming |
-| `agent_harness_rails/rules/policies.mdc`, `skills/writing-policies` | Policy class and permission method naming |
-| `agent_harness_rails/rules/testing.mdc`, `skills/writing-tests` | Spec, factory, and example naming |
-| `agent_harness_rails/rules/services.mdc` | Why there is no `Service` suffix |
+Before finalising any name, check it against § Anti-Patterns in the same rule.

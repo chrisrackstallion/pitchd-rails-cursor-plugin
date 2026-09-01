@@ -2,76 +2,24 @@
 name: writing-hotwire
 description: >-
   Build Hotwire-first UIs — Turbo Drive, Frames, Streams, morphing,
-  broadcasts, and Stimulus — with server-rendered HTML as the source of truth.
-  Opinionated Rails best practice: redirect before frames before streams;
-  small Stimulus controllers; no accidental SPA. Use when adding Turbo frames
-  or streams, Stimulus behaviour, real-time updates, modal/inline-edit flows,
-  or when front-end work drifts toward client-side routing or JSON-first CRUD
-  for same-origin pages.
+  broadcasts, and Stimulus — with server-rendered HTML as the source of truth;
+  redirect before frames before streams. Use when adding Turbo frames or
+  streams, Stimulus behaviour, real-time updates, modal/inline-edit flows, or
+  when front-end work drifts toward client-side routing or JSON-first CRUD.
 ---
 
 # Writing Hotwire (Turbo + Stimulus)
 
-<objective>
-Ship server-rendered Rails apps where Turbo handles navigation and partial
-updates and Stimulus handles focused DOM behaviour. The HTML the server sends
-is the contract — not a parallel data model in JavaScript. Prefer full-page
-redirects and morphing over bespoke stream choreography; use Turbo Streams when
-multiple DOM targets must update in one response; use Stimulus when HTML plus
-Turbo is not enough. Follow opinionated Rails best practice: omakase stack, clarity
-over client-side framework patterns, and progressive enhancement.
-</objective>
+**Announce:** "I'm using the writing-hotwire skill."
 
-## When to Use This Skill
+Ship server-rendered Rails apps where Turbo handles navigation and partial updates and Stimulus handles focused DOM behaviour. The HTML the server sends is the contract — not a parallel data model in JavaScript. Progressive enhancement over client-side framework patterns.
 
-| Use | Defer |
-|-----|--------|
-| Frames, lazy frames, `data-turbo-*` | Dedicated API clients — separate API conventions |
-| `format.turbo_stream`, stream templates | Replacing Rails with React/Vue for app chrome |
-| Stimulus targets, actions, values | Heavy realtime games — different constraints |
-| `broadcasts_*`, `turbo_stream_from`, morph meta | Infra/deploy — out of scope |
+**The rules — scope, the response hierarchy (redirect → frames → streams, 422 on failed saves), markup conventions, broadcasts, anti-patterns, and the verification checklist — live in `agent_harness_rails/rules/hotwire.mdc`.** Read it before writing or reviewing Hotwire work, and verify against its checklist.
 
-**Importmap, bundlers, and `application.js` wiring** are not this skill — see **`../writing-javascript`**.
-
-**Tailwind / global CSS** — add or remove utility classes from Stimulus; do not duplicate a styling architecture here — **`../writing-css-tailwind`**, **`agent_harness_rails/rules/css-tailwind.mdc`**.
-
-## Process
-
-### 1. Pick the Response Shape
-
-Work top-down (details in `references/patterns.md`):
-
-1. **Full page** — `redirect_to` on success; `render` + 422 on failure. Enough for most CRUD.
-2. **Turbo Frame** — region swaps without full navigation; validation errors stay in the frame.
-3. **Turbo Stream** — multiple targets or modal-close + background refresh in **one** response — last resort.
-
-### 2. Wire Forms and Frames
-
-Use **`form_with`**. Set **`data-turbo-frame`** when a form posts into a named frame. Keep frame **`id`s** stable (`dom_id(record)`). Prefer **`button_to`** for mutations, **`link_to`** for GET.
-
-### 3. Add Stimulus Last
-
-Add a Stimulus controller only when behaviour is not expressible as HTML + Turbo (toggle UI, focus, keyboard shortcuts). Keep controllers **single-purpose**; derive state from the DOM (targets, values) so **morphing** does not strand state.
-
-### 4. Real-Time and Broadcasts
-
-Prefer model helpers like **`broadcasts_refreshes_to`** + morphing when the whole page can refresh. Use granular **`broadcast_*`** when lists need surgical updates. The submitter still gets a normal redirect or stream in the same request — do not rely on broadcasts alone for their UX.
-
-### 5. Keep Controllers Thin
-
-Compose stream payloads in **`ApplicationController`** helpers or concerns — not ten-line **`turbo_stream`** arrays inline in every action.
-
-## Verification
-
-- [ ] Response hierarchy is explicit: full page → frame → stream — not “streams first.”
-- [ ] No duplicated **routing** or **authorization** in client JS for first-party pages.
-- [ ] Forms use Rails helpers; Turbo semantics are intentional (`turbo_confirm`, `data-turbo-frame`).
-- [ ] Stimulus: one behaviour per controller; cleanup in `disconnect` when needed.
-- [ ] Frames have stable ids; links target the correct frame or `_top` **intentionally**.
-- [ ] Stream templates are named (`action.turbo_stream.erb`); broadcasts tied to domain events.
-- [ ] Validation errors use **`render` + :unprocessable_content**, not redirects or stream hacks.
-
-## References
-
-- [references/patterns.md](references/patterns.md) — controller responses, frames, streams, Stimulus, morphing, broadcasts, accidental SPA anti-patterns.
-- [agent_harness_rails/skills/writing-javascript/references/patterns.md](agent_harness_rails/skills/writing-javascript/references/patterns.md) — importmap vs bundling, Stimulus file location, asset pipeline boundary.
+| Task | Read |
+|------|------|
+| Any Hotwire change — rules and checklist | `agent_harness_rails/rules/hotwire.mdc` |
+| Controller responses, frames, streams, Stimulus in ERB, morphing-friendly views, broadcasts vs synchronous responses, accidental-SPA anti-patterns | [references/patterns.md](references/patterns.md) |
+| Model broadcast APIs (`broadcasts_refreshes_to`, `turbo_stream_from`, granular `broadcast_*`) | `agent_harness_rails/skills/writing-models/references/patterns.md` § Turbo Broadcasts |
+| Importmap, bundlers, `application.js` wiring, Stimulus file layout | `agent_harness_rails/skills/writing-javascript/SKILL.md` |
+| Tailwind / global CSS | `agent_harness_rails/skills/writing-css-tailwind/SKILL.md` |

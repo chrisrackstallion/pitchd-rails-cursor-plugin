@@ -1,12 +1,9 @@
 ---
 name: rails-query
 description: >-
-  Answers questions about Rails application development using the full
-  harness: rails-omakase-compass, only the writing-* skills and
-  agent_harness_rails/rules/*.mdc files that match the question's topic, plus
-  referencing-unofficial-37signals-guide for supplemental third-party topics
-  or referencing-rails-guides for authoritative Rails API docs when harness
-  material is insufficient. Opinionated Rails best practice (omakase,
+  Answers Rails development questions using the harness: rails-omakase-compass
+  plus only the writing-* skills and agent_harness_rails/rules/*.mdc files
+  matching the question's topic. Opinionated Rails best practice (omakase,
   server-owned truth, REST gravity, Hotwire-first, boring code). Readonly;
   explains and recommends — does not implement or commit unless the parent
   explicitly asks for code in the same turn.
@@ -31,50 +28,31 @@ omakase answer.
 
 ## Harness rules beat application patterns
 
-If the user's question describes a current application pattern that contradicts
-harness rules, answer with the correct harness approach — not with validation of
-the existing pattern. Name the violation and cite the rule. If the anti-pattern
-must be worked around for practical reasons, acknowledge that and explain how
-to route around it correctly.
+Per `agent_harness_rails/rules/harness-contract.mdc` — answer with the correct
+harness approach, not with validation of the existing pattern; name the
+violation and cite the rule. If the anti-pattern must be worked around for
+practical reasons, acknowledge that and explain how to route around it
+correctly.
 
 ## Grounding order (always)
 
-1. **`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`** — For **architectural** questions (boundaries, "should we…", API vs HTML, where logic belongs, "whether / shape"), read the compass **first**. For **purely tactical** questions (e.g. local Hotwire / Stimulus wiring), you may open the relevant **`writing-*`** skill first; use the **compass** whenever the answer could pull the app off-Rails or split ownership badly.
-
-2. **Scoped tactical layer** — Read **`agent_harness_rails/skills/writing-*/SKILL.md`** files that match the topic (see **Topic → assets** below). Pair with **`agent_harness_rails/rules/*.mdc`** for the same areas — **do not skip** a rule file that applies to what you are advising on.
-
-3. **Supplementary reference (optional)** — When the compass, relevant **`writing-*`** skills, and **`agent_harness_rails/rules/*.mdc`** still leave a gap, two sources are available:
-   - **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — for supplemental patterns and philosophy from the third-party community guide.
-   - **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — for **authoritative Rails API and feature docs** (fetches the GitHub API index first, then the specific guide).
-
-   Both **inform** answers — they do **not** override harness rules or skills. If a fetch fails, **report that** per the skill; **do not** invent or assert content from memory.
-
-4. **User's codebase** — If the workspace is a Rails app and the question is project-specific, read the **relevant** files (models, controllers, routes, etc.) before answering; tie guidance to what you saw.
-
-## Topic → assets (load what applies)
-
-| Area | Skill(s) | Rules |
-|------|----------|--------|
-| Stack shape, boundaries, "where should this live?" | compass (+ `writing-services` if extraction) | `services.mdc`, `models.mdc`, `controllers.mdc` as needed |
-| Models, AR, domain | `writing-models` | `models.mdc` |
-| Controllers, params, REST | `writing-controllers` | `controllers.mdc` |
-| Routes | `writing-routes` | `routes.mdc` |
-| Views, helpers, partials | `writing-views` | `views.mdc` |
-| Hotwire, Turbo, Stimulus | `writing-hotwire` | `hotwire.mdc` |
-| CSS / Tailwind | `writing-css-tailwind` | `css-tailwind.mdc` |
-| JavaScript | `writing-javascript` | `javascript.mdc` |
-| I18n | `writing-i18n` | `i18n.mdc` |
-| Mailers | `writing-mailers` | `mailers.mdc` |
-| Jobs, Solid Queue, async | `writing-jobs` | `jobs.mdc` |
-| Policies / authorization | `writing-policies` | `policies.mdc` |
-| Migrations, schema | `writing-migrations` | `migrations.mdc` |
-| Tests | `writing-tests` | `testing.mdc` |
-| RuboCop / style gates | `running-rubocop` when advising on lint/process | `rubocop.mdc` |
-| Naming (classes, methods, columns, routes, specs) | `writing-naming-conventions` | `naming.mdc` |
-| Planning / execution context | `writing-rails-plans`, `executing-rails-plan`, `implementing-rails-task`, `reviewing-rails-work` | only when the question is about **how** to plan or run those workflows in this harness |
-| Primitives (capability docs, intent clauses, compilation, provenance) | `maintaining-primitives` (setup: `bootstrapping-primitives`) | `primitives.mdc` when paths are under `docs/primitives/` |
-
-**Routing:** use the table to load **only** the **`writing-*`** skills and **`agent_harness_rails/rules/*.mdc`** files that match the question — not every file in `skills/` and `rules/` unless the question is genuinely cross-cutting. Pull in workflow skills (e.g. `implementing-rails-task`, `reviewing-rails-work`, `writing-rails-plans`, `maintaining-primitives`) when the question is explicitly about those processes.
+The **compass** first
+(`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`) for
+**architectural** questions (boundaries, "should we…", API vs HTML, where
+logic belongs); purely tactical questions may open the relevant **`writing-*`**
+skill first, but use the compass whenever the answer could pull the app
+off-Rails or split ownership badly. Then load **only** the **`writing-*`**
+skills and **`agent_harness_rails/rules/*.mdc`** files that match the question
+— route by the compass's **Where to go next** index (its scoping notes on the
+primitives and planning rows apply as written; workflow skills such as
+`implementing-rails-task` and `reviewing-rails-work` load only when the
+question is explicitly about those processes), **do not skip** a rule file
+that applies to what you are advising on, and load nothing more unless the
+question is genuinely cross-cutting. When a gap remains, consult the
+supplementary references per `agent_harness_rails/rules/harness-contract.mdc`
+— an **optional** consult for this workflow. Last, the **user's codebase**:
+when the question is project-specific, read the **relevant** files before
+answering and tie guidance to what you saw.
 
 ## How to answer
 

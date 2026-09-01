@@ -19,24 +19,9 @@ which tests implementation rather than behaviour and drifts from what the
 controller actually renders. Any "does the page show X?" assertion belongs
 in a request spec via `response.body.include?`.
 
-## What Request Specs Own (Default Home)
-
-- **Status codes and redirects** — 200, 201, 302, 401, 422, 429
-- **Auth gates at every endpoint** — unauthenticated → redirect, unauthorized → redirect (always tested here, even when a system spec exists for the happy path)
-- **CRUD round-trips for non-canonical actions** — show, edit, update, destroy. The system spec covers the canonical create; the request spec covers the rest.
-- **Rendering smoke** for index/show pages — `expect(response.body).to include("Article Title")`. A `visit`-only system spec is the wrong tool; this is.
-- **Params handling** — strong-parameter behaviour, missing params, malformed input
-- **Rate limiting**
-- **CSRF and security headers**
-- **Turbo Stream content type** for endpoints that respond with Turbo Streams
-
-## What Request Specs Do NOT Test
-
-- Domain verb logic (`article.publish` creates a publication) — model spec
-- Authorization logic (admin vs. member vs. owner matrix) — policy spec
-- The canonical end-to-end journey through the browser — system spec
-- JavaScript-driven behaviour — system spec with Selenium
-- Mailer or job bodies — mailer/job spec; the request spec only asserts the enqueue
+What request specs own versus every other layer — including the auth-gate,
+rate-limit, CSRF, and Turbo-content-type rows: **`agent_harness_rails/rules/testing.mdc`**
+§ Ownership by Layer. This file is the worked mechanics.
 
 ## Structure
 
@@ -295,8 +280,9 @@ end
 
 ### Authorization (with Pundit)
 
-Request specs verify that Pundit enforcement works at the HTTP layer.
-Test one authorized and one unauthorized case per endpoint — the policy
+Request specs verify that Pundit enforcement works at the HTTP layer —
+one authorized and one unauthorized case per endpoint, per
+`agent_harness_rails/rules/testing.mdc` § Ownership by Layer; the policy
 spec covers the full role × action matrix.
 
 The `rescue_from Pundit::NotAuthorizedError` handler in `ApplicationController`
@@ -546,129 +532,17 @@ end
 
 ---
 
-## Boundaries — What Belongs Here vs. Elsewhere
+## Within-File Discipline
 
-Request specs are the workhorse layer. They own the HTTP boundary and
-most CRUD/rendering coverage. They do not duplicate the **canonical
-happy-path journey** (that's the one system spec per resource), and
-they do not re-test model domain logic or policy logic.
-
-### What Request Specs Own
-
-- Status codes: 200, 201, 302, 401, 422, 429
-- Redirects: where the user is sent after mutations
-- Auth gates: unauthenticated → redirect to login, unauthorized → redirect (Pundit handler) — always, regardless of system spec coverage
-- CRUD round-tripping for non-canonical actions (index, show, edit, update, destroy)
-- Rendering smoke: index/show pages contain expected content (`response.body.include?`)
-- Per-field round-tripping: PATCH sets the attribute and persists
-- Validation failure responses: 422 + form re-renders
-- Rate limiting: 429 after exceeding limits
-- CSRF and security headers
-- Turbo Stream content type for Turbo requests
-
-### What Request Specs Do NOT Test
-
-- The canonical end-to-end journey through the browser — that's the one system spec per resource
-- Domain verb logic (`article.publish` creates a publication) — model spec
-- Authorization logic (who can do what across roles) — policy spec; request spec tests the HTTP gate only
-- JavaScript-driven behaviour — system spec with Selenium
-- Mailer/job content — mailer/job spec; the request spec only asserts the enqueue
-
-### Auth Is Always Tested Here
-
-Authentication and authorization are critical enough to **always** test at
-the HTTP layer, even when system specs exist for the happy path. A system
-spec that signs in and creates an article doesn't prove that an
-unauthenticated request gets redirected to login, or that an unauthorized
-user gets redirected by the Pundit handler. Those are request spec concerns.
-
-```ruby
-# Always write these, regardless of system spec coverage
-describe "POST /articles" do
-  it "requires authentication" do
-    post articles_path, params: { article: { title: "New" } }
-    expect(response).to redirect_to(new_session_path)
-  end
-end
-
-describe "DELETE /articles/:id" do
-  it "redirects unauthorized users" do
-    sign_in create(:user) # authenticated but not the owner
-    article = create(:article)
-
-    delete article_path(article)
-
-    expect(response).to redirect_to(root_path)
-  end
-end
-```
-
-### The Only Overlap with System Specs
-
-The **one** thing request specs do not duplicate is the canonical
-happy-path journey for a resource. If the system spec walks "user visits
-new article page, fills form, submits, sees the article" — the request
-spec for `POST /articles` skips the success case and tests only what the
-system spec can't:
-
-```ruby
-# The system spec proves user creation. The request spec covers:
-describe "POST /articles" do
-  it "returns 422 with missing params" do
-    sign_in create(:user)
-    post articles_path, params: { article: { title: "" } }
-    expect(response).to have_http_status(:unprocessable_content)
-  end
-
-  it "requires authentication" do
-    post articles_path, params: { article: { title: "New" } }
-    expect(response).to redirect_to(new_session_path)
-  end
-end
-```
-
-For every other CRUD action (show, edit, update, destroy), the request
-spec is the **only** spec — there is no system spec to defer to. Cover
-the happy path and the auth gate, not the full validation matrix (that's
-the model spec).
-
-### No Redundant Tests Within the File
-
-Don't test the same endpoint twice with different wording for the same
-concern:
-
-```ruby
-# Bad — two tests for one concern
-it "redirects to the article" do
-  sign_in create(:user)
-  post articles_path, params: { article: valid_params }
-  expect(response).to redirect_to(article_path(Article.last))
-end
-
-it "creates the article record" do
-  sign_in create(:user)
-  post articles_path, params: { article: valid_params }
-  expect(Article.count).to eq(1)
-end
-
-# Good — one test for the success path
-it "creates an article and redirects" do
-  sign_in create(:user)
-  post articles_path, params: { article: valid_params }
-
-  expect(response).to redirect_to(article_path(Article.last))
-  expect(Article.count).to eq(1)
-end
-```
+One test per concern — assertions about the same action belong in one `it`
+with multiple `expect`s. Worked example:
+**`agent_harness_rails/skills/writing-tests/references/model-specs.md`**
+§ No Redundant Tests Within the File.
 
 ## Guidelines
 
 - **One HTTP verb per `describe`** — `describe "POST /articles"`
 - **Use path helpers** — `articles_path`, not `"/articles"`
-- **Status codes, redirects, and rendering smoke** — request specs own all three. `response.body.include?` is the right tool for "does the page show X?"
-- **Test auth at every endpoint** — unauthenticated, unauthorized, authorized — always, even when a system spec exists
-- **Cover every CRUD action except the canonical create** — show, edit, update, destroy live here; the system spec only covers the canonical happy-path journey
+- **`response.body.include?`** is the right tool for "does the page show X?"
 - **Follow redirects when needed** — `follow_redirect!` after a redirect assertion
-- **Don't re-test domain logic** — `article.publish` is the model spec's job
-- **Don't re-test policy logic** — the policy spec owns the role × action matrix; request specs test the HTTP gate (one authorized + one unauthorized case)
-- **Don't duplicate the canonical system spec flow** — if the system spec walks the create-and-see happy path, the request spec for `POST /articles` covers only the failure case and the auth gate
+- **Ownership is settled in `agent_harness_rails/rules/testing.mdc` § Ownership by Layer** — auth gates always here (one authorized + one unauthorized per endpoint), non-canonical CRUD only here, domain logic and the policy matrix never here

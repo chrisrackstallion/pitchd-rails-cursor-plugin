@@ -1,27 +1,12 @@
 # Job Patterns Reference
 
-ActiveJob is part of Rails omakase: **no separate async service layer.**
-Jobs are thin wrappers that call model methods asynchronously — the same
-principle that keeps controllers thin applies here. See **`agent_harness_rails/rules/services.mdc`**
-and **`agent_harness_rails/skills/writing-services/SKILL.md`** for where domain logic belongs.
+Worked mechanics for the conventions in **`agent_harness_rails/rules/jobs.mdc`**.
+Where domain logic belongs: **`agent_harness_rails/rules/services.mdc`** and
+**`agent_harness_rails/skills/writing-services/SKILL.md`**.
 
 ---
 
 ## Job Structure
-
-### Minimal job
-
-```ruby
-# app/jobs/notify_subscribers_job.rb
-class NotifySubscribersJob < ApplicationJob
-  queue_as :default
-
-  def perform(article_id)
-    article = Article.find(article_id)
-    article.notify_subscribers
-  end
-end
-```
 
 ### ApplicationJob defaults
 
@@ -44,27 +29,15 @@ end
 
 ## Arguments
 
-### Pass IDs, not objects
-
-ActiveRecord objects are serialized by GlobalID when passed as job arguments.
-If the record is deleted between enqueueing and execution, the job raises
-`ActiveJob::DeserializationError`. Pass IDs and find records fresh in `perform`:
-
-```ruby
-# Good — pass the ID
-NotifySubscribersJob.perform_later(article.id)
-
-def perform(article_id)
-  article = Article.find(article_id)
-  article.notify_subscribers
-end
-```
+### GlobalID and the ID convention
 
 GlobalID allows passing ActiveRecord objects directly as job arguments — Rails
-serializes them automatically. The convention is to pass IDs for explicitness
-and resilience. As an exception, if you pass an object directly, ensure
-`discard_on ActiveJob::DeserializationError` is set on `ApplicationJob` to
-prevent queue poisoning when the record is deleted before the job runs.
+serializes them automatically. If the record is deleted between enqueueing and
+execution, the job raises `ActiveJob::DeserializationError`. The convention is
+to pass IDs for explicitness and resilience. As an exception, if you pass an
+object directly, ensure `discard_on ActiveJob::DeserializationError` is set on
+`ApplicationJob` to prevent queue poisoning when the record is deleted before
+the job runs.
 
 ### Keyword arguments
 
@@ -85,32 +58,8 @@ AssignRoleJob.perform_later(user_id: user.id, role: "admin")
 
 ## Enqueue Timing
 
-### The after_commit rule
+The `_commit` variants for enqueueing after a transaction:
 
-Never enqueue a job inside an open transaction. The queue backend receives
-the job immediately — before the transaction commits. If the transaction rolls
-back, the job runs against a record that no longer exists or has been
-reverted to a previous state.
-
-```ruby
-# Bad — job enqueued inside transaction, will run if transaction rolls back
-def publish(by: Current.user)
-  transaction do
-    create_publication!(publisher: by)
-    NotifySubscribersJob.perform_later(id)  # runs even on rollback
-  end
-end
-
-# Good — after_commit fires only when the outer transaction commits
-after_create_commit :notify_subscribers_later
-
-private
-  def notify_subscribers_later
-    NotifySubscribersJob.perform_later(id)
-  end
-```
-
-Use the `_commit` variants:
 - `after_create_commit` — after a new record is committed
 - `after_update_commit` — after an update is committed
 - `after_destroy_commit` — after a destroy is committed
@@ -208,22 +157,7 @@ end
 
 ## Idempotency
 
-Jobs can run more than once — retries, duplicate enqueues, or manual
-re-processing. Write `perform` so running it twice produces the same result
-as running it once.
-
-### Guard clauses
-
-Check the record's current state at the start of `perform` and return early
-if the work is already done:
-
-```ruby
-def perform(subscription_id)
-  subscription = Subscription.find(subscription_id)
-  return if subscription.cancelled?   # already done — nothing to do
-  subscription.cancel
-end
-```
+Mechanics beyond the guard clause shown in **`agent_harness_rails/rules/jobs.mdc`**.
 
 ### find_or_create_by for unique records
 
@@ -272,16 +206,11 @@ RenewalReminderJob.set(wait_until: subscription.renews_at - 3.days).perform_late
 
 ### Recurring jobs (cron-style)
 
-Solid Queue has scheduling built in — no additional gem required. Define
-recurring tasks in `config/recurring.yml` — a dedicated flat file separate
-from the queue/worker configuration:
+The rule and the minimal `config/recurring.yml` shape live in
+**`agent_harness_rails/rules/jobs.mdc`** § Recurring Jobs. Operational detail:
 
 ```yaml
 # config/recurring.yml
-daily_digest:
-  class: DailyDigestJob
-  schedule: "0 8 * * *"   # standard cron — every day at 08:00
-
 weekly_report:
   class: WeeklyReportJob
   args: [ { format: "pdf" } ]

@@ -1,8 +1,9 @@
 # Routes Patterns Reference
 
-## REST Resources
+Worked mechanics for the conventions in
+**`agent_harness_rails/rules/routes.mdc`**.
 
-Default to `resources` with the seven actions. Trim with `only` or `except` so unused routes do not exist.
+## REST Resources
 
 ```ruby
 # Full resource — all seven actions exist in the UI
@@ -124,8 +125,6 @@ Use `constraints` for routing predicates Rails should know before dispatch:
 - Format (`constraints format: :json`) when routing truly splits
 - Segment patterns (numeric id vs uuid) when the router must distinguish
 
-Do **not** use `constraints` to check `current_user.admin?` — that is authorization; keep it in controllers and policies.
-
 ```ruby
 # Good — host-based split
 constraints(host: "api.example.com") do
@@ -199,20 +198,7 @@ Avoid testing every line of `routes.rb` syntax; test the integration surface tea
 
 ---
 
-## Anti-Patterns (Quick Reference)
-
-| Problem | Direction |
-|---------|-----------|
-| Many `post :verb` on one resource | New resources + CRUD or model method |
-| `/a/:a_id/b/:b_id/c/:c_id/...` | Shallow, flatten, or split resource |
-| Duplicate HTML vs JSON trees with divergent names | One REST shape; namespace when contract differs |
-| Permission checks in `constraints` | Policies + controller |
-| Meta-programmed routes file | Explicit blocks; small helpers only |
-| `match '*path'` early | Catch-alls last; narrow patterns |
-
----
-
 ## Cross-References
 
-- **Controller action shape and new resources:** writing-controllers skill, `references/patterns.md` § REST Mapping.
+- **Controller action shape and new resources:** `agent_harness_rails/skills/writing-controllers/references/patterns.md` § REST Mapping.
 - **Authorization:** writing-policies skill — not in the router.

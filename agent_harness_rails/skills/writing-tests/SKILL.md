@@ -1,36 +1,26 @@
 ---
 name: writing-tests
 description: >-
-  Write Rails tests following opinionated Rails best-practice testing
-  philosophy, adapted for RSpec and FactoryBot — system specs as the backbone,
-  real objects over mocks, behaviour-driven testing over implementation
-  testing. Use when writing specs, adding test coverage, debugging test
-  failures, creating factories, or when the user mentions tests, specs, RSpec,
-  FactoryBot, Capybara, system tests, request specs, or test coverage.
+  Write Rails tests with RSpec and FactoryBot — system specs as the backbone,
+  real objects over mocks, behaviour-driven over implementation testing. Use
+  when writing specs, adding test coverage, debugging test failures, creating
+  factories, or when the user mentions tests, specs, RSpec, FactoryBot,
+  Capybara, system tests, or request specs.
 ---
 
 # Writing Rails Tests
 
 <objective>
-Write tests that give you confidence to ship. System specs are the **backbone**
-of the suite — a small number of integration tests that prove the seams hold,
-not the place to chase coverage. Model specs cover domain logic. Request specs
-cover the HTTP layer — rendering smoke for index/show, CRUD round-tripping,
-and every auth gate. Request specs are the rendering layer: **never write view
-specs** (`spec/views/`, `type: :view`) — templates are tested through the full
-stack via `response.body`, not in isolation with stubbed assigns. Policy specs
-cover authorization logic. Everything uses real objects, real database records,
-and real rendering.
-
-The default answer to "should this be a system spec?" is **no — push it down
-a layer.** System specs are slow and expensive to maintain; each one must earn
-its place against the budget and gates in `references/system-specs.md`.
-
-The testing *philosophy* — system tests as backbone, behaviour over
-implementation, integration over isolation — is the vanilla-Rails position;
-the tooling (RSpec, FactoryBot) is an adaptation of it (Rails ships Minitest
-with fixtures).
+Write tests that give you confidence to ship, at the lowest layer that can
+prove the behaviour, with real objects, real database records, and real
+rendering. The normative canon — philosophy, test pyramid, system-spec budget,
+Five Gates, ownership by layer, anti-patterns, falsifiability, running and
+flake discipline — is **`agent_harness_rails/rules/testing.mdc`**. Read it
+before writing any spec; this skill routes you to the right spec type and the
+worked patterns for it.
 </objective>
+
+**Announce:** "I'm using the writing-tests skill."
 
 ## Process
 
@@ -68,21 +58,22 @@ Is this domain logic (a method on a model — publish, close, scope, state trans
             Is this the work a job, mailer, or PORO performs?
             ├── YES → Spec matching the object type
             └── NO
-                Does this user journey pass ALL FIVE GATES in
-                `references/system-specs.md` (interaction, uniqueness,
-                JS-necessity, single-home, one-story)?
+                Does this user journey pass ALL FIVE GATES
+                (interaction, uniqueness, JS-necessity, single-home, one-story —
+                agent_harness_rails/rules/testing.mdc § The Five Gates)?
                 ├── YES → System spec — within the budget
                 └── NO → Push down a layer; do NOT add a system spec
 ```
 
-**Read `references/system-specs.md` before adding any system spec.** It defines
-the budget (typically 1 per CRUD resource, 1 per cross-resource journey, 1 per
-JS behaviour across the entire suite), the five gates, and the patterns that
-look like system specs but belong elsewhere.
+The system-spec **budget**, the **Five Gates**, and the **ownership table**
+(which layer owns which behaviour, including the auth-gate and rate-limit
+rules) live in `agent_harness_rails/rules/testing.mdc`. Full gate rationale
+and the patterns that look like system specs but belong elsewhere:
+`references/system-specs.md`.
 
 ### 3. Test Structure
 
-Every test follows this pattern:
+Every test follows Arrange-Act-Assert:
 
 ```ruby
 RSpec.describe Article, type: :model do
@@ -115,471 +106,46 @@ end
 Key principles:
 - **Arrange-Act-Assert** — every test has three clear phases
 - **Inline setup** — each test tells its own story; avoid deep `let` chains. A single `let` for the authenticated user is fine; five nested `let`s are not.
-- **One behaviour per test** — multiple assertions are fine if they verify one behaviour
+- **One behaviour per test** — multiple assertions are fine if they verify one behaviour; split into a new `it` when the *context* differs, not when you want another `expect` on the same outcome (`agent_harness_rails/rules/testing.mdc` § Within a Single Spec File)
 - **Descriptive names** — `describe "#method"`, `context "when X"`, `it "does Y"`
 - **Real objects** — `create(:article)`, not `double` or `instance_double`
 
-### 4. Decision Framework
-
-Before writing a test, ask:
-
-**"Am I testing behaviour or implementation?"**
-- Behaviour: "when I publish an article, it becomes visible" — good
-- Implementation: "publish calls create_publication! then update!" — bad
-- If a refactor that preserves behaviour breaks the test, the test is wrong
-
-**"Do I need a mock here?"**
-- Almost never. Use real objects and real database records.
-- Mock external HTTP APIs (use WebMock or VCR)
-- Mock the clock when testing time-dependent behaviour (`travel_to`)
-- Never mock ActiveRecord, never mock the object under test
-
-**"Is this test pulling its weight?"**
-- Does it catch real bugs? Keep it.
-- Does it only break during refactors? Delete it.
-- Does it test Rails itself (validates presence works)? Delete it.
-- Does it document a non-obvious business rule? Keep it.
-
-**"Is this already tested elsewhere?"**
-- Before writing a test, check if the behaviour is already covered in another
-  spec type. Each behaviour has exactly one home:
-  - Domain logic (publish, close, scopes) → model spec owns it
-  - HTTP concerns (status codes, redirects, params handling, rendering smoke
-    for index/show, CRUD round-tripping) → request spec owns it
-  - Authorization logic (who can do what) → policy spec owns the logic
-  - Auth gates at the HTTP layer → request spec **always** owns this, even if a system spec exists. Test one authorized + one unauthorized case per endpoint.
-  - Canonical user journey end-to-end (form → submit → see result on page) → system spec owns it, but only within the budget in `references/system-specs.md`
-  - Job/mailer work → job/mailer spec owns it; callers just assert enqueuing
-- If a request spec proves `POST /articles` creates the record and redirects,
-  don't add a system spec to prove the same thing unless the journey is the
-  canonical happy path for that resource (one per resource — not one per action).
-- If a model spec proves `article.publish` works, the system spec just clicks
-  "Publish" and checks the page — it doesn't also inspect `article.publication`.
-
-**"Does this system spec pass the Five Gates?"** (Only ask if a system spec is
-under consideration — see `references/system-specs.md` for the full text.)
-1. **Interaction gate** — the spec calls `fill_in`, `click_*`, `select`, `check`,
-   or `attach_file`. A `visit` + assert with no interaction is not a system spec;
-   it is a view spec — move to a request spec.
-2. **Uniqueness gate** — the journey is materially different from existing system
-   specs for this resource or area.
-3. **JavaScript-necessity gate** — Selenium is justified, and the Stimulus
-   controller / Turbo pattern is not already exercised by another system spec.
-4. **Single-home gate** — the assertion is not already owned by a model, request,
-   policy, or job/mailer spec.
-5. **One-story gate** — the spec tells exactly one user story; no drive-by
-   assertions about nav, footer, sidebar, or unrelated widgets.
-
-If any gate fails, do not write the system spec — push the assertion to the
-appropriate lower layer.
-
-**"Am I splitting tests unnecessarily within this file?"**
-- Multiple assertions about the same action belong in one test, not separate tests.
-- Split tests when the *setup* differs (different `context`), not when you want to
-  assert another facet of the same outcome.
-- If two tests have identical setup and identical action but different `expect` lines,
-  merge them into one test.
-
-**"Where does this test live?"**
-- Tests live in `spec/` mirroring `app/` structure — models, concerns, POROs,
-  jobs, mailers, policies each at the mirrored path
-  (`app/models/concerns/publishable.rb` → `spec/models/concerns/publishable_spec.rb`,
-  `app/models/account/onboarding.rb` → `spec/models/account/onboarding_spec.rb`)
-- Concern behaviour lives in the concern's own spec file — an including
-  model's spec tests a concern method only when the model overrides it
-- System specs live in `spec/system/` organized by feature
-- Factories live in `spec/factories/` one file per model
-
-### 5. No Duplication — Across Layers or Within Files
-
-Every behaviour is tested in exactly one place. Duplication across spec types
-slows the suite and creates maintenance drag; duplication within a file
-inflates test counts without adding confidence.
-
-#### Across Spec Types
-
-Each spec type has a job. Test the behaviour where it naturally lives, and
-trust the lower layer from above:
-
-```
-┌─────────────┐  Owns: canonical happy-path journeys (one per resource, within budget)
-│ System spec │  Owns: multi-request integration (signup, checkout, password reset)
-│ (smallest)  │  Owns: JS-essential behaviour (one spec per Stimulus controller / Turbo pattern)
-│             │  Trusts: model logic, policies, HTTP layer, mailer/job content
-│             │  Does NOT do: visit-only assertions, per-field testing, CRUD parity
-├─────────────┤  Owns: status codes, redirects, params handling, rate limits
-│ Request spec│  Owns: auth gates — ALWAYS test auth here, even if system specs exist
-│ (workhorse) │  Owns: rendering smoke (response.body.include?) for index/show pages
-│             │  Owns: CRUD round-trips for non-canonical actions (show/edit/update/destroy)
-│             │  Trusts: policy logic, model logic, mailer/job content
-│             │  Does NOT duplicate: the canonical happy-path system spec, policy logic
-├─────────────┤  Owns: authorization logic — full role × action matrix, scoped collections
-│ Policy spec │  Is trusted by: request and system specs
-│             │  Does NOT test: HTTP responses or UI
-├─────────────┤  Owns: domain verbs, scopes, state transitions, business rules, callbacks
-│ Model spec  │  (largest layer — most behaviour lives here)
-│             │  Is trusted by: system, request, and policy specs
-│             │  Trusts: concern specs for included behaviour (tests overrides only)
-│             │  Does NOT test: HTTP, UI, or authorization concerns
-├─────────────┤  Owns: the work the job/mailer performs
-│ Support spec│  Callers assert enqueuing only (have_enqueued_job / have_enqueued_mail)
-└─────────────┘
-```
-
-**Concrete example — article publishing:**
-
-```ruby
-# Model spec — owns the domain logic (this is where most coverage lives)
-describe "#publish" do
-  it "creates a publication and records the publisher" do
-    publisher = create(:user)
-    article = create(:article)
-    article.publish(by: publisher)
-    expect(article).to be_published
-    expect(article.publication.publisher).to eq(publisher)
-  end
-
-  it "raises when already published" do
-    article = create(:article, :published)
-    expect { article.publish }.to raise_error(Article::AlreadyPublished)
-  end
-end
-
-# Policy spec — owns the role × action matrix
-describe ArticlePolicy do
-  it "permits the author and forbids others" do
-    # ...full matrix here
-  end
-end
-
-# Request spec — owns auth gates, status codes, and the HTTP shape
-describe "POST /articles/:id/publication" do
-  it "requires authentication" do
-    post article_publication_path(article)
-    expect(response).to redirect_to(new_session_path)
-  end
-
-  it "redirects unauthorized users" do
-    sign_in create(:user)  # not the author
-    post article_publication_path(article)
-    expect(response).to redirect_to(root_path)
-  end
-end
-
-# System spec — owns the ONE canonical happy-path journey (within budget)
-it "author publishes an article" do
-  sign_in author
-  visit article_path(article)
-  click_button "Publish"
-  expect(page).to have_content("Published")  # visible outcome only
-  # Does NOT check article.publication.present? — model spec covers that
-  # Does NOT also test "non-author cannot publish" — request/policy specs cover that
-end
-```
-
-#### Within a Single Spec File
-
-Don't split assertions about the same action into separate tests:
-
-```ruby
-# Bad — three tests for one action, identical setup
-it "publishes the article" do
-  article.publish(by: publisher)
-  expect(article).to be_published
-end
-
-it "creates a publication record" do
-  article.publish(by: publisher)
-  expect(article.publication).to be_present
-end
-
-it "records the publisher" do
-  article.publish(by: publisher)
-  expect(article.publication.publisher).to eq(publisher)
-end
-
-# Good — one test verifying one behaviour from multiple angles
-it "publishes the article with attribution" do
-  publisher = create(:user)
-  article = create(:article)
-  article.publish(by: publisher)
-
-  expect(article).to be_published
-  expect(article.publication).to be_present
-  expect(article.publication.publisher).to eq(publisher)
-end
-```
-
-Split into separate `it` blocks only when the **context differs** — different
-preconditions, different user roles, different input. The signal for a new test
-is a new `context`, not a new `expect`.
-
-```ruby
-# Good — different contexts warrant separate tests
-context "when the article is a draft" do
-  it "publishes successfully" do
-    article = create(:article)
-    article.publish(by: article.author)
-    expect(article).to be_published
-  end
-end
-
-context "when already published" do
-  it "raises AlreadyPublished" do
-    article = create(:article, :published)
-    expect { article.publish }.to raise_error(Article::AlreadyPublished)
-  end
-end
-```
-
-### 6. Anti-Patterns
-
-| Anti-Pattern | Instead |
-|-------------|---------|
-| Mocking ActiveRecord models | Use FactoryBot — create real records |
-| `allow_any_instance_of` | Test through the real code path |
-| Testing private methods directly | Test through public interface |
-| `before(:all)` for database records | `before(:each)` or inline `create` |
-| Deep `let` / `subject` chains that obscure setup | Inline setup in each test; a single `let` for auth user is fine |
-| Shared examples across unrelated specs | Inline the assertion — clarity over DRY |
-| Testing validates/belongs_to declarations | Test domain behaviour, not framework |
-| Controller specs | Request specs — controller specs are deprecated |
-| View specs (`spec/views/`, `type: :view`) | Request specs — rendering is tested through the full stack with `response.body.include?`, never in template isolation |
-| `stub_const` for ENV vars | Use Rails credentials or test config |
-| Asserting exact error messages | Assert error keys or behaviour |
-| Giant setup blocks | Extract to factory traits |
-| `is_expected.to` with implicit subject | Explicit subject and expectation |
-| System spec inspecting model internals (`article.publication`) | System spec asserts what the user sees on the page |
-| Model spec + request spec + system spec for the same happy path | One home per behaviour — pick the right layer |
-| Separate `it` blocks for each assertion on one action | One `it` with multiple `expect`s when setup and action are identical |
-| Re-testing domain verb logic in a request spec | Request spec calls the endpoint; model spec owns the verb logic |
-| Job spec re-testing what the model spec covers | Job spec tests orchestration; model spec tests the domain method the job calls |
-| An absence read off a page or response, with nothing proving the page rendered | Keep the `not_to`; anchor it with the status or a landmark |
-| Treating a negation the unit answers directly (`not_to permit`, `not_to be_valid`) as needing a positive assertion | Leave it alone — nothing can fail into its passing side |
-| An assertion that cannot fail (`be_a(described_class)`) added to satisfy a rule | If no honest anchor exists, the negation needed none |
-| System spec that only `visit`s and asserts content (no interaction) | Move to a request spec asserting `response.body.include?` |
-| One system spec per CRUD action when the actions share a shape | One canonical happy-path system spec (usually create); edit/delete go to request specs |
-| One system spec per field, attribute, or validation rule | One system spec exercises the form as a whole; per-field belongs to model/request specs |
-| Re-testing the same Stimulus controller / Turbo pattern in multiple system specs | One system spec per JS behaviour across the entire suite, on the simplest page |
-| Selenium driver for a spec that passes under `rack_test` | Use `rack_test`; Selenium is for genuinely JS-required behaviour only |
-| Asserting flash copy as the primary success signal | Use resource state on the page as the primary signal; flash is a secondary check |
-| Drive-by assertions on nav/footer/sidebar inside a feature spec | One story per spec; assert only what belongs to the journey under test |
-| System spec for a UI authorization rule when no product requirement exists | Policy spec for the logic + request spec for the HTTP gate is usually enough |
-
-#### Every assertion must be able to fail
-
-The question is never whether an assertion is positive or negative. It is whether
-**a failure the example is not about could satisfy it** — so ask, of every
-negation: *if the request 500s, the route disappears, or the page renders blank,
-does this still pass?*
-
-**Sound — the verdict comes straight back from the unit.** Nothing sits in
-between, so a broken unit raises instead of passing quietly. Keep these as they
-are; there is nothing to add:
-
-```ruby
-expect(policy).not_to permit(reader, article)   # the policy answered
-expect(article).not_to be_published             # the record answered
-expect(duplicate).not_to be_valid               # validation ran
-expect { card.reopen }.not_to raise_error       # the method ran
-```
-
-Prefer the **positive spelling** of a denial where one exists — `expect(policy.destroy?).to be false`
-is the policy-spec style throughout this harness, and it settles the question by
-construction (`references/support-specs.md` § Policy Specs).
-
-**Unanchored — the absence is a by-product of machinery.** A page, a status, a
-record reloaded after a request, a count after a `post`: the machinery's failure
-lands on the passing side.
-
-```ruby
-# Bad — passes when the button is correctly hidden, and when the page 500s
-it "does not offer deleting to a reader" do
-  visit article_path(article)
-
-  expect(page).not_to have_button("Delete")
-end
-
-# Good — the landmark proves the page rendered; the absence is still the point
-it "does not offer deleting to a reader" do
-  visit article_path(article)
-
-  expect(page).to have_content(article.title)   # anchor — red if the page breaks
-  expect(page).not_to have_button("Delete")     # the behaviour under test
-end
-```
-
-The `not_to` stays; it gains an anchor. Reach for the status, then a landmark the
-page must show, then the state the record is left in.
-
-**An anchor that cannot fail is not an anchor.** `expect(policy).to be_a(described_class)`
-is true the moment it is written — it makes the example longer and proves nothing.
-If no honest anchor presents itself, that is the signal the negation was sound and
-needed none.
-
-**A status code is not a working page.** `have_http_status(:unprocessable_content)`
-passes for a re-rendered form the user could never successfully resubmit — one
-addressed to a verb the route does not serve, missing the record's id, or with its
-fields stripped. The behaviour a failure path owns is not the error, it is the
-**recovery**:
-
-```ruby
-# Bad — green whether the returned form works or not
-post card_closure_path(card), params: { closure: { reason: "" } }
-
-expect(response).to have_http_status(:unprocessable_content)
-
-# Good — the rejection is the setup; the corrected resubmit is the behaviour
-post card_closure_path(card), params: { closure: { reason: "" } }
-
-expect(response).to have_http_status(:unprocessable_content)
-
-post card_closure_path(card), params: { closure: { reason: "Duplicate card" } }
-
-expect(response).to redirect_to(card_path(card))
-expect(card.reload).to be_closed
-```
-
-**Cover every state the action's finder can produce.** A lookup that can return
-either a new record or an existing one — `find_or_initialize_by`, a singular
-resource, a create that revives a previously-decided row — gives the action two
-renderings, and an example built on one leaves the other branch's rendering,
-routing, and authorization untested. Set the record up in the state the branch
-needs (create the row, run the flip, *then* submit), one example per branch. A
-model spec covering the branch does not close it: the branch's HTTP shape belongs
-to the request spec (`agent_harness_rails/rules/testing.mdc` § Ownership by Layer).
-
-**A removal receipt still gets deleted.** A spec with no behaviour behind it —
-written to record that a feature is gone — should not exist:
-
-```ruby
-# Bad — passes because the feature never existed
-it "does not show an excluded agencies section" do
-  expect(page).not_to have_link("New Excluded Agency")
-end
-
-# Good — asserts what the user actually sees and can do
-it "shows the agencies list" do
-  visit agencies_path
-
-  expect(page).to have_content("Agencies")
-  expect(page).to have_link("New Agency")
-end
-```
-
-**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
-
-### 7. Running Specs
-
-Run the **narrowest slice that covers what you changed** — one spec file, or one
-example while chasing a failure.
-
-`bin/rspec` with no arguments is **earned**, not routine: a cross-cutting change
-(factory, `spec/support/`, `rails_helper.rb`, shared concern, schema), a
-spec-refactor session that moved or deleted specs, or the single final
-verification before handoff. Everything else leaves cross-slice regressions to
-branch CI. Full rule and the situation table: **`agent_harness_rails/rules/testing.mdc`**
-§ Running Specs. Never call the suite green off a slice run — report the command
-you ran.
-
-**When a run comes back red, re-run the failures — not the run.** Fix, then run
-those examples or files (`bin/rspec spec/models/article_spec.rb:42`, or
-`--only-failures` where the app persists example status); the passes from the
-same run still stand for everything you did not touch. Widen back to the suite
-only if the fix itself was cross-cutting, and after a red full run at most once
-more, once the failures are green. A failure that will not reproduce is a
-**flake to report with its seed**, not a suite to re-run until it goes green —
-`agent_harness_rails/rules/testing.mdc` § When a Run Comes Back Red and §
-Flaky and Order-Dependent Failures.
-
-### 8. Naming Conventions
-
-| Thing | Convention | Examples |
-|-------|-----------|----------|
-| Spec files | `_spec.rb` suffix matching source | `article_spec.rb`, `articles_spec.rb` |
-| Top-level describe | Class or feature name | `RSpec.describe Article`, `RSpec.describe "Article management"` |
-| Method describes | `#instance_method`, `.class_method` | `describe "#publish"`, `describe ".search"` |
-| Contexts | Start with "when" or "with" | `context "when published"`, `context "with comments"` |
-| Examples | Read as sentences | `it "creates a publication record"` |
-| Factories | Singular model name | `factory :article`, `factory :user` |
-| Traits | Adjective or state | `:published`, `:archived`, `:with_comments` |
-| System specs | User action or flow | `"User publishes an article"`, `"Admin manages users"` |
-
-### 9. Tagging the Intent a Spec Proves
-
-**Only when the app has a `docs/primitives/` tree.** The example proving an
-intent clause carries the clause id as RSpec metadata:
-
-```ruby
-it "shows replies nested under their parent", intent: "comment_threads#I2" do
-```
-
-Rules, format, and the list form: **`agent_harness_rails/rules/testing.mdc`**
-§ Tagging the Intent a Spec Proves. Four things to get right here:
-
-1. **The example must actually prove the clause** — *breaking the clause turns it
-   red*, or the tag is decoration. Read the clause's quantifier before you tag:
-   *only*, *never*, *any*, *every* each claim more than a happy path, and the
-   denial half usually belongs in a policy or request spec rather than bolted
-   onto the journey. One clause proven across two or three files at two or three
-   layers is normal — but each evaluation must be **necessary**: if you could
-   delete it and the clause were still fully proven, it is padding.
-   Full test and its failure modes:
-   **`agent_harness_rails/rules/testing.mdc`** § What counts as proving a clause.
-2. **Tag the example, not the group.** Never a `describe` or `context` — a group
-   tag survives the deletion of the example it stood for, so the clause keeps
-   claiming a proof that is gone. Four examples proving one clause carry four
-   tags — and **nothing fails when only three of them do**, because
-   `agent_harness_rails evals` counts files and one tag makes the whole file a
-   carrier. Check yourself with **`agent_harness_rails proofs '<capability>#I<n>'`**:
-   it lists the tagged examples behind the clause — a planned example missing
-   from the listing never got its tag, or never got written.
-3. **Tag only evaluation examples.** Most specs prove behaviour without proving a
-   *clause*; tagging everything makes the map useless.
-4. **The capability doc must list the file too** — `evaluations:` on that clause.
-   Both sides, or the link is half-made.
-
-Then check it:
-
-```bash
-agent_harness_rails evals
-```
-
-It fails on a clause with no proof, a tag naming a clause that does not exist or
-has been superseded, and an `evaluations:` entry whose file lacks the tag. Run it
-after adding or moving a tagged spec.
-
-### 10. Verification
+### 4. The Rules You Are Working Under
+
+All normative in **`agent_harness_rails/rules/testing.mdc`** — one-line
+pointers, not restated here:
+
+- **Each behaviour has one home** — § Ownership by Layer is the arbitration
+  table; check it before writing a test that another layer might own.
+- **Anti-patterns** — § What NOT to Do is the full table (mocking, view
+  specs, per-field system specs, Selenium-where-rack_test-passes, and more).
+- **Every assertion must be able to fail** — § Every Assertion Must Be Able
+  to Fail covers unanchored absences, tautological anchors, discriminating
+  setup, recovery over error codes, finder branches, and removal receipts.
+- **Running specs** — § Running Specs, § When a Run Comes Back Red, and
+  § Flaky and Order-Dependent Failures: run the narrowest slice, re-run
+  failures not runs, report flakes with their seed. Never call the suite
+  green off a slice run — report the command you ran.
+- **Intent tags** — when the app has `docs/primitives/`, the example proving
+  an intent clause carries `intent:` metadata per
+  **`agent_harness_rails/rules/intent-tags.mdc`**; finish with
+  `agent_harness_rails evals` green.
+
+### 5. Verification
 
 Before finishing, verify:
 
 - [ ] Tests cover the happy path and key error paths
-- [ ] No mocks of ActiveRecord or internal objects
 - [ ] Each test is self-contained — can run in isolation
 - [ ] Factory uses minimal required attributes
-- [ ] Every system spec passes the **Five Gates** (interaction, uniqueness, JS-necessity, single-home, one-story)
-- [ ] System-spec count is within budget: ~1 canonical journey per CRUD resource, 1 per cross-resource journey, 1 per JS behaviour across the suite
-- [ ] No `visit`-and-assert-only specs in `spec/system/` — they live in `spec/requests/` with `response.body.include?`
-- [ ] No view specs (`spec/views/`, `type: :view`) — request specs own all rendering assertions
-- [ ] No Selenium spec passes under `rack_test` — if it does, move it back
-- [ ] System specs assert resource state on the page as the primary signal; flash copy is at most secondary
-- [ ] Request specs verify status codes, redirects, auth gates, and rendering smoke (`response.body.include?`) for resources without a system spec
-- [ ] Model specs cover domain verbs, scopes, and state transitions
-- [ ] Policy specs cover the full role × action matrix
+- [ ] Every spec passes the tables in `agent_harness_rails/rules/testing.mdc`: the **Budget** and **Five Gates** for any system spec, § Ownership by Layer for where each assertion lives (no cross-layer duplication), and § What NOT to Do for the anti-patterns — mocking, view specs, visit-only specs, Selenium where `rack_test` passes, flash-as-signal, unanchored absences, indiscriminate setup
 - [ ] Tests read as documentation — a new developer understands the feature from reading them
 - [ ] No flaky tests — no sleep, no order-dependent state
 - [ ] Transactional fixtures are on — they cover system specs too (Rails 5.1+ shares the connection); database_cleaner is unnecessary
-- [ ] No cross-layer duplication — each behaviour is tested in exactly one spec type
-- [ ] System specs don't inspect model internals — they assert what users see
-- [ ] System specs don't re-test the same Stimulus controller / Turbo pattern across files
-- [ ] Model specs don't re-test in request/system specs — integration specs trust the unit
 - [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
-- [ ] Job/mailer callers assert enqueuing only — the job/mailer spec owns the work
-- [ ] Every absence read off a page, response, or reloaded record has an anchor that goes red when the request breaks — and no assertion was added that cannot fail
-- [ ] Denials the unit answers directly (`not_to permit`, `not_to be_published`) are left as they are, or written positively (`to be false`)
 - [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
-- [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without one of the earned reasons (§7)
-- [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag, the clause lists the file in `evaluations:`, and **`agent_harness_rails evals`** is green
+- [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without an earned reason
+- [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag per `agent_harness_rails/rules/intent-tags.mdc`, the clause lists the file in `evaluations:`, and **`agent_harness_rails evals`** is green
 
 ## References
 
@@ -589,12 +155,12 @@ For detailed patterns and examples by spec type:
 - [Request specs](references/request-specs.md) — HTTP layer, auth, redirects
 - [System specs](references/system-specs.md) — user flows, Capybara, browser testing
 - [Factory patterns](references/factory-patterns.md) — FactoryBot conventions, traits, sequences
-- [Support specs](references/support-specs.md) — jobs, mailers, concerns, POROs
+- [Support specs](references/support-specs.md) — policies, jobs, mailers, concerns, POROs
 
 ## Refactoring an existing suite
 
 For rebalancing a drifted suite — slimming heavy system specs, moving
 assertions to their correct layer, deleting framework-tautology tests —
 use the **`refactoring-rails-specs`** skill. It batches discovery → audit →
-plan → execute → verify per resource, using this skill's Five Gates and
-budget as the rubric.
+plan → execute → verify per resource, using the Five Gates and budget in
+`agent_harness_rails/rules/testing.mdc` as the rubric.
