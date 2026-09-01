@@ -122,6 +122,21 @@ Use helpers for:
 - Small composed elements (badge with icon, link with label)
 - Wrapping Rails helpers with domain defaults
 
+### Organised by domain, split by size
+
+Every helper module is available in every view — the module boundary exists for
+the human reader, so draw it where the app's domain draws it:
+
+- **One module per domain** (`ArticlesHelper`, `BillingHelper`) — not one per
+  controller by reflex, and not a grab-bag.
+- **`ApplicationHelper` holds only the genuinely app-wide** — nav state, page
+  titles, flash rendering. A method that names a domain belongs in that
+  domain's module.
+- **Split by size, into a more focused domain.** Past ~100 lines, extract the
+  cohesive cluster into its own module — `BillingHelper` spawns
+  `BillingInvoicesHelper` — the same instinct as splitting a fat controller.
+  The shared prefix keeps the domain greppable.
+
 ## Stimulus and Turbo (Hotwire)
 
 Stimulus controllers live in **`app/javascript/controllers/`** — `data-controller`, `data-action`, targets — not inline `<script>` tags. Importmap vs bundling, entrypoints, and not fighting the pipeline: **`agent_harness_rails/rules/javascript.mdc`**, **`agent_harness_rails/skills/writing-javascript/references/patterns.md`**. Turbo Frames wrap regions that update in isolation; stream templates use **`action.turbo_stream.erb`**. Full patterns, morphing, broadcasts, and accidental-SPA anti-patterns: **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**. Rule: **`agent_harness_rails/rules/hotwire.mdc`**.

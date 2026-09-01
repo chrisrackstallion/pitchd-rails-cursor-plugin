@@ -456,9 +456,22 @@ tag.hr(class: "my-8 border-gray-200")
 tag.img(src: image_path("logo.png"), alt: "Logo", class: "h-8 w-auto")
 ```
 
+### Organisation
+
+Every helper module is available in every view, so the module boundary is for
+the human reader — organise by **app domain**:
+
+- **One module per domain** — `ArticlesHelper`, `BillingHelper` — not one per
+  controller by reflex.
+- **Split by size, into a more focused domain.** When a domain helper grows
+  past ~100 lines, extract the cohesive cluster into its own module —
+  `BillingHelper` spawns `BillingInvoicesHelper`. The shared prefix keeps the
+  domain greppable.
+
 ### Application-Wide Helpers
 
-Put helpers used across all views in `ApplicationHelper`:
+`ApplicationHelper` holds only the genuinely app-wide — nav state, page titles,
+flash rendering. A method that names a domain belongs in that domain's module:
 
 ```ruby
 # app/helpers/application_helper.rb

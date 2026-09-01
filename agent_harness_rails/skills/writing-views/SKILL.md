@@ -162,6 +162,7 @@ Before writing markup, ask these questions:
 | Deep nesting of `render` calls (3+ levels) | Flatten — max 2 levels of nesting |
 | `content_for` used for control flow | `content_for` / `provide` is for content injection into layouts |
 | Fat helpers with many lines of HTML | Extract to a partial instead |
+| Domain methods accumulating in `ApplicationHelper`, or one helper module mixing domains | Organise by domain; past ~100 lines, split the cohesive cluster into a more focused domain module (`agent_harness_rails/rules/views.mdc` § Organised by domain) |
 
 ### 6. Naming Conventions
 
@@ -171,7 +172,7 @@ Before writing markup, ask these questions:
 | Partials | `_noun.html.erb` (singular) | `_article.html.erb`, `_comment.html.erb` |
 | Form partials | `_form.html.erb` | `_form.html.erb` |
 | Shared partials | `app/views/shared/` or `app/views/application/` | `shared/_flash.html.erb` |
-| Helper modules | `ResourceHelper` matching controller | `ArticlesHelper`, `CommentsHelper` |
+| Helper modules | Named for the app domain; oversized modules split into a more focused domain, keeping the prefix | `ArticlesHelper`, `BillingHelper` → `BillingInvoicesHelper` |
 | Helper methods | Verb or noun describing the output | `reading_time`, `status_badge`, `btn_classes` |
 | Layouts | Purpose-named | `application.html.erb`, `admin.html.erb`, `mailer.html.erb` |
 | Turbo stream templates | `action.turbo_stream.erb` | `create.turbo_stream.erb` |
@@ -196,6 +197,7 @@ Before finishing, verify:
 - [ ] Turbo Frames wrap the right granularity of content
 - [ ] Page titles and meta set via `provide` / `content_for`, not hardcoded in layout
 - [ ] Helpers return strings and have no side effects
+- [ ] Helper modules are organised by app domain — `ApplicationHelper` only for the genuinely app-wide, and any module past ~100 lines split into a more focused domain helper
 - [ ] Tailwind utilities used directly in markup — partials for reuse, not `@apply`
 - [ ] Conditional classes use `class_names` helper
 - [ ] Stimulus attributes use `data-controller`, `data-action`, `data-[name]-target`

@@ -187,6 +187,16 @@ no parser can settle — when a code comment earns its line.
 
 ### Changed
 
+- **Helpers are organised by app domain, split by size.** Every helper module
+  is globally available, so the boundary exists for the human reader:
+  `agent_harness_rails/rules/views.mdc` § Helpers gains an organisation
+  section — one module per domain, `ApplicationHelper` only for the genuinely
+  app-wide, and a ~100-line tripwire past which the cohesive cluster extracts
+  into a more focused domain module (`BillingHelper` →
+  `BillingInvoicesHelper`), keeping the prefix greppable. Mirrored in
+  `writing-views` (naming row, anti-pattern row, verification item) and its
+  patterns reference.
+
 - **The setup must discriminate.** `agent_harness_rails/rules/testing.mdc`
   § Every Assertion Must Be Able to Fail gains a subsection extending the
   question to positive assertions: an example whose setup gives the right and
