@@ -1,11 +1,41 @@
 # Harness leanness — single-source every concept
 
-**Status:** planned; deletion targets adversarially verified against the corpus 2026-09-01
+**Status:** executed 2026-09-01 on `harness/leanness` (7 commits, Phases 1–6 +
+closing sweep). Verification: `bin/check-references` clean (592 references, all
+canonical), 260 specs passing, RuboCop clean.
 **Goal:** cut agent context load roughly in half without losing a single normative
 statement, worked example, or template. Every deletion in this plan removes the
 Nth copy of something, never the only copy. Where verification found a "copy"
 carrying site-specific content, that content is listed under **Must survive**
 and the consolidation is a merge, not a delete.
+
+## Execution record — outcomes vs the plan as written
+
+1. **Corpus landed at 96.3k words, not the 68–74k target.** The per-cluster
+   word targets were estimates made before the no-loss constraint was applied
+   file by file; executors stopped wherever a deeper cut would remove unique
+   content, and a closing duplication scan confirmed what remains is
+   capability, not copies (residual true duplication after the final sweep is
+   under ~1k words). The plan's primary constraint won over its aspiration.
+2. **Per-task instruction load (protocol step 5):** controller+view+spec
+   25.0k words (was ~32k), migration+model 21.1k (was ~29k), Stimulus refactor
+   17.2k (was ~25k). The first exceeds the ≤22k line the plan set; the
+   overage is `references/patterns.md` files counted whole, which agents are
+   directed to read by section. Every rule reachable in the fat stack is
+   reachable in the lean one (verified by three per-cluster diff passes).
+3. **Closing verification caught four genuinely lost statements** — "never
+   mock the object under test", the refactor-brittle-test delete/keep triage,
+   two workflow skills missing from the compass planning row, and the
+   reviewer's confident-approval posture — all restored, plus one relative
+   § citation made canonical. Protocol step 4 earned its place.
+4. **Frontmatter descriptions:** 2,236 → 1,577 words (skills+agents); the
+   ~1,000 aspiration lost to the binding rule that trigger vocabulary
+   survives (longest surviving description: 60 words).
+5. **CHANGELOG.md was deliberately left untouched** when intent-tag citations
+   moved — release notes keep the paths that were true at release time.
+6. **Phase 4's embedded-gate savings were ~200w, not ~500–650w** — the gates
+   proved to be mostly workflow-specific must-survive content, as the plan's
+   own "do not force more" instruction anticipated.
 
 ## Measured baseline
 
