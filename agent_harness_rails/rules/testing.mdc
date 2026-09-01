@@ -445,6 +445,34 @@ expect(response).to redirect_to(card_path(card))
 expect(card.reload).to be_closed
 ```
 
+#### The setup must discriminate
+
+The same question applies to **positive** assertions, through the data: **could
+the wrong outcome present the same evidence?** When two records, pages, or
+states involved in the example share the asserted value, the assertion is
+honest but the setup has made it worthless — the example passes whichever one
+the app actually produced:
+
+```ruby
+# Bad — the draft carries the article's title, so this passes on the draft's
+# own page too; the redirect to the article could vanish and nothing goes red
+visit draft_path(draft)
+
+expect(page).to have_content(article.title)
+
+# Good — the evidence is unique to the expected outcome
+visit draft_path(draft)
+
+expect(page).to have_current_path(article_path(article))
+```
+
+Wherever an assertion must tell two things apart, set them up to **differ in
+exactly what is asserted** — distinct values on the attribute the expectation
+reads — or assert **identity** instead of shared content: the path, the
+record's id, a marker only the expected state renders. The cheap check is the
+red run: break or revert the behaviour once and watch the example fail. An
+example that has never been red is not known to catch anything.
+
 #### Cover every state the action's finder can produce
 
 A lookup that can return either a new record or an existing one —

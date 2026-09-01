@@ -187,6 +187,16 @@ no parser can settle — when a code comment earns its line.
 
 ### Changed
 
+- **The setup must discriminate.** `agent_harness_rails/rules/testing.mdc`
+  § Every Assertion Must Be Able to Fail gains a subsection extending the
+  question to positive assertions: an example whose setup gives the right and
+  wrong outcome the same evidence — two records or pages sharing the asserted
+  value — passes whichever one the app produced. The cure is setup that
+  differs in exactly what is asserted, or an identity assertion
+  (`have_current_path`, the record's id); the cheap check is one deliberate
+  red run. Mirrored in `writing-tests` (prose, an anti-pattern row, a
+  verification item) and flagged at review by `reviewing-rails-work`.
+
 - **Plans, specs, and primitives docs are written for a human skimming, not a
   model reading.** `writing-rails-plans` gains § Write for the human reader
   (cite rule paths and clause IDs instead of restating them, one–two sentences

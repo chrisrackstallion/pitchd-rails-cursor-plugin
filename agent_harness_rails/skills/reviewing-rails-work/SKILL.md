@@ -275,6 +275,12 @@ files for method definitions that repeat across entities; the same method on
 multiple models is a `tactical:` finding (shared behaviour belongs in a
 concern or on the owning model, `agent_harness_rails/rules/models.mdc`).
 
+**Setup discrimination in new specs:** for each new example, ask whether the
+wrong outcome would present the same evidence — an assertion satisfied by two
+records, pages, or states that share the asserted value is a `tactical:`
+finding, however green the run
+(`agent_harness_rails/rules/testing.mdc` § The setup must discriminate).
+
 **Failure and recovery paths:** the happy path is the one the plan describes, the
 specs cover, and every reader follows — so read the **other** branches on purpose.
 For each mutation in scope, follow the failure path as far as the user does: not

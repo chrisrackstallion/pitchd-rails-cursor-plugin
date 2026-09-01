@@ -357,6 +357,7 @@ end
 | An absence read off a page or response, with nothing proving the page rendered | Keep the `not_to`; anchor it with the status or a landmark |
 | Treating a negation the unit answers directly (`not_to permit`, `not_to be_valid`) as needing a positive assertion | Leave it alone — nothing can fail into its passing side |
 | An assertion that cannot fail (`be_a(described_class)`) added to satisfy a rule | If no honest anchor exists, the negation needed none |
+| Asserting evidence the wrong outcome would also show (two records or pages sharing the asserted value) | Set the records up to differ in what's asserted, or assert identity — `have_current_path`, the record's id |
 | System spec that only `visit`s and asserts content (no interaction) | Move to a request spec asserting `response.body.include?` |
 | One system spec per CRUD action when the actions share a shape | One canonical happy-path system spec (usually create); edit/delete go to request specs |
 | One system spec per field, attribute, or validation rule | One system spec exercises the form as a whole; per-field belongs to model/request specs |
@@ -416,6 +417,30 @@ page must show, then the state the record is left in.
 is true the moment it is written — it makes the example longer and proves nothing.
 If no honest anchor presents itself, that is the signal the negation was sound and
 needed none.
+
+**The setup must discriminate.** The same question applies to positive
+assertions, through the data: could the **wrong** outcome present the same
+evidence? When two records, pages, or states in the example share the asserted
+value, the example passes whichever one the app produced:
+
+```ruby
+# Bad — the draft carries the article's title, so this passes on the draft's
+# own page too; the redirect to the article could vanish and nothing goes red
+visit draft_path(draft)
+
+expect(page).to have_content(article.title)
+
+# Good — the evidence is unique to the expected outcome
+visit draft_path(draft)
+
+expect(page).to have_current_path(article_path(article))
+```
+
+Set the things the assertion must tell apart up to **differ in exactly what is
+asserted**, or assert identity instead of shared content — the path, the
+record's id, a marker only the expected state renders. The cheap check is the
+red run: break or revert the behaviour once and watch the example fail
+(`agent_harness_rails/rules/testing.mdc` § The setup must discriminate).
 
 **A status code is not a working page.** `have_http_status(:unprocessable_content)`
 passes for a re-rendered form the user could never successfully resubmit — one
@@ -576,6 +601,7 @@ Before finishing, verify:
 - [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
 - [ ] Job/mailer callers assert enqueuing only — the job/mailer spec owns the work
 - [ ] Every absence read off a page, response, or reloaded record has an anchor that goes red when the request breaks — and no assertion was added that cannot fail
+- [ ] Setup discriminates — no assertion is satisfied by the wrong outcome because two records, pages, or states share the asserted value; each new example has been seen red once
 - [ ] Denials the unit answers directly (`not_to permit`, `not_to be_published`) are left as they are, or written positively (`to be false`)
 - [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
 - [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without one of the earned reasons (§7)
