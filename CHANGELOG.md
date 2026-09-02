@@ -8,9 +8,33 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Four executable backstops for rules that were previously prose only: a linter
 for the primitives tree, a change-review pass over it, a per-example proof
 listing, and a RuboCop layer for the rules a parser can settle. Plus one rule
-no parser can settle — when a code comment earns its line.
+no parser can settle — when a code comment earns its line, and a skill for
+changing the harness itself.
 
 ### Added
+
+- **`maintaining-harness`** — a skill for changing this repo, and the only one
+  the gem does not ship. `AgentHarnessRails::DEV_ONLY` drops it from both
+  `spec.files` and `install`, because a consuming app has no use for a skill
+  about editing the harness it consumes.
+
+  It routes a change to its one home — a bar to its `.mdc`, a procedure to a
+  skill, a shared commitment to `harness-contract.mdc` — and pushes enforcement
+  down to the cheapest gate that can hold it before settling for prose: a cop,
+  else `bin/check-references`, else a spec. Judgment calls are named as
+  judgment rather than turned into a check that will be noisy and then routed
+  around.
+
+- **`spec/payload_spec.rb`** — the payload's own authoring contract, which
+  nothing held before: a `SKILL.md` per skill directory and nowhere deeper,
+  `name` matching the directory or filename, a description inside the budget an
+  editor loads, and Cursor frontmatter on every rule with `globs` on all but
+  the always-applied contract.
+
+  `.rubocop.yml` excludes `agent_harness_rails/**/*`, so the payload had no
+  mechanical gate at all. None of these failures announce themselves — a
+  mismatched `name` or a rule with no `globs` does not error, it just never
+  loads, inside an agent, long after the edit.
 
 - **`agent_harness_rails proofs`** — lists the tagged examples proving each
   intent clause, per evaluation file, with a count to hold against the plan's

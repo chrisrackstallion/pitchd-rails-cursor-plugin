@@ -23,6 +23,15 @@ RSpec.describe AgentHarnessRails::Installer do
       expect(depths.uniq).to eq([ 1 ]), "expected every SKILL.md at skills/<name>/SKILL.md"
     end
 
+    it "leaves this repo's own development skills out of a consuming app" do
+      install
+
+      AgentHarnessRails::DEV_ONLY.each do |relative|
+        expect(Dir).not_to exist(payload_path(relative))
+        expect(manifest["owns"].keys.grep(/\A#{Regexp.escape(relative)}\//)).to be_empty
+      end
+    end
+
     it "creates one relative symlink per editor surface" do
       install
 

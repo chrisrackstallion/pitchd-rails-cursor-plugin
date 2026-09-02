@@ -46,9 +46,14 @@ Gem::Specification.new do |spec|
   # Dir.chdir keeps the globs anchored to this file, so `gem build` works from
   # any working directory.
   spec.files = Dir.chdir(__dir__) do
+    # The maintaining-harness reject mirrors AgentHarnessRails::DEV_ONLY, which
+    # `install` reads: a skill for editing this repo is no use to a consuming
+    # app. Literal here for the same reason PAYLOAD_DIR is — spec/gem_spec.rb
+    # asserts the two lists agree.
     payload = Dir.glob("agent_harness_rails/**/*", File::FNM_DOTMATCH)
                  .select { |path| File.file?(path) }
                  .reject { |path| File.basename(path).start_with?(".") }
+                 .reject { |path| path.start_with?("agent_harness_rails/skills/maintaining-harness/") }
 
     # Every rubocop config is shipped so apps can `inherit_gem` them — see the
     # README. rubocop.yml is the thin omakase layer; the rubocop-harness-*.yml

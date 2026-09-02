@@ -129,6 +129,7 @@ module AgentHarnessRails
          .select { |path| File.file?(path) }
          .map { |path| path.delete_prefix("#{base}/") }
          .reject { |relative| File.basename(relative).start_with?(".") }
+         .reject { |relative| AgentHarnessRails.dev_only?(relative) }
          .sort
     end
 

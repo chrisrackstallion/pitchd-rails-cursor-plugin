@@ -71,6 +71,23 @@ RSpec.describe "gem packaging" do
     expect(spec.files.grep(%r{\Afixtures/})).to be_empty
   end
 
+  it "excludes the payload paths that only develop this repo" do
+    # They live in the payload so this repo's own editor links pick them up, so
+    # the dotfile reject does not catch them. The gemspec repeats the list
+    # literally rather than loading the library, which is what makes this assert
+    # worth having: the two can silently disagree.
+    source = File.read(File.expand_path("../agent_harness_rails.gemspec", __dir__))
+
+    expect(AgentHarnessRails::DEV_ONLY).not_to be_empty
+    AgentHarnessRails::DEV_ONLY.each do |relative|
+      prefix = "#{AgentHarnessRails::PAYLOAD_DIR}/#{relative}/"
+
+      expect(source).to include(prefix)
+      expect(spec.files.grep(/\A#{Regexp.escape(prefix)}/)).to be_empty
+      expect(Dir).to exist(File.join(AgentHarnessRails.payload, relative))
+    end
+  end
+
   it "excludes dotfiles that would ride along with FNM_DOTMATCH" do
     expect(spec.files.grep(/\.DS_Store/)).to be_empty
   end
