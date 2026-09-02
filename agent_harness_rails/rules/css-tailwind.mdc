@@ -58,6 +58,7 @@ Non-negotiable, not a polish step:
 | Anti-Pattern | Instead |
 |-------------|---------|
 | Token layers / bespoke naming that duplicates Tailwind’s scale without team payoff | Tailwind utilities + partials; extend theme when truly shared |
+| Defining a new class for something the stylesheet already styles, because the existing one is slightly different | Apply the existing class and widen it — **`agent_harness_rails/rules/views.mdc`** § Reuse What the App Already Defines |
 | CSS-in-JS or component-library styling (styled-components, emotion, CSS modules) as the primary pattern for ERB + Hotwire apps | Utilities in templates; Stimulus toggles classes |
 | `@apply` everywhere | Partials and helper-returned class strings |
 | Giant class strings **only** in Ruby as the default API | Visible markup in ERB; helpers for real repetition |
@@ -70,6 +71,7 @@ Non-negotiable, not a polish step:
 - [ ] Tailwind config and docs match the project’s **major** version (v3 JS config vs v4 CSS-first).
 - [ ] Global `@tailwind` / `@import "tailwindcss"` live in the **documented** entry stylesheet, not ERB.
 - [ ] `@apply` is exceptional — not a second utility system.
+- [ ] No class added beside one the stylesheet already defines (**`agent_harness_rails/rules/views.mdc`** § Reuse What the App Already Defines).
 - [ ] Project colours/spacing live in **theme extension**, not endless arbitrary values.
 - [ ] Focus states and contrast are not stripped for aesthetics.
 - [ ] No duplicate “design system” in JS for Hotwire-first CRUD UI.

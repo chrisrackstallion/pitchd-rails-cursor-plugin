@@ -238,6 +238,20 @@ changing the harness itself.
 
 ### Changed
 
+- **Reuse what the app already defines.** `agent_harness_rails/rules/views.mdc`
+  gains a section ahead of the template skeleton: grep before authoring a
+  partial, helper, component, or CSS class, and use the existing one **even
+  when it is not quite what you would have written**. A near-miss rendered,
+  called, or applied beats a second version a shade away from it — two things
+  doing one job means each later change lands in one of them, and the markup
+  drifts further apart with every change. Where the existing one is close but
+  insufficient the fix is to widen it (a local with a default, an argument, a
+  `class_names` branch), and rewriting something already in use is a decision to
+  raise, because it changes every page that renders it. Carried in the same file
+  as a partial-decision bullet, an anti-pattern row, and a verification item,
+  and pointed to from `agent_harness_rails/rules/css-tailwind.mdc`, which owns
+  the stylesheet a new class would be defined in.
+
 - **Helpers are organised by app domain, split by size.** Every helper module
   is globally available, so the boundary exists for the human reader:
   `agent_harness_rails/rules/views.mdc` § Helpers gains an organisation

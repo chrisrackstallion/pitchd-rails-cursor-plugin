@@ -1,5 +1,5 @@
 ---
-description: Rails view conventions — opinionated Rails best practice. Apply when working with views, partials, helpers, and layouts.
+description: Rails view conventions — opinionated Rails best practice, including reuse of the partials, helpers, and CSS classes an app already defines. Apply when working with views, partials, helpers, and layouts.
 globs: app/views/**/*.erb, app/helpers/**/*.rb
 alwaysApply: false
 ---
@@ -13,6 +13,25 @@ Views render the model for the browser. They are HTML documents with the minimum
 Push domain predicates to models (`article.edited?`, `article.byline`), reusable formatting to helpers, and reusable markup to partials. Worked good/bad example: **`agent_harness_rails/skills/writing-views/references/patterns.md`** § Keep Logic Out of Templates.
 
 **User-facing static copy** — use **`t()`** / **`I18n.t`** and keys under **`config/locales`**, not raw strings scattered through ERB. Lazy lookup, interpolation, and key structure: **`agent_harness_rails/rules/i18n.mdc`**, **`agent_harness_rails/skills/writing-i18n/references/patterns.md`**.
+
+## Reuse What the App Already Defines
+
+Before authoring a partial, a helper, a component, or a CSS class, grep the app
+for the one it already has. **Use the existing one even when it is not quite
+what you would have written** — a near-miss you render, call, or apply beats a
+second version a shade away from it. Two things doing one job means each later
+change lands in one of them, and the app's markup drifts further apart with
+every change.
+
+Search by the name the thing would carry (§ Naming Conventions): the partial
+under `app/views` (including `shared/`), the method in the domain's helper
+module, the class in the app's stylesheet.
+
+Where the existing one is close but not sufficient, **widen it** — a local with
+a default, an argument to the helper, a conditional utility through
+`class_names` — rather than copy it under a new name. Rewriting or restyling
+something already in use changes every page that renders it, so it is a
+decision to raise, not a step inside the task that noticed it.
 
 ## Action Template Skeleton
 
@@ -132,6 +151,7 @@ Rule of thumb: run `bin/rails routes -g <resource>`; if the routes do not serve 
 - Shared page chrome → layout
 
 **"Should this be a partial?"**
+- One already exists for this content → render **that** one; don't write a second
 - Used in more than one place → yes, extract
 - Represents a single domain concept (a comment, a card, a form) → yes, extract
 - Template exceeds ~50 lines → extract sub-sections
@@ -175,6 +195,7 @@ state-dependent appearance → `class_names`.
 | `@apply` for every styled block | Extract a partial — partials are your components |
 | Arbitrary Tailwind values everywhere (`bg-[#1a2b3c]`) | Extend the Tailwind config with project tokens |
 | Hardcoded CSS class strings repeated across templates | Helper returning class string, or extract partial |
+| A second partial, helper, or CSS class for something the app already defines — because the existing one is slightly different | Render, call, or apply the existing one; widen it with a local, an argument, or `class_names` (§ Reuse What the App Already Defines) |
 | Rendering partials without locals declaration | Add `<%# locals: (...) %>` magic comment |
 | HTML string concatenation in helpers | `tag` builder or partials |
 | Deep nesting of `render` calls (3+ levels) | Flatten — max 2 levels of nesting |
@@ -217,6 +238,7 @@ Before finishing, verify:
 - [ ] Page titles and meta set via `provide` / `content_for`, not hardcoded in layout
 - [ ] Helpers return strings and have no side effects
 - [ ] Helper modules are organised by app domain — `ApplicationHelper` only for the genuinely app-wide, and any module past ~100 lines split into a more focused domain helper
+- [ ] Nothing you added duplicates a partial, helper, or CSS class the app already defines — you grepped by name before authoring it
 - [ ] Tailwind utilities used directly in markup — partials for reuse, not `@apply`
 - [ ] Conditional classes use `class_names` helper
 - [ ] Stimulus attributes use `data-controller`, `data-action`, `data-[name]-target`
