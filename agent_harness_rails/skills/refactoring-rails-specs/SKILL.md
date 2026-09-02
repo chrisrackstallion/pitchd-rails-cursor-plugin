@@ -94,6 +94,7 @@ re-deriving them here. Map what they flag to verdicts:
 - Policy matrix walked in a request spec — or a policy spec that makes HTTP requests or **signs in via the form** → **MOVE** the matrix branches to the policy spec; the request spec keeps one authorized + one unauthorized case.
 - Happy-path triplets (same flow in model + request + system) → keep **one** home per § Ownership by Layer: the system spec keeps the canonical journey, the request spec trims to status/auth/422, the model spec to domain logic.
 - Per-field system specs, or CRUD parity (separate show/edit/delete specs with identical shape) → **MERGE** per-field assertions into the canonical create flow; **MOVE** show/edit/delete to request specs.
+- Two spec files for one subject (`article_publishing_spec.rb` beside `article_spec.rb`) → **MOVE** the examples into the file that owns the subject, then **DELETE** the extra file.
 - Repeated JS-behaviour tests (same Stimulus controller or Turbo pattern across files) → **DELETE** the duplicates; keep one on the simplest page.
 - Drive-by assertions (nav, footer, sidebar inside a feature spec) → **DELETE** the drive-bys; assert them in a layout/helper test if at all.
 - Flash copy as the primary success signal → **REWRITE** to assert resource state on the page; flash becomes secondary.

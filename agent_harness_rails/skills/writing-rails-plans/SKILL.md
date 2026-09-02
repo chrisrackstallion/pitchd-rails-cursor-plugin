@@ -416,7 +416,7 @@ parenthetical only when the app has no primitives tree.]
 - Modify: `app/policies/bar_policy.rb`
 - Modify: `config/routes.rb`
 - Modify: `app/controllers/bars_controller.rb`
-- Create: `spec/system/bars_spec.rb` (or the spec type chosen per writing-tests)
+- Modify: `spec/system/bars_spec.rb` (the spec type per writing-tests; `Create` only when no file owns the subject)
 
 - [ ] **Step 1: Write the failing test** (system / request / model / policy per `agent_harness_rails/skills/writing-tests/SKILL.md`)
 

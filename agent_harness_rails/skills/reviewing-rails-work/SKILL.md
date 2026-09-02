@@ -238,8 +238,10 @@ outside code fences is a finding
 a spec under review (`brainstorming-rails-omakase` § Spec style).
 
 **Implementation:** Map changed files to skills; compass on overall drift; one
-home per behaviour for tests (`writing-tests`). **One home per behaviour for
-code too:** scan the scope as a whole, not file by file — grep the changed
+home per behaviour for tests (`writing-tests`), down to the file and example a
+change lands in (`agent_harness_rails/rules/testing.mdc` § Where New Coverage
+Goes). **One home per behaviour for code too:** scan the scope as a whole, not
+file by file — grep the changed
 files for method definitions that repeat across entities; the same method on
 multiple models is a `tactical:` finding (shared behaviour belongs in a
 concern or on the owning model, `agent_harness_rails/rules/models.mdc`).

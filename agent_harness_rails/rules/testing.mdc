@@ -151,12 +151,18 @@ rate limiting. If a model spec proves `article.publish` creates a publication,
 the system spec asserts the page shows "Published" — never
 `article.publication.present?`.
 
-### Within a Single Spec File
+### Where New Coverage Goes
 
-Don't test the same path twice with different wording. Multiple assertions in
-one test are fine when they verify the same action; split tests when the
-*setup* differs (different context), not when you want to assert more things
-about the same outcome. Worked example:
+Coverage a task adds goes into the spec file that already owns the subject
+(§ Test File Naming), inside its existing `describe` / `context` blocks — a
+task-scoped file beside the subject's own (`article_publishing_spec.rb` next to
+`article_spec.rb`) splits one contract across two files that drift apart.
+Create a file only when no file owns the subject yet.
+
+Inside the file, an expectation folds into the example that already performs
+that setup and action; several assertions about one outcome belong in one
+example. A new `it` is for a different context — different preconditions or
+inputs — never the same path twice with different wording. Worked example:
 **`agent_harness_rails/skills/writing-tests/references/model-specs.md`**
 § No Redundant Tests Within the File.
 

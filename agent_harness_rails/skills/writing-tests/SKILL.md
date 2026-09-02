@@ -106,7 +106,7 @@ end
 Key principles:
 - **Arrange-Act-Assert** — every test has three clear phases
 - **Inline setup** — each test tells its own story; avoid deep `let` chains. A single `let` for the authenticated user is fine; five nested `let`s are not.
-- **One behaviour per test** — multiple assertions are fine if they verify one behaviour; split into a new `it` when the *context* differs, not when you want another `expect` on the same outcome (`agent_harness_rails/rules/testing.mdc` § Within a Single Spec File)
+- **One behaviour per test** — multiple assertions are fine if they verify one behaviour; split into a new `it` when the *context* differs, not when you want another `expect` on the same outcome (`agent_harness_rails/rules/testing.mdc` § Where New Coverage Goes)
 - **Descriptive names** — `describe "#method"`, `context "when X"`, `it "does Y"`
 - **Real objects** — `create(:article)`, not `double` or `instance_double`
 
@@ -142,7 +142,7 @@ Before finishing, verify:
 - [ ] Tests read as documentation — a new developer understands the feature from reading them
 - [ ] No flaky tests — no sleep, no order-dependent state
 - [ ] Transactional fixtures are on — they cover system specs too (Rails 5.1+ shares the connection); database_cleaner is unnecessary
-- [ ] No redundant `it` blocks — tests with identical setup/action are merged into one
+- [ ] Coverage went into the spec file that already owns the subject, and no redundant `it` blocks — tests with identical setup/action are merged into one
 - [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
 - [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without an earned reason
 - [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag per `agent_harness_rails/rules/intent-tags.mdc`, the clause lists the file in `evaluations:`, and **`agent_harness_rails evals`** is green
