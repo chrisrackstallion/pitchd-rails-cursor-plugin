@@ -108,7 +108,7 @@ The rest of the payload is conventions: opinionated Rails best practice — omak
 
 ## RuboCop
 
-The gem ships three configs your app can inherit, in increasing strictness:
+The gem ships four configs your app can inherit, in increasing strictness:
 
 ```yaml
 # .rubocop.yml
@@ -118,9 +118,12 @@ inherit_gem:
     - rubocop.yml                 # thin layer over omakase — changes almost nothing
     - rubocop-harness.yml         # opt-in: turns the parseable rules into real cops
     - rubocop-harness-rspec.yml   # opt-in: needs rubocop-rspec and friends in your Gemfile
+    - rubocop-harness-index.yml   # opt-in: cross-file cops; needs RuboCop 1.89 and the rubydex gem
 ```
 
-`rubocop-harness.yml` enables ~100 existing cops that encode rules already written down here, plus fifteen custom `AgentHarnessRails/*` cops for what no existing cop covers — service objects, non-REST actions, enqueueing inside transactions, view specs, `sleep` in specs. Each names the rule it enforces, and your own `.rubocop.yml` can turn any of it off; agents are told to respect your opt-outs. The gem deliberately does not depend on RuboCop — it ships YAML and cop files, and your app's bundle provides RuboCop at your version.
+`rubocop-harness.yml` enables ~100 existing cops that encode rules already written down here, plus custom `AgentHarnessRails/*` cops for what no existing cop covers — service objects, non-REST actions, enqueueing inside transactions, view specs, `sleep` in specs. Each names the rule it enforces, and your own `.rubocop.yml` can turn any of it off; agents are told to respect your opt-outs. The gem deliberately does not depend on RuboCop — it ships YAML and cop files, and your app's bundle provides RuboCop at your version.
+
+`rubocop-harness-index.yml` turns on RuboCop's project index and the cops that need one: a route naming an action no controller defines, a callback enqueueing through a concern's method, a spec running a job it does not own, a concern or policy with no spec, a mail with no preview. It also carries a dead-method sweep, `AgentHarnessRails/UnreferencedMethod`, that is never enabled — run it with `--only` when you want it. Add `gem "rubydex", require: false` to your Gemfile; without it RuboCop warns and the layer stays silent.
 
 ## Good to know
 

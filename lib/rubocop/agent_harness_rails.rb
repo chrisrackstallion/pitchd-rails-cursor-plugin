@@ -18,6 +18,11 @@ end
 # since RuboCop 1.76.
 RuboCop::ConfigLoader.inject_defaults!(RuboCop::AgentHarnessRails::CONFIG_DEFAULT)
 
+# Shared mixins first; the cops are loaded in name order and several include
+# these.
+require_relative "agent_harness_rails/public_methods"
+require_relative "agent_harness_rails/index_help"
+
 # Which paths each cop applies to is config, not code: every cop's Include lives
 # in config/default.yml, so an app can widen or narrow it without a patch.
 Dir[File.join(__dir__, "cop", "agent_harness_rails", "*.rb")].sort.each { |cop| require cop }

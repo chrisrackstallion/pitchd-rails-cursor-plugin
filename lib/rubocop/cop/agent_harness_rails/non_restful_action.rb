@@ -46,13 +46,15 @@ module RuboCop
       #     end
       #   end
       class NonRestfulAction < Base
+        include PublicMethods
+
         MSG = "`%<name>s` is not a REST action. Extract the noun it implies into a controller " \
               "of its own, routed as a singular `resource` under the parent (`publish` -> " \
               "`Articles::PublicationsController#create`), or move it below `private` if it is a " \
               "helper. Not a `show` that reads the action name out of `params[:id]`."
 
         def on_class(node)
-          public_methods_in(node.body).each do |method|
+          public_defs(node.body).each do |method|
             next if allowed?(method.method_name.to_s)
 
             add_offense(method.loc.name, message: format(MSG, name: method.method_name))
@@ -60,21 +62,6 @@ module RuboCop
         end
 
         private
-
-        # Walks the class body in order, stopping at the first bare `private` or
-        # `protected` — everything after it is out of scope for this cop.
-        def public_methods_in(body)
-          return [] if body.nil?
-
-          nodes = body.begin_type? ? body.children : [ body ]
-          nodes.take_while { |child| !visibility_modifier?(child) }.select { |child| child.is_a?(RuboCop::AST::DefNode) }
-        end
-
-        def visibility_modifier?(node)
-          node.respond_to?(:send_type?) && node.send_type? &&
-            node.receiver.nil? && node.arguments.empty? &&
-            %i[private protected].include?(node.method_name)
-        end
 
         def allowed?(name)
           cop_config.fetch("AllowedActions", []).include?(name)

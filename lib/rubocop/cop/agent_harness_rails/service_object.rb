@@ -36,6 +36,8 @@ module RuboCop
       #     belongs_to :account
       #   end
       class ServiceObject < Base
+        include IndexHelp
+
         MSG_SUFFIX = "Avoid `%<name>s`. Put the behaviour on the model, in a PORO " \
                      "namespaced under it, or in a job."
         MSG_DIRECTORY = "Avoid app/services/. Put the behaviour on the model, in a PORO " \
@@ -88,7 +90,18 @@ module RuboCop
         # nothing to say about rows — moving behaviour onto the model is the
         # advice, and this class already *is* the model.
         def record?(node)
-          record_superclass?(node.parent_class) || record_macros?(node.body)
+          record_superclass?(node.parent_class) || record_macros?(node.body) || indexed_record?(node)
+        end
+
+        # With the project index the ancestry is known rather than read off the
+        # superclass's spelling, so a record reached through any depth of
+        # inheritance passes.
+        def indexed_record?(node)
+          return false unless indexed?
+
+          declaration = resolve_constant_in_index(node.identifier)
+          declaration.is_a?(Rubydex::Class) &&
+            declaration.ancestors.any? { |ancestor| RECORD_SUPERCLASSES.include?(ancestor.name) }
         end
 
         def record_superclass?(superclass)

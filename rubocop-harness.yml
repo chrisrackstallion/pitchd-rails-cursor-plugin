@@ -327,14 +327,10 @@ Naming/ClassAndModuleCamelCase:
 Naming/FileName:
   Enabled: true
 
-# Naming/PredicatePrefix would cover the rule's `is_active` -> `active` line, and
-# is deliberately absent: it was renamed from Naming/PredicateName and naming a
-# cop your RuboCop does not have is a hard error, not a warning. The version that
-# introduced the new name could not be verified, and a shipped config must not
-# rest on a guess. Add it yourself once you know your RuboCop has it:
-#
-#   Naming/PredicatePrefix:
-#     Enabled: true
+# Naming/PredicatePrefix, which covers the rule's `is_active` -> `active` line,
+# lives in rubocop-harness-index.yml: that file pins the RuboCop floor that has
+# the cop under this name, and the index it turns on lets the cop skip overrides
+# of inherited predicates.
 #
 # Naming/VariableNumber is absent for a different reason: it enforces the *style*
 # of numbered names (user_1 vs user1), not their absence, so it does not encode

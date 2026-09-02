@@ -121,3 +121,185 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::MigrationDataChange, :config do
     RUBY
   end
 end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::EnqueueOutsideCommit, "with the project index", :config do
+  it "follows a callback into the method a concern defines" do
+    model = <<~RUBY
+      class Article < ApplicationRecord
+        include Notifying
+        after_save :notify_later
+        ^^^^^^^^^^ Enqueueing in `after_save` runs inside the transaction — the job can run before the commit, or after a rollback. Use `after_save_commit`.
+      end
+    RUBY
+    path = index_project({
+      "app/models/concerns/notifying.rb" => "module Notifying\n  def notify_later\n    NotifySubscribersJob.perform_later(id)\n  end\nend\n",
+      "app/models/article.rb" => model
+    }, subject: "app/models/article.rb")
+
+    expect_offense(model, path)
+  end
+
+  it "follows a concern's included-block callback into the method each includer defines" do
+    concern = <<~RUBY
+      module Notifying
+        extend ActiveSupport::Concern
+
+        included do
+          after_create :notify_later
+          ^^^^^^^^^^^^ Enqueueing in `after_create` runs inside the transaction — the job can run before the commit, or after a rollback. Use `after_create_commit`.
+        end
+      end
+    RUBY
+    path = index_project({
+      "app/models/article.rb" => "class Article < ApplicationRecord\n  include Notifying\n\n  private\n    def notify_later\n      NotifySubscribersJob.perform_later(id)\n    end\nend\n",
+      "app/models/concerns/notifying.rb" => concern
+    }, subject: "app/models/concerns/notifying.rb")
+
+    expect_offense(concern, path)
+  end
+
+  it "stays quiet when the method it finds elsewhere does not enqueue" do
+    model = <<~RUBY
+      class Article < ApplicationRecord
+        include Sluggable
+        after_save :refresh_slug
+      end
+    RUBY
+    path = index_project({
+      "app/models/concerns/sluggable.rb" => "module Sluggable\n  def refresh_slug\n    update_column(:slug, title.parameterize)\n  end\nend\n",
+      "app/models/article.rb" => model
+    }, subject: "app/models/article.rb")
+
+    expect_no_offenses(model, path)
+  end
+end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::MailerWithoutPreview, :config do
+  it "flags a mailer with no preview class" do
+    mailer = <<~RUBY
+      class UserMailer < ApplicationMailer
+            ^^^^^^^^^^ `UserMailer` has no `UserMailerPreview`. Every mail is previewable in development.
+        def welcome; end
+      end
+    RUBY
+    path = index_project({ "app/mailers/user_mailer.rb" => mailer }, subject: "app/mailers/user_mailer.rb")
+
+    expect_offense(mailer, path)
+  end
+
+  it "flags each mail the preview leaves out, wherever the preview lives" do
+    mailer = <<~RUBY
+      class UserMailer < ApplicationMailer
+        def welcome; end
+        def receipt; end
+            ^^^^^^^ `UserMailer#receipt` has no method on `UserMailerPreview`.
+
+        private
+          def footer; end
+      end
+    RUBY
+    path = index_project({
+      "spec/mailers/previews/user_mailer_preview.rb" => "class UserMailerPreview < ActionMailer::Preview\n  def welcome; end\nend\n",
+      "app/mailers/user_mailer.rb" => mailer
+    }, subject: "app/mailers/user_mailer.rb")
+
+    expect_offense(mailer, path)
+  end
+
+  it "does nothing without the project index" do
+    expect_no_offenses(<<~RUBY)
+      class UserMailer < ApplicationMailer
+        def welcome; end
+      end
+    RUBY
+  end
+end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::UnreferencedMethod, :config do
+  let(:cop_config) do
+    { "AllowedMethods" => %w[initialize], "AllowedPatterns" => [ '\Ato_' ],
+      "TemplateGlobs" => [ File.join(project, "app/views/**/*.erb") ] }
+  end
+  let(:model) do
+    <<~RUBY
+      class Article < ApplicationRecord
+        def legacy_slug
+          title.parameterize
+        end
+      end
+    RUBY
+  end
+
+  it "flags a method nothing in the project mentions" do
+    flagged = <<~RUBY
+      class Article < ApplicationRecord
+        def legacy_slug
+            ^^^^^^^^^^^ Nothing in the project calls `legacy_slug` — no call, symbol, or template mentions it. Delete it, or name the caller RuboCop cannot see in `AllowedMethods`.
+          title.parameterize
+        end
+      end
+    RUBY
+    path = index_project({ "app/models/article.rb" => flagged }, subject: "app/models/article.rb")
+
+    expect_offense(flagged, path)
+  end
+
+  it "counts a call from any indexed file" do
+    path = index_project({
+      "app/models/article.rb" => model,
+      "app/models/feed.rb" => "class Feed\n  def entries\n    Article.all.map { |article| article.legacy_slug }\n  end\nend\n"
+    }, subject: "app/models/article.rb")
+
+    expect_no_offenses(model, path)
+  end
+
+  it "counts the name as a symbol in another file, which is how callbacks and delegate name their targets" do
+    path = index_project({
+      "app/models/article.rb" => model,
+      "app/models/post.rb" => "class Post < ApplicationRecord\n  delegate :legacy_slug, to: :article\nend\n"
+    }, subject: "app/models/article.rb")
+
+    expect_no_offenses(model, path)
+  end
+
+  it "counts a mention in a view template, which the index never sees" do
+    FileUtils.mkdir_p(File.join(project, "app/views/articles"))
+    File.write(File.join(project, "app/views/articles/show.html.erb"), "<p><%= @article.legacy_slug %></p>\n")
+    path = index_project({ "app/models/article.rb" => model }, subject: "app/models/article.rb")
+
+    expect_no_offenses(model, path)
+  end
+
+  it "leaves a policy's public predicates alone, since Pundit dispatches to them by name" do
+    policy = <<~RUBY
+      class ArticlePolicy < ApplicationPolicy
+        def show?
+          true
+        end
+      end
+    RUBY
+    path = index_project({ "app/policies/article_policy.rb" => policy }, subject: "app/policies/article_policy.rb")
+
+    expect_no_offenses(policy, path)
+  end
+
+  it "leaves an override of an inherited method alone" do
+    override = <<~RUBY
+      class Article < Content
+        def summary
+          title
+        end
+      end
+    RUBY
+    path = index_project({
+      "app/models/content.rb" => "class Content < ApplicationRecord\n  def summary\n    body.truncate(80)\n  end\nend\n",
+      "app/models/article.rb" => override
+    }, subject: "app/models/article.rb")
+
+    expect_no_offenses(override, path)
+  end
+
+  it "does nothing without the project index" do
+    expect_no_offenses(model)
+  end
+end

@@ -50,9 +50,9 @@ Gem::Specification.new do |spec|
                  .select { |path| File.file?(path) }
                  .reject { |path| File.basename(path).start_with?(".") }
 
-    # Both rubocop configs are shipped so apps can `inherit_gem` them — see the
-    # README. rubocop.yml is the thin omakase layer; rubocop-harness.yml is the
-    # opt-in enforcement layer.
+    # Every rubocop config is shipped so apps can `inherit_gem` them — see the
+    # README. rubocop.yml is the thin omakase layer; the rubocop-harness-*.yml
+    # files are the opt-in enforcement layers.
     # config/default.yml carries the custom cops' defaults. RuboCop loads it by
     # path at require time, so leaving it out breaks cop loading in a consuming
     # app and nowhere else — spec/gem_spec.rb asserts it is here.
@@ -60,7 +60,7 @@ Gem::Specification.new do |spec|
       Dir.glob("lib/**/*.rb") +
       Dir.glob("config/*.yml") +
       [ "exe/agent_harness_rails", "LICENSE", "README.md", "CHANGELOG.md",
-        "rubocop.yml", "rubocop-harness.yml", "rubocop-harness-rspec.yml" ]
+        "rubocop.yml", "rubocop-harness.yml", "rubocop-harness-rspec.yml", "rubocop-harness-index.yml" ]
         .select { |f| File.exist?(f) }
   end
 

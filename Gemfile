@@ -18,3 +18,8 @@ gem "rubocop-capybara", "~> 3.0", require: false
 gem "rubocop-factory_bot", "~> 2.28", require: false
 gem "rubocop-rspec", "~> 3.10", require: false
 gem "rubocop-rspec_rails", "~> 2.32", require: false
+
+# The optional project index behind rubocop-harness-index.yml. RuboCop loads it
+# only when AllCops/UseProjectIndex is on, and a consuming app adds it to its own
+# Gemfile; here it lets the cross-file cops run against fixtures.
+gem "rubydex", require: false

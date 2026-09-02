@@ -19,6 +19,7 @@ require "rubocop-rspec_rails"
 require "rubocop-capybara"
 require "rubocop-factory_bot"
 require "rubocop/agent_harness_rails"
+require "open3"
 
 RSpec.describe "shipped RuboCop configs" do
   def root
@@ -37,7 +38,7 @@ RSpec.describe "shipped RuboCop configs" do
     @registry ||= RuboCop::Cop::Registry.global.cops.map(&:cop_name)
   end
 
-  [ "rubocop-harness.yml", "rubocop-harness-rspec.yml" ].each do |file|
+  [ "rubocop-harness.yml", "rubocop-harness-rspec.yml", "rubocop-harness-index.yml" ].each do |file|
     describe file do
       it "names only cops that exist in the installed RuboCop and plugins" do
         expect(cop_names(file) - registry).to be_empty,
@@ -56,10 +57,13 @@ RSpec.describe "shipped RuboCop configs" do
         expect(declared).to eq(declared.uniq)
       end
 
-      it "declares the plugins its cops come from" do
+      it "declares where its cops come from" do
         # Without this the file only works when something else in the app's
-        # inheritance chain happens to have loaded the plugin already.
-        expect(load_config(file)["plugins"]).not_to be_empty
+        # inheritance chain happens to have loaded the plugin or department
+        # already.
+        config = load_config(file)
+
+        expect(Array(config["plugins"]) + Array(config["require"])).not_to be_empty
       end
     end
   end
@@ -133,6 +137,20 @@ RSpec.describe "shipped RuboCop configs" do
       expect(config.for_cop("AgentHarnessRails/SpecSleep")["Enabled"]).to be(true)
     end
 
+    it "resolves the index layer through inherit_gem, turning the index and its cops on together" do
+      config = app_config("", files: [ "rubocop-harness.yml", "rubocop-harness-index.yml" ])
+
+      expect(config.for_all_cops["UseProjectIndex"]).to be(true)
+      expect(config.for_cop("AgentHarnessRails/RouteWithoutAction")["Enabled"]).to be(true)
+      expect(config.for_cop("Naming/PredicatePrefix")["Enabled"]).to be(true)
+    end
+
+    it "leaves the cross-file cops off without the index layer" do
+      # They would do nothing anyway; off keeps `--show-cops` honest about it.
+      expect(app_config.for_cop("AgentHarnessRails/RouteWithoutAction")["Enabled"]).to be(false)
+      expect(app_config.for_cop("AgentHarnessRails/UnreferencedMethod")["Enabled"]).to be(false)
+    end
+
     it "resolves without error and enables both the borrowed and the custom cops" do
       config = app_config
 
@@ -176,6 +194,54 @@ RSpec.describe "shipped RuboCop configs" do
 
       expect(documented).to eq(%w[index show new create edit update destroy])
       expect(structure.scan(/^  def (\w+)$/).flatten & documented).to eq(documented)
+    end
+  end
+
+  describe "the index layer, end to end" do
+    # Unit specs hand each cop a graph directly. This is the only place that
+    # proves the runner builds one from `UseProjectIndex`, passes it to the
+    # department, and that each cop's Include reaches the file it should —
+    # against a Rails-shaped tree with one deliberate offence per cop
+    # (fixtures/index_app/README.md).
+    def fixture
+      File.join(root, "fixtures", "index_app")
+    end
+
+    def offenses(*args)
+      # --ignore-parent-exclusion: RuboCop otherwise applies this repo's own
+      # AllCops/Exclude, which hides fixtures/ from its lint, to the fixture too.
+      output, status = Dir.chdir(fixture) do
+        Open3.capture2("bundle", "exec", "rubocop", "--format", "json", "--cache", "false",
+                       "--ignore-parent-exclusion", *args)
+      end
+      expect(status.exitstatus).to eq(1), "expected offences, got exit #{status.exitstatus}: #{output}"
+
+      JSON.parse(output.force_encoding("UTF-8")).fetch("files").flat_map do |file|
+        file.fetch("offenses").map { |offense| [ offense.fetch("cop_name"), file.fetch("path") ] }
+      end
+    end
+
+    it "reports exactly the deliberate offences, each in the file its rule points at" do
+      # An exact match: with omakase inherited the fixture is otherwise clean, so
+      # a cop firing where it should not shows up here as much as one going quiet.
+      expect(offenses).to match_array([
+        [ "AgentHarnessRails/RouteWithoutAction", "config/routes.rb" ],
+        [ "AgentHarnessRails/RouteWithoutAction", "config/routes.rb" ],
+        [ "AgentHarnessRails/EnqueueOutsideCommit", "app/models/concerns/publishable.rb" ],
+        [ "AgentHarnessRails/ExecutedOutsideOwnSpec", "spec/models/article_spec.rb" ],
+        [ "AgentHarnessRails/MissingOwnSpec", "app/models/concerns/publishable.rb" ],
+        [ "AgentHarnessRails/MissingOwnSpec", "app/policies/article_policy.rb" ],
+        [ "AgentHarnessRails/MailerWithoutPreview", "app/mailers/user_mailer.rb" ],
+        [ "AgentHarnessRails/MisfiledSpec", "spec/models/account_onboarding_spec.rb" ]
+      ])
+    end
+
+    it "runs the dead-method sweep only when asked, and finds only the dead method" do
+      # `byline` is called from a template, `publish` from a spec, `notify_later`
+      # by symbol; `legacy_slug` by nothing.
+      reported = offenses("--only", "AgentHarnessRails/UnreferencedMethod")
+
+      expect(reported).to eq([ [ "AgentHarnessRails/UnreferencedMethod", "app/models/article.rb" ] ])
     end
   end
 

@@ -27,11 +27,13 @@ module RuboCop
       #     def create? = user.editor?
       #   end
       class PolicyVerbMethod < Base
+        include PublicMethods
+
         MSG = "`%<name>s` is not a CRUD permission. Map the state change to a noun-resource " \
               "policy (Articles::PublicationPolicy#create?), or make this a private predicate."
 
         def on_class(node)
-          public_predicates(node.body).each do |method|
+          public_defs(node.body).select { |method| method.method_name.to_s.end_with?("?") }.each do |method|
             name = method.method_name.to_s
             next if allowed?(name)
 
@@ -40,20 +42,6 @@ module RuboCop
         end
 
         private
-
-        def public_predicates(body)
-          return [] if body.nil?
-
-          nodes = body.begin_type? ? body.children : [ body ]
-          nodes.take_while { |child| !visibility_modifier?(child) }
-               .select { |child| child.is_a?(RuboCop::AST::DefNode) && child.method_name.to_s.end_with?("?") }
-        end
-
-        def visibility_modifier?(node)
-          node.respond_to?(:send_type?) && node.send_type? &&
-            node.receiver.nil? && node.arguments.empty? &&
-            %i[private protected].include?(node.method_name)
-        end
 
         def allowed?(name)
           cop_config.fetch("AllowedMethods", []).include?(name)

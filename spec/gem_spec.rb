@@ -51,8 +51,8 @@ RSpec.describe "gem packaging" do
     expect(spec.files).to include("config/default.yml", "lib/rubocop/agent_harness_rails.rb", *cops)
   end
 
-  it "ships both rubocop configs so apps can inherit_gem them" do
-    expect(spec.files).to include("rubocop.yml", "rubocop-harness.yml")
+  it "ships every rubocop config so apps can inherit_gem them" do
+    expect(spec.files).to include("rubocop.yml", "rubocop-harness.yml", "rubocop-harness-rspec.yml", "rubocop-harness-index.yml")
   end
 
   it "depends on nothing at runtime" do

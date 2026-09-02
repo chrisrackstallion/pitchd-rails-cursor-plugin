@@ -152,3 +152,87 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::DeepNestedResources, :config do
     RUBY
   end
 end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::RouteWithoutAction, :config do
+  let(:controllers) do
+    {
+      "app/controllers/application_controller.rb" => "class ApplicationController < ActionController::Base; end\n",
+      "app/controllers/cards_controller.rb" => "class CardsController < ApplicationController\n  def show; end\nend\n",
+      "app/controllers/cards/closures_controller.rb" => "class Cards::ClosuresController < ApplicationController\n  def create; end\nend\n",
+      "app/controllers/articles_controller.rb" => "class ArticlesController < ApplicationController\n  def index; end\n  def show; end\nend\n"
+    }
+  end
+
+  it "flags a nested resource that routes to a controller nobody defined, naming the one that exists" do
+    # The controllers rule's own pitfall: plain nesting hits top-level
+    # ClosuresController; `scope module: :cards` is what reaches Cards::.
+    routes = <<~RUBY
+      Rails.application.routes.draw do
+        resources :cards, only: :show do
+          resource :closure, only: :create
+                   ^^^^^^^^ `ClosuresController` is not defined, so every route here 404s. `Cards::ClosuresController` is — route it inside `scope module: :cards`.
+        end
+      end
+    RUBY
+    path = index_project(controllers.merge("config/routes.rb" => routes), subject: "config/routes.rb")
+
+    expect_offense(routes, path)
+  end
+
+  it "flags a routed action the controller does not define, on the symbol that routes it" do
+    routes = <<~RUBY
+      Rails.application.routes.draw do
+        resources :articles, only: %i[index show edit]
+                                                 ^^^^ `ArticlesController#edit` is not defined. Trim the route with `only:` / `except:`, or define the action.
+      end
+    RUBY
+    path = index_project(controllers.merge("config/routes.rb" => routes), subject: "config/routes.rb")
+
+    expect_offense(routes, path)
+  end
+
+  it "resolves namespaces, scope modules and controller: the way Rails does, through inherited actions" do
+    routes = <<~RUBY
+      Rails.application.routes.draw do
+        namespace :admin do
+          resources :reports, only: %i[index show]
+        end
+        scope module: :admin do
+          resources :audits, controller: "reports", only: :show
+        end
+        resources :cards, only: :show do
+          scope module: :cards do
+            resource :closure, only: :create
+          end
+        end
+      end
+    RUBY
+    files = controllers.merge(
+      "app/controllers/admin/base_controller.rb" => "class Admin::BaseController < ApplicationController\n  def index; end\nend\n",
+      "app/controllers/admin/reports_controller.rb" => "class Admin::ReportsController < Admin::BaseController\n  def show; end\nend\n",
+      "config/routes.rb" => routes
+    )
+    path = index_project(files, subject: "config/routes.rb")
+
+    expect_no_offenses(routes, path)
+  end
+
+  it "reads nothing into a computed action list" do
+    routes = <<~RUBY
+      Rails.application.routes.draw do
+        resources :articles, only: PUBLIC_ACTIONS
+      end
+    RUBY
+    path = index_project(controllers.merge("config/routes.rb" => routes), subject: "config/routes.rb")
+
+    expect_no_offenses(routes, path)
+  end
+
+  it "does nothing without the project index" do
+    expect_no_offenses(<<~RUBY)
+      Rails.application.routes.draw do
+        resources :nowhere
+      end
+    RUBY
+  end
+end

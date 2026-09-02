@@ -24,6 +24,7 @@ In the **Rails app root**, understand:
 | `.rubocop.yml` | Ruleset and `require:` for `rubocop-rails` etc. |
 | `inherit_gem` | e.g. `rubocop-rails-omakase: rubocop.yml` — **pack** vs **`rubocop-rails`** plugin, not the same thing. |
 | `agent_harness_rails: rubocop-harness.yml` | Present ⇒ the app opted into the **harness cop layer**; each `AgentHarnessRails/*` cop cites the `.mdc` it enforces (`rubocop --show-cops AgentHarnessRails/ServiceObject` prints the `Reference`) — read that rule, the fix is the rule's, not a guess from the message. |
+| `rubocop-harness-index.yml` in the same list | Present ⇒ the **cross-file cops** run against a project-wide index. An offence may point at a file you did not edit (a route naming a missing action, a spec running another object's job); fix it where the rule says, not by editing the file the message landed on. |
 
 If the app has **no** RuboCop setup, do not invent one unless the **task** asks
 for it. A cop switched off in the app's own `.rubocop.yml` with a reason is a

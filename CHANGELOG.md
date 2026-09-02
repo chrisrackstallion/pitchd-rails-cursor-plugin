@@ -128,6 +128,33 @@ no parser can settle — when a code comment earns its line.
   of 10: a pagination spec has to cross the page boundary to assert anything, and
   the ways around the cop — stubbing the page size, looping `create` — are worse
   than the records.
+- **`rubocop-harness-index.yml`** — the cross-file layer, on RuboCop 1.89's
+  project index (the `rubydex` gem, which your app supplies). Six
+  `AgentHarnessRails/*` cops for rules that were review-only because they span
+  files: `RouteWithoutAction` (a route naming a controller or action that does
+  not exist, `namespace` and `scope module:` resolved the way Rails does — the
+  nested-`resource`-without-`module:` pitfall `controllers.mdc` documents),
+  `ExecutedOutsideOwnSpec` (a spec running a job or mailer it does not own,
+  where "own" is the mirrored path of the defining file), `MissingOwnSpec` (a
+  concern with behaviour or a policy no spec under the mirrored directory
+  references), `MailerWithoutPreview` (a public mailer method with no method on
+  `<Mailer>Preview`), `MisfiledSpec` (a spec not at the path that mirrors where
+  its described constant is defined — the half `RSpec/SpecFilePathFormat`
+  cannot know), and `UnreferencedMethod` (a method no call, symbol or view
+  template in the project mentions). `EnqueueOutsideCommit` now follows a
+  callback into a method a concern or parent defines, and a concern's
+  `included do` callback into each includer; `ServiceObject` recognises a
+  record through any depth of inheritance.
+
+  `UnreferencedMethod` is never enabled. Its blind spot — dispatch assembled
+  from strings — is small but real, so as a gate it would cry wolf; run it with
+  `--only` as a dead-code sweep. The file also enables `Naming/PredicatePrefix`,
+  `Lint/DuplicateMethods`, `Lint/NameTypo` (constants only — with the bundle
+  unindexed the method check is silent, with it indexed every Rails-generated
+  method looks like a typo) and `Lint/MissingSuper`, each of which the index
+  makes trustworthy. Every cop returns before doing anything when the index is
+  absent, so inheriting the file without the gem costs a warning and nothing
+  else. `fixtures/index_app/` runs the layer end to end.
 
 - **`testing.mdc` § Every Assertion Must Be Able to Fail** replaces "every test
   needs at least one positive assertion", which was the wrong rule stated

@@ -244,3 +244,107 @@ AgentHarnessRails/IntentTag:
   Reference: agent_harness_rails/rules/primitives.mdc
   Include:
     - "**/spec/**/*.rb"
+
+# ---------------------------------------------------------------------------
+# Cross-file cops. Off here and switched on by rubocop-harness-index.yml, since
+# each needs the project index RuboCop builds only when that file is inherited
+# and the rubydex gem is installed. Without the index every one of them returns
+# before doing anything, so enabling them elsewhere is harmless and useless.
+# ---------------------------------------------------------------------------
+
+AgentHarnessRails/RouteWithoutAction:
+  Description: >-
+    Every routed action is defined on the controller the route resolves to,
+    namespaces and `module:` included.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/routes.mdc
+  Include:
+    - "**/config/routes.rb"
+    - "**/config/routes/**/*.rb"
+
+AgentHarnessRails/ExecutedOutsideOwnSpec:
+  Description: >-
+    Only a job's or mailer's own spec runs it with perform_now / deliver_now;
+    callers assert the enqueue.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/MissingOwnSpec:
+  Description: >-
+    A concern with behaviour and every policy has a spec under the mirrored
+    spec directory.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/app/models/concerns/**/*.rb"
+    - "**/app/policies/**/*.rb"
+  Exclude:
+    - "**/app/policies/application_policy.rb"
+
+AgentHarnessRails/MailerWithoutPreview:
+  Description: Every public mailer method has a matching method on `<Mailer>Preview`.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/mailers.mdc
+  Include:
+    - "**/app/mailers/**/*.rb"
+  Exclude:
+    - "**/app/mailers/application_mailer.rb"
+
+AgentHarnessRails/MisfiledSpec:
+  Description: A spec sits at the path that mirrors where its described constant is defined.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+  # Request and system specs describe by resource, not by the defining file;
+  # support files and factories describe nothing.
+  Exclude:
+    - "**/spec/requests/**/*"
+    - "**/spec/system/**/*"
+    - "**/spec/features/**/*"
+    - "**/spec/support/**/*"
+    - "**/spec/factories/**/*"
+
+# A sweep, not a gate: nothing enables it. Run it on purpose —
+#   bin/rubocop --only AgentHarnessRails/UnreferencedMethod
+# — with rubocop-harness-index.yml inherited so the index is built.
+AgentHarnessRails/UnreferencedMethod:
+  Description: >-
+    A method nothing in the project calls — by name, by symbol, or from a
+    template — is dead code.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/comments.mdc
+  Include:
+    - "**/app/models/**/*.rb"
+    - "**/app/helpers/**/*.rb"
+    - "**/app/policies/**/*.rb"
+  # Called by Rails or Ruby, never by app code.
+  AllowedMethods:
+    - initialize
+    - perform
+    - resolve
+    - persisted?
+    - to_key
+    - to_model
+    - model_name
+    - method_missing
+    - respond_to_missing?
+    - marshal_dump
+    - marshal_load
+  AllowedPatterns:
+    - '\Ato_'
+    - '\A(==|<=>|\[\]|eql\?|hash|each|inspect)\z'
+  # Relative to the app root. Templates are not Ruby, so the index never sees
+  # them; a token scan does.
+  TemplateGlobs:
+    - "app/views/**/*.erb"
+    - "app/views/**/*.haml"
+    - "app/views/**/*.slim"

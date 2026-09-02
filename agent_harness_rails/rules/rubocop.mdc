@@ -62,9 +62,14 @@ An app may additionally inherit **`rubocop-harness.yml`** (and
 **`rubocop-harness-rspec.yml`**) from this gem. Those enable the slice of these
 rules a parser can settle: no service objects, non-REST controller actions,
 enqueueing inside a transaction, view specs, `sleep` in specs, model and
-controller member ordering. An `AgentHarnessRails/*` offence is a **rule
-violation with a citation** — each cop names the `.mdc` file it enforces, so
-read that rule rather than pattern-matching the message.
+controller member ordering. **`rubocop-harness-index.yml`** adds the slice that
+spans files, through RuboCop's project index (the `rubydex` gem): a route naming
+an action no controller defines, a callback enqueueing through a concern's
+method, a spec running another object's job, a concern or policy with no spec,
+a mail with no preview. An `AgentHarnessRails/*` offence is a **rule violation
+with a citation** — each cop names the `.mdc` file it enforces, so read that
+rule rather than pattern-matching the message. A cross-file offence may name a
+file other than the one you edited; the fix is still the rule's.
 
 Check whether the app opted in before assuming: look for `rubocop-harness.yml`
 in its `.rubocop.yml`. If it did not, these rules still apply — they are just

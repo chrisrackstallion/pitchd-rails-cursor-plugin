@@ -54,7 +54,7 @@ Some annotations are interface or required syntax; this rule does not thin them 
 | `# Publishes the article` above `def publish` | Nothing — the name already said it |
 | Banner or section dividers (`# ---- callbacks ----`) | Conventional ordering; a file needing signposts is too big |
 | Step narration inside a method (`# now save the record`) | Extract the step into a named method, or trust the code |
-| Commented-out code kept "just in case" | Delete it — git remembers |
+| Commented-out code, or a method nothing calls, kept "just in case" | Delete it — git remembers. `AgentHarnessRails/UnreferencedMethod` finds the methods, as a sweep (`rubocop-harness-index.yml`) |
 | Dated or authored notes (`# added for billing, Jan 2026`) | Nothing — `git blame` answers both questions |
 | A `# TODO` / `# FIXME` / `# HACK` left behind | Fix it, or file it as a task or issue |
 | YARD / RDoc doc blocks on Rails classes and methods | Nothing — app code is read, not browsed as API docs |

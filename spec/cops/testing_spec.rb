@@ -369,3 +369,170 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::IntentTag, :config do
     RUBY
   end
 end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::ExecutedOutsideOwnSpec, :config do
+  let(:app) do
+    {
+      "app/jobs/notify_subscribers_job.rb" => "class NotifySubscribersJob < ApplicationJob\n  def perform(id); end\nend\n",
+      "app/mailers/user_mailer.rb" => "class UserMailer < ApplicationMailer\n  def welcome; end\nend\n"
+    }
+  end
+
+  it "flags a model spec running a job, and names the spec that owns the job" do
+    spec = <<~RUBY
+      RSpec.describe Article do
+        it "notifies" do
+          NotifySubscribersJob.perform_now(article.id)
+                               ^^^^^^^^^^^ `NotifySubscribersJob` runs for real only in spec/jobs/notify_subscribers_job_spec.rb. Here, assert `have_enqueued_job`.
+        end
+      end
+    RUBY
+    path = index_project(app.merge("spec/models/article_spec.rb" => spec), subject: "spec/models/article_spec.rb")
+
+    expect_offense(spec, path)
+  end
+
+  it "follows a parameterized mailer chain back to the mailer" do
+    spec = <<~RUBY
+      RSpec.describe Article do
+        it "welcomes" do
+          UserMailer.with(user: user).welcome.deliver_now
+                                              ^^^^^^^^^^^ `UserMailer` runs for real only in spec/mailers/user_mailer_spec.rb. Here, assert `have_enqueued_mail`.
+        end
+      end
+    RUBY
+    path = index_project(app.merge("spec/models/article_spec.rb" => spec), subject: "spec/models/article_spec.rb")
+
+    expect_offense(spec, path)
+  end
+
+  it "accepts the job's own spec running it, by constant or by described_class" do
+    spec = <<~RUBY
+      RSpec.describe NotifySubscribersJob do
+        it "notifies" do
+          NotifySubscribersJob.perform_now(1)
+          described_class.perform_now(1)
+        end
+      end
+    RUBY
+    path = index_project(app.merge("spec/jobs/notify_subscribers_job_spec.rb" => spec), subject: "spec/jobs/notify_subscribers_job_spec.rb")
+
+    expect_no_offenses(spec, path)
+  end
+
+  it "does nothing without the project index" do
+    expect_no_offenses(<<~RUBY)
+      NotifySubscribersJob.perform_now(1)
+    RUBY
+  end
+end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::MissingOwnSpec, :config do
+  let(:concern) do
+    <<~RUBY
+      module Publishable
+             ^^^^^^^^^^^ `Publishable` has no spec under spec/models/concerns/. A concern with behaviour gets its own spec file — the single home for its contract.
+        def publish; end
+      end
+    RUBY
+  end
+
+  it "flags a concern with behaviour that no spec under the mirrored directory describes" do
+    # A model spec mentioning the concern is not the concern's spec.
+    path = index_project({
+      "spec/models/article_spec.rb" => "RSpec.describe Article do\n  it { expect(Article.include?(Publishable)).to be true }\nend\n",
+      "app/models/concerns/publishable.rb" => concern
+    }, subject: "app/models/concerns/publishable.rb")
+
+    expect_offense(concern, path)
+  end
+
+  it "accepts a concern described from spec/models/concerns/" do
+    concern = "module Publishable\n  def publish; end\nend\n"
+    path = index_project({
+      "spec/models/concerns/publishable_spec.rb" => "RSpec.describe Publishable do\nend\n",
+      "app/models/concerns/publishable.rb" => concern
+    }, subject: "app/models/concerns/publishable.rb")
+
+    expect_no_offenses(concern, path)
+  end
+
+  it "leaves a concern with no methods alone — associations and scopes are not behaviour to specify" do
+    concern = <<~RUBY
+      module Publishable
+        extend ActiveSupport::Concern
+
+        included do
+          has_one :publication
+          scope :published, -> { joins(:publication) }
+        end
+      end
+    RUBY
+    path = index_project({ "app/models/concerns/publishable.rb" => concern }, subject: "app/models/concerns/publishable.rb")
+
+    expect_no_offenses(concern, path)
+  end
+
+  it "flags a policy no spec/policies/ file describes" do
+    policy = <<~RUBY
+      class ArticlePolicy < ApplicationPolicy
+            ^^^^^^^^^^^^^ `ArticlePolicy` has no spec under spec/policies/. Every policy gets a spec covering each role × action.
+        def show?
+          true
+        end
+      end
+    RUBY
+    path = index_project({ "app/policies/article_policy.rb" => policy }, subject: "app/policies/article_policy.rb")
+
+    expect_offense(policy, path)
+  end
+
+  it "does nothing without the project index" do
+    expect_no_offenses(<<~RUBY, "app/policies/article_policy.rb")
+      class ArticlePolicy < ApplicationPolicy
+        def show?
+          true
+        end
+      end
+    RUBY
+  end
+end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::MisfiledSpec, :config do
+  let(:app) { { "app/models/account/onboarding.rb" => "class Account::Onboarding\n  def complete; end\nend\n" } }
+
+  it "flags a spec that is not where the constant's defining file says it belongs" do
+    spec = <<~RUBY
+      RSpec.describe Account::Onboarding do
+                     ^^^^^^^^^^^^^^^^^^^ `Account::Onboarding` lives in app/models/account/onboarding.rb; its spec belongs at spec/models/account/onboarding_spec.rb.
+      end
+    RUBY
+    path = index_project(app.merge("spec/models/account_onboarding_spec.rb" => spec), subject: "spec/models/account_onboarding_spec.rb")
+
+    expect_offense(spec, path)
+  end
+
+  it "accepts the mirrored path" do
+    spec = "RSpec.describe Account::Onboarding do\nend\n"
+    path = index_project(app.merge("spec/models/account/onboarding_spec.rb" => spec), subject: "spec/models/account/onboarding_spec.rb")
+
+    expect_no_offenses(spec, path)
+  end
+
+  it "leaves controllers alone — request specs describe them, and controller specs are never written" do
+    spec = "RSpec.describe ArticlesController do\nend\n"
+    path = index_project({
+      "app/controllers/articles_controller.rb" => "class ArticlesController < ApplicationController\nend\n",
+      "spec/requests/articles_spec.rb" => spec
+    }, subject: "spec/requests/articles_spec.rb")
+
+    expect_no_offenses(spec, path)
+  end
+
+  it "does nothing without the project index" do
+    expect_no_offenses(<<~RUBY, "spec/models/wrong_spec.rb")
+      RSpec.describe Account::Onboarding do
+      end
+    RUBY
+  end
+end

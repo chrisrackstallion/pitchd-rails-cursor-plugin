@@ -156,3 +156,22 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::GenericOperationMethod, :config 
     RUBY
   end
 end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::ServiceObject, "with the project index", :config do
+  let(:cop_config) { { "Suffixes" => %w[Service Manager Handler Interactor Operation Command] } }
+
+  it "accepts a record reached through inheritance the superclass spelling does not reveal" do
+    model = <<~RUBY
+      class PaymentService < Billing::Record
+        def charge; end
+      end
+    RUBY
+    path = index_project({
+      "app/models/application_record.rb" => "class ApplicationRecord < ActiveRecord::Base; end\n",
+      "app/models/billing/record.rb" => "class Billing::Record < ApplicationRecord; end\n",
+      "app/models/payment_service.rb" => model
+    }, subject: "app/models/payment_service.rb")
+
+    expect_no_offenses(model, path)
+  end
+end
