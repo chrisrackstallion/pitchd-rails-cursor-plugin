@@ -69,6 +69,28 @@ RSpec.describe "shipped RuboCop configs" do
   end
 
   describe "the custom department" do
+    it "loads when ProjectIndexHelp is absent, the way RuboCop < 1.89 does" do
+      # rubocop-harness.yml requires the department. ProjectIndexHelp arrived in
+      # RuboCop 1.89; an app on 1.85 that inherits the base layer still hits this
+      # require. A bare `include ProjectIndexHelp` aborts the run — the constant
+      # is resolved from IndexHelp, and the NameError names that nesting rather
+      # than saying the mixin is missing. The include is gated and qualified so
+      # the department loads; the index cops stay silent via indexed?.
+      script = <<~RUBY
+        require "rubocop"
+        if RuboCop::Cop.const_defined?(:ProjectIndexHelp, false)
+          RuboCop::Cop.send(:remove_const, :ProjectIndexHelp)
+        end
+        require "rubocop/agent_harness_rails"
+        abort "IndexHelp did not load" unless defined?(RuboCop::Cop::AgentHarnessRails::IndexHelp)
+        abort "department did not load" unless defined?(RuboCop::Cop::AgentHarnessRails::ServiceObject)
+      RUBY
+
+      output, status = Open3.capture2e(RbConfig.ruby, "-I#{File.join(root, 'lib')}", "-e", script)
+
+      expect(status).to be_success, output
+    end
+
     it "ships a default for every cop in the AgentHarnessRails namespace" do
       defaults = load_config("config/default.yml")
       loaded = registry.grep(%r{\AAgentHarnessRails/})

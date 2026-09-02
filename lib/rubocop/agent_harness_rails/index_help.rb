@@ -8,12 +8,17 @@ module RuboCop
       # testing rule defines, and a per-index memo so a project-wide scan runs
       # once rather than once per file.
       #
-      # Every cop that includes this returns early when `project_index` is nil,
-      # which is what happens whenever an app has not inherited
-      # rubocop-harness-index.yml or has not installed the rubydex gem. Nothing
-      # here is reached in that case, so the department loads without Rubydex.
+      # Every cop that includes this returns early when there is no index —
+      # the app has not inherited rubocop-harness-index.yml, has not installed
+      # the rubydex gem, or is on a RuboCop older than 1.89, which is when
+      # ProjectIndexHelp arrived. rubocop-harness.yml requires this department
+      # on those older RuboCops too, so the include is gated and qualified:
+      # a bare `include ProjectIndexHelp` raises `IndexHelp::ProjectIndexHelp`
+      # when the mixin is missing (rubydex does not define it). Nothing here
+      # is reached without the mixin, so the department loads without Rubydex
+      # and without 1.89.
       module IndexHelp
-        include ProjectIndexHelp
+        include ::RuboCop::Cop::ProjectIndexHelp if ::RuboCop::Cop.const_defined?(:ProjectIndexHelp)
 
         class << self
           # Keyed by graph identity: RuboCop builds one index per run, and the
@@ -26,7 +31,7 @@ module RuboCop
         private
 
         def indexed?
-          !project_index.nil?
+          respond_to?(:project_index, true) && !project_index.nil?
         end
 
         def index_memo(key)

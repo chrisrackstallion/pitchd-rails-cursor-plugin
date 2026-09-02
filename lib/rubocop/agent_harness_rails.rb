@@ -19,7 +19,8 @@ end
 RuboCop::ConfigLoader.inject_defaults!(RuboCop::AgentHarnessRails::CONFIG_DEFAULT)
 
 # Shared mixins first; the cops are loaded in name order and several include
-# these.
+# these. IndexHelp optionally includes RuboCop's ProjectIndexHelp (1.89+);
+# without it the department still loads and those cops stay silent.
 require_relative "agent_harness_rails/public_methods"
 require_relative "agent_harness_rails/index_help"
 

@@ -408,6 +408,15 @@ changing the harness itself.
 
 ### Fixed
 
+- **`bin/rubocop` aborted on RuboCop < 1.89** with
+  `uninitialized constant …::IndexHelp::ProjectIndexHelp`. The mixin arrived
+  in 1.89, but `rubocop-harness.yml` requires the department on older
+  RuboCops too — and a bare `include ProjectIndexHelp` is resolved from
+  `IndexHelp`, so the NameError names that nesting even when the constant
+  is missing entirely. Installing `rubydex` does not define it. The include
+  is now gated and qualified; `indexed?` is false without `project_index`,
+  and the department loads. The index layer still needs 1.89 and rubydex.
+
 - **Capability docs in a subdirectory were silently ignored.** `Capability.load_all`
   globs one level deep, and an `intent:` tag names a bare filename with no path in
   it, so a nested doc's clauses did not exist as far as the tool was concerned —
