@@ -121,7 +121,8 @@ pointers, not restated here:
   specs, per-field system specs, Selenium-where-rack_test-passes, and more).
 - **Every assertion must be able to fail** — § Every Assertion Must Be Able
   to Fail covers unanchored absences, tautological anchors, discriminating
-  setup, recovery over error codes, finder branches, and removal receipts.
+  setup, recovery over error codes, finder branches, and task receipts —
+  a spec must earn its place apart from the task that wrote it.
 - **Running specs** — § Running Specs, § When a Run Comes Back Red, and
   § Flaky and Order-Dependent Failures: run the narrowest slice, re-run
   failures not runs, report flakes with their seed. Never call the suite
@@ -143,7 +144,7 @@ Before finishing, verify:
 - [ ] No flaky tests — no sleep, no order-dependent state
 - [ ] Transactional fixtures are on — they cover system specs too (Rails 5.1+ shares the connection); database_cleaner is unnecessary
 - [ ] Coverage went into the spec file that already owns the subject, and no redundant `it` blocks — tests with identical setup/action are merged into one
-- [ ] No removal-verification scaffolding left behind — any throwaway spec written to confirm a deletion is deleted before reporting
+- [ ] No task receipts left behind — every committed spec proves behaviour a user or caller gets; throwaway specs confirming your own change landed are deleted before reporting (`agent_harness_rails/rules/testing.mdc` § A task receipt is not a spec)
 - [ ] The commands you ran match the scope you changed, and the report names them — no full-suite run without an earned reason
 - [ ] When the app has `docs/primitives/`: every spec proving an intent clause carries its `intent:` tag per `agent_harness_rails/rules/intent-tags.mdc`, the clause lists the file in `evaluations:`, and **`agent_harness_rails evals`** is green
 

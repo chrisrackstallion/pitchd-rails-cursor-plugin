@@ -90,7 +90,7 @@ re-deriving them here. Map what they flag to verdicts:
 - Visit-only system spec (`visit` + assert, no interaction) → **MOVE** to a request spec asserting `response.body.include?`.
 - View spec (`spec/views/`, `type: :view`) → **MOVE** the rendering assertion to a request spec, then **DELETE** the file — view specs are never kept.
 - Selenium driver where `rack_test` passes → **REWRITE** to `rack_test`.
-- Unanchored `not_to` read off a page or response → **REWRITE**: add an anchor that goes red when the request breaks; keep the `not_to`. **DELETE** only a removal receipt with no behaviour behind it. A `not_to` the unit answers directly (`not_to permit`, `not_to be_published`, `not_to raise_error`) is **KEEP** — optionally **REWRITE** to the positive spelling (`expect(policy.destroy?).to be false`).
+- Unanchored `not_to` read off a page or response → **REWRITE**: add an anchor that goes red when the request breaks; keep the `not_to`. **DELETE** only a task receipt with no behaviour behind it. A `not_to` the unit answers directly (`not_to permit`, `not_to be_published`, `not_to raise_error`) is **KEEP** — optionally **REWRITE** to the positive spelling (`expect(policy.destroy?).to be false`).
 - Policy matrix walked in a request spec — or a policy spec that makes HTTP requests or **signs in via the form** → **MOVE** the matrix branches to the policy spec; the request spec keeps one authorized + one unauthorized case.
 - Happy-path triplets (same flow in model + request + system) → keep **one** home per § Ownership by Layer: the system spec keeps the canonical journey, the request spec trims to status/auth/422, the model spec to domain logic.
 - Per-field system specs, or CRUD parity (separate show/edit/delete specs with identical shape) → **MERGE** per-field assertions into the canonical create flow; **MOVE** show/edit/delete to request specs.
@@ -151,7 +151,7 @@ For every `it` block, assign one of:
 - **KEEP** — correct layer, no duplication, useful coverage. No action.
 - **MOVE** — the assertion belongs at a different layer. Write the new test at the destination first; verify it passes; then delete the source.
 - **MERGE** — collapse into another test (same setup/action, or fold a per-field spec into the canonical flow).
-- **DELETE** — the test is testing Rails, is a removal receipt, or duplicates an assertion already correctly placed elsewhere.
+- **DELETE** — the test is testing Rails, is a task receipt, or duplicates an assertion already correctly placed elsewhere.
 - **REWRITE** — keep the intent but rewrite to match harness patterns (e.g. `rack_test` instead of Selenium, inline setup instead of nested `let`).
 
 **Write the audit plan to a temporary file** (e.g. `tmp/refactor-articles-plan.md`) or print it to the user before executing. The plan should list every `it` block by file and line, with the verdict and one-line rationale. This is the artifact the user (or a reviewer) checks against the final result.
@@ -234,7 +234,7 @@ For each item in the plan:
 
 **DELETE** — remove the test. Required preconditions, **all** must be true:
 
-- The behaviour is already covered at the correct layer, **OR** the test asserts Rails framework behaviour, **OR** the test is a removal receipt — a `not_to` with no behaviour behind it, written to record that a feature is gone. A `not_to` the unit answers directly is **not** a removal receipt and is never deleted for lacking a positive assertion.
+- The behaviour is already covered at the correct layer, **OR** the test asserts Rails framework behaviour, **OR** the test is a task receipt — no behaviour behind it, written to record that a change landed (a `not_to` for a removed feature, a column or constant check for an addition; `agent_harness_rails/rules/testing.mdc` § A task receipt is not a spec). A `not_to` the unit answers directly is **not** a task receipt and is never deleted for lacking a positive assertion.
 - The test is not the only place the behaviour is asserted.
 
 If neither applies, **do NOT delete**. Write the missing lower-layer test first; then delete.
@@ -289,7 +289,7 @@ Runtime (full suite)     24s       7s
 ### Verdicts applied
 - MOVE: 7  (5 system → request, 2 request → model)
 - MERGE: 4 (CRUD parity collapsed; per-field assertions folded into create)
-- DELETE: 3 (2 visit-only system specs, 1 not_to-only removal receipt)
+- DELETE: 3 (2 visit-only system specs, 1 not_to-only task receipt)
 - REWRITE: 2 (Selenium → rack_test)
 - KEEP: 16
 
@@ -336,7 +336,7 @@ Before declaring done:
 - [ ] Baseline captured: total spec count, system-spec count, Selenium count, runtime, pass rate
 - [ ] All related specs for each input discovered (model / request / policy / job / mailer / concern / factory / support) and read
 - [ ] Audit plan written, one verdict per `it` block
-- [ ] The refactored files pass the layering items of the writing-tests checklist (`agent_harness_rails/skills/writing-tests/SKILL.md` § Verification): Five Gates, no `visit`-only or view specs, no Selenium that passes under `rack_test`, no per-field or CRUD-parity system specs, no repeated Stimulus/Turbo coverage, anchored absences, no removal receipts
+- [ ] The refactored files pass the layering items of the writing-tests checklist (`agent_harness_rails/skills/writing-tests/SKILL.md` § Verification): Five Gates, no `visit`-only or view specs, no Selenium that passes under `rack_test`, no per-field or CRUD-parity system specs, no repeated Stimulus/Turbo coverage, anchored absences, no task receipts
 - [ ] System-spec count per resource is within budget (typically 1 canonical journey; up to a few for multi-step journeys)
 - [ ] No duplicate happy-path coverage across model + request + system
 - [ ] Each assertion from the original suite is reachable at exactly one layer in the new suite

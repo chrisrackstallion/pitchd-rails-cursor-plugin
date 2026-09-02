@@ -224,6 +224,16 @@ no parser can settle — when a code comment earns its line.
   `writing-views` (naming row, anti-pattern row, verification item) and its
   patterns reference.
 
+- **A task receipt is not a spec.** `agent_harness_rails/rules/testing.mdc`
+  § Every Assertion Must Be Able to Fail generalises "removal receipts" to any
+  spec whose only job is to certify the task landed — a column exists, a
+  constant equals, a method responds, a feature is gone. A committed spec
+  must earn its place apart from the task that wrote it; scaffolding that
+  confirms your own change is deleted before reporting. Mirrored in
+  `writing-tests` (rule pointer, anti-pattern row, verification item),
+  `implementing-rails-task`, `refactoring-rails-specs` (DELETE verdict), and
+  flagged at review by `reviewing-rails-work`.
+
 - **The setup must discriminate.** `agent_harness_rails/rules/testing.mdc`
   § Every Assertion Must Be Able to Fail gains a subsection extending the
   question to positive assertions: an example whose setup gives the right and

@@ -252,6 +252,11 @@ records, pages, or states that share the asserted value is a `tactical:`
 finding, however green the run
 (`agent_harness_rails/rules/testing.mdc` § The setup must discriminate).
 
+**Task receipts in new specs:** an example that would tell a reader nothing
+once the task is forgotten — a column exists, a constant equals, a method
+responds, a feature is gone — is a `tactical:` finding to delete, not to
+anchor (`agent_harness_rails/rules/testing.mdc` § A task receipt is not a spec).
+
 **Failure and recovery paths:** read the branches the happy path skips — for
 each mutation, follow the failure to the successful retry and cover every
 record state the action's finder can produce

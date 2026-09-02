@@ -190,6 +190,7 @@ inputs — never the same path twice with different wording. Worked example:
 | Job spec re-testing what the model spec covers | Job spec tests orchestration; model spec tests the domain method the job calls |
 | Separate tests for each assertion on one action | Multiple assertions in one test for one behaviour |
 | Testing the same happy path in model + request + system | One home per behaviour — pick the right layer |
+| A spec that only certifies the task landed (column exists, constant equals, method responds, feature gone) | Delete it — a committed spec proves behaviour a user or caller gets (§ A task receipt is not a spec) |
 | An absence read off a page or response, with nothing proving the page rendered | Keep the `not_to`; anchor it with the status or a landmark the page must show |
 | A negation the unit answers directly (`not_to permit`, `not_to be_published`) treated as needing a positive assertion | Leave it alone — nothing can fail into its passing side |
 | An assertion that cannot fail (`be_a(described_class)`) added to satisfy a rule | If no honest anchor exists, the negation needed none |
@@ -390,10 +391,14 @@ A model spec covering the branch does not close this. The branch's HTTP shape �
 the status, the form that comes back, whether a resubmit reaches a route — is
 the request spec's to own (§ Ownership by Layer).
 
-#### Removal receipts still get deleted
+#### A task receipt is not a spec
 
-A spec with no behaviour behind it at all — written to record that a feature is
-gone — is not an assertion to repair. It is a spec that should not exist:
+Every committed spec must earn its place in the suite **apart from the task
+that wrote it**: strip the task away, and the example still tells a reader what
+a user or caller gets. A spec whose only job is to certify that a change landed
+— a column or index exists, a constant holds a value, a gem loads, a method
+responds, a config key is set, a former feature is gone — is a receipt, not an
+assertion to repair. It is a spec that should not exist:
 
 ```ruby
 # Bad — nothing here is a behaviour; it passes because the feature never existed
@@ -410,7 +415,7 @@ it "shows the agencies list without the excluded agency option" do
 end
 ```
 
-**Verifying a removal while you work is fine — keeping the test is not.** A throwaway `not_to` spec is legitimate scaffolding to confirm your own deletion landed: delete it before you report the task done. Nothing whose only job is to prove a former feature is gone gets committed.
+**Verifying your own change while you work is fine — keeping the test is not.** A throwaway spec confirming a deletion landed or a column arrived is legitimate scaffolding: delete it before you report the task done. Nothing whose only job is to prove the task happened gets committed.
 
 ## Running Specs
 
