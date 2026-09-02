@@ -1,0 +1,222 @@
+---
+description: Pundit policy conventions — authorization logic in dedicated policy objects. Apply when working with policies.
+globs: app/policies/**/*.rb
+alwaysApply: false
+---
+
+# Policy Conventions
+
+## Why Pundit
+
+Vanilla Rails would keep authorization in model methods and controller `before_action` guards. Pundit earns its dependency: one policy per model, one method per action, one place to look. Every controller action calls `authorize`. Every index calls `policy_scope`. Missed calls are caught by the verification callbacks — see § Verification Callbacks below.
+
+Policies answer **authorization** (“who may do this?”), not business rules (“what happens when they do?”). Domain logic stays on the model; policies compose model predicates.
+
+> **Dependency note:** Pundit is a thin library (~300 lines) providing a convention, not a framework — `authorize` and `policy_scope` in controllers mapped to plain Ruby objects; no DSL, no configuration, no runtime magic.
+
+## One Policy Per Model
+
+Every model exposed through a controller gets a policy in `app/policies/`. The policy mirrors the controller's CRUD actions.
+
+```ruby
+# app/policies/article_policy.rb
+class ArticlePolicy < ApplicationPolicy
+  def index?
+    true
+  end
+
+  def show?
+    true
+  end
+
+  def create?
+    user.present?
+  end
+
+  def update?
+    owner_or_admin?
+  end
+
+  def destroy?
+    owner_or_admin?
+  end
+
+  private
+    def owner_or_admin?
+      record.creator == user || user.admin?
+    end
+end
+```
+
+## ApplicationPolicy as Base
+
+Define sensible defaults — deny everything, then open up per-policy:
+
+```ruby
+# app/policies/application_policy.rb
+class ApplicationPolicy
+  attr_reader :user, :record
+
+  def initialize(user, record)
+    @user = user
+    @record = record
+  end
+
+  def index?   = false
+  def show?    = false
+  def create?  = false
+  def new?     = create?
+  def update?  = false
+  def edit?    = update?
+  def destroy? = false
+
+  class Scope
+    attr_reader :user, :scope
+
+    def initialize(user, scope)
+      @user = user
+      @scope = scope
+    end
+
+    def resolve
+      raise NotImplementedError, "#{self.class} must implement #resolve"
+    end
+
+    private :user, :scope
+  end
+end
+```
+
+`new?` delegates to `create?` and `edit?` to `update?` — override only when the form page itself has different access from the submission (rare).
+
+## Controller Integration
+
+Call `authorize` in every action. Pundit raises `Pundit::NotAuthorizedError` on denial — handle it once in `ApplicationController` (see § Verification Callbacks):
+
+```ruby
+class ArticlesController < ApplicationController
+  def show
+    @article = Article.find(params[:id])
+    authorize @article
+  end
+
+  def create
+    @article = Article.new(article_params)
+    authorize @article
+
+    if @article.save
+      redirect_to @article
+    else
+      render :new, status: :unprocessable_content
+    end
+  end
+end
+```
+
+## Scoping Collections
+
+Use `policy_scope` in index actions to filter records, then authorize `index?` — typically with the model class (matches common Pundit usage). Assign the scoped relation to an instance variable for the view; you can pass the scoped relation to `authorize` instead if `index?` needs it.
+
+```ruby
+def index
+  @articles = policy_scope(Article).chronologically
+  authorize Article
+end
+```
+
+Alternatively: `authorize @articles` — Pundit passes the relation as `record` to `index?`. Pick one style and stay consistent.
+
+## Verification Callbacks
+
+Default posture: `after_action :verify_authorized` on every action and `after_action :verify_policy_scoped, only: :index`, set once in `ApplicationController`, so a missed `authorize` or `policy_scope` raises during the request — in all environments, unless you customize Pundit or disable those callbacks.
+
+```ruby
+class ApplicationController < ActionController::Base
+  include Pundit::Authorization
+
+  after_action :verify_authorized
+  after_action :verify_policy_scoped, only: :index
+
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  private
+    def user_not_authorized
+      flash[:alert] = "You are not authorized to perform this action."
+      redirect_back_or_to(root_path)
+    end
+end
+```
+
+`verify_authorized` raises if the action never called `authorize`. `verify_policy_scoped` with `only: :index` raises if `index` never called `policy_scope`; it does **not** cover other actions that call `policy_scope` — widen `only:` / `except:` where needed. For actions that intentionally have no authorization or scoping (public pages, health checks), use `skip_after_action` explicitly — worked examples: `agent_harness_rails/skills/writing-policies/references/patterns.md` § Skipping Verification.
+
+## Decision Framework
+
+**"Which policy does this action belong on?"** The question is never "does this need a policy?" but "which policy?" — every controller action calls `authorize`, including index.
+- All actions are RESTful CRUD — no custom action methods on policies
+- Standard resource → `ArticlePolicy` with `index?`, `show?`, `create?`, `update?`, `destroy?`
+- State-change noun resource (e.g., `Cards::ClosuresController`) → `Cards::ClosurePolicy` with `create?`/`destroy?`
+- Never add non-CRUD methods like `close?` or `publish?` — those are verbs, and the controller convention maps them to CRUD on a noun
+
+**"What does this method receive?"**
+- Policies see `user` (whatever `pundit_user` returns — often `Current` or `Current.user`) and `record` (the model instance)
+- Policies do NOT see `request`, `params`, `session`, or controller state
+- If a permission depends on request context, the controller decides that before calling `authorize`
+
+**"Is this authorization or business logic?"**
+- "Can this user edit this article?" → authorization → policy
+- "Is this article publishable?" → business logic → model method
+- "Can this user publish this article?" → authorization → policy
+- "What happens when an article is published?" → business logic → model
+
+**"Should I use a scope or filter in the controller?"**
+- Filtering records by what the user can see → `policy_scope` in the policy
+- Filtering records by query params (search, status) → named scope on the model
+- Both → `policy_scope(Article).search(params[:q])` — compose them
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Authorization *policy* checks in controller `before_action` | `authorize @record` in the action body — use `before_action` for authentication (`authenticate_user!`, session), not for Pundit |
+| Mirroring the full permission matrix on the model (`editable_by?` everywhere) | Policy methods (`update?`); keep domain predicates on the model (`published?`, `owned_by?(user)`) and call them from policies |
+| Checking `current_user.admin?` inline in actions | Policy method encapsulates the check |
+| Giant case/switch in a single permission method | One policy method per CRUD action |
+| Custom verb methods (`close?`, `publish?`) | CRUD only — state changes map to `create?`/`destroy?` on a noun-resource policy |
+| Skipping authorize for any action (including index) | `after_action :verify_authorized` — use `skip_after_action` only when an action intentionally has no authorization |
+| Skipping `policy_scope` on index when the listing is user-specific | `policy_scope` in index; the default `verify_policy_scoped, only: :index` callback catches it — `skip_after_action` where intentional |
+| `unless` / negative conditionals in policy methods | Positive assertions: `user.admin?`, not `!user.banned?` (extract predicates) |
+| Separate policies for new/edit that differ from create/update | `new?` delegates to `create?`, `edit?` delegates to `update?` |
+| Policy reaching into `request` or `params` | Policies only see `user` and `record` |
+| Business logic in policies | Policies answer "can this user do this?" — nothing else |
+| Policy returning data or performing side effects | Return `true` / `false` only |
+| Raising `Pundit::NotAuthorizedError` manually | `authorize record` (with `policy_class:` when needed) — Pundit raises when the policy denies |
+| Re-checking in the controller or view what the policy already decides (inline role/ownership conditionals around an authorized action or in ERB) | One gate, one home: `authorize` in the action, `policy(record).action?` in views — never a second copy of the logic |
+
+## Naming
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Policy class | Model name + `Policy` | `ArticlePolicy`, `CommentPolicy` |
+| Policy file | `app/policies/model_policy.rb` | `app/policies/article_policy.rb` |
+| Action methods | CRUD action + `?` | `show?`, `create?`, `update?`, `destroy?` — no custom verbs |
+| State-change policy | Noun-resource namespace | `Cards::ClosurePolicy`, `Articles::PublicationPolicy` |
+| Scope class | Nested `Scope` inside the policy | `ArticlePolicy::Scope` |
+| Base policy | `ApplicationPolicy` | `app/policies/application_policy.rb` |
+| Namespaced policies | Match controller namespace | `Admin::ArticlePolicy` |
+| Private helpers | Descriptive predicate | `owner_or_admin?`, `member_of_team?` |
+
+## Verification
+
+Before finishing, verify:
+
+- [ ] Every controller action calls `authorize` — including index
+- [ ] Index actions use `policy_scope` to filter records, then `authorize` (typically `authorize Model`)
+- [ ] `after_action :verify_authorized` and `after_action :verify_policy_scoped, only: :index` are in `ApplicationController` (§ Verification Callbacks); `skip_after_action` only where intentional
+- [ ] Policy defaults to deny (inherits from `ApplicationPolicy` which returns `false`)
+- [ ] `new?` delegates to `create?`, `edit?` delegates to `update?`
+- [ ] Policy only receives `user` and `record` — no controller state leaks in
+- [ ] Policy methods return `true`/`false` only — no side effects
+- [ ] Scope's `resolve` returns an `ActiveRecord::Relation`, not an array
+- [ ] Views use `policy(@record).action?` for conditional display
+- [ ] Policy spec exists with tests for each role × action combination — `Policy.new`’s first argument matches `pundit_user` (`User` vs `Current`; see `agent_harness_rails/skills/writing-tests/references/support-specs.md` § When `pundit_user` is `Current`)
+- [ ] No full permission matrix duplicated in models or in controller `before_action` callbacks

@@ -1,0 +1,105 @@
+# The cross-file layer — opt-in, and separate again.
+#
+#   # .rubocop.yml in your app
+#   inherit_gem:
+#     rubocop-rails-omakase: rubocop.yml
+#     agent_harness_rails:
+#       - rubocop.yml
+#       - rubocop-harness.yml
+#       - rubocop-harness-index.yml   # this file
+#
+# REQUIRES RuboCop >= 1.89 and, in your own Gemfile,
+#
+#   gem "rubydex", require: false
+#
+# RuboCop then builds one project-wide index per run — every declaration, its
+# ancestry, every constant and method reference — and hands it to cops that ask.
+# Without the gem RuboCop prints a warning and every cop below stays silent, so
+# inheriting this file never breaks a run; it only fails to add to it.
+#
+# Split from rubocop-harness.yml for the same reason the rspec layer is: a gem
+# with a native extension and an indexing pass are a real cost, and the choice to
+# pay it is the app's. What it buys is the rules that were review-only because
+# they span files: a route naming an action no controller defines, a callback
+# enqueueing through a method a concern holds, a spec running another object's
+# job, a concern or policy nobody specced, a mail nobody can preview.
+#
+# WHAT THE INDEX CANNOT SEE: methods Rails generates from `scope`, `enum` and
+# associations; names passed as symbols to callbacks; local variable types; ERB.
+# Every cop here is built on declarations, ancestry and reference locations, and
+# under-reports rather than guesses where the index is blind.
+
+AllCops:
+  UseProjectIndex: true
+  # Left off on purpose. Indexing the bundle resolves ActiveRecord::Base, and
+  # from then on Lint/NameTypo's method check treats every scope and enum
+  # predicate as a typo. Turn it on only with that cop's method check off.
+  # ProjectIndexIncludesGems: true
+
+require:
+  - rubocop/agent_harness_rails
+
+# ---------------------------------------------------------------------------
+# Existing cops the index makes trustworthy
+# ---------------------------------------------------------------------------
+# "`is_active`, `is_locked` -> `active`, `locked`" —
+# agent_harness_rails/rules/naming.mdc. Here rather than in rubocop-harness.yml
+# because this file pins the RuboCop floor that has the cop under this name,
+# and because the index lets it skip overrides of inherited predicates.
+Naming/PredicatePrefix:
+  Enabled: true
+
+# A model reopened across app/models/article.rb and app/models/article/*.rb
+# defining the same method twice — now seen across files.
+Lint/DuplicateMethods:
+  Enabled: true
+
+# Constant typos across files. The method check stays off: without the bundle
+# indexed it is silent anyway, and with it every Rails-generated method looks
+# like a typo.
+Lint/NameTypo:
+  Enabled: true
+  CheckMethods: false
+
+# POROs take their aggregate in `initialize`
+# (agent_harness_rails/rules/services.mdc); the index verifies a stateless
+# ancestry, so a PORO with no inherited initialize is no longer a false positive.
+Lint/MissingSuper:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# The harness's cross-file cops — see config/default.yml for their scoping
+# ---------------------------------------------------------------------------
+AgentHarnessRails/RouteWithoutAction:
+  Enabled: true
+AgentHarnessRails/ExecutedOutsideOwnSpec:
+  Enabled: true
+AgentHarnessRails/MissingOwnSpec:
+  Enabled: true
+AgentHarnessRails/MailerWithoutPreview:
+  Enabled: true
+AgentHarnessRails/MisfiledSpec:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Sweeps — deliberately not enabled
+# ---------------------------------------------------------------------------
+# Two cops find methods nothing calls. Both are blind to dispatch assembled from
+# strings, so as gates they would cry wolf; as an occasional sweep they find
+# real dead code. Run them by name — `--only` runs a cop whether or not config
+# enables it:
+#
+#   bin/rubocop --only Lint/UnusedPrivateMethod,AgentHarnessRails/UnreferencedMethod
+#
+# The harness's own cop is the Rails-aware one: it counts symbols in every
+# indexed file and identifiers in every view template as uses, and exempts the
+# names Rails calls by convention (agent_harness_rails/rules/comments.mdc).
+
+# ---------------------------------------------------------------------------
+# Opting out
+# ---------------------------------------------------------------------------
+# As in rubocop-harness.yml: put the override in your own .rubocop.yml with the
+# reason, and it wins.
+#
+#   AgentHarnessRails/MailerWithoutPreview:
+#     Exclude: [ "app/mailers/system_mailer.rb" ]   # Internal alerts; no preview.

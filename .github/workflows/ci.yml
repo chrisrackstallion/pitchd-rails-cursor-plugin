@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The declared floor (see required_ruby_version in the gemspec) and
+        # current Ruby. The dev bundle resolves on both, so the floor needs no
+        # special handling — if a dependency drops it, bundle install on the
+        # floor entry is where that surfaces.
+        ruby: ["3.3", "4.0"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      # Every internal reference must resolve and be written in the canonical
+      # agent_harness_rails/... form. Nothing else catches a typo'd path, which
+      # would otherwise fail silently inside an agent at runtime.
+      - name: Check harness references
+        run: bin/check-references
+
+      # `rake` with no task runs the default: :spec then :rubocop (see Rakefile).
+      # Named here because the command alone does not say so, and a reader
+      # checking whether CI runs the suite should not have to open another file.
+      - name: Specs and RuboCop
+        run: bundle exec rake
+
+      - name: Build gem
+        run: gem build agent_harness_rails.gemspec
+
+      # Installing into a scratch project proves the payload, the links, and the
+      # manifest all survive packaging — and that check passes on a fresh install.
+      - name: Install into a fixture app and verify
+        run: |
+          mkdir -p /tmp/fixture-app
+          ruby -Ilib exe/agent_harness_rails install --path /tmp/fixture-app
+          ruby -Ilib exe/agent_harness_rails check --path /tmp/fixture-app

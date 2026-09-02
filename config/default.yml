@@ -1,0 +1,350 @@
+# Defaults for the AgentHarnessRails cop department.
+#
+# Injected by lib/rubocop/agent_harness_rails.rb, which an app loads only by
+# inheriting rubocop-harness.yml. Every cop names the rule file it enforces in
+# its Reference, so an offence leads back to the prose that explains it.
+#
+# Each cop is scoped by Include rather than by checking paths in Ruby, so an app
+# with an unusual layout can widen or narrow it without patching a cop.
+
+AgentHarnessRails:
+  Enabled: true
+
+AgentHarnessRails/ServiceObject:
+  Description: >-
+    Business logic belongs on the model, in a PORO namespaced under it, or in a
+    job — not in an app/services/ wrapper.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/services.mdc
+  Include:
+    - "**/app/**/*.rb"
+    - "**/lib/**/*.rb"
+  Suffixes:
+    - Service
+    - Manager
+    - Handler
+    - Interactor
+    - Operation
+    - Command
+
+AgentHarnessRails/GenericOperationMethod:
+  Description: >-
+    Name the domain verb (complete, import, publish) rather than call/execute/run.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/services.mdc
+  Include:
+    - "**/app/models/**/*.rb"
+  ForbiddenMethods:
+    - call
+    - execute
+    - run
+  # `perform` is the ActiveJob contract.
+  AllowedMethods:
+    - perform
+
+AgentHarnessRails/NonRestfulAction:
+  Description: >-
+    A public controller method outside the seven REST actions wants to be a
+    resource of its own.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/controllers.mdc
+  Include:
+    - "**/app/controllers/**/*.rb"
+  AllowedActions:
+    - index
+    - show
+    - new
+    - create
+    - edit
+    - update
+    - destroy
+
+AgentHarnessRails/CsrfSkip:
+  Description: Do not disable CSRF verification.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/controllers.mdc
+  Include:
+    - "**/app/controllers/**/*.rb"
+
+AgentHarnessRails/EnqueueOutsideCommit:
+  Description: >-
+    Enqueue from after_*_commit, not from callbacks that run inside the
+    transaction.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/jobs.mdc
+  Include:
+    - "**/app/models/**/*.rb"
+
+AgentHarnessRails/MailerDeliverNow:
+  Description: Prefer deliver_later so sending does not block the request.
+  Enabled: true
+  VersionAdded: '0.2'
+  # The swap changes behaviour — sending becomes asynchronous, needs a queue
+  # adapter, and returns a MessageDelivery rather than the Mail::Message — so
+  # only `rubocop -A` applies it.
+  SafeAutoCorrect: false
+  Reference: agent_harness_rails/rules/mailers.mdc
+  Include:
+    - "**/app/**/*.rb"
+  # deliver_now is correct in all three of these.
+  Exclude:
+    - "**/spec/**/*"
+    - "**/test/**/*"
+    - "**/*_preview.rb"
+    - "**/lib/tasks/**/*"
+
+AgentHarnessRails/PolicyVerbMethod:
+  Description: Policy permission methods are CRUD + `?`; state changes get a noun-resource policy.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/policies.mdc
+  Include:
+    - "**/app/policies/**/*.rb"
+  AllowedMethods:
+    - index?
+    - show?
+    - new?
+    - create?
+    - edit?
+    - update?
+    - destroy?
+
+AgentHarnessRails/PolicyContext:
+  Description: Policies see only `user` and `record`, never the request.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/policies.mdc
+  Include:
+    - "**/app/policies/**/*.rb"
+
+AgentHarnessRails/DeepNestedResources:
+  Description: "Nest routes one level, then use `shallow: true` or split the resource."
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/routes.mdc
+  Include:
+    - "**/config/routes.rb"
+    - "**/config/routes/**/*.rb"
+  Max: 2
+
+AgentHarnessRails/MigrationDataChange:
+  Description: Keep backfills out of schema migrations.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/migrations.mdc
+  Include:
+    - "**/db/migrate/**/*.rb"
+
+AgentHarnessRails/SpecSleep:
+  Description: Do not sleep in specs; matchers wait, assertions are explicit.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+    - "**/test/**/*.rb"
+
+AgentHarnessRails/StubbedSubject:
+  Description: Do not stub the object under test, or every instance of a class.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/ViewSpec:
+  Description: View specs are never written; request specs own rendering.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/UnanchoredAbsence:
+  Description: >-
+    An example that only asserts absences, over a document or after a request,
+    needs an anchor that goes red when the request breaks.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+  # Reading one of these is reading a by-product: whatever the matcher then asks,
+  # the answer is shaped by machinery that can fail into the passing side.
+  DocumentSubjects:
+    - page
+    - response
+    - last_response
+    - rendered
+  # And these read a document whatever they were handed.
+  DocumentMatchers:
+    - have_content
+    - have_text
+    - have_link
+    - have_button
+    - have_field
+    - have_selector
+    - have_css
+    - have_xpath
+    - have_title
+    - have_table
+    - have_select
+    - have_checked_field
+    - have_unchecked_field
+    - have_current_path
+    - have_http_status
+  # An example that drives a request or a browser has machinery in it, so an
+  # assertion about what is *not* there says nothing about whether it ran.
+  # Deliberately not `perform_now` or a model verb: those raise on the way past,
+  # so a hard failure surfaces as an error rather than as a green negation.
+  ActionMethods:
+    - visit
+    - get
+    - post
+    - patch
+    - put
+    - delete
+    - head
+    - click_on
+    - click_link
+    - click_button
+    - fill_in
+    - choose
+    - check
+    - uncheck
+    - select
+    - attach_file
+
+AgentHarnessRails/TautologicalAssertion:
+  Description: An assertion no change to the application could turn red anchors nothing.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/HttpStatusComparison:
+  Description: Assert the response status itself, never a range around it.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+    - "**/test/**/*.rb"
+
+AgentHarnessRails/IntentTag:
+  Description: "Intent metadata reads `<capability>#I<n>` and sits on the example, not the group."
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/primitives.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+# ---------------------------------------------------------------------------
+# Cross-file cops. Off here and switched on by rubocop-harness-index.yml, since
+# each needs the project index RuboCop builds only when that file is inherited
+# and the rubydex gem is installed. Without the index every one of them returns
+# before doing anything, so enabling them elsewhere is harmless and useless.
+# ---------------------------------------------------------------------------
+
+AgentHarnessRails/RouteWithoutAction:
+  Description: >-
+    Every routed action is defined on the controller the route resolves to,
+    namespaces and `module:` included.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/routes.mdc
+  Include:
+    - "**/config/routes.rb"
+    - "**/config/routes/**/*.rb"
+
+AgentHarnessRails/ExecutedOutsideOwnSpec:
+  Description: >-
+    Only a job's or mailer's own spec runs it with perform_now / deliver_now;
+    callers assert the enqueue.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+
+AgentHarnessRails/MissingOwnSpec:
+  Description: >-
+    A concern with behaviour and every policy has a spec under the mirrored
+    spec directory.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/app/models/concerns/**/*.rb"
+    - "**/app/policies/**/*.rb"
+  Exclude:
+    - "**/app/policies/application_policy.rb"
+
+AgentHarnessRails/MailerWithoutPreview:
+  Description: Every public mailer method has a matching method on `<Mailer>Preview`.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/mailers.mdc
+  Include:
+    - "**/app/mailers/**/*.rb"
+  Exclude:
+    - "**/app/mailers/application_mailer.rb"
+
+AgentHarnessRails/MisfiledSpec:
+  Description: A spec sits at the path that mirrors where its described constant is defined.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/**/*.rb"
+  # Request and system specs describe by resource, not by the defining file;
+  # support files and factories describe nothing.
+  Exclude:
+    - "**/spec/requests/**/*"
+    - "**/spec/system/**/*"
+    - "**/spec/features/**/*"
+    - "**/spec/support/**/*"
+    - "**/spec/factories/**/*"
+
+# A sweep, not a gate: nothing enables it. Run it on purpose —
+#   bin/rubocop --only AgentHarnessRails/UnreferencedMethod
+# — with rubocop-harness-index.yml inherited so the index is built.
+AgentHarnessRails/UnreferencedMethod:
+  Description: >-
+    A method nothing in the project calls — by name, by symbol, or from a
+    template — is dead code.
+  Enabled: false
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/comments.mdc
+  Include:
+    - "**/app/models/**/*.rb"
+    - "**/app/helpers/**/*.rb"
+    - "**/app/policies/**/*.rb"
+  # Called by Rails or Ruby, never by app code.
+  AllowedMethods:
+    - initialize
+    - perform
+    - resolve
+    - persisted?
+    - to_key
+    - to_model
+    - model_name
+    - method_missing
+    - respond_to_missing?
+    - marshal_dump
+    - marshal_load
+  AllowedPatterns:
+    - '\Ato_'
+    - '\A(==|<=>|\[\]|eql\?|hash|each|inspect)\z'
+  # Relative to the app root. Templates are not Ruby, so the index never sees
+  # them; a token scan does.
+  TemplateGlobs:
+    - "app/views/**/*.erb"
+    - "app/views/**/*.haml"
+    - "app/views/**/*.slim"

@@ -1,0 +1,96 @@
+---
+description: >-
+  RuboCop must pass with zero offences: fix code, never disable cops in source
+  or config. Full bin/rubocop green before work is complete. Apply when editing
+  Ruby or Rake files.
+globs: "**/*.{rb,rake}"
+alwaysApply: false
+---
+
+# RuboCop (Rails + omakase-shaped)
+
+## Zero offences — non-negotiable
+
+- **`bin/rubocop`** must finish with **exit code 0** and **no offences** for the work you are finishing. Do not report **DONE** or hand off for review until that is true (when the app uses RuboCop).
+- **Fix offences in code** — refactor, rename, extract, or adjust implementation so the cop is satisfied.
+
+## Never suppress
+
+- **No** `# rubocop:disable` / `:enable` / inline directive comments (or any RuboCop comment that turns cops off).
+- **No** disabling or excluding cops in **`.rubocop.yml`** or any other RuboCop config to “make green” — that is the same failure mode as inline disables.
+- **No** **`.rubocop_todo.yml`** — do not use or keep it. Fix every offence in code, then **delete** that file from the project so nothing is deferred.
+- Do **not** add new `Exclude:` / `Enabled: false` entries to silence offences on your changes.
+
+### The one carve-out: a standing, human-owned opt-out
+
+An app may decide that one **harness** cop does not fit it, and record that once
+in its own `.rubocop.yml` with a reason. That is a policy decision about the
+app, not a way to get a branch green, and the two are distinguished by **who,
+when, and why** — not by the YAML, which looks identical:
+
+| | Who | Verdict |
+|---|---|---|
+| Suppressing an offence on work in progress — inline disable, a new `Exclude:`, `.rubocop_todo.yml` | Agent or human | **Forbidden**, as above |
+| A standing decision that a harness cop does not suit this app, recorded with a reason comment | **Human only** | **Allowed** |
+
+In the app's `.rubocop.yml` it looks like this:
+
+```yaml
+Layout/ClassStructure:
+  Enabled: false            # We order models by reading flow, not macro type.
+```
+
+Agents: **never add one, never re-enable one, never route around one, and never
+report one as a finding.** Raise it as a review observation if you think it is
+wrong. This mirrors `compilation.md` ownership in
+`agent_harness_rails/rules/primitives.mdc` — app-wide constraints are the
+human's, and agents propose rather than edit.
+
+The carve-out covers only the **`AgentHarnessRails/*`** cops and the cops the
+harness's opt-in configs enable. Everything in the app's baseline ruleset —
+`rubocop-rails-omakase` and whatever else it inherits — keeps zero-offences
+unchanged.
+
+## Source of truth (baseline only)
+
+- **Follow the app’s** `.rubocop.yml` and inherited packs (e.g. **`rubocop-rails-omakase`** via `inherit_gem`) as the **ruleset** — not as permission to opt out per file.
+- **`rubocop-rails`** is the Rails plugin; **`rubocop-rails-omakase`** is an inherited **config pack** — they are not the same thing.
+
+## The harness cop layer (only if the app opts in)
+
+An app may additionally inherit **`rubocop-harness.yml`** (and
+**`rubocop-harness-rspec.yml`**) from this gem. Those enable the slice of these
+rules a parser can settle: no service objects, non-REST controller actions,
+enqueueing inside a transaction, view specs, `sleep` in specs, model and
+controller member ordering. **`rubocop-harness-index.yml`** adds the slice that
+spans files, through RuboCop's project index (the `rubydex` gem): a route naming
+an action no controller defines, a callback enqueueing through a concern's
+method, a spec running another object's job, a concern or policy with no spec,
+a mail with no preview. An `AgentHarnessRails/*` offence is a **rule violation
+with a citation** — each cop names the `.mdc` file it enforces, so read that
+rule rather than pattern-matching the message. A cross-file offence may name a
+file other than the one you edited; the fix is still the rule's.
+
+Check whether the app opted in before assuming: look for `rubocop-harness.yml`
+in its `.rubocop.yml`. If it did not, these rules still apply — they are just
+enforced by review instead.
+
+**Green still does not mean right.** ERB, Stimulus, and Tailwind get no cop
+coverage at all, and thin controllers, jobs that delegate, and one-home-per-behaviour
+are judgment. The layer narrows what review has to catch; it does not replace it.
+
+## How to run and fix
+
+- **`bin/rubocop`** from the Rails app root (match **CI**). Use **`bin/rubocop -a`** / **`--autocorrect`** first; use **`-A`** / **`--autocorrect-all`** only when you read the diff and behaviour stays correct.
+- During iteration you may pass **paths**; before **done**, run **`bin/rubocop`** on the **whole project** (no path args) unless CI explicitly scopes differently — default assumption is **full tree green**.
+
+## When you cannot fix (rare)
+
+- If an offence cannot be resolved correctly without a policy call (true edge case), **stop**: status **BLOCKED**, with the cop name, the offence, what you tried, and what the user must decide. **Do not** ship with offences or suppressions.
+- When the blocker is a **harness cop that is genuinely wrong for this app** — not wrong for this branch — the escalation is the same **BLOCKED**, plus the opt-out you would **propose**. Never apply it: the opt-out is the human's to make (worked message in the skill).
+
+## What green does not mean
+
+- Passing RuboCop does **not** prove well-shaped Rails design (REST, fat models, thin controllers). It is still **required** before completion — pair with **tests** per the repo.
+
+For procedure — the baseline reading table, the fix loop, the cop-dodge examples, and the worked BLOCKED message — use **`agent_harness_rails/skills/running-rubocop/SKILL.md`**.

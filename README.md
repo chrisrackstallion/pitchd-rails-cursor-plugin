@@ -1,82 +1,143 @@
-# pitchd-rails (Cursor + Claude Code plugin)
+# agent_harness_rails
 
-A plugin for [Cursor](https://cursor.com) and [Claude Code](https://claude.com/claude-code) with **rules**, **skills**, and **agents** for building **Rails** applications the way we like: grounded in **DHH and 37signals** (omakase, majestic monolith, REST-shaped boundaries, Hotwire-first front ends) with a few **Pitchd-specific** preferences layered on top.
+A harness for coding agents working on Rails apps, built around one idea: **keep a durable record of what your app must do, and prove it with tests.**
 
-Cursor metadata lives in [`.cursor-plugin/plugin.json`](.cursor-plugin/plugin.json) and [`.cursor-plugin/marketplace.json`](.cursor-plugin/marketplace.json); Claude Code metadata lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json). Both manifests point at the same `skills/`, `agents/`, and `rules/` directories — there's no duplication between the two.
+That record is the **primitives tree**. Around it, the gem ships the skills, rules, and agent definitions that teach [Cursor](https://cursor.com) and [Claude Code](https://claude.com/claude-code) to build Rails the omakase way — and to keep the record alive as a side effect of planning, implementing, and reviewing.
 
-## Installing in Cursor
+## Primitives
 
-Once listed on the Cursor Marketplace, install **Pitchd Rails** from the in-app plugin marketplace.
+Code can't carry *why*. It shows what the app does today, not what it must keep doing, which alternatives were rejected, or which test proves which promise. When agents write most of the code, that knowledge evaporates unless something holds it.
 
-Until then, use it from a local checkout: clone this repo and open it in (or add it to) your workspace — Cursor reads the `.cursor-plugin` manifest and discovers `rules/`, `skills/`, and `agents/` from the repo root. The repo passes the official [cursor/plugin-template](https://github.com/cursor/plugin-template) validation (`node scripts/validate-template.mjs`).
+The primitives tree is that something: plain markdown in `docs/primitives/`, one doc per capability, four sections each.
 
-## Installing in Claude Code
+| Section | Holds |
+| --- | --- |
+| **Intent** | Numbered clauses stating what must be true. `I1 — A reader can reply to any comment.` |
+| **Shape** | Constraints the implementation must respect, beyond the framework defaults |
+| **Evaluations** | Which spec proves each clause |
+| **Provenance** | Append-only history: decisions, rejected alternatives, accepted debt |
 
-Clone this repo locally, then from any Claude Code session:
+Intent and evaluations live in YAML frontmatter so tools can check them. Each proving example carries its clause id as RSpec metadata:
+
+```ruby
+it "shows replies nested under their parent", intent: "comment_threads#I2" do
+```
+
+The same tag runs the proof on demand: `bundle exec rspec --tag 'intent:comment_threads#I2'`.
+
+### Three tools keep the record true
+
+**`evals`** — a CI check that every clause is proven, in both directions: a clause with no spec fails, and a tag pointing at a clause that no longer exists fails. It parses statically — no database, no Rails boot — so it runs in any CI job.
+
+```console
+$ bundle exec agent_harness_rails evals
+docs/primitives/capabilities/comment_threads.md
+  12:1   E  I3 has no evaluation — a built clause must name the spec that proves it   [clause/unproven]
+
+3 capabilities, 14 clauses — 1 offence
+```
+
+**`guard`** — compares the tree against a base revision and reports what got smaller or different: a clause reworded under the same id, a proving example that lost assertions. Growth is silent by design; only shrinkage or substitution needs your attention. Everything it prints is a notice, never a failure — agents read their own notices and restore proof they dropped by accident, and intent notices come to you, because only the user's decision changes intent.
+
+```console
+$ bundle exec agent_harness_rails guard --base main
+spec/system/comment_threads_spec.rb
+  7:1   N  the example proving comment_threads#I2 lost 1 assertion(s) — it still carries the tag while proving less of the clause   [proof/weakened]
+```
+
+**`proofs`** — a lookup, not a check: the tagged examples proving each clause, to hold against the plan's proof set — a planned example missing from the listing never got its tag, or never got written. `proofs --since main` counts them per clause a branch touched, which is the shape a task's verify step runs; `--format json` carries the untagged examples too.
+
+### The record stays alive on its own
+
+You never "go document things." Planning writes intent clauses. Execution close-out fills in evaluations and provenance. Review checks traceability. The workflows below do this automatically whenever a `docs/primitives/` tree exists — and skip it cleanly when one doesn't.
+
+To adopt it, ask your agent to **"set up primitives"** (the `bootstrapping-primitives` skill scaffolds the tree and interviews you for app-wide constraints). Backfills, provenance questions, and health passes go through `maintaining-primitives`.
+
+## Install
+
+```ruby
+# Gemfile
+group :development do
+  gem "agent_harness_rails", require: false
+end
+```
+
+```bash
+bundle install
+bundle exec agent_harness_rails install
+git add -A && git commit -m "Install agent harness"
+```
+
+`install` vendors the harness into `agent_harness_rails/` and points both editors at it with symlinks:
 
 ```
-/plugin marketplace add /path/to/pitchd-rails-cursor-plugin
-/plugin install pitchd-rails-cursor-plugin@pitchd-rails
+myapp/
+  agent_harness_rails/          # the harness — commit this
+    skills/  rules/  agents/
+  .claude/skills        -> ../agent_harness_rails/skills
+  .claude/agents        -> ../agent_harness_rails/agents
+  .cursor/skills        -> ../agent_harness_rails/skills
+  .cursor/agents        -> ../agent_harness_rails/agents
+  .cursor/rules/harness -> ../../agent_harness_rails/rules
 ```
 
-This adds the local checkout as a marketplace (via [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)) and installs the plugin from it — `skills/` and `agents/` are auto-discovered, so the workflows below work the same way they do in Cursor. Pull the repo to pick up updates, then run `/plugin marketplace update pitchd-rails` (or reinstall) to refresh.
+Teammates clone the repo and it works — no bundle step needed to *use* the harness, only to update it. Anything already in `.claude/` or `.cursor/` is moved into the shared directory first, so both editors see it; your files stay yours and are never overwritten on update.
 
-## What you can do
+| Command | What it does |
+| --- | --- |
+| `install` | vendor the harness and create the links (idempotent) |
+| `update` | re-vendor after `bundle update`, reporting what changed |
+| `check` | verify the vendored harness matches the gem — use in CI |
+| `evals` | check every intent clause is proven — use in CI |
+| `guard --base <rev>` | report what a change did to intent and its proofs |
+| `proofs <scope>` | list the examples proving a clause |
 
-### Write a plan
-> *"Write a plan for adding comment threads to posts"*
+## The Rails harness
 
-Use the **`writing-pitchd-rails-plans`** skill. It turns a spec or feature description into a checklisted implementation plan — exact file paths, real Ruby snippets, RSpec commands, and REST-shaped decomposition. A philosophy check and a tactical pass run before you see the final plan.
+The rest of the payload is conventions: opinionated Rails best practice — omakase defaults, majestic monolith, REST-shaped boundaries, server-owned truth, Hotwire-first front ends.
 
-### Execute a plan
-> *"Execute the plan"*
+- **Workflow skills** — say it, and the agent picks the right one:
+  - *"I want to let people follow projects, not sure how it should work"* → `brainstorming-rails-omakase` shapes the idea into an approved spec before any code.
+  - *"Write a plan for comment threads"* → `writing-rails-plans` produces a checklisted plan with real file paths and code, reviewed before you see it.
+  - *"Execute the plan"* → `executing-rails-plan` delegates each task to an implementor subagent and loops a reviewer on it until approved.
+  - *"Review this PR"* → `reviewing-rails-work` checks philosophy first (is this the right kind of Rails solution?), then tactics.
+  - *"The system specs are too heavy"* → `refactoring-rails-specs` rebalances a test suite layer by layer. `refactoring-stimulus-controllers` does the same for a Stimulus fleet.
+  - *"How should I handle this in Rails?"* → `rails-omakase-compass`, the philosophy reference behind everything else.
+- **Layer skills and rules** — `writing-models`, `writing-controllers`, `writing-tests`, and a dozen more, each paired with an `.mdc` rule file. Cursor attaches rules by glob; skills open them by path.
+- **Agents** — subagent definitions for implementation, review, querying, and primitives maintenance.
 
-Use the **`executing-pitchd-rails-plan`** skill. An orchestrator delegates each task to a `pitchd-rails-implementor` subagent, then runs `pitchd-rails-reviewer` after each task and loops on feedback until every item is approved.
+## RuboCop
 
-### Review existing code
-> *"Review this PR"* / *"Review the code I just wrote"*
+The gem ships four configs your app can inherit, in increasing strictness:
 
-Use the **`reviewing-pitchd-rails`** skill. It runs a two-layer review: **philosophy** (is this the right kind of Rails solution?) via `rails-omakase-compass`, then **tactics** (is it implemented correctly?) via the relevant `writing-*` skills and rules. During implementation reviews it also checks the **surroundings** — pre-existing code in touched files — flagging quick wins and deferred follow-ups in the same report.
+```yaml
+# .rubocop.yml
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+  agent_harness_rails:
+    - rubocop.yml                 # thin layer over omakase — changes almost nothing
+    - rubocop-harness.yml         # opt-in: turns the parseable rules into real cops
+    - rubocop-harness-rspec.yml   # opt-in: needs rubocop-rspec and friends in your Gemfile
+    - rubocop-harness-index.yml   # opt-in: cross-file cops; needs RuboCop 1.89 and the rubydex gem
+```
 
-### Query for Rails best practice
-> *"How should I handle this in Rails?"* / *"What's the right pattern for background jobs here?"*
+`rubocop-harness.yml` enables ~100 existing cops that encode rules already written down here, plus custom `AgentHarnessRails/*` cops for what no existing cop covers — service objects, non-REST actions, enqueueing inside transactions, view specs, `sleep` in specs. Each names the rule it enforces, and your own `.rubocop.yml` can turn any of it off; agents are told to respect your opt-outs. The gem deliberately does not depend on RuboCop — it ships YAML and cop files, and your app's bundle provides RuboCop at your version.
 
-Use the **`rails-omakase-compass`** skill. It answers whether a direction fits 37signals-shaped Rails — omakase defaults, REST gravity, server-owned truth, majestic monolith — and points you at the right `writing-*` skill for tactical detail. It can also pull from the unofficial 37signals guide via **`referencing-unofficial-37signals-guide`**.
+`rubocop-harness-index.yml` turns on RuboCop's project index and the cops that need one: a route naming an action no controller defines, a callback enqueueing through a concern's method, a spec running a job it does not own, a concern or policy with no spec, a mail with no preview. It also carries a dead-method sweep, `AgentHarnessRails/UnreferencedMethod`, that is never enabled — run it with `--only` when you want it. Add `gem "rubydex", require: false` to your Gemfile; without it RuboCop warns and the layer stays silent.
 
-### Refactor an existing test suite
-> *"The system specs are too heavy"* / *"Rebalance the article specs to the right layers"*
+## Good to know
 
-Use the **`refactoring-rails-specs`** skill. It takes a list of specs (typically bloated system specs), discovers their related request, model, policy, job, mailer, and factory specs, then audits every `it` block against the Five Gates and per-layer ownership defined in `writing-tests`. Each test gets a verdict — **KEEP / MOVE / MERGE / DELETE / REWRITE** — and the work proceeds one resource at a time with coverage preserved and the suite kept green.
-
-### Refactor an existing Stimulus fleet
-> *"The Stimulus controllers are a mess"* / *"Half of these do the same thing"*
-
-Use the **`refactoring-stimulus-controllers`** skill. It maps every controller and its `data-*` attachments, scores each against single-responsibility, DOM-derived state, lifecycle cleanup, and cross-controller coupling rules, then assigns a verdict — **KEEP / REWRITE / MERGE / SPLIT / DELETE**. After the structural refactor it ensures each Stimulus behaviour has exactly one canonical system spec on the simplest representative page, per `writing-tests`. Pair with **`writing-javascript`** for fresh-write conventions.
-
-### Keep durable primitives (intent, compilation, evaluations, provenance)
-> *"Set up primitives"* / *"Document the billing feature"* / *"Why don't we cap thread depth?"*
-
-The plugin maintains **`docs/primitives/`** — one markdown doc per capability holding **intent clauses** (what must be true), **shape** (constraints the code compiles into), an **evaluations map** (which RSpec home proves each clause), and append-only **provenance** (decisions, rejected alternatives, accepted debt). Planning creates and amends intent, execution close-out fills evaluations and provenance, and review checks traceability — so the record stays alive as a side effect of the workflows, not as a chore. One-time setup (tree scaffold + a `compilation.md` interview): **`bootstrapping-primitives`**. Backfills, provenance questions, and health passes: **`maintaining-primitives`**, delegated via **`pitchd-rails-primitives-maintainer`**. Structure rules: **`rules/primitives.mdc`**.
-
----
-
-New here? Start with **`rails-omakase-compass`** to understand the philosophy, then reach for the workflow skills above.
-
-## What's inside
-
-- **`rules/`** — `.mdc` rules for models, controllers, routes, Hotwire, testing, RuboCop, and more.
-- **`skills/`** — Workflows for planning, implementing, and reviewing Rails work (including layer-specific `writing-*` skills). **`resolving-plugin-root`** is a small internal skill other skills/agents read first, so `rules/*.mdc` and sibling skill references resolve correctly whether this plugin is loaded by Cursor or installed as a Claude Code plugin.
-- **`agents/`** — Subagent definitions for implementation, review, and focused primitives maintenance passes.
+- **Adding your own skills:** put them in `agent_harness_rails/skills/` alongside the vendored ones. Keep them flat (`skills/<name>/SKILL.md`) and don't reuse a vendored name. Write to `agent_harness_rails/`, not through the `.claude/` or `.cursor/` links.
+- **Git and the symlinks:** git can't stage paths through a symlink, so commit the install with `git add -A`, and stage your own new skills under `agent_harness_rails/`.
+- **Windows:** committed symlinks need Developer Mode plus `core.symlinks=true` *before* cloning. Or run `bundle exec agent_harness_rails install --mode copy` after cloning to use real directories locally.
+- **Your editor shows the harness twice** — the vendored directory and the linked one are the same files. Nothing to clean up.
 
 ## Credits
 
-This plugin stands on the shoulders of two excellent Cursor plugin ecosystems and one reference guide:
-
-- **[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)** (Every) — for strong **planning**, **execution**, and **review** skills and patterns; the **DHH Rails reviewer** persona in particular is a highlight.
-- **[Superpowers](https://github.com/obra/superpowers)** — for disciplined **planning** and **execution** workflows.
-- **[37signals-skills](https://github.com/marckohlbrugge/37signals-skills)** (Marc Köhlbrugge, formerly `unofficial-37signals-coding-style-guide`) — the community-maintained guide to 37signals coding patterns, fetched selectively as a supplemental reference.
-
-Thank you to all three projects for the ideas and structure that made this plugin possible.
+- **Chad Fowler** and **[Regenerative Software](https://www.linkedin.com/posts/fowlerchad_im-genuinely-excited-to-share-the-early-share-7488974712543277056-iRQi/)** — the inspiration for the primitives tree: durable intent, evaluations that prove each clause, and provenance that outlives any implementation.
+- **[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin)** (Every) — planning, execution, and review skill patterns.
+- **[Superpowers](https://github.com/obra/superpowers)** — disciplined planning and execution workflows.
+- **[37signals-skills](https://github.com/marckohlbrugge/37signals-skills)** (Marc Köhlbrugge) — a community guide to Rails coding patterns, fetched selectively as a supplemental reference.
 
 ## License
 

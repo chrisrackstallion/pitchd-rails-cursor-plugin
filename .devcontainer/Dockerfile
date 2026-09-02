@@ -1,6 +1,13 @@
 # Dev tooling only — project is bind-mounted at workspaceFolder (see devcontainer.json).
 # Debian/glibc: supported base for Cursor and VS Code remote server (Alpine/musl is not).
-FROM node:22-bookworm-slim
+#
+# Ruby, not Node: this repo is a gem. Its own tooling is bundler, rspec, and
+# rubocop; the payload under agent_harness_rails/ is markdown.
+#
+# Latest Ruby here, deliberately ahead of the gemspec's required_ruby_version —
+# the floor is the oldest supported Ruby so consuming apps trail at their own
+# pace, and CI's matrix covers it. Development runs current; support is wide.
+FROM ruby:4.0-bookworm
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -14,5 +21,10 @@ RUN apt-get update \
   && chsh -s /usr/bin/zsh root
 
 ENV SHELL=/usr/bin/zsh
+
+# Gemfile.lock is committed and written by Bundler 4; the image ships 2.x, which
+# refuses a lockfile from a newer major. Install the current bundler so
+# postCreateCommand's `bundle install` matches the lockfile.
+RUN gem install bundler --no-document
 
 WORKDIR /workspaces

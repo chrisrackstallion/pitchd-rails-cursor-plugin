@@ -1,12 +1,12 @@
 {
-  "name": "pitchd-rails-cursor-plugin",
+  "name": "agent_harness_rails",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
   },
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "remoteUser": "root",
-  "postCreateCommand": "npm run validate",
+  "postCreateCommand": "bundle install",
   "customizations": {
     "vscode": {
       "settings": {

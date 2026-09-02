@@ -1,0 +1,227 @@
+---
+description: Rails model conventions — opinionated Rails best practice. Apply when working with models.
+globs: app/models/**/*.rb
+alwaysApply: false
+---
+
+# Model Conventions
+
+## Rich Domain Models
+
+Business logic belongs on the model, not in service objects. If logic operates on a single model instance, it's a model method.
+
+```ruby
+# Good — domain verb on the model; the Publication record is the single
+# source of truth (its created_at is the publish time — no duplicate column)
+def publish(by: Current.user)
+  create_publication!(publisher: by)
+end
+# Wrap in `transaction` when the verb performs more than one write.
+
+# Bad — unnecessary service wrapper
+class PublishService
+  def call!(article)
+    article.update!(published: true)
+  end
+end
+```
+
+## Model Structure
+
+Organise every model in this order:
+
+```ruby
+class Article < ApplicationRecord
+  # 1. Concerns (capabilities this model has)
+  include Publishable
+  include Taggable
+  include Searchable
+
+  # 2. Constants
+  VISIBILITIES = { public: "public", private: "private", unlisted: "unlisted" }.freeze
+
+  # 3. Associations (belongs_to first, then has_many, then has_one)
+  belongs_to :author, class_name: "User", default: -> { Current.user }
+  has_many :comments, dependent: :destroy
+
+  # 4. Delegated types / enums / store accessors
+  enum :visibility, VISIBILITIES, default: :public, prefix: true
+
+  # 5. Normalizes
+  normalizes :title, with: ->(t) { t.strip }
+
+  # 6. Validations (minimal — database constraints do the heavy lifting)
+  validates :title, presence: true
+
+  # 7. Scopes
+  scope :chronologically, -> { order(created_at: :asc) }
+  scope :preloaded, -> { includes(:author, :tags) }
+
+  # 8. Callbacks (sparingly)
+  after_create_commit :notify_subscribers_later
+
+  # 9. Class methods
+  def self.search(query)
+    where("title ILIKE ?", "%#{sanitize_sql_like(query)}%")
+  end
+
+  # 10. Public instance methods — domain verbs
+  # (publishing is handled by the Publishable concern via state record)
+
+  private
+    def notify_subscribers_later
+      NotifySubscribersJob.perform_later(id)
+    end
+end
+```
+
+The `Publishable` concern (see **`agent_harness_rails/skills/writing-models/references/patterns.md`** § Concerns) provides `publish`, `unpublish`, `published?`, and scopes like `published` / `unpublished` via a `Publication` state record. Enums are used for a *different* dimension (`visibility`) that doesn't need audit trails. Never mix both patterns for the same concept.
+
+`prefix: true` on the enum is required here: bare `public` / `private` values would generate `Article.public` / `Article.private` class methods that shadow Ruby's `Module#public` / `Module#private` visibility modifiers. Values that don't collide with existing methods (`draft`, `archived`) don't need a prefix.
+
+## Concerns for Horizontal Behaviour
+
+Extract shared capabilities into concerns. Name them as adjectives describing what the model *can do*.
+
+- `Publishable`, `Closeable`, `Searchable`, `Taggable` — capabilities
+- 50–150 lines each, self-contained with associations + scopes + methods
+- Not for mere organisation — extract when genuine reuse exists or a single file grows unwieldy
+- Extract when a model exceeds ~300 lines with distinct capability clusters, or when a concept has its own vocabulary (verbs, predicates, scopes)
+- One concern, one concept — `Closeable` handles closing/reopening; it should not also handle archiving
+- Every method must earn its place: a method belongs only if it is part of the capability; one that a single includer uses, or that isn't about the capability, goes on that model instead
+
+## State as Records, Not Booleans
+
+Model state as **data you can query** — often a **child record whose existence is the state** — with **domain verbs** on the parent that create or destroy that row in a transaction. That is the default omakase alternative to **boolean soup** and to **state machine gems** (AASM, Statesman, Workflow, etc.) for typical lifecycles: it stays Active Record–native and maps cleanly to **REST noun resources** and standard HTTP (`POST`/`DELETE` on a small resource; see the controllers rule).
+
+- **`enum`** on a column for a **small ordered lifecycle** (`draft` → `published`) when you do not need attribution or join-heavy “who closed this?” queries on that axis.
+- **State record** (`has_one` child, polymorphic join, etc.) when you need **timestamps, actor, or joins** — existence of the row *is* the current state; destroying it *is* revert.
+- **Per-transition history table** when audit, compliance, or a **timeline** is a product requirement — not by default for every app.
+- **State machine gem** only when **many named states**, **non-obvious allowed transitions**, **guards across several attributes**, **external workflow** integration, or team agreement that the gem's API is the single choke point for transitions would otherwise scatter `if`/`case` logic.
+
+```ruby
+has_one :closure, dependent: :destroy
+
+def closed?   = closure.present?
+def close(by: Current.user) = create_closure!(creator: by)
+def reopen     = closure&.destroy!
+```
+
+**Heuristic:** If the lifecycle fits two or three nouns on a napkin and rules live in a few well-named methods, you likely need better names and maybe one more table — not a gem.
+
+Worked pattern (migration, state record, concern), retention constraints, and the callback-transition contrast: **`agent_harness_rails/skills/writing-models/references/patterns.md`** § State as Records.
+
+## Decision Framework
+
+**"Does this logic belong on the model?"**
+- Operates on a single model instance → model method
+- Crosses model boundaries → controller orchestration or a PORO namespaced under the primary model (e.g. `Article::Publisher`)
+- Hits external systems → job for async; PORO or model method for sync
+- Shared across unrelated models → concern
+- Pure presentation → helper or component
+
+**"Is this a new concept or a capability?"**
+- New concept (own table, own identity) → new model
+- Capability added to existing model → concern
+- Derived/computed state → method on the model
+
+**"Boolean column or state record?"**
+- Need to know *when* and *who* → state record
+- Will be queried with joins → state record
+- Simple flag with no history, toggled freely → boolean is acceptable
+
+For enum vs state record vs history vs gem, apply the ladder in § State as Records — simplest shape that fits, escalate only when justified.
+
+## Scopes — Query Logic on the Model
+
+Push domain queries to named scopes. Controllers should read like prose, not SQL. Never use `default_scope` — it contaminates every query, breaks `unscoped` expectations, and hides intent.
+
+- **Business terms** for scope names: `active`, `pending`, `featured` — not SQL-ish names like `with_status_active`
+- **Composable** — each scope does one thing
+- One `preloaded` scope per model for standard eager loading
+
+```ruby
+scope :chronologically, -> { order(created_at: :asc) }
+scope :active,          -> { where(status: :active) }
+scope :preloaded,       -> { includes(:creator, :tags) }
+```
+
+## Database Constraints Over Validations
+
+Enforce integrity at the database level. Model validations are for user-facing error messages, not data safety.
+
+```ruby
+# migration — source of truth
+add_index :users, :email, unique: true
+add_foreign_key :cards, :boards
+change_column_null :users, :email, false
+```
+
+## Callbacks — Sparingly
+
+Use `after_commit` for async work and `before_save` for derived data. Never use callbacks for business logic, external calls, or complex side effects. Avoid callbacks that touch other models, `after_save` for side effects (use `after_commit` — it cannot fire against rolled-back data), and chains of callbacks that create ordering dependencies. For simple data cleaning prefer `normalizes` over `before_validation`.
+
+## Naming
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Concerns | Adjective describing capability | `Publishable`, `Closeable`, `Watchable` |
+| Scopes | Adverb or business term | `chronologically`, `active`, `preloaded` |
+| State records | Noun for the state | `Closure`, `Publication`, `Archival` |
+| Verbs | Domain action (non-bang) | `publish`, `close`, `archive`, `gild` |
+| Predicates | State query | `published?`, `closed?`, `golden?` |
+| POROs | Namespaced under parent | `Article::Summary`, `User::Filtering` |
+
+No generic setters: `set_status`, `update_flag` — use domain verbs instead.
+
+## Bang Convention
+
+Domain verbs use the non-bang form (`publish`, `close`) — they are the normal way to do the thing. The bang lives on the internal AR calls (`create!`, `update!`) and propagates `ActiveRecord::RecordInvalid` naturally. Reserve a bang domain verb only when you offer both a "try" form and a "must succeed" form.
+
+## Association Defaults with Current
+
+```ruby
+belongs_to :creator, class_name: "User", default: -> { Current.user }
+```
+
+## Normalizes for Data Cleaning
+
+```ruby
+normalizes :email, with: ->(e) { e.strip.downcase }
+```
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Service wrapping a single `update!` | Model method |
+| `app/services/` single-method service objects | Model method or PORO under model namespace |
+| Callback chains for business logic | Explicit method calls |
+| `before_save` touching other models | Controller orchestration or explicit call |
+| Fat controller with inline queries | Named scopes |
+| Generic `set_X` / `update_X` methods | Domain verbs (`publish`, `close`) |
+| Boolean columns for auditable state | State records with timestamps |
+| Model validations for data integrity | Database constraints |
+| `rescue => e` in model methods | Let exceptions propagate |
+| `default_scope` | Named scopes — `default_scope` contaminates all queries |
+| `ActiveRecord::Base` subclass with no table | `ActiveModel::Model` instead |
+| Workflow-specific validations via `on:` contexts or mode flags (`if: :signup_step_two?`) | Form objects — one per workflow (**`agent_harness_rails/skills/writing-models/references/patterns.md`** § Validations). Attribute-state guards (`if: :title_changed?`) are fine |
+| State machine gem for two-state lifecycles | State record + domain verbs; `enum` if a column is enough |
+| Callback-driven transitions (`after_transition` doing business logic) | Explicit verbs + transactions; `after_commit` only for async side effects |
+| Scattered `transition_to!` / `case state` across the app | Centralize in model methods or one object next to the model; gem only if the matrix warrants it |
+| Over-modeled enums — twelve `status` values | Often really “has publication” / “has closure” plus clear verbs |
+
+## Verification
+
+Before finishing, verify:
+
+- [ ] No logic that belongs in a service sitting on the model (multi-model, external calls)
+- [ ] No logic that belongs on the model sitting in a service (single-model operations)
+- [ ] Concerns are self-contained (associations + scopes + methods together)
+- [ ] Every concern method earns its place — each is part of the capability all includers get; methods only one includer uses, or that aren't about the capability, live on that model instead
+- [ ] Database constraints back up any model validations
+- [ ] Scopes handle all domain queries — no raw `where` chains in controllers
+- [ ] Callbacks are limited to async dispatch and derived data
+- [ ] Method names use domain language, not generic CRUD terms
+- [ ] Domain verbs use the non-bang form; bangs live on the internal AR calls (`create!`, `update!`) so failures raise and propagate
+- [ ] State modeled with the simplest shape that fits: `enum` → state record → history/gem only when justified (§ State as Records)

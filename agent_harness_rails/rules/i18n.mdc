@@ -1,0 +1,62 @@
+---
+description: Rails I18n — key structure, lazy lookup, interpolation, no string soup in views. Opinionated Rails best practice. Apply when editing locales, user-facing strings in views/helpers, or flash copy.
+globs: config/locales/**/*.yml, config/locales/**/*.yaml, config/locales.yml, config/initializers/i18n.rb, app/views/**/*.erb, app/helpers/**/*.rb
+alwaysApply: false
+---
+
+# I18n Conventions
+
+## Use the Framework
+
+Rails ships **I18n** — use **`t()`** / **`I18n.t`** for user-visible static copy instead of scattering raw English in ERB and helpers. Domain data (`@article.title`) stays out of locale files; **labels, buttons, flashes, and validation messages** belong in **`config/locales`**.
+
+Canonical patterns: **`agent_harness_rails/skills/writing-i18n/references/patterns.md`**. Mailer subjects and mail-scoped keys: **`agent_harness_rails/skills/writing-mailers/references/patterns.md`** (subjects) + writing-i18n for key shape. Pundit flash messages: **`agent_harness_rails/skills/writing-policies/references/patterns.md`** § I18n for Policy Messages.
+
+## Keys
+
+- **Locale files live under `config/locales/`** (`en.yml`, `articles.en.yml`). Keep the default locale complete for keys you introduce; add secondary locales when the app actually ships them.
+- **Mirror the application structure** — locale files and key nesting follow the app's own layout (`articles.index.title` matches `app/views/articles/index.html.erb`) so lazy lookup and Rails' conventional resolution always find the key. Never invent a parallel taxonomy.
+- **Scope by feature** — `articles.index.title`, `comments.form.submit`, not a flat `title_472`.
+- **`activerecord`** — attributes and errors live under Rails’ expected structure for `human_attribute_name` and form errors.
+- **Lazy lookup in templates** — `t(".heading")` resolves relative to the view path; use for page-specific copy.
+- **Absolute keys** — shared partials, helpers, controllers (`flash`), mailers — `t("articles.published_notice")`.
+
+## Errors
+
+**All user-facing error messages live in I18n** — never hardcode them in models, controllers, or views. Messages must read as **human language**: override `activerecord.attributes` so schema-shaped names never leak into copy — a join-table attribute like `article_categorizations.category_id` is labelled by its real-world name (`Category`), so errors read “Category must exist”, not “Article categorizations category id can't be blank”.
+
+## Dates and Times
+
+**All user-visible dates and times are formatted through I18n** — `l(date)` / `l(time)` with formats declared under `date.formats` / `time.formats`. No `strftime` in views or helpers.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| `"Hello " + user.name + "!"` in ERB | `t("greeting", name: user.name)` with `%{name}` in YAML |
+| `t("foo.#{key}.bar")` with unbounded `key` | Fixed keys, enum, or explicit allowlist |
+| User-facing strings only in English in `en.yml` and hardcoded elsewhere | One approach per app; translate keys consistently |
+| `time.strftime("%d/%m/%Y")` in a view | `l(time, format: :short)` with the format in locale YAML |
+| Error copy exposing schema names (“Category id can't be blank”) | `activerecord.attributes` override with the real-world name |
+| Hardcoded error strings in models/controllers | Keys under `activerecord.errors` / feature namespace |
+| Storing canonical copy in the DB for static UI | Locale files for static strings; DB for user-authored content |
+| Locale taxonomy grouped by “type of string” instead of mirroring app paths | Mirror view/mailer paths — a divergent taxonomy breaks resolution and forces absolute keys everywhere |
+| Skipping I18n because the app only ships English | Still use keys for consistency and grep-ability; `en` alone is a valid single-locale setup |
+
+## Verification
+
+Before finishing, verify:
+
+- [ ] User-facing static strings in views/helpers/controllers use **`t()`** / **`I18n.t`**, not raw literals (domain data excepted)
+- [ ] Lazy keys match the template path; shared partials use absolute keys
+- [ ] Interpolation uses YAML placeholders, not Ruby concatenation
+- [ ] Pluralization uses `count:` and proper `one` / `other` (and locale-specific keys when required)
+- [ ] No unbounded dynamic key paths from user input
+- [ ] `activerecord` attributes/errors follow Rails structure for forms
+- [ ] Locale file nesting mirrors the app structure (view paths, mailer paths) so keys resolve by convention
+- [ ] All user-facing error messages come from I18n and read as human language — join-table / FK attributes renamed to real-world names via `activerecord.attributes`
+- [ ] All user-visible dates and times go through `l()` with formats declared in locale YAML — no `strftime` in views or helpers
+
+## What This Rule Is Not
+
+Translation vendor workflows, TMS sync, and client-side i18n stacks — out of scope. This harness documents **Rails I18n** conventions only.

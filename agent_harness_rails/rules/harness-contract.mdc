@@ -1,0 +1,49 @@
+---
+description: Shared harness contract — the conflict rule, the harness-rules-beat-application-patterns premise, subagent context isolation, and the supplementary-reference policy. Carrier skills and agents cite this file and add only their role-specific consequence.
+alwaysApply: true
+---
+
+# Harness Contract
+
+The commitments every harness workflow shares. Each carrier skill or agent
+cites this file and keeps only its **role-specific consequence** — the
+consequence lives at the site, the rule lives here.
+
+## Conflict rule
+
+- **Tactics** (`writing-*` skills, `agent_harness_rails/rules/*.mdc`) win on **specific HOW**.
+- **Compass** (`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`) wins
+  on **whether** the solution shape matches omakase intent — unless the user or
+  plan has **explicitly** documented a different shape (API-first, SPA); then
+  that documented exception governs.
+
+## Harness rules beat application patterns
+
+Apply harness rules to the work at hand — do not inherit anti-patterns from the
+surrounding codebase. If every controller in the app calls service objects but
+this task adds a new action, write the action using model logic per
+`agent_harness_rails/rules/services.mdc`, not by calling into an existing
+service object. An established application pattern is not a justification — it
+may be exactly the debt worth naming. Each carrier defines what its role does
+when the surrounding pattern genuinely blocks the correct approach.
+
+## Subagent context isolation
+
+A subagent sees only its prompt and the files it reads — never the parent
+chat. Facts the parent holds but the prompt omits do not exist for the
+subagent.
+
+## Supplementary references
+
+Two fetch-based skills supplement the harness when the compass, the scoped
+**`writing-*`** skills, and **`agent_harness_rails/rules/*.mdc`** leave a
+**Rails best-practice** gap:
+
+- **`agent_harness_rails/skills/referencing-unofficial-37signals-guide/SKILL.md`** — supplemental patterns and philosophy from the third-party community guide.
+- **`agent_harness_rails/skills/referencing-rails-guides/SKILL.md`** — authoritative Rails API and feature docs (GitHub API index first, then the specific guide).
+
+Both **inform** harness conventions — they never override them; tactics in this
+harness win on HOW, per the conflict rule above. Each carrier declares whether
+the consult is **optional** or **required** for its workflow. If a fetch fails,
+**report the failure** per that skill — never invent or assert content as if it
+came from the source.
