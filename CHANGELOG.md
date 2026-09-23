@@ -238,6 +238,20 @@ changing the harness itself.
 
 ### Changed
 
+- **Styling is not behaviour.** `agent_harness_rails/rules/testing.mdc` gains
+  a section and an anti-pattern row: a change that only restyles ships with no
+  spec, and no example asserts a CSS class to stand in for one. Where a class
+  toggle carries behaviour, the spec asserts visibility, text, or ARIA state
+  instead. `agent_harness_rails/rules/primitives.mdc` adds the matching
+  not-a-clause row, so styling never becomes an intent clause. The clipboard
+  recipe in `refactoring-stimulus-controllers` no longer asserts a class.
+
+- **The plan's Intent impact is a nested list, not a table.** One entry per
+  clause, with its change in bold, one line per proof file, and one line per
+  named case, with changed clauses listed ahead of the regression contract. The
+  table crammed files and cases into a single cell and was hard to read.
+  Executing, implementing, and reviewing skills now refer to it as an entry.
+
 - **Reuse what the app already defines.** `agent_harness_rails/rules/views.mdc`
   gains a section ahead of the template skeleton: grep before authoring a
   partial, helper, component, or CSS class, and use the existing one **even

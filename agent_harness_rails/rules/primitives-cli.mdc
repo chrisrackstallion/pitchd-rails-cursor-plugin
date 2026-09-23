@@ -99,7 +99,7 @@ tag `evals` will reject.
 
 **Nothing here is an offence and the exit code is always 0.** Most examples in a
 spec file carry no tag by design — only evaluation examples are tagged — so a
-tagged count is a number to hold against the plan's **Intent impact** row, which
+tagged count is a number to hold against the plan's **Intent impact** entry, which
 names the cases the clause needs. Made a gate it would fire on nearly every file.
 `--since main` prints one counted line per clause whose spec files a change
 touched, untracked files included, which is the shape a task's verify step runs —

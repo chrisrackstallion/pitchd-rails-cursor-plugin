@@ -123,7 +123,7 @@ proof-vs-intent handling split — is
 **`agent_harness_rails/rules/primitives-cli.mdc`**. Cite `evals` file:line
 output rather than re-deriving it by hand, and cite `guard` notices with a
 verdict rather than copying them in as findings. Two turn into findings: an
-**intent** notice with no matching row in the plan's **Intent impact** table
+**intent** notice with no matching entry in the plan's **Intent impact** block
 (scope creep into intent, whatever the code does), and a **proof** notice on a
 still-active clause (**Eval adequacy** below, with the before-state attached —
 name what stopped being covered). Never clear a notice by editing the tree — a
@@ -138,8 +138,8 @@ suggestions:
   or scope creep. A plan whose header lacks the **Capability:** line when the
   tree exists is a finding.
 - **Intent impact declared** — plan phase: the header carries a complete, honest
-  **Intent impact** table per `writing-rails-plans` § Plan document header; a
-  missing table, an omitted touched clause, an undelivered row, or `no intent
+  **Intent impact** block per `writing-rails-plans` § Plan document header; a
+  missing block, an omitted touched clause, an undelivered case, or `no intent
   delta` beside a wording change is a finding.
 - **Clause admissibility** — every new or amended clause passes the four tests
   in `agent_harness_rails/rules/primitives.mdc` § Intent clauses; run the
@@ -181,7 +181,7 @@ suggestions:
   tagged examples per clause the change touched, and
   `proofs '<capability>#I<n>'` lists them for one. Read the counts and listings
   against the plan's **Intent
-  impact** row, which names the cases the clause needs. A case the row named that is missing from the tagged listing is a finding —
+  impact** entry, which names the cases the clause needs. A case the entry named that is missing from the tagged listing is a finding —
   `evals` is green on it, because one tag makes the whole file a carrier, so a
   clause meant to be proven by four denials passes with three tagged. Then read
   each touched clause's wording against its evaluations. A quantifier (*only*, *never*, *any*, *every*) proven by one

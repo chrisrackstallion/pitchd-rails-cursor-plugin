@@ -299,17 +299,17 @@ updates the capability doc directly (see the Hard rules carve-out):
    **`intent:` tag** (`agent_harness_rails/rules/testing.mdc`); add it if the
    implementor did not. Delete-listed specs must actually be gone.
 
-   **Reconcile against the plan's Intent impact table**, case by case, with
-   **`agent_harness_rails proofs --since <ref>`** — the row names the cases a
+   **Reconcile against the plan's Intent impact block**, case by case, with
+   **`agent_harness_rails proofs --since <ref>`** — each entry names the cases a
    clause needs and that output counts each clause's tagged examples; a count
    that comes up short is drilled into with
    **`agent_harness_rails proofs '<capability>#I<n>'`**, whose tagged listing
    shows which planned case is missing. Do this before filling the row —
    `evals` counts files, not cases
    (`agent_harness_rails/rules/primitives-cli.mdc` § Which examples prove a
-   clause). A case the row named and the listing does not show
+   clause). A case the entry named and the listing does not show
    goes back through the implement → review loop, not into `evaluations:`.
-   A declared row no spec delivered is a gap. A clause listed `unchanged — regression contract`
+   A declared case no spec delivered is a gap. A clause listed `unchanged — regression contract`
    whose evaluation had its **assertions** edited is the one to stop on: a
    refactor may move an evaluation's file, never change what it asserts — an
    edited assertion means behaviour moved and the plan was a mislabelled
@@ -355,7 +355,7 @@ updates the capability doc directly (see the Hard rules carve-out):
      (`agent_harness_rails/rules/primitives.mdc` § Ownership and write points).
    - **Expected movement** (`intent/deactivated`, `proof/changed`,
      `evaluation/moved`) — normal when the plan called for it. Confirm each
-     against the plan's **Intent impact** table and report them in step 9; an
+     against the plan's **Intent impact** block and report them in step 9; an
      unplanned one belongs in the group above.
    - **`doc/unreadable`** — the capability doc stopped parsing, so nothing about
      it was compared and this run's `guard` output means nothing for that

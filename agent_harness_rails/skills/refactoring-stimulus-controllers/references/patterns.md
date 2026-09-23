@@ -286,14 +286,14 @@ RSpec.describe "Clipboard", type: :system do
     visit page_with_clipboard_path
 
     click_button "Copy"
-    expect(page).to have_css("[data-controller='clipboard'].copied")
+    expect(page).to have_button("Copied")
   end
 end
 ```
 
-Asserting the `copied` class is fine when the *visible* behaviour the user
-sees is exactly that class (the controller's contract). Don't reach into JS
-internals.
+Assert the confirmation the user perceives — its text or ARIA state — never the
+class that styles it (`agent_harness_rails/rules/testing.mdc` § Styling is not
+behaviour). Don't reach into JS internals.
 
 ### Recipe: debounced auto-submit
 

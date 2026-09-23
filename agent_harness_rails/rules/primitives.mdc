@@ -175,6 +175,7 @@ None of the following is a clause:
 | "Comments use a `parent_id` self-join" | How the code is arranged; a rewrite invalidates it | `## Shape` |
 | "Use Turbo Streams for replies" | A constraint on implementation, not a promise | `## Shape`, or `compilation.md` if app-wide |
 | "Notifications move into a concern" | Nothing observable changes, so nothing could go red | `## Shape` if it leaves a constraint worth respecting; otherwise **nothing** — a refactor is git's business |
+| "Overdue invoices are shown in red", "the form uses the card layout" | Styling, not behaviour — a restyle invalidates it, and its only proof is a class assertion (`agent_harness_rails/rules/testing.mdc` § Styling is not behaviour) | Nothing — the markup is the record; restate as behaviour if one hides inside ("overdue invoices are listed first") |
 | "Threading feels natural", "the page is fast" | Not falsifiable — no spec can fail | Drop it, or restate as a measurable outcome |
 | "Add a comments controller" | A work item, ephemeral by design | The plan's task list |
 | "A member can manage their comments" | Several promises in one sentence; no example proves the whole | Split per action (below) |

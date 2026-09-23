@@ -190,6 +190,7 @@ inputs — never the same path twice with different wording. Worked example:
 | Job spec re-testing what the model spec covers | Job spec tests orchestration; model spec tests the domain method the job calls |
 | Separate tests for each assertion on one action | Multiple assertions in one test for one behaviour |
 | Testing the same happy path in model + request + system | One home per behaviour — pick the right layer |
+| Asserting a CSS class (`have_css(".bg-red-500")`, `[class*=…]`) to prove a styling change | No spec — styling is not behaviour; assert visibility, text, or ARIA state when a class toggle carries behaviour (§ Styling is not behaviour) |
 | A spec that only certifies the task landed (column exists, constant equals, method responds, feature gone) | Delete it — a committed spec proves behaviour a user or caller gets (§ A task receipt is not a spec) |
 | An absence read off a page or response, with nothing proving the page rendered | Keep the `not_to`; anchor it with the status or a landmark the page must show |
 | A negation the unit answers directly (`not_to permit`, `not_to be_published`) treated as needing a positive assertion | Leave it alone — nothing can fail into its passing side |
@@ -416,6 +417,26 @@ end
 ```
 
 **Verifying your own change while you work is fine — keeping the test is not.** A throwaway spec confirming a deletion landed or a column arrived is legitimate scaffolding: delete it before you report the task done. Nothing whose only job is to prove the task happened gets committed.
+
+#### Styling is not behaviour
+
+A spec proves what a user can do or perceive, never how it looks. A change that
+only restyles — colours, spacing, layout, a swapped utility class — ships with
+**no spec**, and no example asserts a class name to stand in for one:
+
+```ruby
+# Bad — breaks on every restyle, passes when the error never renders to a user
+expect(page).to have_css(".text-red-600", text: "Title can't be blank")
+
+# Good — the outcome the user gets, whatever it is painted
+expect(page).to have_content("Title can't be blank")
+```
+
+When a class toggle carries behaviour — a Stimulus controller hiding a panel —
+assert the behaviour through what Capybara can observe: visibility
+(`have_no_content`, `visible: :hidden`), an `aria-*` state, or text. Locate
+elements by label, role, or text, never by a styling class
+(`agent_harness_rails/skills/writing-tests/references/system-specs.md`).
 
 ## Running Specs
 

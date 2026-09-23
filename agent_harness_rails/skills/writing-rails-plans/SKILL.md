@@ -136,7 +136,7 @@ target capability doc, and **`compilation.md`**.
      architecture change):** the fourth classification, and the one with no
      `intent:` edit in it. Leave every clause and `status:` untouched; the active
      clauses become the plan's **regression contract** — list them as
-     `unchanged` rows in the Intent impact table and write `no intent delta`.
+     `unchanged` entries in the Intent impact block and write `no intent delta`.
      Record what future work must respect in `## Shape`, and append a
      `refactored` provenance line only when a constraint actually changed;
      tidying that leaves no constraint behind earns no entry. If a clause's
@@ -176,7 +176,7 @@ target capability doc, and **`compilation.md`**.
    covered by one happy path: its task list names the denial or boundary case at
    the layer that owns it (`agent_harness_rails/rules/testing.mdc`
    § Ownership by Layer), usually a policy or request spec rather than
-   another system spec — and its **Intent impact** row names those cases one by
+   another system spec — and its **Intent impact** entry names those cases one by
    one, because a proof set promised in prose is one nothing can count. A clause whose proof was never planned becomes a green
    row that proves nothing at close-out
    (`agent_harness_rails/rules/intent-tags.mdc` § What counts as proving a clause). When this gate **creates** a doc (new feature or lazy backfill),
@@ -332,38 +332,47 @@ different docs location):
 > How the plan is followed or sequenced is up to the user and the implementing agent.
 
 **Capability:** `docs/primitives/capabilities/<name>.md` — serves I1–I4
-[Clause IDs this plan serves, supersedes, or adds. Omit this line and the table
-below only when the app has no `docs/primitives/` tree.]
+[Clause IDs this plan serves, supersedes, or adds. Omit this line and the
+Intent impact block below only when the app has no `docs/primitives/` tree.]
 
 **Intent impact:** every clause this plan touches, and where its proof will land.
 
-| Clause | Change | Proof lands at |
-|--------|--------|----------------|
-| I1 A reader can reply to any comment | unchanged — regression contract | `spec/system/comment_threads_spec.rb` (exists) |
-| I5 Only the author can delete a comment | new | `spec/policies/comment_policy_spec.rb` — deny: reader, other author, archived post; `spec/requests/comments_spec.rb` — redirect a non-author (Task 3) |
-| I4 Anyone can delete a comment | superseded by I5 | row retires at close-out; spec deleted in Task 3 |
+- **I5** Only the author can delete a comment — **new**
+  - `spec/policies/comment_policy_spec.rb`
+    - deny: reader
+    - deny: other author
+    - deny: archived post
+  - `spec/requests/comments_spec.rb` (Task 3)
+    - redirects a non-author
+- **I4** Anyone can delete a comment — **superseded by I5**
+  - spec deleted in Task 3; entry retires at close-out
+- **I1** A reader can reply to any comment — **unchanged — regression contract**
+  - `spec/system/comment_threads_spec.rb` (exists)
 
-`Change` is one of **new**, **amended**, **superseded by I\<n>**, or **unchanged
-— regression contract**. That last value is not filler: it is the explicit list of
-promises this plan must not break, and it is what makes a **Shape-only plan**
-expressible — a refactor's table is all regression-contract rows, and it says
-`no intent delta` where new clauses would go.
+One entry per clause: the clause on the first line with its change in bold, one
+line per proof file under it, one line per case under that. The change is one of
+**new**, **amended**, **superseded by I\<n>**, or **unchanged — regression
+contract**. That last value is not filler: it is the explicit list of promises
+this plan must not break, and it is what makes a **Shape-only plan** expressible
+— a refactor's block is all regression-contract entries, and it says `no intent
+delta` where new clauses would go. List changed clauses first, so the delta
+reads before the contract.
 
-`Proof lands at` names the **cases**, not only the files, whenever a clause needs
-more than one example in the same file — `spec/policies/comment_policy_spec.rb —
-deny: reader, other author, archived post`. A file name alone is the granularity
+An entry names the **cases**, not only the files, whenever a clause needs more
+than one example in the same file — the three denials under
+`spec/policies/comment_policy_spec.rb` above. A file name alone is the granularity
 `agent_harness_rails evals` can check, and it is satisfied by **one** tag in that
 file: so a clause whose four denials were promised in prose passes every gate
 with three of them tagged. Named cases are countable —
 `agent_harness_rails proofs 'comment_threads#I5'` lists the tagged examples
 behind the clause, and both execution close-out and review check that listing
-against this row.
+against this entry.
 
-`Proof lands at` is a **plan**, and it lives in this file only. It is never copied
+Where proof lands is a **plan**, and it lives in this file only. It is never copied
 into the doc's `evaluations:` — those are filled at close-out from the specs the
 implementor actually reported, never from intention. Declaring the layer up front
 is still the point: a clause whose only conceivable proof is a wide journey spec
-is a clause that wants splitting, and this table is where that becomes visible
+is a clause that wants splitting, and this block is where that becomes visible
 (`agent_harness_rails/rules/primitives.mdc` § Intent clauses).
 
 **Problem:** [One sentence — the underlying need in the user's terms: what
