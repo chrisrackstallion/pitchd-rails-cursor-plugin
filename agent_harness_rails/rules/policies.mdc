@@ -10,7 +10,25 @@ alwaysApply: false
 
 Vanilla Rails would keep authorization in model methods and controller `before_action` guards. Pundit earns its dependency: one policy per model, one method per action, one place to look. Every controller action calls `authorize`. Every index calls `policy_scope`. Missed calls are caught by the verification callbacks — see § Verification Callbacks below.
 
-Policies answer **authorization** (“who may do this?”), not business rules (“what happens when they do?”). Domain logic stays on the model; policies compose model predicates.
+Policies answer **authorization**: may this user take this action on this record, **in its current state**? That is two questions — **who** (the user's role, or their relationship to the record) and **what** (whether the record's state allows the action) — and the policy owns both. What happens when they act stays on the model.
+
+## Ask the Record, Never Interrogate It
+
+The policy owns the decision; the model owns what its state means. Every call on `record` is a **predicate the model defines** — `record.draft?`, `record.created_by?(user)`, `record.account_member?(user)` — never an attribute read, a comparison, or an association walk:
+
+```ruby
+# Bad — the policy re-derives what "editable" and "owner" mean
+def update?
+  record.creator == user && record.status == "draft" && record.comments.none?
+end
+
+# Good — the policy composes; the model defines each predicate once
+def update?
+  record.created_by?(user) && record.editable?
+end
+```
+
+A predicate on the model is reused by the scope, the view, and the model's own rules, and a model spec proves what it means; a comparison inside a policy is a second, driftable copy of it. Held by `AgentHarnessRails/PolicyRecordPredicate`.
 
 > **Dependency note:** Pundit is a thin library (~300 lines) providing a convention, not a framework — `authorize` and `policy_scope` in controllers mapped to plain Ruby objects; no DSL, no configuration, no runtime magic.
 
@@ -34,7 +52,7 @@ class ArticlePolicy < ApplicationPolicy
   end
 
   def update?
-    owner_or_admin?
+    owner_or_admin? && record.editable?
   end
 
   def destroy?
@@ -43,7 +61,7 @@ class ArticlePolicy < ApplicationPolicy
 
   private
     def owner_or_admin?
-      record.creator == user || user.admin?
+      record.created_by?(user) || user.admin?
     end
 end
 ```
@@ -149,6 +167,31 @@ end
 
 `verify_authorized` raises if the action never called `authorize`. `verify_policy_scoped` with `only: :index` raises if `index` never called `policy_scope`; it does **not** cover other actions that call `policy_scope` — widen `only:` / `except:` where needed. For actions that intentionally have no authorization or scoping (public pages, health checks), use `skip_after_action` explicitly — worked examples: `agent_harness_rails/skills/writing-policies/references/patterns.md` § Skipping Verification.
 
+## View Integration
+
+Views gate UI on the same policy method the controller authorizes against — never a second copy of its logic:
+
+```erb
+<% if policy(@article).update? %>
+  <%= link_to "Edit", edit_article_path(@article) %>
+<% end %>
+```
+
+`policy(record)` works when Pundit resolves the policy from the record's class. **A view never names a policy class.** When the check needs one it cannot resolve — a noun-resource policy such as `Cards::ClosurePolicy` — a helper in that domain wraps it, and the template calls the helper:
+
+```ruby
+# app/helpers/cards/closures_helper.rb
+module Cards
+  module ClosuresHelper
+    def card_closable?(card)
+      Cards::ClosurePolicy.new(pundit_user, card).create?
+    end
+  end
+end
+```
+
+Where that helper lives: **`agent_harness_rails/rules/views.mdc`** § Organised by domain. A hidden button is not authorization — the action still calls `authorize`.
+
 ## Decision Framework
 
 **"Which policy does this action belong on?"** The question is never "does this need a policy?" but "which policy?" — every controller action calls `authorize`, including index.
@@ -164,8 +207,8 @@ end
 
 **"Is this authorization or business logic?"**
 - "Can this user edit this article?" → authorization → policy
-- "Is this article publishable?" → business logic → model method
-- "Can this user publish this article?" → authorization → policy
+- "Can this article be edited in its current state?" → authorization → policy, calling a model predicate (`record.editable?`)
+- "What makes an article editable?" → business logic → the model predicate itself
 - "What happens when an article is published?" → business logic → model
 
 **"Should I use a scope or filter in the controller?"**
@@ -187,10 +230,12 @@ end
 | `unless` / negative conditionals in policy methods | Positive assertions: `user.admin?`, not `!user.banned?` (extract predicates) |
 | Separate policies for new/edit that differ from create/update | `new?` delegates to `create?`, `edit?` delegates to `update?` |
 | Policy reaching into `request` or `params` | Policies only see `user` and `record` |
-| Business logic in policies | Policies answer "can this user do this?" — nothing else |
+| Business logic in policies | Policies decide who and what; the model defines what each state means, and the policy calls it |
+| Interrogating the record (`record.status == "draft"`, `record.creator == user`, `record.board.members`) | A predicate on the model (`record.draft?`, `record.created_by?(user)`, `record.board_member?(user)`) — § Ask the Record |
 | Policy returning data or performing side effects | Return `true` / `false` only |
 | Raising `Pundit::NotAuthorizedError` manually | `authorize record` (with `policy_class:` when needed) — Pundit raises when the policy denies |
 | Re-checking in the controller or view what the policy already decides (inline role/ownership conditionals around an authorized action or in ERB) | One gate, one home: `authorize` in the action, `policy(record).action?` in views — never a second copy of the logic |
+| A policy class named in a view (`Cards::ClosurePolicy.new(...)` in ERB) | A domain helper wraps it — § View Integration |
 
 ## Naming
 
@@ -217,6 +262,7 @@ Before finishing, verify:
 - [ ] Policy only receives `user` and `record` — no controller state leaks in
 - [ ] Policy methods return `true`/`false` only — no side effects
 - [ ] Scope's `resolve` returns an `ActiveRecord::Relation`, not an array
-- [ ] Views use `policy(@record).action?` for conditional display
-- [ ] Policy spec exists with tests for each role × action combination — `Policy.new`’s first argument matches `pundit_user` (`User` vs `Current`; see `agent_harness_rails/skills/writing-tests/references/support-specs.md` § When `pundit_user` is `Current`)
+- [ ] Every call on `record` in a policy is a model predicate — no attribute reads, comparisons, or association walks
+- [ ] Views use `policy(@record).action?` for conditional display, and name no policy class
+- [ ] Policy spec exists with tests for each role × state × action combination — `Policy.new`’s first argument matches `pundit_user` (`User` vs `Current`; see `agent_harness_rails/skills/writing-tests/references/support-specs.md` § When `pundit_user` is `Current`)
 - [ ] No full permission matrix duplicated in models or in controller `before_action` callbacks

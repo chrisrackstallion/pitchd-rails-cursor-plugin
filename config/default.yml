@@ -122,6 +122,25 @@ AgentHarnessRails/PolicyContext:
   Include:
     - "**/app/policies/**/*.rb"
 
+AgentHarnessRails/PolicyRecordPredicate:
+  Description: A policy asks the record through predicates it defines, never reads its attributes or associations.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/policies.mdc
+  Include:
+    - "**/app/policies/**/*.rb"
+
+AgentHarnessRails/HelperModuleLength:
+  Description: A domain helper past the limit splits into a subdomain helper under app/helpers/<domain>/.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/views.mdc
+  Include:
+    - "**/app/helpers/**/*.rb"
+  Max: 100
+  CountComments: false
+  CountAsOne: []
+
 AgentHarnessRails/DeepNestedResources:
   Description: "Nest routes one level, then use `shallow: true` or split the resource."
   Enabled: true

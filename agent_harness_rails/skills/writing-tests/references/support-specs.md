@@ -70,6 +70,14 @@ RSpec.describe ArticlePolicy do
 end
 ```
 
+### Covering state
+
+A policy that asks the record's state (`record.editable?`) gets one example per
+state that flips the answer — the matrix is role × state × action. Build each
+record in its real state with a factory trait; never stub the predicate. What
+makes a record editable is the model spec's to prove
+(`agent_harness_rails/rules/policies.mdc` § Ask the Record).
+
 ### Stating a denial
 
 The matrix above asserts its denials **positively** — `expect(policy.destroy?).to be false`.
@@ -120,7 +128,7 @@ RSpec.describe ArticlePolicy do
   it "uses Current as the first argument when production uses pundit_user → Current" do
     policy = described_class.new(Current, article)
 
-    # Example: policy compares user.user to record.creator — adjust expectations to your rules
+    # Example: policy asks record.created_by?(user.user) — adjust expectations to your rules
     expect(policy.update?).to be false
   end
 end

@@ -96,7 +96,7 @@ Use helpers for:
 - Small composed elements (badge with icon, link with label)
 - Wrapping Rails helpers with domain defaults
 
-### Organised by domain, split by size
+### Organised by domain, split into subdomain directories
 
 Every helper module is available in every view — the module boundary exists for
 the human reader, so draw it where the app's domain draws it:
@@ -106,10 +106,16 @@ the human reader, so draw it where the app's domain draws it:
 - **`ApplicationHelper` holds only the genuinely app-wide** — nav state, page
   titles, flash rendering. A method that names a domain belongs in that
   domain's module.
-- **Split by size, into a more focused domain.** Past ~100 lines, extract the
-  cohesive cluster into its own module — `BillingHelper` spawns
-  `BillingInvoicesHelper` — the same instinct as splitting a fat controller.
-  The shared prefix keeps the domain greppable.
+- **Split by size, into a subdomain directory.** Past ~100 lines, move the
+  cohesive cluster into its own module under a directory named for the domain:
+  `app/helpers/billing/invoices_helper.rb` defines `Billing::InvoicesHelper`,
+  and `BillingHelper` keeps only what spans the whole domain. The tree mirrors
+  the model namespaces (`app/models/billing/invoice.rb`), so a reader finds
+  the helper where they found the model. Held by
+  `AgentHarnessRails/HelperModuleLength`; which cluster is cohesive is judgment.
+- **Helpers that wrap a policy** live in the subdomain of the resource they
+  gate — `Cards::ClosuresHelper#card_closable?`
+  (**`agent_harness_rails/rules/policies.mdc`** § View Integration).
 
 ## Stimulus and Turbo (Hotwire)
 
@@ -201,7 +207,8 @@ state-dependent appearance → `class_names`.
 | Deep nesting of `render` calls (3+ levels) | Flatten — max 2 levels of nesting |
 | `content_for` used for control flow | `content_for` / `provide` is for content injection into layouts |
 | Fat helpers with many lines of HTML | Extract to a partial instead |
-| Domain methods accumulating in `ApplicationHelper`, or one helper module mixing domains | Organise by domain; past ~100 lines, split the cohesive cluster into a more focused domain module (§ Organised by domain) |
+| Domain methods accumulating in `ApplicationHelper`, or one helper module mixing domains | Organise by domain; past ~100 lines, move the cohesive cluster into a subdomain directory (§ Organised by domain) |
+| A policy class named in a template | A domain helper wraps it (**`agent_harness_rails/rules/policies.mdc`** § View Integration) |
 | `Current.user` checks inside partials | Pass permission as boolean local, or use model predicate at the template level |
 
 ## Naming Conventions
@@ -212,7 +219,7 @@ state-dependent appearance → `class_names`.
 | Partials | `_noun.html.erb` (singular) | `_article.html.erb`, `_comment.html.erb` |
 | Form partials | `_form.html.erb` | `_form.html.erb` |
 | Shared partials | `app/views/shared/` or `app/views/application/` | `shared/_flash.html.erb` |
-| Helper modules | Named for the app domain; oversized modules split into a more focused domain, keeping the prefix | `ArticlesHelper`, `BillingHelper` → `BillingInvoicesHelper` |
+| Helper modules | Named for the app domain; oversized modules split into a subdomain directory | `ArticlesHelper`, `BillingHelper` → `Billing::InvoicesHelper` in `app/helpers/billing/invoices_helper.rb` |
 | Helper methods | Verb or noun describing the output | `reading_time`, `status_badge`, `btn_classes` |
 | Layouts | Purpose-named | `application.html.erb`, `admin.html.erb`, `mailer.html.erb` |
 | Turbo stream templates | `action.turbo_stream.erb` | `create.turbo_stream.erb` |
@@ -237,7 +244,7 @@ Before finishing, verify:
 - [ ] Turbo Frames wrap the right granularity of content
 - [ ] Page titles and meta set via `provide` / `content_for`, not hardcoded in layout
 - [ ] Helpers return strings and have no side effects
-- [ ] Helper modules are organised by app domain — `ApplicationHelper` only for the genuinely app-wide, and any module past ~100 lines split into a more focused domain helper
+- [ ] Helper modules are organised by app domain — `ApplicationHelper` only for the genuinely app-wide, and any module past ~100 lines split into a subdomain directory (`app/helpers/billing/invoices_helper.rb` → `Billing::InvoicesHelper`)
 - [ ] Nothing you added duplicates a partial, helper, or CSS class the app already defines — you grepped by name before authoring it
 - [ ] Tailwind utilities used directly in markup — partials for reuse, not `@apply`
 - [ ] Conditional classes use `class_names` helper

@@ -121,10 +121,11 @@ changing the harness itself.
   `Rails/*`, `Naming/*`, `Lint/*` and `Security/*` cops that encode rules already
   written down here, with `Layout/ClassStructure` and `Rails/ActionOrder`
   configured to the model and controller ordering the rules document.
-- **Seventeen `AgentHarnessRails/*` cops** for rules no existing cop covers:
+- **Nineteen `AgentHarnessRails/*` cops** for rules no existing cop covers:
   `ServiceObject`, `GenericOperationMethod`, `NonRestfulAction`, `CsrfSkip`,
   `EnqueueOutsideCommit`, `MailerDeliverNow`, `PolicyVerbMethod`,
-  `PolicyContext`, `DeepNestedResources`, `MigrationDataChange`, `SpecSleep`,
+  `PolicyContext`, `PolicyRecordPredicate`, `HelperModuleLength`,
+  `DeepNestedResources`, `MigrationDataChange`, `SpecSleep`,
   `StubbedSubject`, `ViewSpec`, `UnanchoredAbsence`, `TautologicalAssertion`,
   `HttpStatusComparison`, `IntentTag`. Each names the `.mdc` rule it enforces.
 
@@ -266,15 +267,33 @@ changing the harness itself.
   and pointed to from `agent_harness_rails/rules/css-tailwind.mdc`, which owns
   the stylesheet a new class would be defined in.
 
-- **Helpers are organised by app domain, split by size.** Every helper module
-  is globally available, so the boundary exists for the human reader:
-  `agent_harness_rails/rules/views.mdc` § Helpers gains an organisation
-  section — one module per domain, `ApplicationHelper` only for the genuinely
-  app-wide, and a ~100-line tripwire past which the cohesive cluster extracts
-  into a more focused domain module (`BillingHelper` →
-  `BillingInvoicesHelper`), keeping the prefix greppable. Mirrored in
+- **Helpers are organised by app domain, split into subdomain directories.**
+  Every helper module is globally available, so the boundary exists for the
+  human reader: `agent_harness_rails/rules/views.mdc` § Helpers gains an
+  organisation section — one module per domain, `ApplicationHelper` only for the
+  genuinely app-wide, and a ~100-line tripwire past which the cohesive cluster
+  moves into a directory named for the domain
+  (`app/helpers/billing/invoices_helper.rb` → `Billing::InvoicesHelper`),
+  mirroring the model namespaces. Helpers that wrap a policy live in the
+  subdomain of the resource they gate. Held by the new
+  **`AgentHarnessRails/HelperModuleLength`** cop, which measures only `*Helper`
+  modules so it leaves the app's `Metrics/ModuleLength` alone. Mirrored in
   `writing-views` (naming row, anti-pattern row, verification item) and its
   patterns reference.
+
+- **Policies decide who and what, and ask the record.**
+  `agent_harness_rails/rules/policies.mdc` settles an ambiguity: a policy owns
+  both whether this user may act and whether the record's state allows it. It
+  asks through predicates the model defines (`record.editable?`,
+  `record.created_by?(user)`) and never reads attributes, compares values, or
+  walks associations itself. The new **`AgentHarnessRails/PolicyRecordPredicate`**
+  cop enforces this: every call on `record` in `app/policies/` must be a `?`
+  predicate. Policy specs cover role × state × action. The rule also gains
+  § View Integration: views call `policy(record).action?` and never name a
+  policy class, and a check that needs one goes through a domain helper. The
+  worked examples in `writing-policies` and `writing-views` now follow both
+  rules. The `writing-views` examples used `editable_by?(Current.user)`,
+  which bypassed the policy.
 
 - **A task receipt is not a spec.** `agent_harness_rails/rules/testing.mdc`
   § Every Assertion Must Be Able to Fail generalises "removal receipts" to any

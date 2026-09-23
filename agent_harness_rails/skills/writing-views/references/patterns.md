@@ -479,9 +479,30 @@ tag.img(src: image_path("logo.png"), alt: "Logo", class: "h-8 w-auto")
 ### Organisation
 
 One module per app domain, `ApplicationHelper` only for the genuinely
-app-wide, split past ~100 lines into a more focused domain module:
-**`agent_harness_rails/rules/views.mdc`** § Organised by domain. A genuinely
-app-wide helper looks like this:
+app-wide, split past ~100 lines into a subdomain directory:
+**`agent_harness_rails/rules/views.mdc`** § Organised by domain.
+
+```text
+app/helpers/
+  application_helper.rb          # ApplicationHelper — app-wide only
+  billing_helper.rb              # BillingHelper — spans the whole domain
+  billing/
+    invoices_helper.rb           # Billing::InvoicesHelper
+    plans_helper.rb              # Billing::PlansHelper
+```
+
+```ruby
+# app/helpers/billing/invoices_helper.rb
+module Billing
+  module InvoicesHelper
+    def invoice_status_badge(invoice)
+      tag.span(invoice.status.humanize, class: "rounded-full px-2 py-0.5 text-xs font-medium")
+    end
+  end
+end
+```
+
+A genuinely app-wide helper looks like this:
 
 ```ruby
 # app/helpers/application_helper.rb
@@ -511,7 +532,7 @@ Action templates can reference `Current.user` for conditional rendering:
 
 ```erb
 <%# app/views/articles/show.html.erb %>
-<% if @article.editable_by?(Current.user) %>
+<% if policy(@article).update? %>
   <%= link_to "Edit", edit_article_path(@article), class: "text-sm text-blue-600 hover:underline" %>
 <% end %>
 ```
@@ -519,12 +540,12 @@ Action templates can reference `Current.user` for conditional rendering:
 ### Partials — Keep Them Dumb
 
 Partials should not check `Current.user` internally. Pass permission
-state as a boolean local or use a model predicate at the template
-level that produces the conditional *before* rendering:
+state as a boolean local, decided at the template level by the policy
+*before* rendering:
 
 ```erb
 <%# Good — partial receives what it needs %>
-<%= render "articles/article", article: @article, editable: @article.editable_by?(Current.user) %>
+<%= render "articles/article", article: @article, editable: policy(@article).update? %>
 
 <%# In the partial %>
 <%# locals: (article:, editable: false) %>
@@ -537,10 +558,10 @@ level that produces the conditional *before* rendering:
 ```
 
 ```erb
-<%# Bad — partial reaches for global state %>
+<%# Bad — the partial decides permission itself; policy() reads the signed-in user %>
 <%# locals: (article:) %>
 <article>
-  <% if article.editable_by?(Current.user) %>
+  <% if policy(article).update? %>
     ...
   <% end %>
 </article>

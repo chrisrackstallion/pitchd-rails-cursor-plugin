@@ -70,3 +70,38 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::PolicyContext, :config do
     RUBY
   end
 end
+
+RSpec.describe RuboCop::Cop::AgentHarnessRails::PolicyRecordPredicate, :config do
+  it "flags a policy comparing a record attribute" do
+    expect_offense(<<~RUBY)
+      class ArticlePolicy < ApplicationPolicy
+        def update?
+          record.creator == user || record.status == "draft"
+          ^^^^^^^^^^^^^^ Ask the record, don't interrogate it: replace `record.creator` with a predicate the model defines (`record.created_by?(user)`, `record.draft?`).
+                                    ^^^^^^^^^^^^^ Ask the record, don't interrogate it: replace `record.status` with a predicate the model defines (`record.created_by?(user)`, `record.draft?`).
+        end
+      end
+    RUBY
+  end
+
+  it "flags a policy walking an association, even to a predicate" do
+    expect_offense(<<~RUBY)
+      class CardPolicy < ApplicationPolicy
+        def update?
+          record.board.members.include?(user)
+          ^^^^^^^^^^^^ Ask the record, don't interrogate it: replace `record.board` with a predicate the model defines (`record.created_by?(user)`, `record.draft?`).
+        end
+      end
+    RUBY
+  end
+
+  it "accepts who and what asked through the record's predicates" do
+    expect_no_offenses(<<~RUBY)
+      class ArticlePolicy < ApplicationPolicy
+        def update?
+          user.admin? || (record.created_by?(user) && !record.archived?)
+        end
+      end
+    RUBY
+  end
+end

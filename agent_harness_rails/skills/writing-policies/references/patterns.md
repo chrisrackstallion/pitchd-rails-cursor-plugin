@@ -33,16 +33,16 @@ with standard `create?`/`destroy?`, not custom methods on `CardPolicy`.
 module Cards
   class ClosurePolicy < ApplicationPolicy
     def create?
-      owner_or_team_member?
+      owner_or_team_member? && record.open?
     end
 
     def destroy?
-      owner_or_team_member?
+      owner_or_team_member? && record.closed?
     end
 
     private
       def owner_or_team_member?
-        record.creator == user || record.board.members.include?(user)
+        record.created_by?(user) || record.board_member?(user)
       end
   end
 end
@@ -94,10 +94,10 @@ module Cards
 end
 ```
 
-If you take this route, write the policy's helpers against
-`record.closeable` (the card), not `record.creator` — you just assigned
-the creator to the current user, so `record.creator == user` would be
-vacuously true for everyone.
+If you take this route, the closure delegates the predicates the policy
+asks to the card it closes (`delegate :created_by?, :board_member?, to:
+:closeable`) — a closure you just built with `creator: Current.user` answers
+"did this user create it?" with yes for everyone.
 
 ### Headless Policies (No Record)
 
@@ -233,7 +233,7 @@ class CommentPolicy < ApplicationPolicy
 
   private
     def author?
-      record.author == user
+      record.authored_by?(user)
     end
 
     def moderator_or_admin?
@@ -255,16 +255,12 @@ class ProjectPolicy < ApplicationPolicy
   end
 
   def update?
-    member_of_account? && (record.creator == user.user || user_is_account_admin?)
+    member_of_account? && (record.created_by?(user.user) || record.account_admin?(user.user))
   end
 
   private
     def member_of_account?
-      record.account.memberships.exists?(user: user.user)
-    end
-
-    def user_is_account_admin?
-      record.account.memberships.find_by(user: user.user)&.admin?
+      record.account_member?(user.user)
     end
 end
 ```
@@ -426,27 +422,13 @@ end
 
 ## View Integration
 
-Use `policy` helper in views to conditionally show UI elements:
+`policy(record).action?` in views, and a domain helper wherever the check
+names a policy class: **`agent_harness_rails/rules/policies.mdc`** § View
+Integration.
 
-```erb
-<% if policy(@article).update? %>
-  <%= link_to "Edit", edit_article_path(@article) %>
-<% end %>
-
-<% if policy(@article).destroy? %>
-  <%= button_to "Delete", @article, method: :delete %>
-<% end %>
-```
-
-### Guidelines
-
-- Always gate UI elements behind policy checks — don't show buttons the
-  user can't use
-- The policy is the single source of truth — don't duplicate permission
-  logic in view conditionals
 - Use `policy(Model).create?` for "New" links: `policy(Article).create?`
-- Views call policy methods but never bypass them — if the button is
-  hidden but the endpoint isn't authorized, that's a security bug
+- Hiding a button is not authorization — if the button is hidden but the
+  endpoint isn't authorized, that's a security bug
 
 ---
 
