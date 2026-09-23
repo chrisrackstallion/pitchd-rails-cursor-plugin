@@ -1,0 +1,281 @@
+---
+description: Rails controller conventions — opinionated Rails best practice. Apply when working with controllers.
+globs: app/controllers/**/*.rb
+alwaysApply: false
+---
+
+# Controller Conventions
+
+## Thin Controllers, Rich Models
+
+Controllers orchestrate — they receive requests, delegate to models, and respond. Business logic belongs on the model. If a controller action has more than a handful of lines, logic is leaking.
+
+```ruby
+# Good — controller delegates to model verb
+# (authorize omitted for brevity — every real action calls it; see Authorization below)
+def create
+  @card.close(by: Current.user)
+  redirect_to @card
+end
+
+# Bad — business logic in controller
+def create
+  @card.update!(closed: true, closed_at: Time.current, closed_by: Current.user)
+  @card.watchers.each { |w| NotifyJob.perform_later(w, @card) }
+  redirect_to @card
+end
+```
+
+## Everything Maps to CRUD
+
+Custom actions become new resources. Instead of verbs on existing resources, create noun controllers with standard CRUD actions.
+
+```ruby
+# Good — noun resources with CRUD
+resources :cards do
+  scope module: :cards do        # module: is what routes to Cards::* —
+    resource :closure            # Cards::ClosuresController#create / #destroy
+    resource :archival           # Cards::ArchivalsController#create
+    resources :assignments       # Cards::AssignmentsController#create / #destroy
+  end                            # plain nesting would hit top-level ClosuresController
+end
+
+# Bad — verb actions on parent controller
+resources :cards do
+  member do
+    post :close
+    post :archive
+    post :assign
+  end
+end
+```
+
+**One controller per resource — the fix is a new controller, not a new route to
+the old one.** Keeping the branching and hiding the verb in the URL clears the
+lint and preserves the RPC shape:
+
+```ruby
+# Bad — the same RPC controller with the verbs moved into params[:id]
+# GET /cards/1/closure, /cards/1/archival ... all served by one `show`
+resources :cards do
+  resources :actions, only: :show, module: :cards
+end
+
+class Cards::ActionsController < ApplicationController
+  def show
+    @card.public_send(params[:id])   # params[:id] is not identifying anything
+  end
+end
+```
+
+`params[:id]` identifies a record. A path segment naming an action is a verb
+wearing an id's clothes, and it costs the resource its CRUD verbs: there is no
+`destroy` for un-closing a card, because `show` swallowed the whole resource.
+Each noun gets its own controller — `Cards::ClosuresController#create` and
+`#destroy` — and a singular `resource` route when there is one per parent.
+
+## Controller Structure
+
+Organise every controller in this order:
+
+```ruby
+class ArticlesController < ApplicationController
+  # 1. Concerns
+  include Sortable
+
+  # 2. Security / rate limiting
+  rate_limit to: 10, within: 3.minutes, only: :create
+
+  # 3. Callbacks (before_action, after_action)
+  before_action :set_article, only: %i[ show edit update destroy ]
+
+  # 4. Public actions — in CRUD order
+  def index
+    @articles = policy_scope(Article).chronologically
+    authorize Article
+  end
+
+  def show
+    authorize @article
+  end
+
+  def new
+    @article = Article.new
+    authorize @article
+  end
+
+  def create
+    @article = Article.new(article_params)
+    authorize @article
+
+    if @article.save
+      redirect_to @article, notice: "Article created."
+    else
+      render :new, status: :unprocessable_content
+    end
+  end
+
+  def edit
+    authorize @article
+  end
+
+  def update
+    authorize @article
+
+    if @article.update(article_params)
+      redirect_to @article, notice: "Article updated."
+    else
+      render :edit, status: :unprocessable_content
+    end
+  end
+
+  def destroy
+    authorize @article
+    @article.destroy!
+    redirect_to articles_path, notice: "Article deleted."
+  end
+
+  private
+    # 5. Resource finders (memoised)
+    def set_article
+      @article = Article.find(params[:id])
+    end
+
+    # 6. Strong parameters
+    def article_params
+      params.expect(article: %i[ title body ])
+    end
+end
+```
+
+This is the baseline. It uses `redirect_to` for every mutation — no
+`respond_to`, no format negotiation, no stream templates. Stay here as long
+as possible. Flash copy is hardcoded here to keep the example focused — in
+application code, flash strings live in `config/locales` (e.g.
+`notice: t("articles.created_notice")`; see the i18n rule).
+
+## Response Hierarchy (Hotwire)
+
+Prefer the simplest mechanism that satisfies the UX. Each step adds controller complexity — resist climbing until you must:
+
+1. **Full-page success** — `redirect_to` after a successful mutation. Turbo Drive performs a full-page visit by default (Turbo 8 may morph on refresh when that path is enabled — not every redirect implies a morph). Model-driven refreshes (e.g. `broadcasts_refreshes_to`) can still update other clients. Default for ordinary CRUD.
+2. **Turbo Frames** — scoped regions (drawers, modals, per-record inline edit). Controller renders HTML into a frame; no streams required for validation errors if the frame can re-render with 422.
+3. **Turbo Streams** — multi-target DOM updates. Last resort — see **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**.
+
+**Successful mutations:** prefer **`redirect_to`**. **Failed validations:** **`render`** the same template (`:new` / `:edit` / a partial context) with **`status: :unprocessable_content`** — never redirect a failed save. Use **`:unprocessable_content`** (422), not **`:unprocessable_entity`**.
+
+**The re-rendered form has to be resubmittable.** The 422 is half the contract; the other half is that the form coming back targets a route that exists and accepts the verb it will emit. `form_with model:` derives that verb from `record.persisted?`, so any action that can be reached with its record in either state — `find_or_initialize_by`, a singular resource, a create that revives or updates an existing row, a record loaded before validation failed — has **two** renderings, and only one of them is the one you looked at. When the resource's routes do not serve both `POST` and `PATCH`, the other rendering points at a verb that does not exist: the corrected resubmit 404s and the user's work is lost with no error raised anywhere. Pin `url:` and `method:` in the template (**`agent_harness_rails/rules/views.mdc`** § Form Conventions) rather than letting the failure path decide, and check the verb you pin against `bin/rails routes -g <resource>`. Worked example: **`agent_harness_rails/skills/writing-controllers/references/patterns.md`** § The re-render must be resubmittable. The specs that own this are in **`agent_harness_rails/rules/testing.mdc`** § Every Assertion Must Be Able to Fail.
+
+**Turbo-heavy flows** (modal close + refresh underlying list, frame-targeted success): use `respond_to` with `format.html` and `format.turbo_stream` when needed; **compose stream payloads** in `ApplicationController` helpers or small concerns so actions stay thin. Frames, streams, Stimulus, and anti-SPA patterns: **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**. The **`agent_harness_rails/rules/hotwire.mdc`** rule applies when editing views and Stimulus controllers.
+
+## Strong Parameters with `params.expect`
+
+Prefer `params.expect` over `params.require(...).permit(...)` — it is the Rails 8+ convention, more concise, and raises on missing keys.
+
+```ruby
+def article_params
+  params.expect(article: %i[ title body visibility ])
+end
+```
+
+## Scoped Finders for Nested Resources
+
+For nested resources, always scope record lookups through the parent association:
+
+```ruby
+# Good — scoped through parent
+def set_comment
+  @comment = @article.comments.find(params[:id])
+end
+
+# Bad — unscoped lookup for a nested resource
+def set_comment
+  @comment = Comment.find(params[:id])
+end
+```
+
+Top-level resources use `Model.find(params[:id])` directly — scoping only applies when a resource is nested under a parent.
+
+## Authentication (Rails 8+)
+
+Rails 8 ships a built-in authentication generator (`bin/rails generate authentication`). Controllers require authentication by default and opt out explicitly:
+
+```ruby
+class ApplicationController < ActionController::Base
+  include Authentication
+end
+
+class SessionsController < ApplicationController
+  allow_unauthenticated_access
+  skip_after_action :verify_authorized  # no user to authorize yet
+  rate_limit to: 10, within: 3.minutes, only: :create
+end
+```
+
+## Authorization with Pundit
+
+Every action calls `authorize` — including `index`, which also calls `policy_scope` to filter records, then `authorize` (usually `authorize Article` after scoping). Authorization conventions are single-sourced in **`agent_harness_rails/rules/policies.mdc`**: policy shape, scoping, the `ApplicationController` verification callbacks (`verify_authorized` / `verify_policy_scoped`), and when to `skip_after_action`.
+
+## Decision Framework
+
+**"Does this need a new controller or a new action?"**
+- Action outside CRUD (close, archive, publish) → new noun resource with its own controller
+- Standard CRUD operation → action on existing controller
+- Shared behaviour across controllers → concern
+
+**"Where does the logic live?"**
+- Single-model operation → model method, controller just calls it
+- Multi-model orchestration → controller coordinates, each model does its part
+- External system call → job enqueued by controller or model callback
+- Query/filtering → named scope on the model
+
+**"What response mechanism?"** — see § Response Hierarchy (Hotwire) above.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Business logic in actions | Model method or domain verb |
+| Custom verb actions (`close`, `archive`) | New noun resource with CRUD, in its own controller |
+| Action names routed as `params[:id]` on a single `show` | Separate controllers; `params[:id]` identifies a record, never an action |
+| `params.require(...).permit(...)` | `params.expect(...)` |
+| Reaching for Turbo Streams first | Redirect → frames → streams (`agent_harness_rails/skills/writing-hotwire/references/patterns.md`) |
+| Unscoped find for nested resources | Scope through parent association |
+| `redirect_to` after failed save | `render :action, status: :unprocessable_content` |
+| A 422 re-render whose form emits a verb the route does not serve | Pin `url:` / `method:` in the template; check `bin/rails routes -g <resource>` |
+| Service object wrapping a single model call | Let the controller call the model directly |
+| Multiple `before_action` setting the same chain | Base controller concern or inheritance |
+| `rescue => e` in actions | `rescue_from` at the controller class level |
+| Skipping CSRF / auth checks per-action | Dedicated controller with appropriate base class |
+| Inline `current_user.admin?` permission checks | `authorize @record` delegates to policy |
+| Manually raising `Pundit::NotAuthorizedError`, or re-checking a condition the action already `authorize`d | One gate: `authorize` raises on denial; the policy is the single home for the logic |
+| Pundit policy checks in `before_action` | `authorize` in the action body — keep `before_action` for authentication and finders, not permission rules |
+| Forgetting authorization in an action | `after_action :verify_authorized` catches it (`agent_harness_rails/rules/policies.mdc` § Verification Callbacks) |
+| Forgetting `policy_scope` on index | `after_action :verify_policy_scoped, only: :index` catches it (same section) |
+
+## Naming
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| Controllers | Plural noun matching resource | `ArticlesController`, `CommentsController` |
+| Nested state controllers | `Parent::StateNounController` | `Cards::ClosuresController`, `Articles::PublicationsController` |
+| Namespace controllers | Module wrapping | `Admin::ArticlesController` |
+| Resource finders | `set_` + singular resource name | `set_article`, `set_comment` |
+| Params methods | `resource_params` | `article_params`, `comment_params` |
+| Concerns | Adjective or `Scoped` suffix | `Searchable`, `BoardScoped`, `Sortable` |
+
+## Verification
+
+Before finishing, verify:
+
+- [ ] No business logic in controller actions — only orchestration
+- [ ] Every action maps to one of the seven RESTful actions (index, show, new, create, edit, update, destroy)
+- [ ] Strong parameters use `params.expect`, not `params.require.permit`
+- [ ] Failed validations render with `status: :unprocessable_content`, not redirect
+- [ ] The re-rendered form is resubmittable — it targets a route that exists with the verb it emits, on **every** record state the action's finder can produce (§ Response Hierarchy above)
+- [ ] Nested resource lookups are scoped through parent associations
+- [ ] Response uses the simplest Turbo mechanism (full-page redirect → frames → streams — see `agent_harness_rails/skills/writing-hotwire/references/patterns.md`)
+- [ ] Every action calls `authorize` (Pundit) — including index, which also uses `policy_scope`; verification callbacks per `agent_harness_rails/rules/policies.mdc` § Verification Callbacks
+- [ ] Controller has no more than ~7 public methods (CRUD actions only)
+- [ ] Shared behaviour is extracted to concerns, not duplicated
+- [ ] Rate limiting applied to creation/mutation endpoints where appropriate

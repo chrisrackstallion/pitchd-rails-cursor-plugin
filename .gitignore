@@ -12,3 +12,7 @@
 *.log
 tmp/
 temp/
+
+# Gem build artifacts
+*.gem
+pkg/

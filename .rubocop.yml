@@ -1,0 +1,22 @@
+# This repo eats its own cooking: the same two-layer inheritance a consuming app
+# is told to use in the README — omakase as the ruleset source of truth, then the
+# harness's own thin layer on top.
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+inherit_from:
+  - rubocop.yml
+
+AllCops:
+  # The minimum Ruby consumers may be on (spec.required_ruby_version), not the
+  # latest — cops must not suggest syntax an older consuming app cannot run.
+  TargetRubyVersion: 3.3
+  # This repo holds itself to new cops immediately; the shipped rubocop.yml
+  # deliberately leaves the choice to each consuming app.
+  NewCops: enable
+  Exclude:
+    - "agent_harness_rails/**/*"
+    - "vendor/**/*"
+    # A fixture Rails app, deliberately shaped like a consumer's code rather
+    # than like this gem's.
+    - "fixtures/**/*"

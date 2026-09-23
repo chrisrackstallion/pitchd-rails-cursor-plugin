@@ -1,6 +1,6 @@
 .git
-node_modules
 *.log
+*.gem
 tmp
 temp
 .DS_Store

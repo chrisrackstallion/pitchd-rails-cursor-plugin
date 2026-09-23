@@ -1,0 +1,402 @@
+# The harness's own enforcement layer — opt-in, and separate from rubocop.yml.
+#
+#   # .rubocop.yml in your app
+#   inherit_gem:
+#     rubocop-rails-omakase: rubocop.yml
+#     agent_harness_rails:
+#       - rubocop.yml           # thin layer over omakase; contradicts nothing
+#       - rubocop-harness.yml   # this file
+#
+# Why this is a separate file, and opt-in: omakase disables every Lint, Rails,
+# Metrics, Naming and Style cop and re-enables only formatting. That is a
+# deliberate stance — omakase Rails does not lint semantics. Turning these on is a
+# real change of position, so an app chooses it rather than inheriting it on a
+# gem bump. rubocop.yml keeps its promise of never contradicting omakase.
+#
+# Every cop below encodes a requirement that is already written down in
+# agent_harness_rails/rules/*.mdc. Nothing here is new policy; it is the subset
+# of existing policy a parser can settle. The rest — thin controllers, jobs that
+# delegate, one home per behaviour — stays with review, because an AST
+# approximation of a judgment call cries wolf, and a cop that cries wolf gets
+# disabled. That is the one thing agent_harness_rails/rules/rubocop.mdc forbids.
+#
+# WHAT THIS FILE CANNOT REACH: RuboCop parses Ruby. agent_harness_rails/rules/
+# hotwire.mdc, javascript.mdc, and css-tailwind.mdc get zero coverage here, and
+# views.mdc only its helper slice — ERB, JavaScript, and CSS are not Ruby. Roughly
+# a quarter of the rule corpus is review-only for that reason alone.
+#
+# REQUIRES: rubocop-rails >= 2.29 (for Rails/StrongParametersExpect and
+# Rails/MultipleRoutePaths) and a rubocop that ships it. Every cop named here is
+# asserted to resolve by spec/rubocop_config_spec.rb in the gem's own suite, so a
+# renamed upstream cop fails there rather than crashing your RuboCop.
+#
+# TO OPT OUT of anything here, see the block at the foot of this file.
+
+# Declared here rather than relied on from omakase, so this file works whether or
+# not omakase is in your inheritance chain. Loading a plugin twice is harmless;
+# not loading it at all makes every Rails/* line below a hard error.
+plugins:
+  - rubocop-rails
+
+# The AgentHarnessRails department: custom cops for rules no existing cop
+# covers — no service objects, non-REST controller actions, enqueueing inside a
+# transaction, view specs, assertion-free removal receipts. Their defaults and
+# path scoping live in this gem's config/default.yml, and each names the rule
+# file it enforces so an offence leads back to the prose.
+require:
+  - rubocop/agent_harness_rails
+
+# ---------------------------------------------------------------------------
+# Models — agent_harness_rails/rules/models.mdc
+# ---------------------------------------------------------------------------
+Rails/DefaultScope:            # "Never use default_scope"
+  Enabled: true
+Rails/SkipsModelValidations:   # update_attribute / update_column / touch
+  Enabled: true
+Rails/UniqueValidationWithoutIndex:  # "Database constraints over validations"
+  Enabled: true
+Rails/HasManyOrHasOneDependent:
+  Enabled: true
+Rails/InverseOf:
+  Enabled: true
+Rails/BelongsTo:
+  Enabled: true
+Rails/RedundantPresenceValidationOnBelongsTo:
+  Enabled: true
+Rails/HasAndBelongsToMany:
+  Enabled: true
+Rails/ActiveRecordCallbacksOrder:  # "Callbacks — sparingly", in lifecycle order
+  Enabled: true
+Rails/ActiveRecordOverride:
+  Enabled: true
+Rails/AfterCommitOverride:
+  Enabled: true
+Rails/TransactionExitStatement:    # return/break inside transaction silently commits
+  Enabled: true
+Rails/Validation:                  # validates_presence_of -> validates
+  Enabled: true
+Rails/EnumHash:
+  Enabled: true
+Rails/EnumSyntax:
+  Enabled: true
+Rails/EnumUniqueness:
+  Enabled: true
+Rails/AttributeDefaultBlockValue:
+  Enabled: true
+Rails/RelativeDateConstant:
+  Enabled: true
+Rails/ApplicationRecord:
+  Enabled: true
+
+# Query logic belongs in named scopes, and reads efficiently when it gets there.
+Rails/FindEach:
+  Enabled: true
+Rails/FindBy:
+  Enabled: true
+Rails/FindById:
+  Enabled: true
+Rails/Pluck:
+  Enabled: true
+Rails/PluckId:
+  Enabled: true
+Rails/PluckInWhere:
+  Enabled: true
+Rails/UniqBeforePluck:
+  Enabled: true
+Rails/WhereEquals:
+  Enabled: true
+Rails/WhereNot:
+  Enabled: true
+Rails/WhereExists:
+  Enabled: true
+Rails/WhereMissing:
+  Enabled: true
+Rails/WhereRange:
+  Enabled: true
+Rails/OrderById:
+  Enabled: true
+Rails/RedundantActiveRecordAllMethod:
+  Enabled: true
+Rails/DynamicFindBy:
+  Enabled: true
+Rails/SquishedSQLHeredocs:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Controllers — agent_harness_rails/rules/controllers.mdc
+# ---------------------------------------------------------------------------
+# Safe to enable on any Rails. The cop gates itself on the railties version in
+# your Gemfile.lock (>= 8.0), so a Rails 7 app sees nothing — no need to opt out.
+# Verified both ways against a fixture app.
+Rails/StrongParametersExpect:
+  Enabled: true
+
+# ExpectedOrder is overridden deliberately. RuboCop's default is
+# index show new edit create update destroy; the controller in
+# agent_harness_rails/rules/controllers.mdc § Controller Structure pairs each
+# form action with the write it submits to, so the shipped config follows the
+# rule rather than the other way round.
+Rails/ActionOrder:
+  Enabled: true
+  ExpectedOrder: [ index, show, new, create, edit, update, destroy ]
+
+Rails/HttpStatus:                    # status: :unprocessable_content, not 422
+  Enabled: true
+Rails/ActionControllerFlashBeforeRender:
+  Enabled: true
+Rails/LexicallyScopedActionFilter:
+  Enabled: true
+Rails/IgnoredSkipActionFilterOption:
+  Enabled: true
+Rails/ApplicationController:
+  Enabled: true
+Rails/ActionFilter:
+  Enabled: true
+Style/RescueStandardError:           # "rescue => e in actions" -> rescue_from
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Structure — agent_harness_rails/rules/controllers.mdc, models.mdc
+# ---------------------------------------------------------------------------
+# OPINIONATED, and the most likely thing here to argue with. RuboCop ships this
+# cop disabled; the categories below are what turn it into the model and
+# controller ordering the harness documents. Autocorrectable.
+Layout/ClassStructure:
+  Enabled: true
+  Include:
+    - "**/app/**/*.rb"
+  ExpectedOrder:
+    - module_inclusion
+    - constants
+    - association
+    - attribute_macros
+    - validation
+    - callback
+    - scope
+    - public_class_methods
+    - initializer
+    - public_methods
+    - protected_methods
+    - private_methods
+  Categories:
+    module_inclusion:
+      - include
+      - extend
+      - prepend
+    association:
+      - belongs_to
+      - has_one
+      - has_many
+      - has_and_belongs_to_many
+    attribute_macros:
+      - attr_accessor
+      - attr_reader
+      - attr_writer
+      - enum
+      - normalizes
+      - attribute
+      - delegate
+    validation:
+      - validates
+      - validate
+      - validates_associated
+    callback:
+      - before_validation
+      - after_validation
+      - before_save
+      - after_save
+      - before_create
+      - after_create
+      - before_update
+      - after_update
+      - before_destroy
+      - after_destroy
+      - after_commit
+      - after_create_commit
+      - after_update_commit
+      - after_save_commit
+      - after_destroy_commit
+    scope:
+      - scope
+
+# ---------------------------------------------------------------------------
+# Routes — agent_harness_rails/rules/routes.mdc
+# ---------------------------------------------------------------------------
+Rails/MatchRoute:                    # match -> the specific verb
+  Enabled: true
+Rails/MultipleRoutePaths:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Jobs and mailers — agent_harness_rails/rules/jobs.mdc, mailers.mdc
+# ---------------------------------------------------------------------------
+Rails/ApplicationJob:
+  Enabled: true
+Rails/ApplicationMailer:
+  Enabled: true
+Rails/MailerName:                    # {Noun}Mailer
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Migrations — agent_harness_rails/rules/migrations.mdc
+# ---------------------------------------------------------------------------
+Rails/ReversibleMigration:
+  Enabled: true
+Rails/ReversibleMigrationMethodDefinition:
+  Enabled: true
+Rails/BulkChangeTable:
+  Enabled: true
+Rails/NotNullColumn:                 # the add-nullable/backfill/constrain rule
+  Enabled: true
+Rails/AddColumnIndex:
+  Enabled: true
+Rails/CreateTableWithTimestamps:
+  Enabled: true
+Rails/DangerousColumnNames:
+  Enabled: true
+Rails/ThreeStateBooleanColumn:
+  Enabled: true
+Rails/MigrationClassName:
+  Enabled: true
+Rails/TableNameAssignment:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# I18n — agent_harness_rails/rules/i18n.mdc
+# ---------------------------------------------------------------------------
+Rails/I18nLazyLookup:
+  Enabled: true
+Rails/I18nLocaleTexts:               # user-facing copy belongs in locale files
+  Enabled: true
+Rails/DotSeparatedKeys:
+  Enabled: true
+Rails/ShortI18n:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Views and helpers — agent_harness_rails/rules/views.mdc
+# ---------------------------------------------------------------------------
+# Only the helper slice: ERB is out of RuboCop's reach entirely.
+Rails/OutputSafety:
+  Enabled: true
+Rails/HelperInstanceVariable:        # helpers take arguments, not @ivars
+  Enabled: true
+Rails/ContentTag:
+  Enabled: true
+Rails/LinkToBlank:
+  Enabled: true
+Rails/RenderInline:
+  Enabled: true
+Rails/RenderPlainText:
+  Enabled: true
+Rails/UnusedRenderContent:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Specs — agent_harness_rails/rules/testing.mdc
+# ---------------------------------------------------------------------------
+# Most of testing.mdc needs rubocop-rspec; that is rubocop-harness-rspec.yml.
+Rails/ActionControllerTestCase:      # "Controller specs -> request specs"
+  Enabled: true
+Rails/HttpPositionalArguments:
+  Enabled: true
+Rails/ResponseParsedBody:
+  Enabled: true
+Rails/FreezeTime:
+  Enabled: true
+Rails/RedundantTravelBack:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Naming — agent_harness_rails/rules/naming.mdc
+# ---------------------------------------------------------------------------
+Naming/AccessorMethodName:           # "No generic setters: set_status"
+  Enabled: true
+Naming/MethodParameterName:
+  Enabled: true
+Naming/MemoizedInstanceVariableName:
+  Enabled: true
+Naming/MethodName:
+  Enabled: true
+Naming/VariableName:
+  Enabled: true
+Naming/ConstantName:
+  Enabled: true
+Naming/ClassAndModuleCamelCase:
+  Enabled: true
+Naming/FileName:
+  Enabled: true
+
+# Naming/PredicatePrefix, which covers the rule's `is_active` -> `active` line,
+# lives in rubocop-harness-index.yml: that file pins the RuboCop floor that has
+# the cop under this name, and the index it turns on lets the cop skip overrides
+# of inherited predicates.
+#
+# Naming/VariableNumber is absent for a different reason: it enforces the *style*
+# of numbered names (user_1 vs user1), not their absence, so it does not encode
+# the rule's "role names, not ordinals" line at all.
+
+# ---------------------------------------------------------------------------
+# Correctness — every layer
+# ---------------------------------------------------------------------------
+Lint/Debugger:                       # a binding.irb that reached CI
+  Enabled: true
+Lint/SuppressedException:            # "Silently rescuing all exceptions"
+  Enabled: true
+Lint/RescueException:
+  Enabled: true
+Lint/UselessAssignment:
+  Enabled: true
+Security/Eval:
+  Enabled: true
+Security/Open:
+  Enabled: true
+Security/YAMLLoad:
+  Enabled: true
+Rails/Output:
+  Enabled: true
+Rails/Exit:
+  Enabled: true
+Rails/TimeZone:
+  Enabled: true
+Rails/Date:
+  Enabled: true
+Rails/FilePath:
+  Enabled: true
+Rails/RootPathnameMethods:
+  Enabled: true
+Rails/Delegate:
+  Enabled: true
+Rails/Presence:
+  Enabled: true
+Rails/Blank:
+  Enabled: true
+Rails/Present:
+  Enabled: true
+Rails/CompactBlank:
+  Enabled: true
+Rails/NegateInclude:
+  Enabled: true
+Rails/IndexBy:
+  Enabled: true
+Rails/IndexWith:
+  Enabled: true
+Rails/Pick:
+  Enabled: true
+
+# ---------------------------------------------------------------------------
+# Opting out
+# ---------------------------------------------------------------------------
+# Put these in your own .rubocop.yml, below the inherit_gem block, and they win.
+#
+#   Layout/ClassStructure:
+#     Enabled: false          # We order models by reading flow, not macro type.
+#
+#   Rails/ActionOrder:
+#     Enabled: false          # Our controllers group by concern, not CRUD.
+#
+# This is a standing, human-owned decision, and it is not the same thing as
+# suppressing an offence to make a branch green — that stays forbidden, for
+# agents and humans alike (agent_harness_rails/rules/rubocop.mdc § Never
+# suppress). Write the reason in the comment; agents are instructed to leave
+# these alone rather than re-enable them or route around them.

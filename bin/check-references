@@ -1,0 +1,123 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Verifies that every internal harness reference resolves, and that each one is
+# written in the canonical root-relative form.
+#
+# Skills, rules, and agents refer to each other by path. Nothing else checks
+# those paths, so a typo fails silently at runtime, inside an agent, long after
+# the edit.
+#
+# A reference counts as a harness reference when its first segment (after any
+# `../` hops) is `rules`, `skills`, `agents`, or the name of a real skill
+# directory. That deliberately excludes application paths such as
+# `docs/primitives/index.md`, which skills legitimately mention.
+#
+#   bin/check-references          # summary, misses, non-canonical forms
+#   bin/check-references -v       # also list every distinct reference
+
+REPO_ROOT = File.expand_path("..", __dir__)
+HARNESS_DIR = "agent_harness_rails"
+PAYLOAD_DIRS = %w[skills rules agents].freeze
+
+# Where the payload lives: inside agent_harness_rails/ once moved, else the root.
+PREFIX = Dir.exist?(File.join(REPO_ROOT, HARNESS_DIR, "skills")) ? "#{HARNESS_DIR}/" : ""
+
+SKILL_NAMES = Dir.children(File.join(REPO_ROOT, PREFIX, "skills")).select do |name|
+  Dir.exist?(File.join(REPO_ROOT, PREFIX, "skills", name))
+end.freeze
+
+CANDIDATE = %r{
+  (?:\.\./)*
+  (?:#{HARNESS_DIR}/)?
+  [A-Za-z0-9_-]+
+  (?:/[A-Za-z0-9_.*-]+)+
+  \.(?:mdc|md)
+}x
+
+# `/`, `:` and `.` are deliberately absent so a URL's scheme stays attached.
+BOUNDARY = " \t\n\r`'\"()[]<>,|".chars.freeze
+
+# True when the match sits inside a URL rather than being a repo path. Walks back
+# to the start of the surrounding token and looks for a scheme separator, which is
+# how `.../37signals-skills/main/README.md` is excluded.
+def inside_url?(line, match_start)
+  i = match_start
+  i -= 1 while i.positive? && !BOUNDARY.include?(line[i - 1])
+  line[i...match_start].include?("://")
+end
+
+# Returns the repo-relative path a reference points at, or nil when the reference
+# is not a harness path at all.
+def resolve(reference)
+  rest = reference.sub(%r{\A(?:\.\./)+}, "").delete_prefix("#{HARNESS_DIR}/")
+  head = rest.split("/").first
+
+  return "#{PREFIX}#{rest}" if PAYLOAD_DIRS.include?(head)
+  return "#{PREFIX}skills/#{rest}" if SKILL_NAMES.include?(head)
+
+  nil
+end
+
+def canonical?(reference)
+  reference.start_with?("#{HARNESS_DIR}/")
+end
+
+def present?(path)
+  full = File.join(REPO_ROOT, path)
+  path.include?("*") ? !Dir.glob(full).empty? : File.exist?(full)
+end
+
+roots = PAYLOAD_DIRS.map { |d| File.join(PREFIX, d) }
+                    .select { |d| Dir.exist?(File.join(REPO_ROOT, d)) }
+abort "no payload directories found under #{REPO_ROOT}" if roots.empty?
+
+verbose = ARGV.include?("-v") || ARGV.include?("--verbose")
+files = roots.flat_map { |r| Dir.glob(File.join(REPO_ROOT, r, "**", "*.{md,mdc}")) }.sort
+
+occurrences = 0
+misses = []
+noncanonical = []
+distinct = {}
+
+files.each do |path|
+  relative = path.delete_prefix("#{REPO_ROOT}/")
+
+  File.readlines(path, chomp: true, encoding: "UTF-8").each_with_index do |line, index|
+    line.to_enum(:scan, CANDIDATE).each do
+      match = Regexp.last_match
+      reference = match[0]
+      next if inside_url?(line, match.begin(0))
+
+      target = resolve(reference)
+      next if target.nil?
+
+      occurrences += 1
+      exists = present?(target)
+      distinct[target] = exists
+
+      location = format("%s:%d", relative, index + 1)
+      misses << "#{location}: #{reference}" unless exists
+      noncanonical << "#{location}: #{reference}" if PREFIX != "" && !canonical?(reference)
+    end
+  end
+end
+
+puts "scanned  #{files.size} files under #{roots.join(", ")}"
+puts "found    #{occurrences} harness references to #{distinct.size} distinct paths"
+
+if verbose
+  puts
+  distinct.keys.sort.each { |t| puts format("  %s  %s", distinct[t] ? "ok     " : "MISSING", t) }
+end
+
+puts(misses.empty? ? "missing  none" : "missing  #{misses.size} unresolved:")
+misses.each { |m| puts "  #{m}" }
+
+unless PREFIX.empty?
+  puts(noncanonical.empty? ? "form     all canonical" : "form     #{noncanonical.size} not root-relative:")
+  noncanonical.first(15).each { |m| puts "  #{m}" }
+  puts "  … and #{noncanonical.size - 15} more" if noncanonical.size > 15
+end
+
+exit(misses.empty? && noncanonical.empty? ? 0 : 1)
