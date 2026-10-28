@@ -1,0 +1,124 @@
+---
+description: Rails migration conventions — safe schema changes, reversibility, database constraints. Apply when writing or reviewing migrations.
+globs: db/migrate/**/*.rb
+alwaysApply: false
+---
+
+# Migration Conventions
+
+## Migrations Are an Append-Only Record
+
+Never edit a migration that has been committed. It has been run in production.
+Create a new migration to change the schema.
+
+## Reversibility First
+
+Use `def change` for operations Rails can automatically reverse (add_column,
+create_table, add_index, add_foreign_key). Use `def up` / `def down` for
+irreversible changes, or when reverting requires a different operation. Raise
+`ActiveRecord::IrreversibleMigration` in `down` only when data is genuinely
+destroyed and cannot be recreated.
+
+```ruby
+# Good — reversible
+class AddPublishedAtToArticles < ActiveRecord::Migration[8.0]
+  def change
+    add_column :articles, :published_at, :datetime
+    add_index :articles, :published_at
+  end
+end
+```
+
+Worked `up` / `down` conversions and the reversible-operation list:
+**`agent_harness_rails/skills/writing-migrations/references/patterns.md`** § Reversibility.
+
+## Database Constraints Are the Source of Truth
+
+Enforce integrity at the database level. Model validations are for user-facing
+error messages, not data safety — add the constraint in the migration and
+mirror it as a validation for clear error reporting.
+
+```ruby
+# Migration — source of truth
+add_index :users, :email, unique: true
+add_foreign_key :articles, :users, column: :author_id
+change_column_null :articles, :title, false
+```
+
+## Safe Operations on Live Tables
+
+Some operations lock the table and block reads/writes while they run — fine
+on a small or new table. On a large production table, evaluate before running:
+
+| Operation | Safety | Notes |
+|-----------|--------|-------|
+| `add_column` (nullable) | Safe | No table rewrite |
+| `add_column` with `default:` | Safe on Postgres 11+ / MySQL 8+ | The database applies the default without rewriting rows — a database-version property, not a Rails one |
+| `add_column` NOT NULL, no default, existing rows | Unsafe on large tables | Add nullable first, backfill, then add constraint |
+| `add_index` | Unsafe without `algorithm: :concurrently` | Locks table; use concurrent index on Postgres |
+| `remove_column` | Requires two-deploy process | App must ignore the column before it is removed |
+| `rename_column` | Unsafe | App breaks between deploy and migration; use three-step |
+| `change_column_type` | Often unsafe | Full table rewrite; use new column + backfill instead |
+
+For Postgres, `add_index :table, :column, algorithm: :concurrently` adds the
+index without a full table lock. Declare `disable_ddl_transaction!` in the
+migration yourself — concurrent index builds cannot run inside a transaction,
+and Rails does not disable it for you.
+
+Worked multi-deploy patterns (nullable → backfill → constraint, removal via
+`ignored_columns`, three-step rename):
+**`agent_harness_rails/skills/writing-migrations/references/patterns.md`**.
+
+## Separate Schema Changes from Data Migration
+
+Data migrations (backfills) belong in a separate migration file or a rake
+task — not mixed with DDL. Schema changes run instantly; data migrations
+can take hours on large tables.
+
+## Naming
+
+Migration names are the permanent record of what changed. Be specific:
+
+| Pattern | Example |
+|---------|---------|
+| `add_column_to_table` | `add_published_at_to_articles` |
+| `remove_column_from_table` | `remove_legacy_status_from_articles` |
+| `create_table` | `create_publications` |
+| `add_index_to_table` | `add_index_to_articles_on_published_at` |
+| `add_foreign_key_to_table` | `add_foreign_key_to_articles_on_author_id` |
+| `change_column_in_table` | `change_body_to_text_in_articles` |
+| Data-only migration | `backfill_published_at_from_publications` |
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Editing a past migration | New migration |
+| `add_column null: false` on existing table with no default | Add nullable → backfill → add constraint |
+| DDL and DML (backfill) in the same migration | Separate files |
+| `add_index` without `algorithm: :concurrently` on large Postgres table | Concurrent index with `disable_ddl_transaction!` |
+| `rename_column` on a live app | Three-step: add → dual-write → remove |
+| Putting business rules in `change` | Schema only in migrations; business logic belongs on models |
+| Hardcoded IDs or seeds in migrations | Seeds file or separate rake task |
+| Migration that only works in one direction | `def up` / `def down`, or `raise ActiveRecord::IrreversibleMigration` in `down` |
+
+## Verification
+
+Before finishing, verify:
+
+- [ ] Migration uses `def change` where reversible; `def up` / `def down` or
+  `raise ActiveRecord::IrreversibleMigration` where not
+- [ ] Migration name describes exactly what changes (`add_X_to_Y`, not `update_articles`)
+- [ ] Adding NOT NULL column to existing table: added nullable first, backfill
+  scheduled, constraint added in follow-up migration
+- [ ] Adding index to Postgres: `algorithm: :concurrently` with
+  `disable_ddl_transaction!` for production tables
+- [ ] Removing a column: app ignores it first (deploy 1), migration removes it
+  (deploy 2)
+- [ ] No data migration mixed with DDL (separate files)
+- [ ] Database constraints added: `add_foreign_key`, `change_column_null`,
+  `add_index unique:` where data integrity requires it
+- [ ] No hardcoded IDs or environment-specific data in the migration
+- [ ] `bin/rails db:migrate` followed by `bin/rails db:rollback` passes
+  (verify reversibility in development)
+- [ ] `schema.rb` (or `structure.sql`) committed alongside the migration

@@ -1,0 +1,64 @@
+---
+description: Hotwire — Turbo (Drive, Frames, Streams) and Stimulus. Server-rendered HTML first; no accidental SPA. Apply when editing views, turbo_stream templates, or Stimulus controllers.
+globs: app/views/**/*.erb, app/javascript/controllers/**/*.js
+alwaysApply: false
+---
+
+# Hotwire Conventions
+
+## Server HTML First
+
+The browser receives **HTML from Rails**. Turbo accelerates navigation and partial updates; Stimulus adds **small** client behaviours. Do not duplicate routing, authorization, or domain state in JavaScript — that is SPA drift.
+
+Canonical detail, examples, and anti-patterns: **`agent_harness_rails/skills/writing-hotwire/references/patterns.md`**. Importmap vs bundling, entrypoints, Propshaft: **`agent_harness_rails/rules/javascript.mdc`**, **`agent_harness_rails/skills/writing-javascript/references/patterns.md`**. Tailwind utilities and global CSS policy — add or remove utility classes from Stimulus; do not duplicate a styling architecture here: **`agent_harness_rails/rules/css-tailwind.mdc`**, **`agent_harness_rails/skills/writing-css-tailwind/references/patterns.md`**. Controllers stay thin: **`agent_harness_rails/rules/controllers.mdc`** § Response Hierarchy. Model broadcast APIs: **`agent_harness_rails/skills/writing-models/references/patterns.md`** § Turbo Broadcasts.
+
+## Scope
+
+| This rule owns | Defer |
+|----------------|-------|
+| Frames, lazy frames, `data-turbo-*` | Dedicated API clients — separate API conventions |
+| `format.turbo_stream`, stream templates | Replacing Rails with React/Vue for app chrome |
+| Stimulus targets, actions, values | Heavy realtime games — different constraints |
+| `broadcasts_*`, `turbo_stream_from`, morph meta | Infra / deploy — out of scope |
+
+## Response Hierarchy (Controllers)
+
+Prefer the simplest mechanism. Each step adds complexity — climb only when required:
+
+1. **Full-page success** — `redirect_to` after a successful mutation (default CRUD).
+2. **Turbo Frames** — scoped regions (modals, drawers, per-record edit). Re-render with **422** on validation errors inside the frame when possible.
+3. **Turbo Streams** — multi-target DOM updates. **Last resort** — see `agent_harness_rails/skills/writing-hotwire/references/patterns.md` § When streams fit.
+
+**Failed saves:** `render` + **`status: :unprocessable_content`** (not `:unprocessable_entity`) — never `redirect_to` after validation failure.
+
+## Markup and Stimulus (Views / JS)
+
+- Wrap frame targets with **`turbo_frame_tag`** and stable **`dom_id`**s.
+- Use **`form_with`** so URL, method, and Turbo semantics stay correct; set **`data-turbo-frame`** when a form posts into a named frame.
+- **`button_to`** (or a form) for mutations — POST/PATCH/DELETE; **`link_to`** for GET navigation only.
+- Add Stimulus **last** — only when behaviour is not expressible as HTML + Turbo (toggle UI, focus, keyboard shortcuts). Put it in **`app/javascript/controllers/*_controller.js`** — `data-controller`, `data-action`, targets — not inline `<script>` tags. One behaviour per controller; derive state from the DOM so morphing does not strand it.
+- Stream templates live beside HTML: **`create.turbo_stream.erb`**, etc.
+
+## Broadcasts
+
+Prefer model helpers like **`broadcasts_refreshes_to`** + morphing when the whole page can refresh; use granular **`broadcast_*`** when lists need surgical updates. Broadcasts update **other** clients — the submitter still gets a normal redirect or stream in the same request; do not rely on broadcasts alone for their UX.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| Turbo Streams as the default for CRUD | Redirect → frames → streams (`agent_harness_rails/skills/writing-hotwire/references/patterns.md`) |
+| Large Stimulus apps mirroring server state | Forms, frames, streams, broadcasts — server is source of truth |
+| JSON APIs + `fetch` for first-party pages only you render | HTML responses + Turbo |
+| Inline `turbo_stream` arrays in every action | Helpers or concerns on `ApplicationController` |
+| `data-turbo-frame="_top"` everywhere | Named frames, full-page flow, or 422 inside the frame |
+
+## Verification
+
+- [ ] Response hierarchy is explicit: full page → frame → stream — not "streams first."
+- [ ] No duplicated **routing** or **authorization** in client JS for first-party pages.
+- [ ] Forms use Rails helpers; Turbo semantics are intentional (`turbo_confirm`, `data-turbo-frame`).
+- [ ] Stimulus: one behaviour per controller; cleanup in `disconnect` when needed.
+- [ ] Frames have stable ids; links target the correct frame or `_top` **intentionally**.
+- [ ] Stream templates are named (`action.turbo_stream.erb`); broadcasts tied to domain events.
+- [ ] Validation errors use **`render` + :unprocessable_content**, not redirects or stream hacks.

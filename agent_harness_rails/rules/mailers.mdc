@@ -1,0 +1,57 @@
+---
+description: ActionMailer — thin mailers, previews, deliver_later, multipart templates. Opinionated Rails best practice. Apply when editing mailers, mailer views, or mailer specs/previews.
+globs: app/mailers/**/*.rb, app/views/**/*_mailer/**/*, spec/mailers/**/*.rb, test/mailers/**/*.rb
+alwaysApply: false
+---
+
+# Mailer Conventions
+
+## Mailers Are Mail Controllers
+
+Each public method is one user-visible email — named after the **outcome** (`welcome`, `password_reset`, `published`), not `send_email` or `notify`. Set instance variables for templates; keep business rules on the **model** (or the job that calls the mailer), not buried in the mailer. Pass structured context via **`Mailer.with(...)`**; use plain method args when a single, obvious recipient fits.
+
+Canonical patterns: **`agent_harness_rails/skills/writing-mailers/references/patterns.md`**. Template style (partials, helpers): **`agent_harness_rails/skills/writing-views/references/patterns.md`**. No mailer-shaped service objects: **`agent_harness_rails/rules/services.mdc`**.
+
+## Delivery
+
+Prefer **`deliver_later`** from the request lifecycle so sending does not block the user. Use **`deliver_now`** only when the caller must know delivery finished before continuing (rare). After a DB write, enqueue from **`after_create_commit`** / **`after_update_commit`** (or a job) so mail is not sent for rolled-back transactions — see **`agent_harness_rails/skills/writing-mailers/references/patterns.md`** § Delivery.
+
+## Templates
+
+Provide **HTML and text** parts unless you deliberately ship one format and document why. Use **`_url`** helpers in mailer bodies, not **`_path`**. Email HTML is not Tailwind-in-class — inline CSS or an inliner; see patterns. Subjects and repeated phrases — **`default_i18n_subject`** / **`t()`**; key shape: **`agent_harness_rails/skills/writing-i18n/references/patterns.md`** § Mailers.
+
+## Previews
+
+Every non-trivial mailer method should be **previewable** in development (`ActionMailer::Preview`). Realistic sample records — no production secrets.
+
+## Testing
+
+Mailer **content** (recipients, subject, body fragment) lives in **mailer specs**. Callers assert **`have_enqueued_mail`** or job enqueue — they do not re-assert body copy. **`agent_harness_rails/rules/testing.mdc`** § Each Behaviour Has One Home.
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| `NotificationService` that only calls a mailer | Call `Mailer.with(...).action.deliver_later` from model/job/controller |
+| Heavy domain logic in the mailer | Model methods; mailer formats what the model exposes |
+| Authorization logic only in the mailer | Caller enforces policy before sending — "can this user receive this?" is a policy or model predicate |
+| `deliver_now` in a controller during a normal POST | `deliver_later` |
+| N+1 queries in the mailer method | Preload in the mailer method or pass preloaded associations |
+| Skipping previews | Add `ActionMailer::Preview` for each important method |
+| Only HTML, no text | Add `.text.erb` or explicit documented exception |
+| Copy-pasted HTML and text bodies | Extract shared strings via I18n or small partials/helpers |
+
+## Verification
+
+- [ ] Public methods are named for the message, not `send` / `notify` generics
+- [ ] Instance variables are set in the mailer method (or a documented `before_action` pattern)
+- [ ] HTML + text templates exist, or the exception is documented
+- [ ] Links use **`_url`**, not **`_path`**
+- [ ] **`deliver_later`** unless sync delivery is truly required
+- [ ] No new "mailer service" wrapper — callers use the mailer API
+- [ ] Preview exists for non-trivial mail
+- [ ] Mailer spec covers content; callers use **`have_enqueued_mail`** where appropriate
+
+## Out of Scope
+
+SMTP credentials, provider dashboards, DNS (SPF/DKIM) — operations concerns; keep secrets in env vars. **Action Mailbox** inbound processing is a separate feature, not mailer sending. MJML/component frameworks — adopt in the app first, then document locally.

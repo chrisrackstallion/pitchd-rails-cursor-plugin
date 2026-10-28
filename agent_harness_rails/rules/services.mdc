@@ -1,0 +1,189 @@
+---
+description: Where logic lives without app/services — models, POROs, forms, jobs. Opinionated Rails best practice. Apply when placing operations, form objects, jobs, or pushing back on service objects.
+globs: app/services/**/*.rb, app/models/**/form.rb, app/models/**/*_form.rb
+alwaysApply: false
+---
+
+# Service Conventions
+
+## There Is No Service Layer
+
+Rails does not have a service layer. Business logic belongs on the model. If you are reaching for `app/services/`, stop and ask where this logic *actually* lives.
+
+```ruby
+# Good — domain verb on the model; the Publication record is the single
+# source of truth (its created_at is the publish time — no duplicate column)
+class Article < ApplicationRecord
+  def publish(by: Current.user)
+    create_publication!(publisher: by)
+  end
+end
+
+# Bad — service wrapping a model call
+class PublishArticleService
+  def call(article, user:)
+    article.update!(published: true, published_by: user)
+  end
+end
+```
+
+This is about wrappers, not about the word. A **table-backed model** named
+`Service`, `Operation` or `Command` is domain vocabulary — a row in a table, named
+for what it stores — and it is the right place for behaviour, not a violation of
+this rule. `AgentHarnessRails/ServiceObject` is scoped accordingly: it flags
+`app/services/` and names that put a verb in front of a suffix
+(`PublishArticleService`, `ApplicationService`), and leaves records alone.
+
+## The Decision Tree
+
+Before writing any service-like object, walk this tree:
+
+```
+Does this logic operate on a single model instance?
+├── YES → Model method (domain verb)
+│         e.g. article.publish, account.suspend
+└── NO
+    Does it create/validate records from form input?
+    ├── YES → Form object (ActiveModel::Model)
+    │         e.g. Registration, Checkout, Import
+    └── NO
+        Is it async work, scheduled, or retriable?
+        ├── YES → Job (ActiveJob)
+        │         e.g. ProcessPaymentJob, SyncInventoryJob
+        └── NO
+            Is there a primary model this coordinates around?
+            ├── YES → PORO namespaced under that model
+            │         e.g. Account::Onboarding, Order::Fulfillment
+            └── NO
+                Is this a noun your business uses in everyday language
+                (not a technical operation dressed as a noun)?
+                ├── YES → Standalone PORO in app/models/
+                │         e.g. Search, Broadcast, Import
+                │         Fails the test: ReportGenerator, PaymentProcessor,
+                │         UserAuthenticator (verb phrases or infra wrappers)
+                └── NO
+                    Let the controller orchestrate inline.
+```
+
+**"Do I actually need a new object at all?"** One model, one action → model
+method. Two models the controller can coordinate → inline orchestration is
+fine. Extract only when you can name the concept precisely and the name is
+richer than the model name alone. If you're struggling to name it, the logic
+belongs on the model.
+
+## Where Logic Actually Lives
+
+| Situation | Where It Goes |
+|-----------|---------------|
+| Operates on a single model instance | Model method (domain verb) |
+| Shared behaviour across models | Concern |
+| Complex multi-step operation on one aggregate | PORO namespaced under the model |
+| Multi-field form spanning models or workflow | Form object (`ActiveModel::Model`) |
+| Async work, retries, scheduling | Job (`ActiveJob`) — **`agent_harness_rails/rules/jobs.mdc`**, **`agent_harness_rails/skills/writing-jobs/references/patterns.md`** |
+| Incoming email processing | Mailbox (`ActionMailbox`) |
+| Sending email | Mailer (`ActionMailer`) — **`agent_harness_rails/rules/mailers.mdc`**, **`agent_harness_rails/skills/writing-mailers/references/patterns.md`** |
+| External API integration | PORO in `app/models/` namespaced under a domain noun |
+| Controller coordinates two models | Inline controller orchestration — no wrapper needed |
+
+A concern is a **mixin** — it gets included and becomes part of the model; use
+one for behaviour intrinsic to what a model *is*, or shared across two or more
+unrelated models. A PORO is an **operation** — it receives the model and
+coordinates it; use one for a distinct workflow step within one aggregate.
+
+## POROs Under Model Namespaces
+
+When a model method grows too complex or an operation involves several steps within a single aggregate, extract to a PORO namespaced under the primary model. These live in `app/models/`, not `app/services/`.
+
+- **Named as a noun** — the object *is* a concept, not an action
+- **Initialised with its primary model** — the aggregate root, not a bag of dependencies
+- **Methods are domain verbs** — `process`, `complete`, `import`, not `call` or `execute`
+- **No base class** — each PORO stands alone; `ApplicationService` is an anti-pattern
+- **Uses the model's transaction** — `account.transaction` keeps data integrity with the aggregate
+- **Returns meaningful values** — the updated model or created records, not a result object
+- **Lets exceptions propagate** — bang methods internally; the controller or caller handles the exception
+
+A PORO is not a junk drawer: each public method must be a verb of the named concept; a method that operates on the model alone goes back on the model, presentation goes to a helper. A PORO that accumulates unrelated methods is a service object with a nicer name.
+
+Worked examples and file organisation: **`agent_harness_rails/skills/writing-services/references/patterns.md`** § POROs.
+
+## Form Objects for Multi-Model Writes
+
+When a single form creates or updates records across multiple models, use a form object with `ActiveModel::Model`. This replaces both `accepts_nested_attributes_for` and service objects. Form objects live in `app/models/` — they are models, just not database-backed ones.
+
+| Scenario | Use Form Object? |
+|----------|-----------------|
+| Single model, standard validations | No — use the model directly |
+| Single model, workflow-specific validations | Yes — keeps model validations clean |
+| Form spans two or more models | Yes — replaces `accepts_nested_attributes_for` |
+| Wizard / multi-step form | Yes — one form object per step |
+| Import from CSV / external data | Yes — validates before persisting |
+| API payload mapping | Yes — transforms input to model attributes |
+
+**Form object or PORO?** Receives user input and needs validation → form
+object (`ActiveModel::Model`). Receives model instances and performs
+operations → PORO. Both → form object that delegates to model methods after
+validation.
+
+Worked examples (create, update, controller and view integration): **`agent_harness_rails/skills/writing-services/references/patterns.md`** § Form Objects.
+
+## Jobs Are Your Async Service Layer
+
+Anything that should happen in the background is a job, not a service. The model enqueues (`after_create_commit`, always outside the open transaction), the job executes. Conventions: **`agent_harness_rails/rules/jobs.mdc`**.
+
+## Naming and Placement
+
+| Thing | Convention | Examples |
+|-------|-----------|----------|
+| POROs under models | Noun describing the operation | `Account::Onboarding`, `Order::Fulfillment` |
+| Form objects | Noun describing the workflow | `Registration`, `Checkout`, `ContactForm` |
+| Standalone domain objects | Domain noun | `Search`, `Broadcast`, `Import` |
+| Methods | Domain verb | `process`, `complete`, `import`, `sync` |
+| Jobs | `VerbNounJob` | `ProcessPaymentJob`, `SyncInventoryJob` |
+| Exceptions | Namespaced under model | `Order::NotFulfillable`, `Account::AlreadySuspended` |
+
+Name after a domain noun, not a verb: `Account::Onboarding`, not `OnboardAccount` or `OnboardService`.
+
+Where files live:
+
+- Form objects → `app/models/` (e.g. `app/models/registration.rb`)
+- Model-namespaced POROs → `app/models/model_name/` (e.g. `app/models/order/fulfillment.rb`)
+- Standalone domain objects → `app/models/` (e.g. `app/models/search.rb`)
+- Jobs → `app/jobs/` (e.g. `app/jobs/process_payment_job.rb`)
+- Never → `app/services/`
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|-------------|---------|
+| `app/services/` directory | Model methods, POROs under models, form objects, jobs — all in `app/models/` or `app/jobs/` |
+| Single-method `call` service objects | Model method or PORO with a named domain verb |
+| Service wrapping one `update!` | Model domain verb |
+| Service as a "transaction script" | Model method with `transaction` block |
+| Service objects injecting models to simulate loose coupling | If you need the model, be the model or live under it — PORO constructor injection is fine; injection-as-architectural-boundary is not |
+| `ApplicationService` base class | No base class needed — each PORO stands alone |
+| `ServiceResult` / `Result` monads | Return the created/updated record, or raise on failure |
+| Service for form validation | Form object (`ActiveModel::Model`) |
+| Service for async work | Job (`ActiveJob`) |
+| Service for email | Mailer (`ActionMailer`) — see mailers rule |
+| Service per CRUD action | Controller + model handle CRUD natively |
+| God service coordinating everything | Break into model methods; controller orchestrates |
+| `Interactor`, `UseCase`, `Command` patterns | POROs with domain names — no framework needed |
+| `begin/rescue` in service for flow control | Let exceptions propagate; `rescue_from` in controller |
+| Generic `execute`, `run` method names on POROs and form objects | Domain verbs: `complete`, `process`, `import`. Exception: `perform` is the ActiveJob contract and must not be renamed. |
+
+## Verification
+
+Before finishing, verify:
+
+- [ ] No `app/services/` directory — objects live in `app/models/` or `app/jobs/`
+- [ ] No `ApplicationService` or service base class
+- [ ] No single-method `call` — methods use domain verbs
+- [ ] Objects are named as nouns, not verb phrases
+- [ ] POROs are namespaced under their primary model
+- [ ] Form objects include `ActiveModel::Model` and have validations
+- [ ] Async work is in jobs, not POROs
+- [ ] Objects that wrap a single model call have been inlined to model methods
+- [ ] Transactions wrap the right scope — ideally on the model's own `transaction`
+- [ ] The object represents a real domain concept, not a procedural wrapper
+- [ ] Every PORO method earns its place — each public method is a verb of the named concept; single-model operations moved back to model methods, presentation to helpers
+- [ ] No success/failure result monads — return records or raise exceptions (a small `Data.define` summary from a bulk operation is fine; a `Result` wrapper around every call is not)

@@ -1,0 +1,9 @@
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+  agent_harness_rails:
+    - rubocop.yml
+    - rubocop-harness.yml
+    - rubocop-harness-index.yml
+
+AllCops:
+  NewCops: disable

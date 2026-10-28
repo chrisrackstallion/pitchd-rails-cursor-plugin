@@ -1,0 +1,65 @@
+---
+description: Code comments — none by default; a comment earns its line only by carrying context the code and the primitives tree cannot. Apply when writing or reviewing any code file.
+globs: app/**/*.rb, app/**/*.erb, app/javascript/**/*.js, lib/**/*.rb, db/migrate/**/*.rb, config/routes.rb, spec/**/*.rb
+alwaysApply: false
+---
+
+# Comment Conventions
+
+## The Default Is No Comment
+
+Conventional structure says where a thing lives; a domain name says what it does (**`agent_harness_rails/rules/naming.mdc`**). A comment is the exception — it earns its line only by carrying context a careful reader **cannot recover** from the code in front of them. Code that felt like it needed annotating is usually code that needed a better name or a smaller method.
+
+Every other kind of explanation has a durable home, and a comment is the worst copy of each:
+
+| The explanation | Where it belongs |
+|---|---|
+| What this code does, step by step | The code — rename or split until it reads that way |
+| How the feature is arranged (this table self-joins; replies arrive by Turbo Stream) | **`## Shape`** in the capability doc — **`agent_harness_rails/rules/primitives.mdc`** |
+| What must stay true for a user | An **intent clause**, proven by a tagged example — **`agent_harness_rails/rules/testing.mdc`** |
+| Why this, and not the alternative we rejected | **`## Provenance`** in the capability doc, or the PR |
+| Why convention is broken here | The plan or PR (**`agent_harness_rails/skills/rails-omakase-compass/SKILL.md`** § Document exceptions); **`## Shape`** when the deviation is a standing constraint |
+| What is still to do | The plan's task list, or an issue — never a `# TODO` in shipped code |
+
+A comment restating any of those drifts by construction: the code changes, the comment does not, and the next reader believes the comment.
+
+## The Test
+
+Before writing a comment, answer one question: **what would a reader get wrong without it?**
+
+"Nothing — they would read a little slower" means delete it and fix the names instead. No answer at all means it was narration.
+
+Comments that pass are about **why**, never **what**:
+
+- **A constraint this file cannot show** — an ordering, timing, or caller assumption enforced somewhere else.
+- **A workaround** — name the upstream bug, version, or issue, so the next reader can delete it once it is fixed.
+- **A measured decision** — the obvious version was tried and was too slow; give the number.
+- **A deliberate omission** — the thing that looks like an oversight and is not.
+
+Keep them short, place them above the line they explain, and write them for a Rails developer who has not read the plan.
+
+## Not Comments in This Sense
+
+Some annotations are interface or required syntax; this rule does not thin them out:
+
+- **`# frozen_string_literal: true`** — magic comment.
+- **`<%# locals: (article:) %>`** — a partial's declared interface (**`agent_harness_rails/rules/views.mdc`**).
+- **The one-line why on a custom route segment** — required when standard REST is not enough (**`agent_harness_rails/rules/routes.mdc`**).
+- **RuboCop directives** — not thinned but **forbidden**: `# rubocop:disable` never ships (**`agent_harness_rails/rules/rubocop.mdc`**).
+
+## Anti-Patterns
+
+| Anti-Pattern | Instead |
+|---|---|
+| `# Publishes the article` above `def publish` | Nothing — the name already said it |
+| Banner or section dividers (`# ---- callbacks ----`) | Conventional ordering; a file needing signposts is too big |
+| Step narration inside a method (`# now save the record`) | Extract the step into a named method, or trust the code |
+| Commented-out code, or a method nothing calls, kept "just in case" | Delete it — git remembers. `AgentHarnessRails/UnreferencedMethod` finds the methods, as a sweep (`rubocop-harness-index.yml`) |
+| Dated or authored notes (`# added for billing, Jan 2026`) | Nothing — `git blame` answers both questions |
+| A `# TODO` / `# FIXME` / `# HACK` left behind | Fix it, or file it as a task or issue |
+| YARD / RDoc doc blocks on Rails classes and methods | Nothing — app code is read, not browsed as API docs |
+| Notes addressed to the next agent (`# NOTE: keep this in sync`) | A constraint in `## Shape`, or a spec that goes red when it drifts |
+| Arrange / act / assert labels in specs | Example names and `let` names that read (**`agent_harness_rails/rules/testing.mdc`**) |
+| `# Good — …` / `# Bad — …` labels copied out of harness examples | Nothing — those annotate teaching examples in rules and skills, not app code |
+
+**No cop settles this.** RuboCop cannot tell a necessary comment from narration, so nothing fails the build when a diff over-annotates. The gate is the question above — when the comment is written, and again when review reads it (**`agent_harness_rails/skills/reviewing-rails-work/SKILL.md`**).
