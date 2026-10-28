@@ -165,7 +165,7 @@ Use `after_commit` for async work and `before_save` for derived data. Never use 
 
 | Thing | Convention | Examples |
 |-------|-----------|----------|
-| Concerns | Adjective describing capability | `Publishable`, `Closeable`, `Watchable` |
+| Concerns | Adjective of the domain verb; namespaced under the model when it has one includer — `agent_harness_rails/rules/naming.mdc` § Concerns | `Publishable`, `Watchable`, `Card::Closeable` |
 | Scopes | Adverb or business term | `chronologically`, `active`, `preloaded` |
 | State records | Noun for the state | `Closure`, `Publication`, `Archival` |
 | Verbs | Domain action (non-bang) | `publish`, `close`, `archive`, `gild` |

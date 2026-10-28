@@ -246,15 +246,15 @@ end
 | Type | Purpose | Example |
 |------|---------|---------|
 | Resource scoping | Load parent resource for nested controllers | `BoardScoped`, `AccountScoped` |
-| Request context | Populate `Current` attributes from request | `SetCurrentRequest`, `SetTimezone` |
-| Response helpers | Shared rendering patterns | `FlashStreams`, `Sortable` |
+| Request context | Populate `Current` attributes from request | `SetCurrentRequestDetails`, `SetTimezone` |
+| Response helpers | Shared rendering patterns | `FlashStreams` |
 | Authentication / session | Ensure user is signed in — not Pundit | `Authentication`, session setup |
-| Platform detection | Mobile/desktop branching | `DetectPlatform` |
+| Platform detection | Mobile/desktop branching | `SetPlatform` |
 
 ### Guidelines
 
-- Name concerns as adjectives (`Searchable`, `Sortable`) or with a
-  `Scoped` suffix (`BoardScoped`, `AccountScoped`)
+- Name per `agent_harness_rails/rules/naming.mdc` § Concerns: `{Parent}Scoped`,
+  `Set{Detail}`, or a mechanism noun — never a bare adjective
 - Keep concerns under 100 lines
 - `included do` block for `before_action`, `helper_method`, `layout`
 - Private methods for the implementation
@@ -356,8 +356,8 @@ The `Authentication` concern sets `Current.session` automatically. For
 additional attributes, use a concern:
 
 ```ruby
-# app/controllers/concerns/set_current_request.rb
-module SetCurrentRequest
+# app/controllers/concerns/set_current_request_details.rb
+module SetCurrentRequestDetails
   extend ActiveSupport::Concern
 
   included do

@@ -8,6 +8,8 @@ alwaysApply: false
 
 Use Rails idioms first, domain language second, and invent nothing. Boring, obvious names are correct; clever names are a smell. When Rails convention and domain language conflict, **Rails convention wins for class and file names**; **domain language wins for method and variable names**.
 
+A name says what the thing does, and only that thing: when a shorter name leaves two readings, take the longer, specific one (`SetCurrentRequestDetails` over `SetRequest`, `approver_id` over `user_id`).
+
 ## Suffixes and Casing
 
 - **Add:** `Controller`, `Job`, `Mailer`, `Policy`, `Scope` (Pundit), `_spec`, `_path`
@@ -20,7 +22,7 @@ Use Rails idioms first, domain language second, and invent nothing. Boring, obvi
 | Thing | Convention | Examples |
 |-------|-----------|----------|
 | Model | Singular PascalCase noun | `Article`, `User`, `ProjectMembership` |
-| Concern | Adjective describing capability | `Publishable`, `Closeable`, `Taggable`, `Searchable` |
+| Concern | `-able` adjective of the domain verb — § Concerns | `Publishable`, `Closeable`, `Card::Closeable` |
 | Scope | Business term or adverb | `chronologically`, `active`, `preloaded`, `recent` |
 | State record | Noun for the state | `Closure`, `Publication`, `Archival`, `Lock` |
 | Domain verb | Imperative, non-bang | `publish`, `close`, `archive`, `gild`, `invite` |
@@ -32,6 +34,25 @@ Use Rails idioms first, domain language second, and invent nothing. Boring, obvi
 Do **not** use generic CRUD verbs as domain names: `set_status`, `update_flag`, `create_record`. The name should reflect what happens in the domain, not which SQL call fires underneath.
 
 Default to non-bang for domain verbs — they are the normal path and propagate exceptions from inner `create!` / `update!` naturally. Add a bang only when you also offer a non-raising alternative (`lock` returns false on failure; `lock!` raises).
+
+## Concerns
+
+`app/models/concerns`, `app/controllers/concerns`, and `app/policies/concerns` are all autoload roots, so every concern shares one constant namespace: a `Searchable` under models and a `Searchable` under controllers cannot coexist, and nothing in the bare name says which layer it belongs to. Each layer has its own shape, and the shape names the layer.
+
+| Layer | Shape | The name says | Examples |
+|-------|-------|---------------|----------|
+| Model concern shared by two or more models | `-able` adjective of the domain verb, in `app/models/concerns/` | what any includer can do | `Publishable`, `Archivable`, `Taggable` |
+| Model concern decomposing one model | The same adjective namespaced under that model, in `app/models/card/closeable.rb` | the one model it belongs to | `Card::Closeable`, `Article::Publishable` |
+| Controller concern loading a parent resource for a nested family | `{Parent}Scoped` | which parent its `before_action` loads | `BoardScoped` sets `@board`, `AccountScoped` sets `@account` |
+| Controller concern running one `before_action` on every request | `Set{Detail}` — the callback method, PascalCased | what every request gets | `SetCurrentRequestDetails`, `SetLocale`, `SetPlatform` |
+| Controller concern adding a mechanism with helpers and callbacks | Noun for the mechanism | what the controller gains | `Authentication`, `Authorization` |
+| Policy concern shared by some policies, not all | `{Role}Permissions`, in `app/policies/concerns/` | which role's permissions and predicates it carries | `OwnerPermissions`, `AccountMemberPermissions` |
+
+A model concern's adjective shares its stem with everything it provides: `Publishable` gives `publish`, `published?`, the `published` scope, and the `Publication` state record. A concern whose verb has a different stem (`Publishable` providing `release`) has misnamed one or the other.
+
+A policy concern is rare. A predicate every policy needs lives on `ApplicationPolicy`, tenant scoping on `ApplicationPolicy::Scope`, and a predicate one policy needs is a private method on that policy (`agent_harness_rails/rules/policies.mdc`). Extract only when several policies, but not all, grant one role the same actions.
+
+Never: a bare adjective on a controller or policy concern (that shape is the model layer's), a `Has` prefix, a bare gerund (`Publishing`), or a `Concern`, `Behavior`, `Module`, or `Helper` suffix.
 
 ## Controllers
 
@@ -141,7 +162,9 @@ Use role names, not ordinals: `author`, `reviewer`, `admin` — not `user1`, `us
 | `set_status`, `update_flag`, `do_publish` | Domain verb: `close`, `publish`, `archive` |
 | `ArticleModel`, `UserClass` | `Article`, `User` — no suffix Rails doesn't expect |
 | `ArticleManager`, `UserHandler` | Model methods or namespaced PORO |
-| `PublishingConcern`, `TaggingBehavior` | Adjective: `Publishable`, `Taggable` |
+| `PublishingConcern`, `TaggingBehavior`, `HasPublication` | Adjective of the verb: `Publishable`, `Taggable` |
+| `Searchable`, `Sortable` as controller concerns | Query belongs in a model scope; a controller concern is `{Parent}Scoped`, `Set{Detail}`, or a mechanism noun |
+| `AccountScoped` as a policy concern | `AccountMemberPermissions` — the `Scoped` shape is a controller's |
 | `ArticleService`, `PublishService` | Model domain verb — see `agent_harness_rails/rules/services.mdc` |
 | `is_active`, `is_locked`, `has_members` | `active`, `locked`, `member?` |
 | `created_date`, `updated_time` | `created_at`, `updated_at` — Rails timestamps |

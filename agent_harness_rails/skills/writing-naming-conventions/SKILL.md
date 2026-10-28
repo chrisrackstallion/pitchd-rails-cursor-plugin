@@ -12,9 +12,10 @@ description: >-
 
 <objective>
 Use Rails idioms for structure, domain language for behaviour, and invent
-nothing. When in doubt, pick the boring name. The only names worth agonising
-over are domain verbs on models: they should read like English sentences when
-called.
+nothing. A name says what the thing does with no second reading, so the
+longer, specific name beats the short, ambiguous one. The only names worth
+agonising over are domain verbs on models: they should read like English
+sentences when called.
 </objective>
 
 ## Process
@@ -26,7 +27,8 @@ Look up the section for the layer you are naming:
 | Layer | Section in `agent_harness_rails/rules/naming.mdc` |
 |-------|-------------------------------|
 | Suffixes, singular vs plural, casing | § Suffixes and Casing |
-| Model, concern, scope, domain verb, state record, PORO, form object | § Domain Layer |
+| Model, scope, domain verb, state record, PORO, form object | § Domain Layer |
+| Concern — model, controller, or policy | § Concerns |
 | Controller class or action name | § Controllers |
 | View template, partial, local variable, Stimulus identifier | § Views and Partials |
 | Job class | § Jobs |

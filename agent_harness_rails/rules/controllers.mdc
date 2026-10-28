@@ -81,7 +81,7 @@ Organise every controller in this order:
 ```ruby
 class ArticlesController < ApplicationController
   # 1. Concerns
-  include Sortable
+  include AccountScoped
 
   # 2. Security / rate limiting
   rate_limit to: 10, within: 3.minutes, only: :create
@@ -262,7 +262,7 @@ Every action calls `authorize` — including `index`, which also calls `policy_s
 | Namespace controllers | Module wrapping | `Admin::ArticlesController` |
 | Resource finders | `set_` + singular resource name | `set_article`, `set_comment` |
 | Params methods | `resource_params` | `article_params`, `comment_params` |
-| Concerns | Adjective or `Scoped` suffix | `Searchable`, `BoardScoped`, `Sortable` |
+| Concerns | `{Parent}Scoped`, `Set{Detail}`, or a mechanism noun — `agent_harness_rails/rules/naming.mdc` § Concerns | `BoardScoped`, `SetCurrentRequestDetails`, `Authentication` |
 
 ## Verification
 

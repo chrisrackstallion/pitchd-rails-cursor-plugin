@@ -249,6 +249,7 @@ Where that helper lives: **`agent_harness_rails/rules/views.mdc`** § Organised 
 | Base policy | `ApplicationPolicy` | `app/policies/application_policy.rb` |
 | Namespaced policies | Match controller namespace | `Admin::ArticlePolicy` |
 | Private helpers | Descriptive predicate | `owner_or_admin?`, `member_of_team?` |
+| Concern shared by some policies | `{Role}Permissions` in `app/policies/concerns/` — rare; `agent_harness_rails/rules/naming.mdc` § Concerns | `OwnerPermissions`, `AccountMemberPermissions` |
 
 ## Verification
 

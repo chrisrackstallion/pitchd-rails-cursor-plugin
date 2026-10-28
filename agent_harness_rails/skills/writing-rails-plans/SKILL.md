@@ -289,7 +289,8 @@ not arbitrary numbering:
 
 1. **Migration / schema** — if the data shape changes (`db/migrate/...`).
 2. **Model** — associations, domain verbs, transactions, scopes
-   (`app/models/...`, concerns under `app/models/concerns/`).
+   (`app/models/...`; concern placement and names per
+   `agent_harness_rails/rules/naming.mdc` § Concerns).
 3. **Policy** — if authorization or scoping changes (`app/policies/...`).
 4. **Routes** — `config/routes.rb` (`resources`, `shallow: true`, etc.).
 5. **Controller** — REST actions only; custom actions are rare and justified.

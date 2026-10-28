@@ -239,6 +239,18 @@ changing the harness itself.
 
 ### Changed
 
+- **Concern names say their layer.** `agent_harness_rails/rules/naming.mdc`
+  gains a § Concerns section: model, controller, and policy concerns share one
+  autoload namespace, so each layer gets its own shape — an `-able` adjective
+  of the domain verb for models (namespaced under the model when it has one
+  includer), `{Parent}Scoped` / `Set{Detail}` / a mechanism noun for
+  controllers, and `{Role}Permissions` for the rare policy concern. The
+  controller rule and patterns no longer offer bare adjectives (`Searchable`,
+  `Sortable`) for controller concerns; the models, controllers, and policies
+  rules cite the one home. The rule and skill also state the bar for every
+  name: it says what the thing does with no second reading, so the longer,
+  specific name wins.
+
 - **Styling is not behaviour.** `agent_harness_rails/rules/testing.mdc` gains
   a section and an anti-pattern row: a change that only restyles ships with no
   spec, and no example asserts a CSS class to stand in for one. Where a class
