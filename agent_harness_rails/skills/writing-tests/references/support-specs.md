@@ -772,6 +772,10 @@ spec/support/
 └── capybara.rb            # Capybara configuration
 ```
 
+Every file here is a way of driving the app, not test data. A record a
+spec needs is a factory trait or inline setup —
+**`agent_harness_rails/rules/testing.mdc`** § Factories and Spec Support.
+
 ---
 
 ## Boundaries

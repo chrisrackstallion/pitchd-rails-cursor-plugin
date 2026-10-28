@@ -168,6 +168,16 @@ AgentHarnessRails/SpecSleep:
     - "**/spec/**/*.rb"
     - "**/test/**/*.rb"
 
+AgentHarnessRails/FactoryCallInSpecSupport:
+  Description: >-
+    Nothing under spec/support/ builds a record; a record in a state is a
+    factory trait, an arrangement is inline in the example.
+  Enabled: true
+  VersionAdded: '0.2'
+  Reference: agent_harness_rails/rules/testing.mdc
+  Include:
+    - "**/spec/support/**/*.rb"
+
 AgentHarnessRails/StubbedSubject:
   Description: Do not stub the object under test, or every instance of a class.
   Enabled: true

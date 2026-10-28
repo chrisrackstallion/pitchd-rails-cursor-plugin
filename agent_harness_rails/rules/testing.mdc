@@ -111,6 +111,29 @@ wasteful. Do not stub the page size to keep the number down — that tests the s
 `rubocop-harness-rspec.yml` to leave room for the common page sizes; a
 `create_list` beyond that is building a fixture set the assertions do not need.
 
+## Factories and Spec Support: What Lives Where
+
+A factory answers *what a record in a given state looks like*. A support file answers *how a spec talks to the app* — signing in, setting `Current`, configuring the driver, a custom matcher. Nothing under `spec/support/` builds a record: a method there that returns one is a factory the factory file cannot see, which no `create(:article, :published)` composes with, which drifts from the trait that means the same thing, and which hides the arrangement a reader of the spec needs to see. `AgentHarnessRails/FactoryCallInSpecSupport` fails the build on it.
+
+| Need | Home |
+|------|------|
+| A valid record — required attributes, sequences, default associations | The model's factory |
+| A record in a named state (`published`, `closed`, `admin`) | A trait that calls the domain verb in `after(:create)`, actor passed explicitly |
+| A record with children (`with_comments`), count parameterised | A trait with a transient attribute |
+| A graph the root record owns (an account with its owner and board) | A trait on the root factory composing the child factories |
+| An arrangement the example is *about* (two articles differing in what's asserted) | Inline in the example — it is the story |
+| The same arrangement repeated across one file | A private method at the bottom of that spec file, named for what it returns |
+| The same arrangement repeated across many files | A trait — it is a state with a name; a model verb when the app wants the same operation. Several layers needing the same deep setup means they are re-walking a journey the model spec owns (§ The Rule) |
+| Signing in, `as_user`, `Current` setup, Capybara and driver config, custom matchers, `config.include` | `spec/support/`, one module per concern, named `{Concern}Helper`, included by `type:` |
+
+When the factory "cannot" build the record, the cause is one of three, and none of them is a support helper:
+
+- **The verb needs a request context** — `Current.user` is nil outside a request. Pass the actor (`by: article.author`) in the trait; the rule's factory example does exactly this.
+- **Creation goes through a form object or PORO** (`Registration`, `Account::Onboarding`) — the spec calls that object inline, because that path *is* the behaviour; a trait may wrap it when the resulting state is reused as a precondition elsewhere.
+- **A validation or callback resists the factory's defaults** — the factory is wrong, or the model is. Fix the one that is, never route around it.
+
+A support helper may create a record only as the side effect of driving the app — `sign_in` creating a session through the app's own code — never as the subject or a precondition of the example.
+
 ## Each Behaviour Has One Home
 
 Every behaviour is tested in exactly one place. Duplication across spec types
@@ -182,6 +205,7 @@ inputs — never the same path twice with different wording. Worked example:
 | `is_expected.to` with implicit subject | Explicit subject and expectation |
 | Asserting exact error messages | Assert error keys or behaviour |
 | Giant setup blocks | Extract to factory traits |
+| A `spec/support/` method that returns a record (`create_account_with_owner`) | A trait on the root factory, or inline setup; support holds only how the spec drives the app (§ Factories and Spec Support) |
 | Controller specs | Request specs (controller specs are deprecated) |
 | View specs (`spec/views/`, `type: :view`) | Request specs — rendering is tested through the full stack with `response.body.include?`, never in template isolation |
 | `stub_const` / `allow(ENV)` | Use Rails credentials or test configuration |
@@ -521,6 +545,7 @@ lives somewhere else in `app/` than the spec's path implies is misfiled.
 | Request | `spec/requests/articles_spec.rb` | Matches controller/resource |
 | System | `spec/system/articles_spec.rb` | Matches feature or user flow |
 | Factory | `spec/factories/articles.rb` | Plural model name |
+| Support | `spec/support/authentication.rb` | Names the concern; defines `AuthenticationHelper` — never a factory in disguise (§ Factories and Spec Support) |
 | Job | `spec/jobs/notify_subscribers_job_spec.rb` | Matches job name |
 | Mailer | `spec/mailers/notification_mailer_spec.rb` | Matches mailer name |
 | Policy | `spec/policies/article_policy_spec.rb` | Matches policy name |

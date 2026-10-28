@@ -17,6 +17,53 @@ RSpec.describe RuboCop::Cop::AgentHarnessRails::SpecSleep, :config do
   end
 end
 
+RSpec.describe RuboCop::Cop::AgentHarnessRails::FactoryCallInSpecSupport, :config do
+  it "flags a support helper that builds a record" do
+    expect_offense(<<~RUBY)
+      module AccountHelper
+        def create_account_with_owner
+          owner = create(:user)
+                  ^^^^^^^^^^^^^ `create` builds a record in spec/support/. A record in a state is a factory trait; an arrangement is inline in the example or private to its spec file. Support files only drive the app.
+          create(:account, owner: owner)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `create` builds a record in spec/support/. A record in a state is a factory trait; an arrangement is inline in the example or private to its spec file. Support files only drive the app.
+        end
+      end
+    RUBY
+  end
+
+  it "flags the explicit FactoryBot receiver and the non-persisting forms" do
+    expect_offense(<<~RUBY)
+      def published_article
+        FactoryBot.build_stubbed(:article, :published)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `build_stubbed` builds a record in spec/support/. A record in a state is a factory trait; an arrangement is inline in the example or private to its spec file. Support files only drive the app.
+      end
+    RUBY
+  end
+
+  it "leaves a helper that drives the app alone, even when the app creates a record on the way" do
+    # The rule's own sign-in helpers: a session created through the app's code
+    # is the app being driven, not test data being built.
+    expect_no_offenses(<<~RUBY)
+      module AuthenticationHelper
+        def sign_in(user)
+          session = user.sessions.create!
+          cookies.signed[:session_id] = session.id
+        end
+
+        def as_user(user, &block)
+          Current.set(user: user, &block)
+        end
+      end
+    RUBY
+  end
+
+  it "leaves create on another receiver alone" do
+    expect_no_offenses("Rails.cache.create(:key)
+Article.create(title: \"x\")
+")
+  end
+end
+
 RSpec.describe RuboCop::Cop::AgentHarnessRails::StubbedSubject, :config do
   it "flags allow_any_instance_of" do
     expect_offense(<<~RUBY)

@@ -32,6 +32,7 @@ worked patterns for it.
 | Model domain logic | Read `references/model-specs.md`, write a model spec |
 | HTTP behaviour | Read `references/request-specs.md`, write a request spec |
 | Creating test data | Read `references/factory-patterns.md`, create factories |
+| A helper or setup that several specs share | `agent_harness_rails/rules/testing.mdc` § Factories and Spec Support — a record is a trait, a way of driving the app is `spec/support/` |
 | Authorization / policy | Read `references/support-specs.md` § Policy Specs, write a policy spec |
 | Job / concern | Read `references/support-specs.md`, write the appropriate spec |
 | Mailer class, templates, previews | Read `agent_harness_rails/skills/writing-mailers/references/patterns.md`; RSpec examples in `references/support-specs.md` § Mailer Specs |
@@ -139,6 +140,7 @@ Before finishing, verify:
 - [ ] Tests cover the happy path and key error paths
 - [ ] Each test is self-contained — can run in isolation
 - [ ] Factory uses minimal required attributes
+- [ ] Nothing under `spec/support/` builds a record — states are traits, arrangements are inline or private to the spec file (`agent_harness_rails/rules/testing.mdc` § Factories and Spec Support)
 - [ ] Every spec passes the tables in `agent_harness_rails/rules/testing.mdc`: the **Budget** and **Five Gates** for any system spec, § Ownership by Layer for where each assertion lives (no cross-layer duplication), and § What NOT to Do for the anti-patterns — mocking, view specs, visit-only specs, Selenium where `rack_test` passes, flash-as-signal, unanchored absences, indiscriminate setup
 - [ ] Tests read as documentation — a new developer understands the feature from reading them
 - [ ] No flaky tests — no sleep, no order-dependent state

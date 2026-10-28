@@ -121,13 +121,14 @@ changing the harness itself.
   `Rails/*`, `Naming/*`, `Lint/*` and `Security/*` cops that encode rules already
   written down here, with `Layout/ClassStructure` and `Rails/ActionOrder`
   configured to the model and controller ordering the rules document.
-- **Nineteen `AgentHarnessRails/*` cops** for rules no existing cop covers:
+- **Twenty `AgentHarnessRails/*` cops** for rules no existing cop covers:
   `ServiceObject`, `GenericOperationMethod`, `NonRestfulAction`, `CsrfSkip`,
   `EnqueueOutsideCommit`, `MailerDeliverNow`, `PolicyVerbMethod`,
   `PolicyContext`, `PolicyRecordPredicate`, `HelperModuleLength`,
   `DeepNestedResources`, `MigrationDataChange`, `SpecSleep`,
   `StubbedSubject`, `ViewSpec`, `UnanchoredAbsence`, `TautologicalAssertion`,
-  `HttpStatusComparison`, `IntentTag`. Each names the `.mdc` rule it enforces.
+  `HttpStatusComparison`, `IntentTag`, `FactoryCallInSpecSupport`. Each names
+  the `.mdc` rule it enforces.
 
   Three of them exist because of how the other cops get satisfied. Applying the
   layer to a real application turned up agents clearing a message while leaving
@@ -236,6 +237,18 @@ changing the harness itself.
   a comment restating the code, narrating a step, signposting a section, or
   documenting shape the primitives tree owns is now a `tactical:` finding on
   every diff regardless of layer.
+
+- **Factories and spec support each have a job.** `agent_harness_rails/rules/testing.mdc`
+  gains § Factories and Spec Support: a factory says what a record in a state
+  looks like, `spec/support/` says how a spec drives the app, and nothing
+  under `spec/support/` builds a record. The section tables where each need
+  goes — trait, trait with transient, inline, a method private to the spec
+  file, or support — and names the three reasons a factory "cannot" build a
+  record, none of which is a helper. **`AgentHarnessRails/FactoryCallInSpecSupport`**
+  holds it: any FactoryBot build call under `spec/support/` fails the build,
+  while a helper that creates a session through the app's own code does not.
+  The writing-tests skill, its factory and support references, and
+  refactoring-rails-specs cite the section.
 
 ### Changed
 

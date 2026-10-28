@@ -68,7 +68,7 @@ For an input like `spec/system/articles_spec.rb`, expect to find and read:
 | Mailers | `spec/mailers/*article*_spec.rb` | Mail content (recipient, subject, body) |
 | View (legacy) | `spec/views/articles/**` | Nothing — view specs are never written; any found are MOVE-to-request-spec candidates |
 | Factory | `spec/factories/articles.rb` | Test-data shape |
-| Support | `spec/support/*.rb` | Sign-in helpers, shared modules |
+| Support | `spec/support/*.rb` | Sign-in helpers, shared modules — a record builder here moves to a trait (`agent_harness_rails/rules/testing.mdc` § Factories and Spec Support) |
 | Production code | `app/models/article.rb`, `app/controllers/articles_controller.rb`, `app/policies/article_policy.rb` | Read so you know what the specs cover |
 
 Use `Bash` with `find` and `Grep` to locate related files. For multi-resource journeys (signup, onboarding, checkout), the related specs span multiple resources — map them all before starting work.

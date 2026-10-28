@@ -512,4 +512,5 @@ end
 - **No factory inheritance** — use traits instead of child factories
 - **`build_stubbed` for pure method tests** — use when the method doesn't touch the database; prefer `create` when any DB interaction is involved
 - **No shared mutable state** — each test creates its own records
+- **No record builders in `spec/support/`** — a record is a trait, an arrangement is inline; the split is `agent_harness_rails/rules/testing.mdc` § Factories and Spec Support
 - **Traits compose** — `create(:article, :published, :with_comments)`
